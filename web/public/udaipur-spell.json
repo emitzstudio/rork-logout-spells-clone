@@ -1,0 +1,149 @@
+{
+  "name": "The Lake City Spell",
+  "hook": "Three days of lakes, palaces and golden hours in Udaipur.",
+  "location": "Udaipur, Rajasthan",
+  "days": 3,
+  "nights": 2,
+  "dates": "Dates TBC",
+  "maxSeats": 12,
+  "category": "wandering",
+  "quickInfo": {
+    "duration": "3 days · 2 nights",
+    "location": "Udaipur, Rajasthan",
+    "highlight": "Sunrise from Bahubali Hill",
+    "vibe": "Lakes, ghats & golden hours",
+    "perfectFor": "Solo wanderers & sunset chasers"
+  },
+  "about": {
+    "heading": "The city that floats",
+    "body": "Udaipur doesn't feel built — it feels **conjured**. Palaces balance on water, old bridges hum with songs, and every second doorway sells a painting smaller than your palm.\n\nFor three days we live inside it: one day for the old city and its ghats, one for the hills and lakes around it, and one last fort on the road home.\n\n- Two sunsets, one sunrise, zero rush\n- Old-city bazaars & miniature paintings\n- A picnic in the hills you'll talk about for months",
+    "quote": "Some cities you visit. Udaipur, you drift through.",
+    "layout": "right"
+  },
+  "itinerary": [
+    {
+      "title": "Arrive Into the Lake City",
+      "location": "Udaipur Old City",
+      "subtitle": "Palaces, ghats & bazaar gold",
+      "description": "Check in over a slow breakfast, then step straight into the old city. The morning belongs to **City Palace** — balconies, mirror-work and Lake Pichola glittering below. Lunch at **Rainbow**, with the lake doing the decorating.\n\nFrom there it's all on foot: the bells of **Jagdish Temple**, the evening **puppet show at Bagore Ki Haveli**, the quiet steps of **Gangaur Ghat** and a walk across **Chand Pole Puliya**. We lose ourselves in the bazaar hunting **miniature paintings**, catch sunset from **Ambrai Ghat**, and end the day with dinner at a cute little café.",
+      "highlights": [
+        { "emoji": "🍲", "text": "Lakeside lunch at Rainbow, above Lake Pichola" },
+        { "emoji": "🎭", "text": "Evening puppet show at Bagore Ki Haveli" },
+        { "emoji": "🎨", "text": "Miniature-painting hunt through the old bazaar" },
+        { "emoji": "🌅", "text": "Sunset at Ambrai Ghat, City Palace across the water" }
+      ]
+    },
+    {
+      "title": "Sunrise Hills & a Palace in the Clouds",
+      "location": "Bahubali Hill · Sajjangarh",
+      "subtitle": "The day we earn our views",
+      "description": "Alarms at dark, no regrets: we climb **Bahubali Hill** while the city sleeps and watch sunrise pour over Badi Lake. Then the day slows down — a **Spellbound picnic lunch** in the **Raita Hills**, the fountains of **Saheliyon Ki Bari**, long easy walks along **Fateh Sagar** and a stroll through **Nehru Park**.\n\nAs golden hour arrives, we drive up to the **Monsoon Palace** and watch the whole lake city glow below.",
+      "highlights": [
+        { "emoji": "🥾", "text": "Sunrise trek up Bahubali Hill over Badi Lake" },
+        { "emoji": "✨", "text": "The Spellbound picnic in the Raita Hills" },
+        { "emoji": "🌊", "text": "Golden-hour walks along Fateh Sagar" },
+        { "emoji": "🏔️", "text": "Sunset from the Monsoon Palace" }
+      ]
+    },
+    {
+      "title": "One Last Fort, Then Home",
+      "location": "Chittorgarh",
+      "subtitle": "The long goodbye",
+      "description": "One last slow breakfast before checkout. We ride up to **Karni Mata Mandir** for a final view over the lakes, then point the wheels toward **Chittorgarh** — walking its ramparts as the fort turns gold at **sunset**.\n\nFrom there, it's onward to **Delhi**, tired in the best way.",
+      "highlights": [
+        { "emoji": "🚠", "text": "Ropeway up to Karni Mata Mandir" },
+        { "emoji": "🏰", "text": "Chittorgarh Fort glowing at sunset" },
+        { "emoji": "🌙", "text": "The drive back to Delhi, full of stories" }
+      ]
+    }
+  ],
+  "host": {
+    "name": "Mehar Sachdev",
+    "title": "Your Udaipur Spellcaster",
+    "instagram": "meharsachdevv",
+    "about": "Mehar collects golden hours the way other people collect fridge magnets — and knows exactly which ghat, which rooftop and which chai stall Udaipur saves for the patient. Expect slow mornings, long walks and zero group-tour energy.",
+    "quote": "The lake does the magic. I just gather the people.",
+    "tags": ["Golden-hour chaser", "Storyteller", "Slow travel", "Chai over coffee"]
+  },
+  "stay": {
+    "name": "Lasani Homestay",
+    "shortDescription": "A family-run homestay in Udaipur's old city — our home base, minutes from the lake.",
+    "longDescription": "Warm hosts, home-cooked breakfasts and rooftop moments over the old city. Small, personal and exactly the opposite of a hotel chain — find them at **@lasanihomestayudaipur** on Instagram.",
+    "amenities": [
+      "Home-cooked breakfasts",
+      "Rooftop sit-outs",
+      "Old-city location",
+      "Family-run warmth"
+    ],
+    "highlights": ["Walking distance to the ghats & bazaars"],
+    "mapLabel": "Old City, Udaipur"
+  },
+  "included": [
+    "2 nights at Lasani Homestay",
+    "Daily breakfasts",
+    "The Spellbound picnic lunch in the Raita Hills",
+    "Bagore Ki Haveli show tickets",
+    "Guided sunrise trek & old-city walks",
+    "All transfers within & around Udaipur"
+  ],
+  "notIncluded": [
+    "Travel to Udaipur, and Chittorgarh → Delhi onward",
+    "Lunches & dinners at cafés (pick your cute spot)",
+    "Personal shopping — the miniature paintings are on you",
+    "Travel insurance"
+  ],
+  "audience": [
+    {
+      "title": "The Screen-Tired",
+      "description": "You've been everywhere online and nowhere in weeks. Udaipur asks nothing of you but your attention."
+    },
+    {
+      "title": "The Solo First-Timer",
+      "description": "Come alone, leave with a table of friends and a camera roll full of ghats."
+    },
+    {
+      "title": "The Golden-Hour Chaser",
+      "description": "Two sunsets, one sunrise and a palace in the clouds. Bring the good lens."
+    }
+  ],
+  "tripHighlights": [
+    {
+      "emoji": "🌅",
+      "title": "Sunrise from Bahubali Hill",
+      "description": "A pre-dawn climb, then Badi Lake turning silver-gold beneath you.",
+      "accent": true
+    },
+    {
+      "emoji": "🛶",
+      "title": "Golden hour at Ambrai Ghat",
+      "description": "The City Palace lit across the water — Udaipur's most famous view, earned slowly.",
+      "accent": false
+    },
+    {
+      "emoji": "🎭",
+      "title": "Puppet show at Bagore Ki Haveli",
+      "description": "Rajasthani music, dance and string puppets in a centuries-old haveli on Gangaur Ghat.",
+      "accent": false
+    },
+    {
+      "emoji": "🏰",
+      "title": "Chittorgarh at sunset",
+      "description": "India's largest fort as the last light hits — the goodbye that doesn't feel like one.",
+      "accent": false
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How hard is the Bahubali Hill trek?",
+      "answer": "A short, steep pre-dawn climb — around 30–40 minutes at an easy pace. Sneakers are enough, and the sunrise pays for every step."
+    },
+    {
+      "question": "I'm coming solo — will I fit in?",
+      "answer": "Most of the circle usually does. By the first ghat sunset, strangers feel like a travel family."
+    },
+    {
+      "question": "What should I pack?",
+      "answer": "Light layers, sneakers for the trek, sunscreen — and space in your bag for miniature paintings."
+    }
+  ]
+}

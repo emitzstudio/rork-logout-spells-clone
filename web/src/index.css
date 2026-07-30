@@ -1,0 +1,482 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   LOGOUT SPELLS — Design System
+   Brand palette (unchanged from original site):
+   charcoal #1C1C1A · deep #0a0806 · cream #F5F0E8
+   gold #B8963E · gold-light #CFA85A · tan #8b7956
+   ============================================ */
+
+@layer base {
+  :root {
+    --background: 60 4% 11%;
+    --foreground: 37 39% 94%;
+
+    --card: 60 3% 13%;
+    --card-foreground: 37 39% 94%;
+
+    --popover: 60 3% 13%;
+    --popover-foreground: 37 39% 94%;
+
+    --primary: 43 50% 48%;
+    --primary-foreground: 30 25% 3%;
+
+    --secondary: 60 3% 16%;
+    --secondary-foreground: 37 39% 94%;
+
+    --muted: 60 3% 16%;
+    --muted-foreground: 39 15% 68%;
+
+    --accent: 43 50% 48%;
+    --accent-foreground: 30 25% 3%;
+
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 37 39% 94%;
+
+    --border: 45 8% 21%;
+    --input: 45 8% 21%;
+    --ring: 43 50% 48%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 60 4% 9%;
+    --sidebar-foreground: 37 39% 94%;
+    --sidebar-primary: 43 50% 48%;
+    --sidebar-primary-foreground: 30 25% 3%;
+    --sidebar-accent: 60 3% 14%;
+    --sidebar-accent-foreground: 37 39% 94%;
+    --sidebar-border: 45 8% 21%;
+    --sidebar-ring: 43 50% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    @apply bg-charcoal text-cream font-sans antialiased;
+    background-color: #1c1c1a;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Visible, on-brand keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid rgba(207, 168, 90, 0.65);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: rgba(184, 150, 62, 0.35);
+    color: #f5f0e8;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #141412;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(184, 150, 62, 0.35);
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(184, 150, 62, 0.6);
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-sans text-[11px] uppercase tracking-[0.32em] text-gold;
+  }
+
+  .heading-serif {
+    @apply font-serif font-medium leading-[0.98] tracking-[-0.01em];
+  }
+
+  .text-gold-gradient {
+    background: linear-gradient(120deg, #cfa85a 0%, #f0dfae 45%, #b8963e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .gold-line {
+    @apply h-px w-16 bg-gradient-to-r from-gold to-transparent;
+  }
+
+  /* Glass card — no backdrop-filter: blurring a flat charcoal backdrop is
+     visually identical yet forces a GPU re-filter on every scroll frame. */
+  .card-glass {
+    background:
+      linear-gradient(160deg, rgba(245, 240, 232, 0.045), rgba(245, 240, 232, 0.015)),
+      rgba(24, 23, 20, 0.42);
+    border: 1px solid rgba(245, 240, 232, 0.08);
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-gold px-7 py-3.5 font-sans text-sm font-medium tracking-[0.08em] text-charcoal-deep transition-all duration-300 hover:bg-gold-light hover:shadow-[0_0_36px_rgba(184,150,62,0.4)] active:scale-[0.98];
+  }
+
+  .btn-ghost-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-gold/35 px-7 py-3.5 font-sans text-sm font-medium tracking-[0.08em] text-gold transition-all duration-300 hover:border-gold/80 hover:bg-gold/10 hover:text-gold-light active:scale-[0.98];
+  }
+
+  /* Premium gold range slider — consistent thumb across browsers.
+     The filled portion of the track is painted via an inline gradient. */
+  .slider-gold {
+    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-cream/10;
+  }
+  .slider-gold:focus-visible {
+    outline-offset: 6px;
+    border-radius: 9999px;
+  }
+  .slider-gold::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 35% 30%, #f0dfae, #b8963e 72%);
+    border: 1px solid rgba(240, 223, 174, 0.75);
+    box-shadow: 0 0 14px rgba(184, 150, 62, 0.55);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .slider-gold::-webkit-slider-thumb:hover,
+  .slider-gold:active::-webkit-slider-thumb {
+    transform: scale(1.18);
+    box-shadow: 0 0 22px rgba(184, 150, 62, 0.85);
+  }
+  .slider-gold::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 35% 30%, #f0dfae, #b8963e 72%);
+    border: 1px solid rgba(240, 223, 174, 0.75);
+    box-shadow: 0 0 14px rgba(184, 150, 62, 0.55);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .slider-gold::-moz-range-thumb:hover {
+    transform: scale(1.18);
+    box-shadow: 0 0 22px rgba(184, 150, 62, 0.85);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Live Spells — gradient text that shimmers softly on hover. */
+  .nav-live {
+    background: linear-gradient(
+      100deg,
+      #dcbc74 0%,
+      #dcbc74 38%,
+      #f6ecc8 50%,
+      #dcbc74 62%,
+      #dcbc74 100%
+    );
+    background-size: 240% 100%;
+    background-position: 0% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 7px rgba(207, 168, 90, 0.25));
+    transition: filter 0.45s ease;
+  }
+  .group:hover .nav-live {
+    animation: nav-live-shimmer 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(240, 223, 174, 0.55));
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Cinematic hero — imperceptibly slow Ken Burns drift on the imagery. */
+  .animate-kenburns {
+    animation: kenburns 28s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  /* Editorial entrance — hero content rises softly into place, staggered
+     via inline animation-delay. */
+  .hero-rise {
+    opacity: 0;
+    animation: hero-rise 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* The gold thread gliding down the hero's scroll indicator. */
+  .animate-scroll-glide {
+    animation: scroll-glide 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  /* Compositor-only ambient loops — transform/opacity keyframes driven by
+     custom properties, promoted off the main thread. Pair with --dur/--delay. */
+  .fx-drift-y {
+    animation: ls-drift-y var(--dur, 7s) ease-in-out var(--delay, 0s) infinite;
+  }
+  .fx-float {
+    animation: ls-float-fade var(--dur, 6s) ease-in-out var(--delay, 0s) infinite;
+  }
+  .fx-pulse {
+    animation: ls-pulse var(--dur, 1.4s) ease-in-out infinite;
+  }
+  .fx-spin {
+    animation: ls-spin var(--dur, 9s) linear infinite;
+  }
+  .fx-spin-rev {
+    animation: ls-spin var(--dur, 14s) linear infinite reverse;
+  }
+  .fx-wiggle {
+    animation: ls-wiggle var(--dur, 1.7s) ease-in-out infinite;
+  }
+
+  /* 3D flip cards — team, spellcaster-style rotatables. */
+  .perspective-1200 {
+    perspective: 1200px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+
+/* ——— Discover cauldron — compositor-friendly idle magic ———
+   All keyframes animate transform/opacity only so the browser can run them
+   off the main thread. Amplitudes arrive via CSS custom properties. */
+@keyframes ls-drift-x {
+  0%,
+  100% {
+    transform: translateX(calc(var(--amp) * -1));
+  }
+  50% {
+    transform: translateX(var(--amp));
+  }
+}
+@keyframes ls-drift-y {
+  0%,
+  100% {
+    transform: translateY(calc(var(--amp) * -1));
+  }
+  50% {
+    transform: translateY(var(--amp));
+  }
+}
+@keyframes ls-breathe {
+  0%,
+  100% {
+    opacity: var(--lo, 0.3);
+  }
+  50% {
+    opacity: var(--hi, 0.6);
+  }
+}
+@keyframes ls-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ls-bubble {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  55% {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+}
+@keyframes ls-smoke {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: var(--o, 0.5);
+  }
+  100% {
+    transform: translate3d(var(--sw, 0px), -86px, 0) scale(1.4);
+    opacity: 0;
+  }
+}
+@keyframes ls-ember {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(var(--ex, 0px), -54px, 0);
+    opacity: 0;
+  }
+}
+@keyframes ls-rumble {
+  0%,
+  100% {
+    transform: rotate(0deg) translateX(0);
+  }
+  25% {
+    transform: rotate(-1.1deg) translateX(-2px);
+  }
+  75% {
+    transform: rotate(1.2deg) translateX(2px);
+  }
+}
+@keyframes ls-spark-rise {
+  0% {
+    transform: translateY(8px) scale(0.5);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-116px) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes ls-cta-shimmer {
+  0% {
+    transform: translateX(-180%) skewX(-14deg);
+  }
+  100% {
+    transform: translateX(280%) skewX(-14deg);
+  }
+}
+
+/* Ambient drift + fade for floating symbols and orbs. */
+@keyframes ls-float-fade {
+  0%,
+  100% {
+    transform: translateY(calc(var(--amp, 8px) * -1));
+    opacity: var(--lo, 0.2);
+  }
+  50% {
+    transform: translateY(var(--amp, 8px));
+    opacity: var(--hi, 0.55);
+  }
+}
+@keyframes ls-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(var(--peak, 1.12));
+  }
+}
+@keyframes ls-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(9deg);
+  }
+  70% {
+    transform: rotate(-7deg);
+  }
+}
+
+@keyframes nav-live-shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: -140% 0;
+  }
+}
+
+/* The wand replaces the native cursor on precise pointers. */
+@media (pointer: fine) {
+  body.wand-cursor,
+  body.wand-cursor * {
+    cursor: none !important;
+  }
+}
+
+@keyframes kenburns {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scroll-glide {
+  0% {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(34px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns,
+  .animate-scroll-glide,
+  .fx-drift-y,
+  .fx-float,
+  .fx-pulse,
+  .fx-spin,
+  .fx-spin-rev,
+  .fx-wiggle {
+    animation: none;
+  }
+  .hero-rise {
+    animation: none;
+    opacity: 1;
+  }
+  .group:hover .nav-live {
+    animation: none;
+  }
+}
