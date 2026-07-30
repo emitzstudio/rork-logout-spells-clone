@@ -123,7 +123,9 @@ INSERT (trigger) · no DELETE (cascades from auth).
 `user_id uuid` PK → profiles (cascade); notification toggles (`notify_trips`,
 `notify_offers`, `notify_reminders`, `channel_email`, `channel_whatsapp`), privacy
 (`profile_visible`, `show_memories`), and `brewed_at timestamptz` (the Discover ritual
-flag, synced from localStorage on first login). RLS: own only, all operations.
+flag, synced from localStorage on first login). RLS: own only — SELECT, INSERT
+(self-heal), column-limited UPDATE; no client DELETE (the row is removed by the
+auth cascade). Staff have no access.
 
 ### `user_roles` — elevated access, separate from profiles
 | Column | Type | Notes |

@@ -121,7 +121,7 @@ alter table public.user_roles enable row level security;
 
 -- §4 · Role helpers ------------------------------------------------------------
 -- SECURITY DEFINER so policies never query user_roles directly (which would
--- recursively evaluate user_roles'' own RLS). Pinned empty search_path per
+-- recursively evaluate the RLS on user_roles itself). Pinned empty search_path per
 -- Supabase guidance; everything inside is schema-qualified. STABLE lets the
 -- planner cache the result per statement.
 
@@ -162,8 +162,9 @@ grant execute on function public.is_staff() to authenticated, anon;
 
 
 -- §5 · Row Level Security policies ----------------------------------------------
--- (select auth.uid()) instead of bare auth.uid() lets Postgres evaluate it once
--- per statement instead of once per row (Supabase initplan lint).
+-- Wrapping auth.uid() and the role helpers in (select ...) lets Postgres
+-- evaluate them once per statement (initplan) instead of once per row —
+-- the Supabase RLS performance guidance.
 
 -- profiles: SELECT own or staff · UPDATE own · no INSERT (trigger only) ·
 -- no DELETE (cascades from auth.users only).
@@ -171,7 +172,7 @@ create policy "profiles_select_own_or_staff"
   on public.profiles
   for select
   to authenticated
-  using (id = (select auth.uid()) or public.is_staff());
+  using (id = (select auth.uid()) or (select public.is_staff()));
 
 create policy "profiles_update_own"
   on public.profiles
@@ -180,7 +181,9 @@ create policy "profiles_update_own"
   using (id = (select auth.uid()))
   with check (id = (select auth.uid()));
 
--- user_settings: own only, all four operations. No staff access.
+-- user_settings: own only — SELECT, INSERT (self-heal if the row is ever
+-- missing), column-limited UPDATE. No DELETE policy: the row lives and dies
+-- with the account (auth cascade). Staff have no access by design.
 create policy "user_settings_select_own"
   on public.user_settings
   for select
@@ -200,12 +203,6 @@ create policy "user_settings_update_own"
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
-create policy "user_settings_delete_own"
-  on public.user_settings
-  for delete
-  to authenticated
-  using (user_id = (select auth.uid()));
-
 -- user_roles: SELECT own or admin · INSERT/DELETE admin only · no UPDATE at all
 -- (a role row is granted or revoked, never edited into a different role).
 create policy "user_roles_select_own_or_admin"
@@ -214,20 +211,20 @@ create policy "user_roles_select_own_or_admin"
   to authenticated
   using (
     user_id = (select auth.uid())
-    or public.has_role((select auth.uid()), 'admin'::public.app_role)
+    or (select public.has_role(auth.uid(), 'admin'::public.app_role))
   );
 
 create policy "user_roles_insert_admin"
   on public.user_roles
   for insert
   to authenticated
-  with check (public.has_role((select auth.uid()), 'admin'::public.app_role));
+  with check ((select public.has_role(auth.uid(), 'admin'::public.app_role)));
 
 create policy "user_roles_delete_admin"
   on public.user_roles
   for delete
   to authenticated
-  using (public.has_role((select auth.uid()), 'admin'::public.app_role));
+  using ((select public.has_role(auth.uid(), 'admin'::public.app_role)));
 
 
 -- §6 · Column-level grants -------------------------------------------------------
@@ -244,9 +241,13 @@ grant update (
   emergency_name, emergency_relation, emergency_phone
 ) on table public.profiles to authenticated;
 
--- user_settings: UPDATE only the preference toggles + brewed_at.
--- Protected by omission: user_id, created_at, updated_at.
-revoke update on table public.user_settings from anon, authenticated;
+-- user_settings: INSERT/UPDATE limited to user_id + the preference columns, so
+-- created_at/updated_at can't be forged even on insert. No DELETE grant.
+revoke insert, update, delete on table public.user_settings from anon, authenticated;
+grant insert (
+  user_id, notify_trips, notify_offers, notify_reminders, channel_email,
+  channel_whatsapp, profile_visible, show_memories, brewed_at
+) on table public.user_settings to authenticated;
 grant update (
   notify_trips, notify_offers, notify_reminders, channel_email, channel_whatsapp,
   profile_visible, show_memories, brewed_at
