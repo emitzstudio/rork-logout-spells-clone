@@ -1,7 +1,10 @@
 -- ============================================================================
 -- M1 · Identity foundation — Logout Spells
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT — runs only after founder approval in chat. Nothing applied.
+-- Status: APPLIED 2026-07-31 as migration `m1-identity-foundation`, after founder
+-- approval in chat. Verified by `m1-verify-assertions` (read-only assertions, all
+-- passed). See backend/docs/migration-history.md. Do NOT re-run: this file is the
+-- source of record, not an idempotent script.
 --
 -- Creates, in dependency order:
 --   §1  Enums: app_role, spell_category

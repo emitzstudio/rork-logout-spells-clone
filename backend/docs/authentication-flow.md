@@ -1,7 +1,9 @@
 # Authentication Flow
 
-> **Status: DESIGN — the auth model is active on the project, but no profiles table,
-> trigger, or roles exist yet.** They arrive in M1 after founder approval.
+> **Status: LIVE as of 2026-07-31 (M1).** `profiles`, `user_settings`, `user_roles`,
+> the role helpers and both `auth.users` triggers are applied and verified on the
+> production project. Still outstanding: the founder's admin grant (needs her real
+> user id — see below) and the client-side auth UI swap, which lands in M6.
 
 ## Model
 
@@ -20,7 +22,7 @@ creating the company's own OAuth credentials (Google Cloud Console / Apple Devel
 and pasting them into the Supabase dashboard — additive, no schema impact, fully
 company-owned.
 
-## Signup pipeline (M1)
+## Signup pipeline (M1 — live)
 
 1. Client calls `supabase.auth.signUp({ email, password, options: { data: { first_name, last_name } } })`.
 2. A `SECURITY DEFINER` trigger on `auth.users` (`handle_new_user`) inserts:

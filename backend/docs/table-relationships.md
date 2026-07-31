@@ -1,6 +1,8 @@
 # Table Relationships
 
-> **Status: DESIGN — nothing applied yet.** Companion to
+> **Status: PARTIALLY APPLIED.** The `auth.users → profiles → user_settings / user_roles`
+> branch is live as of M1 (2026-07-31), including the delete behaviour documented below.
+> Every other node in the map is still design-only. Companion to
 > [database-architecture.md](./database-architecture.md).
 
 ## Entity map

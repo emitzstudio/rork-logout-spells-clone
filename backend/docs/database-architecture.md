@@ -1,7 +1,10 @@
 # Database Architecture
 
-> **Status: DESIGN — nothing here is applied yet.** This document is the reviewed target
-> schema. Each milestone's migration SQL is shown to the founder before it runs, and
+> **Status: PARTIALLY APPLIED.** The identity layer — `profiles`, `user_settings`,
+> `user_roles`, the `app_role` / `spell_category` enums, `has_role()` / `is_staff()`,
+> and the signup pipeline — went live with **M1 on 2026-07-31**, exactly as documented
+> here. Every other table below is still the reviewed target schema and is **not**
+> applied. Each milestone's migration SQL is shown to the founder before it runs, and
 > [migration-history.md](./migration-history.md) records what is actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every

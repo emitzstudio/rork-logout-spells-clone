@@ -10,29 +10,112 @@ a logged founder confirmation).
 
 ---
 
-**No migrations have been applied yet.**
+## M1 — Identity foundation · applied 2026-07-31
 
-The database is empty by design while the architecture (M0) is under founder review.
+| | |
+| --- | --- |
+| Migration | `m1-identity-foundation` |
+| Source of record | [`backend/migrations/0001_identity_foundation.sql`](../migrations/0001_identity_foundation.sql) |
+| Reviewed | Full SQL, object inventory, all 8 RLS policies and 10 trade-offs posted in chat |
+| Approved by | Vidushi Verma, in chat, after clarifying referral codes, `spell_category` and `brewed_at` |
+| Destructive statements | **None.** No drop, rename, delete, truncate or type change. |
+| Applied as | One transaction. First migration against a previously empty database. |
+
+### What went live
+
+**Enums (2)**
+
+- `app_role` — `admin`, `staff`
+- `spell_category` — `gathering`, `movement`, `making`, `wandering`, `stillness`,
+  `celebration`. Pulled forward from M2 because `profiles.category_interests` uses it;
+  `spells.category` reuses the same type in M2 so the taxonomy cannot drift.
+
+**Tables (3)** — all with RLS enabled in the same migration
+
+- `profiles` — one row per auth user; 21 columns mapping 1:1 onto `TravellerProfile`.
+  Inserted **only** by `handle_new_user()`; no client insert or delete path exists.
+- `user_settings` — 1:1 private preferences (`TravellerPrefs`) plus `brewed_at`.
+- `user_roles` — role grants with `granted_by` audit trail, unique on `(user_id, role)`.
+
+**Functions (6)**
+
+- `set_updated_at()` — shared `updated_at` trigger function for all mutable tables.
+- `has_role(uuid, app_role)` / `is_staff()` — `SECURITY DEFINER`, `STABLE`, pinned
+  `search_path`; policies call these instead of querying `user_roles` directly.
+- `generate_referral_code(text)` — `NAME-SPELL` format, collision-suffixed from an
+  alphabet excluding `0/O/1/I/L`. EXECUTE revoked from all client roles.
+- `handle_new_user()` — the only writer of `profiles` inserts; also seeds
+  `user_settings`. Bounded 3-attempt retry on `unique_violation`.
+- `handle_user_email_sync()` — keeps the client-read-only `profiles.email` truthful.
+
+**Triggers (4)**
+
+- `on_auth_user_created` — AFTER INSERT on `auth.users`
+- `on_auth_user_email_updated` — AFTER UPDATE OF email on `auth.users`, guarded by
+  `when (old.email is distinct from new.email)`
+- `set_profiles_updated_at`, `set_user_settings_updated_at` — BEFORE UPDATE
+
+**RLS policies (8)** — default-deny everywhere else
+
+| Table | SELECT | INSERT | UPDATE | DELETE |
+| --- | --- | --- | --- | --- |
+| `profiles` | own or staff | — (trigger only) | own | — (auth cascade only) |
+| `user_settings` | own | own (self-heal) | own | — (dies with account) |
+| `user_roles` | own or admin | admin | — (never) | admin |
+
+`anon` has no access to any of the three tables.
+
+**Column grants** — table-wide writes revoked from `anon`/`authenticated`, then
+re-granted narrowly: 16 UPDATE columns on `profiles` (so `id`, `email`,
+`referral_code`, `created_at`, `updated_at` are unwritable even on a valid own-row
+update), 9 INSERT / 8 UPDATE columns on `user_settings`, zero UPDATE on `user_roles`.
+
+### Verification
+
+A read-only assertion block (`m1-verify-assertions`, no DDL/DML) was executed
+immediately after and passed every check:
+
+- 2 enums with 2 and 6 values
+- 3 tables with `relrowsecurity = true`
+- exactly 8 policies across the three tables
+- all 6 functions present; the 5 `SECURITY DEFINER` ones confirmed definer **and**
+  `search_path`-pinned
+- 2 triggers on `auth.users`, 2 `updated_at` triggers
+- 0 table-wide client write grants on `profiles` / `user_settings`; exactly 16 / 9 / 8
+  column grants; 0 grants on the 5 protected `profiles` columns; 0 UPDATE on `user_roles`
+- `generate_referral_code` not client-executable; `has_role` + `is_staff` executable by
+  `anon` and `authenticated` (4 grants)
+- unique constraints on `profiles.referral_code` and `user_roles(user_id, role)`
+
+TypeScript types regenerated to `backend/types.ts` and copied into
+`web/src/integrations/supabase/types.ts` and `expo/src/integrations/supabase/types.ts`.
+
+### Deliberately NOT in M1
+
+- **Founder admin grant.** Requires a real `auth.users` id. Applied as a reviewed
+  one-liner once Vidushi signs up, and logged here as its own entry:
+
+  ```sql
+  insert into public.user_roles (user_id, role)
+  select id, 'admin'::public.app_role from auth.users where email = 'vidushi@logoutspells.com'
+  on conflict (user_id, role) do nothing;
+  ```
+
+- **No application code changed.** The website still renders mock data; the provider
+  swap happens in M5/M6. Nothing user-visible changed when this ran.
+
+### Open watch item
+
+`spell_category` is a Postgres enum, so *adding* a 7th ritual family later is additive
+and safe, while *renaming or removing* one is destructive. If ritual families should
+ever become founder-editable content from the dashboard, the enum must become a
+`spell_categories` lookup table — a decision best made **before M2** ships
+`spells.category` on top of the enum.
 
 ---
 
-## Planned next: M1 — Foundations (SQL drafted — awaiting founder approval)
+## Planned next: M2 — Spell catalogue
 
-Draft: [`backend/migrations/0001_identity_foundation.sql`](../migrations/0001_identity_foundation.sql)
-— posted in chat for line-by-line review on 2026-07-30. **Not applied.**
-
-One migration containing, in order:
-
-1. Enums: `app_role`, `spell_category` (the latter moved up from M2 because
-   `profiles.category_interests` uses it; all other enums arrive with their tables).
-2. `set_updated_at()` trigger function (shared by all mutable tables).
-3. `profiles` + RLS (select own/staff, update own with protected columns).
-4. `user_settings` + RLS (own only — staff have no access).
-5. `user_roles` + `has_role()` / `is_staff()` security-definer helpers + RLS.
-6. Column-level grants enforcing the protected columns.
-7. `handle_new_user()` trigger on `auth.users` (profile + settings + referral code),
-   an email-sync trigger, and `updated_at` triggers.
-8. Admin grant for the founder's user id — **not in this file**; it is a follow-up
-   one-liner once her real user id exists (she signs up first).
-
-No destructive statements. The migration runs only after approval in chat.
+`spells`, `spell_departures`, `spell_changes`, `interests`, the `spell-media` storage
+bucket, and seeds of everything the live site shows today. SQL will be drafted and
+reviewed in chat before anything runs.

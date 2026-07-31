@@ -1,8 +1,11 @@
 # Logout Spells — Backend Documentation
 
-> **Status: DESIGN PHASE.** No tables, migrations, functions, or storage buckets exist yet.
-> Nothing in these documents has been applied to the database. Every document describes
-> the agreed target architecture; the Migration History records what is actually live.
+> **Status: BUILD PHASE — M1 applied 2026-07-31.** Live today: `profiles`,
+> `user_settings`, `user_roles`, the `app_role` / `spell_category` enums, the role
+> helpers and the signup pipeline. Everything else in these documents is still the
+> agreed target architecture, not yet applied. No storage buckets or Edge Functions
+> exist yet. [migration-history.md](./migration-history.md) is the record of what is
+> actually live — if it is not listed there, it is not live.
 
 Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 
@@ -52,7 +55,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | # | Milestone | Contents | Status |
 | --- | --- | --- | --- |
 | M0 | Architecture design | This documentation set + founder decisions D1–D5 | **Complete — decisions locked** |
-| M1 | Foundations | Extensions, helper functions, enums, `profiles`, `user_settings`, `user_roles`, signup trigger | **Ready for approval** |
+| M1 | Foundations | Helper functions, enums, `profiles`, `user_settings`, `user_roles`, signup trigger | **Applied 2026-07-31 — verified** |
 | M2 | Spell catalogue | `spells`, `spell_departures`, `spell_changes`, `interests`, storage bucket `spell-media`, seeds | Pending |
 | M3 | Journal, team & archive | `blog_posts`, `team_members`, `previous_spells`, `reviews`, media buckets, seeds | Pending |
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, seeds | Pending |
