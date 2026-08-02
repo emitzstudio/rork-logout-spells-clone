@@ -1,10 +1,12 @@
 # Database Architecture
 
-> **Status: PARTIALLY APPLIED.** The identity layer — `profiles`, `user_settings`,
-> `user_roles`, the `app_role` / `spell_category` enums, `has_role()` / `is_staff()`,
-> and the signup pipeline — went live with **M1 on 2026-07-31**, exactly as documented
-> here. Every other table below is still the reviewed target schema and is **not**
-> applied. Each milestone's migration SQL is shown to the founder before it runs, and
+> **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**, 2026-07-31 —
+> `profiles`, `user_settings`, `user_roles`, `app_role`/`spell_category`, role helpers,
+> signup pipeline) and the spell catalogue (**M2**, 2026-08-02 — `spells`,
+> `spell_departures`, `spell_changes`, `interests`, the catalogue enums,
+> `increment_spell_views()`, `guard_last_departure()`, `active_departure()`, and the
+> `spell-media` bucket), exactly as documented here. Every other table below is still
+> the reviewed target schema and is **not** applied.
 > [migration-history.md](./migration-history.md) records what is actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every
@@ -99,7 +101,10 @@ with `position` ordering columns.
 
 Non-negotiable either way: **all queryable fields are proper columns**; jsonb is never
 used for anything we filter, join, or aggregate on. Images inside documents are Storage
-URLs, never data URLs.
+URLs, never data URLs. Image objects are `{id, url, name, alt?, caption?}` — `alt` and
+`caption` are optional v1 fields (accessibility + richer storytelling; adopted at the
+M2 founder review); renderers fall back `alt ?? name`. Document versioning and
+migration rules live in [data-evolution-strategy.md](./data-evolution-strategy.md).
 
 ---
 
@@ -156,7 +161,7 @@ reviewed migration (see authentication-flow.md).
 | `id` | `uuid` PK | |
 | `slug` | `text` unique | public URL identity |
 | `name`, `hook` | `text` | card copy |
-| `category` | `spell_category` | |
+| `category` | `spell_category` null | null while a builder draft is undecided; CHECK forces non-null once status is `published`/`soldout` |
 | `status` | `spell_status` default `draft` | archive instead of delete |
 | `urgency` | `spell_urgency` null | badge |
 | `featured` | `boolean` default false | |
@@ -170,7 +175,7 @@ reviewed migration (see authentication-flow.md).
 | `gradient`, `symbol` | `text` | card art tokens |
 | `inclusions` | `text[]` | card-level list |
 | `page` | `jsonb` null | full Spell Builder document (D1-A) |
-| `form_id` | `uuid` null → forms `set null` | attached application form |
+| `form_id` | `uuid` null → forms `set null` | attached application form — **column arrives in M4** with the `forms` table (additive ALTER) |
 | `views` | `bigint` default 0 | incremented via a `SECURITY DEFINER` RPC, never direct UPDATE |
 | `created_by` | `uuid` null → profiles `set null` | |
 | `published_at` | `timestamptz` null | |
@@ -244,6 +249,15 @@ Columns mirror the mock: `id`, `slug` unique, `title`, `category spell_category`
 `gradient`, `symbol`, `spell_id uuid` null → spells `set null` (joins review
 eligibility; null for journeys older than the CMS), `is_published boolean` default true,
 timestamps. RLS: SELECT anyone where published, staff all · write staff.
+
+**Immutability commitment (founder decision, M2 review Q1):** a previous spell is a
+frozen snapshot, never a live reference. M3 adds snapshot columns —
+`page_snapshot jsonb` (the exact builder document travellers experienced),
+`price_minor` / `currency`, and the completed departure's `date_label` /
+`start_date` / `end_date` — and the archive flow **copies** every referenced image
+into `site-media/previous/{previous_spell_id}/…`, rewriting snapshot URLs, so later
+edits or deletions on the live spell can never alter history. `spell_id` is used for
+review-eligibility joins only, never for rendering.
 
 ### `reviews` — traveller reviews on completed journeys
 | Column | Type | Notes |
@@ -431,9 +445,20 @@ story, the base price, and the marketing state.
 
 **Bridge to the current single-run UI** — no component changes at integration:
 
-- The **active departure** of a spell = the earliest `scheduled` run with
-  `end_date >= today`; if none exists, the most recent run (past circles still
-  display). One shared query helper implements this rule — nowhere else.
+- The **active departure** is resolved by **`public.active_departure(spell_id)`** —
+  a database function (live since M2), so the website, console, and future mobile app
+  share one implementation; the algorithm exists nowhere else. "Today" is the calendar
+  date in **Asia/Kolkata**. A run is *upcoming* when `coalesce(end_date, start_date)`
+  is null (TBC) or `>= today`. Deterministic tier order:
+  1. upcoming `scheduled` runs — soonest `start_date` first, TBC (null dates) last;
+  2. upcoming `closed` runs (bookings paused but truthful) — same internal order;
+  3. the most recent past `scheduled`/`closed` run — `coalesce(end_date, start_date)`
+     descending (past circles still display);
+  4. only if every run is cancelled: the most recent cancelled run.
+  Final tiebreak everywhere: `created_at` asc, then `id` asc — no two clients can
+  disagree. A closed or cancelled nearest run is skipped in favour of the next
+  scheduled one; the ≥1-departure guard means the function always resolves.
+  SECURITY INVOKER — RLS applies to the caller.
 - The provider layer maps the active departure onto the existing card fields
   (`dates`, `seatsTotal`, `seatsBooked`) — every component keeps its exact shape.
 - The Spell Builder's Basic Information section reads/writes the spell's single run

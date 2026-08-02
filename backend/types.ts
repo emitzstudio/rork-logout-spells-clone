@@ -18,6 +18,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      interests: {
+        Row: {
+          categories: Database["public"]["Enums"]["spell_category"][]
+          created_at: string
+          id: string
+          is_active: boolean
+          keywords: string[]
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          categories?: Database["public"]["Enums"]["spell_category"][]
+          created_at?: string
+          id: string
+          is_active?: boolean
+          keywords?: string[]
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          categories?: Database["public"]["Enums"]["spell_category"][]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string[]
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string
@@ -89,6 +122,205 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      spell_changes: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          detail: string
+          id: string
+          kind: Database["public"]["Enums"]["change_kind"]
+          spell_id: string
+          title: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: string
+          id?: string
+          kind: Database["public"]["Enums"]["change_kind"]
+          spell_id: string
+          title?: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["change_kind"]
+          spell_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spell_changes_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spell_changes_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spell_departures: {
+        Row: {
+          created_at: string
+          date_label: string
+          end_date: string | null
+          id: string
+          price_minor: number | null
+          seats_booked: number
+          seats_total: number
+          spell_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["departure_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_label?: string
+          end_date?: string | null
+          id?: string
+          price_minor?: number | null
+          seats_booked?: number
+          seats_total?: number
+          spell_id: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["departure_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_label?: string
+          end_date?: string | null
+          id?: string
+          price_minor?: number | null
+          seats_booked?: number
+          seats_total?: number
+          spell_id?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["departure_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spell_departures_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spells: {
+        Row: {
+          category: Database["public"]["Enums"]["spell_category"] | null
+          cover_url: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          duration_days: number
+          featured: boolean
+          gradient: string
+          hero_as_cover: boolean
+          hero_url: string
+          hook: string
+          host_name: string
+          host_role: string
+          id: string
+          inclusions: string[]
+          location: string
+          mobile_hero_url: string
+          name: string
+          nights: number
+          page: Json | null
+          price_minor: number
+          published_at: string | null
+          region: string
+          slug: string
+          status: Database["public"]["Enums"]["spell_status"]
+          symbol: string
+          updated_at: string
+          urgency: Database["public"]["Enums"]["spell_urgency"] | null
+          views: number
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["spell_category"] | null
+          cover_url?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          duration_days?: number
+          featured?: boolean
+          gradient?: string
+          hero_as_cover?: boolean
+          hero_url?: string
+          hook?: string
+          host_name?: string
+          host_role?: string
+          id?: string
+          inclusions?: string[]
+          location?: string
+          mobile_hero_url?: string
+          name?: string
+          nights?: number
+          page?: Json | null
+          price_minor?: number
+          published_at?: string | null
+          region?: string
+          slug: string
+          status?: Database["public"]["Enums"]["spell_status"]
+          symbol?: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["spell_urgency"] | null
+          views?: number
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["spell_category"] | null
+          cover_url?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          duration_days?: number
+          featured?: boolean
+          gradient?: string
+          hero_as_cover?: boolean
+          hero_url?: string
+          hook?: string
+          host_name?: string
+          host_role?: string
+          id?: string
+          inclusions?: string[]
+          location?: string
+          mobile_hero_url?: string
+          name?: string
+          nights?: number
+          page?: Json | null
+          price_minor?: number
+          published_at?: string | null
+          region?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["spell_status"]
+          symbol?: string
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["spell_urgency"] | null
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spells_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -184,6 +416,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_departure: {
+        Args: { _spell_id: string }
+        Returns: {
+          created_at: string
+          date_label: string
+          end_date: string | null
+          id: string
+          price_minor: number | null
+          seats_booked: number
+          seats_total: number
+          spell_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["departure_status"]
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "spell_departures"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       generate_referral_code: { Args: { _first_name: string }; Returns: string }
       has_role: {
         Args: {
@@ -192,10 +446,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
       is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "staff"
+      change_kind:
+        | "created"
+        | "edited"
+        | "published"
+        | "price"
+        | "booking"
+        | "image"
+        | "duplicated"
+        | "archived"
+        | "restored"
+      departure_status: "scheduled" | "closed" | "cancelled"
       spell_category:
         | "gathering"
         | "movement"
@@ -203,6 +469,8 @@ export type Database = {
         | "wandering"
         | "stillness"
         | "celebration"
+      spell_status: "draft" | "published" | "soldout" | "archived"
+      spell_urgency: "filling-fast" | "last-seats" | "new" | "early-bird"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -331,6 +599,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff"],
+      change_kind: [
+        "created",
+        "edited",
+        "published",
+        "price",
+        "booking",
+        "image",
+        "duplicated",
+        "archived",
+        "restored",
+      ],
+      departure_status: ["scheduled", "closed", "cancelled"],
       spell_category: [
         "gathering",
         "movement",
@@ -339,6 +619,8 @@ export const Constants = {
         "stillness",
         "celebration",
       ],
+      spell_status: ["draft", "published", "soldout", "archived"],
+      spell_urgency: ["filling-fast", "last-seats", "new", "early-bird"],
     },
   },
 } as const

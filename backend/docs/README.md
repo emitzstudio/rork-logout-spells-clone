@@ -1,11 +1,12 @@
 # Logout Spells — Backend Documentation
 
-> **Status: BUILD PHASE — M1 applied 2026-07-31.** Live today: `profiles`,
-> `user_settings`, `user_roles`, the `app_role` / `spell_category` enums, the role
-> helpers and the signup pipeline. Everything else in these documents is still the
-> agreed target architecture, not yet applied. No storage buckets or Edge Functions
-> exist yet. [migration-history.md](./migration-history.md) is the record of what is
-> actually live — if it is not listed there, it is not live.
+> **Status: BUILD PHASE — M1 applied 2026-07-31 · M2 applied 2026-08-02.** Live today:
+> the identity layer (`profiles`, `user_settings`, `user_roles`, signup pipeline) and
+> the spell catalogue (`spells`, `spell_departures`, `spell_changes`, `interests`,
+> the `active_departure()` resolver, the `spell-media` bucket, full seeds). Everything
+> else in these documents is still the agreed target architecture, not yet applied.
+> No Edge Functions exist yet. [migration-history.md](./migration-history.md) is the
+> record of what is actually live — if it is not listed there, it is not live.
 
 Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 
@@ -16,6 +17,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | [database-architecture.md](./database-architecture.md) | Every table, column, enum, index and RLS rule, domain by domain |
 | [table-relationships.md](./table-relationships.md) | Entity relationships, foreign keys, delete behaviour |
 | [storage-structure.md](./storage-structure.md) | Buckets, folder layout, access policies, limits |
+| [data-evolution-strategy.md](./data-evolution-strategy.md) | How documents, enums, storage files, seeds and the schema evolve safely over time |
 | [authentication-flow.md](./authentication-flow.md) | Auth model, signup pipeline, roles, RLS identity |
 | [edge-functions.md](./edge-functions.md) | Planned server-side functions and why each exists |
 | [migration-history.md](./migration-history.md) | Chronological log of every migration actually applied |
@@ -56,7 +58,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | --- | --- | --- | --- |
 | M0 | Architecture design | This documentation set + founder decisions D1–D5 | **Complete — decisions locked** |
 | M1 | Foundations | Helper functions, enums, `profiles`, `user_settings`, `user_roles`, signup trigger | **Applied 2026-07-31 — verified** |
-| M2 | Spell catalogue | `spells`, `spell_departures`, `spell_changes`, `interests`, storage bucket `spell-media`, seeds | Pending |
+| M2 | Spell catalogue | `spells`, `spell_departures`, `spell_changes`, `interests`, `active_departure()`, storage bucket `spell-media`, seeds | **Applied 2026-08-02 — verified** |
 | M3 | Journal, team & archive | `blog_posts`, `team_members`, `previous_spells`, `reviews`, media buckets, seeds | Pending |
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, seeds | Pending |
 | M5 | Public site integration | Website store providers read from Supabase (no UI changes) | Pending |

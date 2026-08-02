@@ -1,8 +1,9 @@
 # Storage Structure
 
-> **Status: DESIGN — no buckets exist yet.** Buckets are created in the milestone that
-> first needs them (M2 onward). All current mock imagery is Unsplash URLs or local
-> `/team/*.jpg` files; real uploads move to Storage with these rules.
+> **Status: PARTIALLY APPLIED — `spell-media` is live (M2, 2026-08-02)** with its four
+> access policies, 10 MB cap and image-only MIME list. The other buckets are created in
+> the milestone that first needs them. Current mock imagery is Unsplash URLs or local
+> `/team/*.jpg` files; builder uploads land in Storage under these rules.
 
 ## Buckets
 
@@ -21,7 +22,7 @@ design — avatars appear on reviews and community surfaces).
 ## Folder layout
 
 ```text
-spell-media/  spells/{spell_id}/hero.jpg · mobile-hero.jpg · cover.jpg
+spell-media/  spells/{spell_id}/hero-{image_id}.jpg · mobile-hero-{image_id}.jpg · cover-{image_id}.jpg
               spells/{spell_id}/gallery/{image_id}.jpg
               spells/{spell_id}/page/{image_id}.jpg      (about/itinerary/host/stay images)
 blog-media/   posts/{post_id}/hero.jpg
@@ -34,7 +35,10 @@ memories/     {user_id}/{memory_id}/{photo_id}.jpg
 ```
 
 The first path segment of user buckets is **always the owner's `auth.uid()`** — this is
-what the policies check. Filenames are generated ids, never user input.
+what the policies check. Filenames embed generated ids, are never user input, and are
+**never reused**: replacing an image uploads a new object id, repoints the database
+row, then deletes the old object — public CDN caches stay valid forever (refined at M2
+from the earlier fixed-name sketch).
 
 ## Access policies (applied with each bucket's milestone)
 
@@ -67,3 +71,9 @@ Replacing an image uploads the new file, updates the row, then removes the old o
 (best-effort; an orphaned object is a cost nuisance, a broken URL is a user-facing bug —
 so the order never reverses). A periodic orphan sweep is a documented future Edge
 Function, not a launch requirement.
+
+**Archive copies (M3 rule, locked at the M2 review):** when a live spell is archived
+into a previous spell, every image its snapshot references is *copied* into
+`site-media/previous/{previous_spell_id}/…` and the snapshot URLs are rewritten —
+historical pages never depend on live objects. Full policy in
+[data-evolution-strategy.md](./data-evolution-strategy.md) §3.

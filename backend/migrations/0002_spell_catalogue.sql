@@ -1,13 +1,21 @@
 -- ============================================================================
 -- M2 · Spell catalogue — Logout Spells
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT — runs only after founder approval in chat. Nothing applied.
+-- Status: APPLIED 2026-08-02 as migration `m2-spell-catalogue`, after founder
+-- approval in chat (four review questions answered; Rev 2 below). Verified by
+-- `m2-verify-assertions` + `m2-verify-departure-resolver` (all passed). See
+-- backend/docs/migration-history.md. Do NOT re-run: this file is the source of
+-- record, not an idempotent script.
+-- Rev 2 (founder review): + active_departure() resolver (Q4 — one shared
+-- implementation of the D2 bridge rule); image objects inside page documents
+-- specified as {id, url, name, alt?, caption?} (Q3 — no SQL impact, pages null).
 --
 -- Creates, in dependency order:
 --   §1  Enums: spell_status, spell_urgency, departure_status, change_kind
 --   §2  Tables: spells · spell_departures · spell_changes · interests
 --       (RLS enabled immediately, constraints + indexes inline)
---   §3  Functions: increment_spell_views() · guard_last_departure()
+--   §3  Functions: increment_spell_views() · guard_last_departure() ·
+--       active_departure() — the D2 bridge-rule resolver, single source of truth
 --   §4  Row Level Security policies (12)
 --   §5  Column-level grants (protected columns)
 --   §6  Triggers: updated_at maintenance + last-departure guard
@@ -91,7 +99,7 @@ create table public.spells (
 comment on table public.spells is
   'Spell catalogue. Queryable fields are columns; the builder page document is jsonb (D1-A). Dates/seats live on spell_departures (D2). Never deleted — archived via status.';
 comment on column public.spells.page is
-  'Versioned Spell Builder document: {version, gallery, quickInfo, about, itinerary, host, stay, included, notIncluded, audience, tripHighlights, faqs}. Images are Storage URLs, never data URLs. Null = legacy/minimal page rendered from card columns.';
+  'Versioned Spell Builder document: {version, gallery, quickInfo, about, itinerary, host, stay, included, notIncluded, audience, tripHighlights, faqs}. Image objects are {id, url, name, alt?, caption?} — Storage URLs, never data URLs; renderers fall back alt ?? name. Null = legacy/minimal page rendered from card columns.';
 comment on column public.spells.views is
   'Marketing counter, bumped by increment_spell_views() RPC only. Excluded from the updated_at trigger so page views never masquerade as content edits.';
 
@@ -218,6 +226,56 @@ begin
   return old;
 end;
 $$;
+
+-- The D2 bridge rule as ONE shared resolver — website, console, and the future
+-- mobile app all call this; the algorithm lives nowhere else.
+-- "Today" is the calendar date in Asia/Kolkata (the business timezone).
+-- Upcoming := coalesce(end_date, start_date) is null (TBC) or >= today.
+-- Tiers: 1 upcoming scheduled · 2 upcoming closed · 3 most recent past
+-- (scheduled/closed) · 4 cancelled-only. Within upcoming: soonest start_date
+-- first, TBC (null dates) last. Within past: most recent first. Final tiebreak
+-- everywhere: created_at asc, id asc — fully deterministic.
+-- SECURITY INVOKER on purpose: RLS applies to the caller, so departures of
+-- unpublished spells resolve only for staff.
+create or replace function public.active_departure(_spell_id uuid)
+returns setof public.spell_departures
+language sql
+stable
+set search_path = ''
+as $$
+  select *
+  from public.spell_departures
+  where id = (
+    select x.id
+    from (
+      select
+        d.id, d.start_date, d.end_date, d.created_at,
+        case
+          when d.status = 'scheduled'
+           and (coalesce(d.end_date, d.start_date) is null
+             or coalesce(d.end_date, d.start_date) >= (now() at time zone 'Asia/Kolkata')::date)
+            then 1
+          when d.status = 'closed'
+           and (coalesce(d.end_date, d.start_date) is null
+             or coalesce(d.end_date, d.start_date) >= (now() at time zone 'Asia/Kolkata')::date)
+            then 2
+          when d.status in ('scheduled', 'closed') then 3
+          else 4
+        end as tier
+      from public.spell_departures d
+      where d.spell_id = _spell_id
+    ) x
+    order by
+      x.tier,
+      case when x.tier <= 2 then x.start_date end asc nulls last,
+      case when x.tier >= 3 then coalesce(x.end_date, x.start_date) end desc nulls last,
+      x.created_at asc,
+      x.id asc
+    limit 1
+  );
+$$;
+
+grant execute on function public.active_departure(uuid) to anon, authenticated;
 
 
 -- §4 · Row Level Security policies ----------------------------------------------

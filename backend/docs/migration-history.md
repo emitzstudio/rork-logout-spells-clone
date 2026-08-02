@@ -109,13 +109,118 @@ TypeScript types regenerated to `backend/types.ts` and copied into
 `spell_category` is a Postgres enum, so *adding* a 7th ritual family later is additive
 and safe, while *renaming or removing* one is destructive. If ritual families should
 ever become founder-editable content from the dashboard, the enum must become a
-`spell_categories` lookup table — a decision best made **before M2** ships
-`spells.category` on top of the enum.
+`spell_categories` lookup table. Raised again at the M2 review; M2 shipped
+`spells.category` on the enum with eyes open. The graduation recipe, if ever needed,
+lives in [data-evolution-strategy.md](./data-evolution-strategy.md) §2.
 
 ---
 
-## Planned next: M2 — Spell catalogue
+## M2 — Spell catalogue · applied 2026-08-02
 
-`spells`, `spell_departures`, `spell_changes`, `interests`, the `spell-media` storage
-bucket, and seeds of everything the live site shows today. SQL will be drafted and
-reviewed in chat before anything runs.
+| | |
+| --- | --- |
+| Migration | `m2-spell-catalogue` |
+| Source of record | [`backend/migrations/0002_spell_catalogue.sql`](../migrations/0002_spell_catalogue.sql) |
+| Reviewed | Full architecture, SQL, JSON split, storage, seeds and testing checklist posted in chat |
+| Approved by | Vidushi Verma — conditional on four questions, all answered; two became Rev 2 changes |
+| Destructive statements | **None.** Purely additive; touches no M1 object. |
+| Applied as | One transaction against the M1 schema. |
+
+### Rev 2 — changes made during founder review
+
+- **`active_departure(spell_id)` added** (Q4): the D2 bridge rule lives in the database
+  as one shared resolver for website, console and the future mobile app. Tiers:
+  upcoming `scheduled` (soonest dated first, TBC last) → upcoming `closed` → most
+  recent past `scheduled`/`closed` → cancelled-only. "Today" = the Asia/Kolkata
+  calendar date; final tiebreak `created_at` asc, `id` asc. SECURITY INVOKER — RLS
+  applies to the caller, so unpublished spells resolve only for staff.
+- **Image objects specified as `{id, url, name, alt?, caption?}`** (Q3): optional
+  accessibility/caption fields are part of page-document v1 — no version bump will
+  ever be needed for them. No SQL impact (all seeded pages are null).
+- Q1 locked the M3 design: previous spells become **immutable snapshots**
+  (`page_snapshot` + price/date context + copied media — see architecture doc §6).
+- Q2 produced [data-evolution-strategy.md](./data-evolution-strategy.md) — binding
+  rules for document, enum, storage, seed and schema evolution.
+
+### What went live
+
+**Enums (4)** — `spell_status` (4 values) · `spell_urgency` (4) · `departure_status`
+(3 — `soldout`/`completed` derived, never stored) · `change_kind` (9).
+
+**Tables (4)** — all with RLS enabled in the same migration:
+
+- `spells` — queryable fields as columns, builder document as `page` jsonb (D1-A, v1
+  shape); `category` nullable for drafts with a CHECK requiring it once
+  published/soldout; 5 CHECK constraints; `(status, category)` + partial featured
+  indexes.
+- `spell_departures` — dated runs (D2); seat-capacity CHECK; `seats_booked` has
+  **zero client write grants** (M7 booking function only); `(spell_id, start_date)` +
+  `(status, start_date)` indexes.
+- `spell_changes` — append-only console log; no UPDATE/DELETE policies exist.
+- `interests` — cauldron catalogue, existing kebab-case ids as PK;
+  deactivate-never-delete (M6 `user_interests` will reference it).
+
+**Functions (3)** — `increment_spell_views` (SECURITY DEFINER, public counter limited
+to published/soldout rows) · `guard_last_departure` (every spell keeps ≥1 run) ·
+`active_departure` (the D2 resolver).
+
+**Triggers (4)** — 3 × `updated_at` (the spells trigger carries a WHEN clause so view
+bumps never masquerade as content edits) + the last-departure delete guard.
+
+**RLS (12 table + 4 storage policies)** — public reads published/soldout spells,
+their departures, and active interests; staff full catalogue control; `spell_changes`
+staff-only; spells have **no DELETE policy** (archive via status, double-locked with
+no grant); `spell-media` public-read, staff-write under `spells/…` only.
+
+**Column grants** — spells: 24 INSERT / 24 UPDATE whitelisted columns (`id`, `views`,
+`created_by`, timestamps protected); departures: 7 / 6 (never `seats_booked`);
+spell_changes: INSERT of 4 content columns only; interests: 6 / 5 (`id` immutable).
+
+**Storage** — `spell-media` bucket: public read, 10 MB cap, jpeg/png/webp only,
+folder discipline enforced on write.
+
+**Seeds (D5)** — 10 spells (6 published · 2 draft · 2 soldout; prices in paise; views
+as displayed; real timestamps; `published_at` from the activity log), 10 departures
+(one per spell, exact display labels, real 2026 dates, TBC = null dates, all
+`scheduled` — soldout stays derived), 27 activity-log entries, 35 interests. Fixed
+deterministic uuids (`a…`/`b…`/`c…`). Revenue and wishlist counts deliberately
+**not** seeded — they derive from the M7 payments ledger and M6 wishlist table.
+
+### Verification
+
+`m2-verify-assertions` (read-only): 4 enums with correct value counts · RLS on all
+4 tables · 12 + 4 policies · 3 functions with correct security modes and pinned
+`search_path` · 4 triggers incl. the WHEN clause · zero table-wide client writes
+(except the intended departures DELETE grant) · exact write whitelists
+(24/24 · 7/6 · 4 · 6/5) · zero write grants on protected columns and `seats_booked` ·
+RPC EXECUTE grants · bucket config · seeds 10/10/27/35 · every spell exactly one
+departure · paise spot-check. *(First run tripped on its own assertion bug — it
+counted SELECT/REFERENCES grants as "writes"; corrected to filter INSERT/UPDATE and
+re-run clean. The schema itself was never wrong.)*
+
+`m2-verify-departure-resolver` (behavioral, self-cleaning, net-zero rows): resolver
+returns exactly one run for all 10 spells · Movement resolves tier 1 (upcoming) ·
+Culinary resolves tier 3 (its July run has passed) · dated upcoming beats TBC ·
+scheduled TBC beats closed dated · scheduled beats cancelled · deleting a surplus run
+passes the guard · deleting the last run is blocked.
+
+TypeScript types regenerated into `backend/types.ts`,
+`web/src/integrations/supabase/types.ts` and `expo/src/integrations/supabase/types.ts`.
+
+### Deliberately NOT in M2
+
+- `spells.form_id` — arrives in M4 with the `forms` table (additive ALTER; the two
+  spells attached to the interest form are re-linked then).
+- `user_interests`, `saved_spells` — M6 (traveller-owned rows need login).
+- The booking function that mutates `seats_booked` — M7 (service role, row-locked).
+- `previous_spells`, `reviews` — M3, now with the Q1 snapshot columns locked in.
+- **No application code changed.** The site still renders mock data until M5;
+  nothing user-visible changed when this ran.
+
+---
+
+## Planned next: M3 — Journal, team & archive
+
+`blog_posts`, `team_members`, `previous_spells` (immutable snapshots per the Q1
+decision), `reviews`, the `blog-media` + `site-media` buckets, and seeds. SQL will be
+drafted and reviewed in chat before anything runs.
