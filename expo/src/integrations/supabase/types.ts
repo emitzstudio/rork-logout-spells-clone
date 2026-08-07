@@ -18,6 +18,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author_avatar: string
+          author_id: string | null
+          author_name: string
+          author_role: string
+          blocks: Json
+          category: Database["public"]["Enums"]["blog_category"]
+          created_at: string
+          created_by: string | null
+          deck: string
+          featured: boolean
+          gallery: string[]
+          hero_url: string
+          id: string
+          published_at: string | null
+          read_minutes: number
+          seo_description: string
+          seo_title: string
+          slug: string
+          status: Database["public"]["Enums"]["blog_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_avatar?: string
+          author_id?: string | null
+          author_name?: string
+          author_role?: string
+          blocks?: Json
+          category?: Database["public"]["Enums"]["blog_category"]
+          created_at?: string
+          created_by?: string | null
+          deck?: string
+          featured?: boolean
+          gallery?: string[]
+          hero_url?: string
+          id?: string
+          published_at?: string | null
+          read_minutes?: number
+          seo_description?: string
+          seo_title?: string
+          slug: string
+          status?: Database["public"]["Enums"]["blog_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          author_avatar?: string
+          author_id?: string | null
+          author_name?: string
+          author_role?: string
+          blocks?: Json
+          category?: Database["public"]["Enums"]["blog_category"]
+          created_at?: string
+          created_by?: string | null
+          deck?: string
+          featured?: boolean
+          gallery?: string[]
+          hero_url?: string
+          id?: string
+          published_at?: string | null
+          read_minutes?: number
+          seo_description?: string
+          seo_title?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["blog_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_posts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interests: {
         Row: {
           categories: Database["public"]["Enums"]["spell_category"][]
@@ -50,6 +140,122 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      previous_spells: {
+        Row: {
+          caption: string
+          category: Database["public"]["Enums"]["spell_category"]
+          chapters: Json
+          community: Json
+          created_at: string
+          currency: string | null
+          date_label: string | null
+          duration_days: number
+          end_date: string | null
+          gallery: Json
+          gradient: string
+          hero_url: string
+          highlights: string[]
+          host_initial: string
+          host_name: string
+          host_role: string
+          id: string
+          is_published: boolean
+          location: string
+          memory_notes: Json
+          page_snapshot: Json | null
+          price_minor: number | null
+          region: string
+          season: string
+          slug: string
+          sort_order: number
+          spell_id: string | null
+          start_date: string | null
+          story: string[]
+          symbol: string
+          title: string
+          travellers: number
+          updated_at: string
+        }
+        Insert: {
+          caption?: string
+          category: Database["public"]["Enums"]["spell_category"]
+          chapters?: Json
+          community?: Json
+          created_at?: string
+          currency?: string | null
+          date_label?: string | null
+          duration_days?: number
+          end_date?: string | null
+          gallery?: Json
+          gradient?: string
+          hero_url?: string
+          highlights?: string[]
+          host_initial?: string
+          host_name?: string
+          host_role?: string
+          id?: string
+          is_published?: boolean
+          location?: string
+          memory_notes?: Json
+          page_snapshot?: Json | null
+          price_minor?: number | null
+          region?: string
+          season?: string
+          slug: string
+          sort_order?: number
+          spell_id?: string | null
+          start_date?: string | null
+          story?: string[]
+          symbol?: string
+          title: string
+          travellers?: number
+          updated_at?: string
+        }
+        Update: {
+          caption?: string
+          category?: Database["public"]["Enums"]["spell_category"]
+          chapters?: Json
+          community?: Json
+          created_at?: string
+          currency?: string | null
+          date_label?: string | null
+          duration_days?: number
+          end_date?: string | null
+          gallery?: Json
+          gradient?: string
+          hero_url?: string
+          highlights?: string[]
+          host_initial?: string
+          host_name?: string
+          host_role?: string
+          id?: string
+          is_published?: boolean
+          location?: string
+          memory_notes?: Json
+          page_snapshot?: Json | null
+          price_minor?: number | null
+          region?: string
+          season?: string
+          slug?: string
+          sort_order?: number
+          spell_id?: string | null
+          start_date?: string | null
+          story?: string[]
+          symbol?: string
+          title?: string
+          travellers?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "previous_spells_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -122,6 +328,66 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          author_avatar: string
+          author_id: string | null
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          previous_spell_id: string
+          rating: number
+          title: string
+          travelled_on: string
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          author_avatar?: string
+          author_id?: string | null
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          previous_spell_id: string
+          rating: number
+          title?: string
+          travelled_on?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          author_avatar?: string
+          author_id?: string | null
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          previous_spell_id?: string
+          rating?: number
+          title?: string
+          travelled_on?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_previous_spell_id_fkey"
+            columns: ["previous_spell_id"]
+            isOneToOne: false
+            referencedRelation: "previous_spells"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spell_changes: {
         Row: {
@@ -322,6 +588,77 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          contribution: string
+          created_at: string
+          department: Database["public"]["Enums"]["team_department"]
+          designation: string
+          featured: boolean
+          focus: string
+          id: string
+          instagram: string
+          intro: string
+          is_active: boolean
+          linkedin: string
+          name: string
+          photo_url: string
+          quote: string
+          sort_order: number
+          updated_at: string
+          user_id: string | null
+          youtube: string
+        }
+        Insert: {
+          contribution?: string
+          created_at?: string
+          department: Database["public"]["Enums"]["team_department"]
+          designation?: string
+          featured?: boolean
+          focus?: string
+          id?: string
+          instagram?: string
+          intro?: string
+          is_active?: boolean
+          linkedin?: string
+          name: string
+          photo_url?: string
+          quote?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string | null
+          youtube?: string
+        }
+        Update: {
+          contribution?: string
+          created_at?: string
+          department?: Database["public"]["Enums"]["team_department"]
+          designation?: string
+          featured?: boolean
+          focus?: string
+          id?: string
+          instagram?: string
+          intro?: string
+          is_active?: boolean
+          linkedin?: string
+          name?: string
+          photo_url?: string
+          quote?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string | null
+          youtube?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -451,6 +788,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "staff"
+      blog_category:
+        | "travel-guides"
+        | "community-stories"
+        | "behind-the-scenes"
+        | "host-interviews"
+        | "spell-recaps"
+        | "travel-tips"
+        | "founder-letters"
+      blog_status: "draft" | "published"
       change_kind:
         | "created"
         | "edited"
@@ -471,6 +817,12 @@ export type Database = {
         | "celebration"
       spell_status: "draft" | "published" | "soldout" | "archived"
       spell_urgency: "filling-fast" | "last-seats" | "new" | "early-bird"
+      team_department:
+        | "founder"
+        | "technology"
+        | "sales"
+        | "social-media"
+        | "operations"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -599,6 +951,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff"],
+      blog_category: [
+        "travel-guides",
+        "community-stories",
+        "behind-the-scenes",
+        "host-interviews",
+        "spell-recaps",
+        "travel-tips",
+        "founder-letters",
+      ],
+      blog_status: ["draft", "published"],
       change_kind: [
         "created",
         "edited",
@@ -621,6 +983,13 @@ export const Constants = {
       ],
       spell_status: ["draft", "published", "soldout", "archived"],
       spell_urgency: ["filling-fast", "last-seats", "new", "early-bird"],
+      team_department: [
+        "founder",
+        "technology",
+        "sales",
+        "social-media",
+        "operations",
+      ],
     },
   },
 } as const

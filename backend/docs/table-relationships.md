@@ -1,7 +1,11 @@
 # Table Relationships
 
-> **Status: PARTIALLY APPLIED.** The `auth.users → profiles → user_settings / user_roles`
-> branch is live as of M1 (2026-07-31), including the delete behaviour documented below.
+> **Status: PARTIALLY APPLIED.** Live branches: the identity tree (M1 — `auth.users →
+> profiles → user_settings / user_roles`), the catalogue tree (M2 — `spells →
+> spell_departures / spell_changes`, `interests`), and the journal/archive tree (M3 —
+> `team_members ← blog_posts.author_id`, `previous_spells ← reviews`,
+> `previous_spells.spell_id → spells`, `blog_posts.created_by / team_members.user_id /
+> reviews.author_id → profiles`), including the delete behaviour documented below.
 > Every other node in the map is still design-only. Companion to
 > [database-architecture.md](./database-architecture.md).
 

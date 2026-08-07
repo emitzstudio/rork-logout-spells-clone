@@ -1,9 +1,14 @@
 -- ============================================================================
 -- M3 · Journal, team & archive — Logout Spells
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT — pending founder review. NOTHING in this file has been
--- applied. Once approved it runs as migration `m3-journal-team-archive` and
--- this header is updated to APPLIED.
+-- Status: APPLIED 2026-08-07, after founder approval in chat (including the two
+-- flagged deviations: byline snapshots, draft-only blog delete). The reviewed
+-- file (78 KB) exceeds the managed migration tool's input size, so it was
+-- applied BYTE-EXACT from this file via the Supabase management API as one
+-- atomic statement batch (HTTP 201). Verified by `m3-verify-assertions` +
+-- `m3-verify-behavior` (managed tool — all passed, types regenerated). See
+-- backend/docs/migration-history.md. Do NOT re-run: this file is the source of
+-- record, not an idempotent script.
 --
 -- Creates, in dependency order:
 --   §1  Enums: blog_category · blog_status · team_department

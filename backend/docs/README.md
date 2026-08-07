@@ -1,12 +1,15 @@
 # Logout Spells — Backend Documentation
 
-> **Status: BUILD PHASE — M1 applied 2026-07-31 · M2 applied 2026-08-02.** Live today:
-> the identity layer (`profiles`, `user_settings`, `user_roles`, signup pipeline) and
-> the spell catalogue (`spells`, `spell_departures`, `spell_changes`, `interests`,
-> the `active_departure()` resolver, the `spell-media` bucket, full seeds). Everything
-> else in these documents is still the agreed target architecture, not yet applied.
-> No Edge Functions exist yet. [migration-history.md](./migration-history.md) is the
-> record of what is actually live — if it is not listed there, it is not live.
+> **Status: BUILD PHASE — M1 applied 2026-07-31 · M2 applied 2026-08-02 · M3 applied
+> 2026-08-07.** Live today: the identity layer (`profiles`, `user_settings`,
+> `user_roles`, signup pipeline, founder admin), the spell catalogue (`spells`,
+> `spell_departures`, `spell_changes`, `interests`, `active_departure()`), and the
+> journal/team/archive domain (`blog_posts`, `team_members`, `previous_spells`,
+> `reviews`) — plus the `spell-media`, `blog-media` and `site-media` buckets, all
+> seeded. Everything else in these documents is still the agreed target architecture,
+> not yet applied. No Edge Functions exist yet.
+> [migration-history.md](./migration-history.md) is the record of what is actually
+> live — if it is not listed there, it is not live.
 
 Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 
@@ -59,7 +62,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M0 | Architecture design | This documentation set + founder decisions D1–D5 | **Complete — decisions locked** |
 | M1 | Foundations | Helper functions, enums, `profiles`, `user_settings`, `user_roles`, signup trigger | **Applied 2026-07-31 — verified** |
 | M2 | Spell catalogue | `spells`, `spell_departures`, `spell_changes`, `interests`, `active_departure()`, storage bucket `spell-media`, seeds | **Applied 2026-08-02 — verified** |
-| M3 | Journal, team & archive | `blog_posts`, `team_members`, `previous_spells`, `reviews`, media buckets, seeds | Pending |
+| M3 | Journal, team & archive | `blog_posts`, `team_members`, `previous_spells` (immutable archive), `reviews`, buckets `blog-media` + `site-media`, seeds | **Applied 2026-08-07 — verified** |
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, seeds | Pending |
 | M5 | Public site integration | Website store providers read from Supabase (no UI changes) | Pending |
 | M6 | Traveller accounts | Real auth UI, profile/settings, `saved_spells`, `user_interests`, `notifications` | Pending |

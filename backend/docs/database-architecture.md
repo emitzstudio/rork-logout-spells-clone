@@ -241,23 +241,28 @@ PK `(user_id, spell_id)`, index on `spell_id` (counts). RLS: own only.
 ## 6. Archive & reviews
 
 ### `previous_spells` — completed journeys, kept as memory pages
-Columns mirror the mock: `id`, `slug` unique, `title`, `category spell_category`,
-`location`, `region`, `season text`, `duration_days int`, `travellers int`,
-`host_name` / `host_initial` / `host_role`, `hero_url`, `caption`,
+Live since M3. Columns mirror the mock: `id`, `slug` unique, `title`,
+`category spell_category`, `location`, `region`, `season text`, `duration_days int`,
+`travellers int`, `host_name` / `host_initial` / `host_role`, `hero_url`, `caption`,
 `story text[]` (paragraphs), `highlights text[]`, `chapters jsonb`, `gallery jsonb`,
-`memory_notes jsonb`, `community jsonb` (ordered display documents, D1 pattern),
-`gradient`, `symbol`, `spell_id uuid` null → spells `set null` (joins review
-eligibility; null for journeys older than the CMS), `is_published boolean` default true,
-timestamps. RLS: SELECT anyone where published, staff all · write staff.
+`memory_notes jsonb`, `community jsonb` (ordered `{version, items}` documents, D1
+pattern, all v1), `gradient`, `symbol`, `sort_order int` (the archive page order is
+**curated**, not chronological), `is_published boolean` default true, plus the frozen
+record group below, timestamps. Index `(is_published, sort_order)`.
+RLS: SELECT anyone where published, staff all · INSERT/UPDATE staff · **no DELETE
+policy or grant** — history is never erased.
 
-**Immutability commitment (founder decision, M2 review Q1):** a previous spell is a
-frozen snapshot, never a live reference. M3 adds snapshot columns —
+**Immutability — live as designed (founder decision, M2 review Q1):** a previous spell
+is a frozen snapshot, never a live reference. The seven **frozen record columns** —
+`spell_id` (→ spells `set null`; review-eligibility joins only, never rendering),
 `page_snapshot jsonb` (the exact builder document travellers experienced),
-`price_minor` / `currency`, and the completed departure's `date_label` /
-`start_date` / `end_date` — and the archive flow **copies** every referenced image
-into `site-media/previous/{previous_spell_id}/…`, rewriting snapshot URLs, so later
-edits or deletions on the live spell can never alter history. `spell_id` is used for
-review-eligibility joins only, never for rendering.
+`price_minor` / `currency`, `date_label` / `start_date` / `end_date` — are
+**write-once**: present in the INSERT column grant, absent from the UPDATE grant, so
+no client role (founder included) can rewrite them after archiving. The archive flow
+(M5+ console) **copies** every referenced image into
+`site-media/previous/{previous_spell_id}/…` and rewrites snapshot URLs, so later edits
+or deletions on the live spell can never alter history. Seeded archives carry null
+record columns — truthfully, they predate the archive flow.
 
 ### `reviews` — traveller reviews on completed journeys
 | Column | Type | Notes |
@@ -273,30 +278,47 @@ review-eligibility joins only, never for rendering.
 
 Partial unique index `(previous_spell_id, author_id) where author_id is not null` —
 one review per traveller per journey. Index `(previous_spell_id, created_at desc)`.
-RLS: SELECT anyone · INSERT authenticated `with check author_id = auth.uid()` **and**
-an EXISTS proof of a completed booking for that journey's `spell_id` (the exact rule
-`canReviewSpell` enforces today) · UPDATE/DELETE own · DELETE staff (moderation).
+
+RLS as live since M3: SELECT anyone **while the parent journey is published** (an
+EXISTS re-check of `previous_spells.is_published`, same pattern as departures), staff
+always · DELETE staff (moderation) · **no INSERT policy and no write grants exist
+yet** — the write path arrives in M7 together with its proof: INSERT authenticated
+`with check author_id = auth.uid()` **and** an EXISTS proof of a completed booking for
+that journey's `spell_id` (the exact rule `canReviewSpell` enforces today), plus own
+UPDATE/DELETE. Until bookings exist, nobody — staff included — can insert a review.
 Rating summaries are computed in queries, not stored.
 
 ---
 
 ## 7. Journal & people
 
-### `blog_posts`
+### `blog_posts` — live since M3
 `id`, `slug` unique, `title`, `deck`, `category blog_category`, `tags text[]`,
-`author_id uuid` null → team_members `set null`, `status blog_status` default `draft`,
-`published_at timestamptz` null, `read_minutes int`, `hero_url`, `featured boolean`,
-`blocks jsonb` (ordered article blocks, D1), `created_by`, timestamps.
-Index `(status, published_at desc)`.
-RLS: SELECT anyone where published · staff all. Author renders by joining
-`team_members` — no duplicated author fields.
+**byline snapshot** `author_name` / `author_role` / `author_avatar` (exactly what the
+shipped Blog Builder edits — bylines survive roster changes and non-roster authors) +
+optional `author_id uuid` null → team_members `set null` (set when the writer is a
+team member), `status blog_status` default `draft`, `published_at timestamptz` null,
+`read_minutes int`, `hero_url`, `featured boolean`, `gallery text[]` (end-of-story
+imagery), `seo_title`, `seo_description`, `blocks jsonb` (ordered article blocks, D1,
+v1: `{version, blocks: BlogBlock[]}` — 11 kinds), `created_by`, timestamps.
+CHECK: published requires `published_at`. Index `(status, published_at desc)`.
 
-### `team_members`
+RLS: SELECT anyone where `status = 'published' AND published_at <= now()` — **the read
+rule IS the publishing workflow**: drafts invisible, future-dated posts appear on their
+own at their moment (scheduled publishing with zero cron; `scheduled` is derived, never
+stored) · INSERT/UPDATE staff · DELETE staff **for drafts only** — a published story
+must be unpublished first, so nothing that was ever live vanishes in one motion.
+
+### `team_members` — live since M3
 `id`, `name`, `designation`, `department team_department`, `photo_url`, `intro`,
-`focus`, `contribution`, `quote`, `featured boolean`, `instagram` / `linkedin` /
-`youtube`, `sort_order int`, `is_active boolean` default true,
-`user_id uuid` null → profiles `set null` (links a member to a login later), timestamps.
-RLS: SELECT anyone where active, staff all · write staff.
+`focus`, `contribution`, `quote`, `featured boolean` (spotlight card), `instagram` /
+`linkedin` / `youtube`, `sort_order int`, `is_active boolean` default true
+(deactivate-never-delete — bylines and history may reference members forever),
+`user_id uuid` null → profiles `set null` (future login link — **no client write grant
+yet**; wiring it is a deliberate M6+ console feature), timestamps.
+Index `(is_active, sort_order)`.
+RLS: SELECT anyone where active, staff all · INSERT/UPDATE staff · no DELETE policy.
+Future expansion (multiple roles, achievements) is additive: join tables, no redesign.
 
 ---
 

@@ -49,7 +49,9 @@ and any future document.
 | Document | Version | Spec | Notes |
 | --- | --- | --- | --- |
 | `spells.page` | **1** | database-architecture.md §5 + `web/src/data/builder.ts` (`SpellDraft` minus client-only fields) | Image objects everywhere are `{id, url, name, alt?, caption?}`; `alt`/`caption` optional since v1 (added during M2 founder review, rule 2). Renderers fall back `alt ?? name`. `slugTouched` and `isLocal` are client-only and never stored. |
-| `blog_posts.blocks` | — | arrives M3 | |
+| `blog_posts.blocks` | **1** | `web/src/data/blog.ts` (`BlogBlock`, 11 kinds) | Live since M3: `{version, blocks: BlogBlock[]}`. Blocks may carry a client-generated `id` (builder reorder identity); renderers ignore it. Images are Storage URLs, never data URLs. |
+| `previous_spells.chapters` / `gallery` / `memory_notes` / `community` | **1** | `web/src/data/previousSpells.ts` item shapes | Live since M3: `{version, items: […]}` wrappers around the existing PastChapter / PastGalleryShot / PastMemoryNote / CommunityMoment shapes. |
+| `previous_spells.page_snapshot` | — | carries whatever `spells.page` version was live at archive time | Content is frozen (write-once column); document migrations may upgrade its **shape** only, never its content. |
 | `forms.questions` | — | arrives M4 | |
 
 ---

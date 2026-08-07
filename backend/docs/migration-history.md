@@ -264,8 +264,96 @@ email confirmed, created 2026-08-04 — was inspected before anything ran:
 
 ---
 
-## Planned next: M3 — Journal, team & archive
+## M3 — Journal, team & archive · applied 2026-08-07
 
-`blog_posts`, `team_members`, `previous_spells` (immutable snapshots per the Q1
-decision), `reviews`, the `blog-media` + `site-media` buckets, and seeds. SQL will be
+| | |
+| --- | --- |
+| Migration | [`backend/migrations/0003_journal_team_archive.sql`](../migrations/0003_journal_team_archive.sql), applied byte-exact |
+| Applied via | Supabase management API as **one atomic statement batch** — the reviewed 78 KB file exceeds the managed migration tool's input size, so the API applied the identical file bytes (HTTP 201). Verification and type regeneration ran through the managed tool (`m3-verify-assertions`, `m3-verify-behavior`). |
+| Reviewed | Full architecture, SQL §1–§6 verbatim, JSON shapes, storage, seeds and testing checklist posted in chat |
+| Approved by | Vidushi Verma — explicitly including the two flagged deviations (byline snapshots · draft-only blog delete) |
+| Destructive statements | **None.** Purely additive; touches no M1/M2 object. |
+
+### What went live
+
+**Enums (3)** — `blog_category` (7 values) · `blog_status` (2 — `scheduled` is derived:
+published + future `published_at`, never stored) · `team_department` (5).
+
+**Tables (4)** — RLS enabled in the same migration:
+
+- `team_members` — roster with per-member socials, `sort_order`, `featured` spotlight,
+  `is_active` (deactivate-never-delete — bylines may reference members forever), and a
+  future `user_id` login link (no client write grant yet).
+- `blog_posts` — the Journal engine: byline **snapshot** (`author_name/role/avatar`,
+  exactly what the shipped Blog Builder edits) + optional `author_id` → team link;
+  categories, tags, SEO fields, end-of-story `gallery`; `blocks` jsonb v1. The public
+  read rule IS the scheduler: `published AND published_at <= now()` — zero cron.
+- `previous_spells` — the immutable archive: curation columns stay staff-editable;
+  the seven **frozen record columns** (`spell_id`, `page_snapshot`, `price_minor`,
+  `currency`, `date_label`, `start_date`, `end_date`) are write-once — in the INSERT
+  grant, absent from the UPDATE grant. No DELETE policy or grant exists.
+- `reviews` — attached to **archived journeys only**; author identity is a snapshot;
+  **no INSERT policy exists** until M7's completed-booking proof; staff DELETE =
+  moderation; partial unique index = one review per traveller per journey.
+
+**Policies** — 12 table + 8 storage. **Triggers** — 4 × `updated_at`.
+
+**Buckets** — `blog-media` (writes under `posts/…`) and `site-media` (writes under
+`team/…` or `previous/…`): public read, staff-only write, 10 MB, jpeg/png/webp.
+
+**Column grants** — team 14 INSERT / 14 UPDATE · blog 18/18 + table DELETE (policy
+narrows to drafts) · archive 30 INSERT / 23 UPDATE (the frozen seven locked) ·
+reviews DELETE only — zero write columns.
+
+**Seeds** — 7 team members (Vidushi featured) · 7 published posts (real dates, latest
+2026-07-02; the founder letter links her team row, other bylines snapshot-only) ·
+6 archives (3 linked to live spells `a…05`/`a…01`/`a…10` for M7 review eligibility;
+frozen columns truthfully null — these journeys predate the archive flow) · 13 reviews
+(author-null historical testimony, all `verified`). Fixed uuids `d…`/`e…`/`f…`/`9…`.
+
+### Verification
+
+`m3-verify-assertions` (read-only) — **all passed**: 3 enums with 7/2/5 values · RLS on
+all 4 tables · 12 + 8 policies · reviews INSERT policy count = 0 · archives DELETE
+policy count = 0 · blog DELETE policy qual contains `draft` · 4 triggers · zero
+unexpected table-wide writes · exact column whitelists (14/14 · 18/18 · 30/23 · 0) ·
+**zero UPDATE grants on the seven frozen archive columns** · both buckets configured ·
+5 indexes incl. the partial unique · seeds 7/7/6/13 · exactly 1 featured member
+(Vidushi Verma) · all posts published with past dates · exactly 1 post linked to the
+founder team row · 3 archive→spell links with the exact mapping · frozen columns null
+on all 6 · review distribution 3+2+2+2+2+2 · every document `version: 1`.
+
+`m3-verify-behavior` (role-switched to `anon`, self-cleaning, net-zero rows) — **all
+passed**: a future-dated published probe stays invisible to anon (the scheduler rule) ·
+anon sees exactly 7 posts / 7 team / 6 archives / 13 reviews · anon holds no reviews
+INSERT privilege · unpublishing an archive hides its reviews (5 archives / 10 reviews)
+and restoring returns 6/13 · `has_column_privilege` confirms all seven frozen columns
+un-updatable while curation columns stay editable · probe deleted, end state 7/6/13.
+
+TypeScript types regenerated into `backend/types.ts`,
+`web/src/integrations/supabase/types.ts` and `expo/src/integrations/supabase/types.ts`.
+Web + Expo builds verified green after regeneration.
+
+### Watch item
+
+Team photos seed as site-relative `/team/*.jpg` paths — correct for the website at M5.
+Before any non-web surface (the Expo app) renders the roster, copy them into
+`site-media/team/…` and repoint (copy → repoint → delete, evolution rules §3).
+
+### Deliberately NOT in M3
+
+- Reviews INSERT policy + own UPDATE/DELETE — M7, together with the completed-booking
+  proof (the write path simply does not exist until then).
+- The archive-a-spell console flow that fills the frozen columns — M5+ console feature;
+  the columns it writes are created and locked now.
+- `avatars` + `memories` buckets — M6, traveller-owned content.
+- **No application code changed.** The site renders mock data until M5; nothing
+  user-visible changed when this ran.
+
+---
+
+## Planned next: M4 — Forms & enquiries
+
+`forms`, `form_responses`, `inquiries`, the additive `spells.form_id` column with the
+seeded-spell re-links, the shared reference-number generator, and seeds. SQL will be
 drafted and reviewed in chat before anything runs.
