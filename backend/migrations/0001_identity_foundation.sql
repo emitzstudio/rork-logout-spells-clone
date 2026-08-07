@@ -18,8 +18,8 @@
 --
 -- Contains NO destructive statements. Touches nothing outside `public` except
 -- two AFTER triggers on auth.users (the canonical Supabase signup pattern).
--- The founder admin grant is NOT here — it is a follow-up one-liner once her
--- real user id exists (documented in authentication-flow.md).
+-- The founder admin grant is NOT here — it was applied 2026-08-07 as its own
+-- migration once her real user id existed: see 0001b_founder_bootstrap.sql.
 -- ============================================================================
 
 

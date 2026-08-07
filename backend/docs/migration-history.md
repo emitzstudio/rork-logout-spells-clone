@@ -101,6 +101,9 @@ TypeScript types regenerated to `backend/types.ts` and copied into
   on conflict (user_id, role) do nothing;
   ```
 
+  **→ Done.** Applied 2026-08-07 as `m1-founder-bootstrap` — see the *Founder
+  bootstrap* entry below.
+
 - **No application code changed.** The website still renders mock data; the provider
   swap happens in M5/M6. Nothing user-visible changed when this ran.
 
@@ -216,6 +219,48 @@ TypeScript types regenerated into `backend/types.ts`,
 - `previous_spells`, `reviews` — M3, now with the Q1 snapshot columns locked in.
 - **No application code changed.** The site still renders mock data until M5;
   nothing user-visible changed when this ran.
+
+---
+
+## Founder bootstrap — M1 follow-up · applied 2026-08-07
+
+| | |
+| --- | --- |
+| Migration | `m1-founder-bootstrap` |
+| Source of record | [`backend/migrations/0001b_founder_bootstrap.sql`](../migrations/0001b_founder_bootstrap.sql) |
+| Reviewed | Live state inspected read-only before and after; full SQL posted in chat |
+| Approved by | Vidushi Verma — explicit instruction in chat after creating the first user (2026-08-04) |
+| Destructive statements | **None.** Data-only: one UPDATE on the founder's own profile row, one INSERT into `user_roles`. No DDL. |
+| Applied as | One transaction, wrapped in pre/post assertions that roll everything back on any mismatch. |
+
+### Signup trigger verification (pre-flight, read-only)
+
+The first real user — `vidushi@logoutspells.com`, id `8cefad26-753f-4dc1-9df8-9b853e90b39b`,
+email confirmed, created 2026-08-04 — was inspected before anything ran:
+
+- `handle_new_user()` **fired correctly**: exactly one `profiles` row and one
+  `user_settings` row existed, email synced.
+- Names were `''` and the referral code was `TRAVELLER-SPELL` — **expected**, not a
+  bug: the dashboard "Add user" flow sends no `first_name` metadata, so the
+  empty-name fallback engaged exactly as designed in M1.
+- `user_roles` was empty (no admin yet); `VIDUSHI-SPELL` was unclaimed.
+
+### What changed
+
+- `profiles.first_name`: `''` → `Vidushi` (her own row only; `last_name` left `''` —
+  editable from the account page once the M6 auth swap lands, or by a follow-up edit).
+- `profiles.referral_code`: `TRAVELLER-SPELL` → `VIDUSHI-SPELL` (collision-guarded;
+  the unique index is the hard backstop).
+- `user_roles`: one row — `admin` granted to the founder. `granted_by` is `NULL` by
+  design: this is the bootstrap grant, there was no pre-existing admin to attribute.
+
+### Verification (post-flight, read-only)
+
+- Profile reads `Vidushi · vidushi@logoutspells.com · VIDUSHI-SPELL`.
+- `user_roles` has exactly the one admin row (granted 2026-08-07 14:29 UTC).
+- `has_role(founder_id, 'admin')` returns `true` — the dashboard policies
+  (`is_staff()`, `has_role()`) now recognise her.
+- No schema change, so `types.ts` regenerated identical on all platforms.
 
 ---
 

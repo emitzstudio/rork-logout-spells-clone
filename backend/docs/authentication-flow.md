@@ -2,8 +2,9 @@
 
 > **Status: LIVE as of 2026-07-31 (M1).** `profiles`, `user_settings`, `user_roles`,
 > the role helpers and both `auth.users` triggers are applied and verified on the
-> production project. Still outstanding: the founder's admin grant (needs her real
-> user id — see below) and the client-side auth UI swap, which lands in M6.
+> production project. The founder's admin grant is **done** — applied 2026-08-07 as
+> `m1-founder-bootstrap` after her first real signup (see migration-history.md).
+> Still outstanding: the client-side auth UI swap, which lands in M6.
 
 ## Model
 
@@ -53,9 +54,11 @@ DNS) is a later, cosmetic upgrade.
   can never escalate privileges.
 - Policies call `is_staff()` / `has_role()` — `SECURITY DEFINER` helpers with pinned
   `search_path`, so RLS never recursively evaluates `user_roles`.
-- **Bootstrap:** the founder signs up normally with her company email; a one-line
-  reviewed migration grants `admin` to that user id. Admins grant `staff` to team
-  members from the dashboard later (M6+ UI) or via reviewed SQL until then.
+- **Bootstrap (done 2026-08-07):** the founder signed up with her company email and
+  a reviewed migration (`m1-founder-bootstrap`) granted `admin` to her real user id,
+  set her name and regenerated her referral code to `VIDUSHI-SPELL`. Admins grant
+  `staff` to team members from the dashboard later (M6+ UI) or via reviewed SQL
+  until then.
 - The founder console routes (`/dashboard/*`) gate on staff status in-app **and** every
   table policy re-checks it — UI gating is convenience, RLS is the enforcement.
 
