@@ -1,23 +1,27 @@
 /**
- * Traveller session + account state for the whole app.
+ * Traveller session + account state for the whole app — real Supabase Auth (M6).
  *
- * Mirrors the SpellStore/FormStore pattern: one provider, one hook. All reads
- * and writes flow through the account service (the future backend seam); this
- * provider only holds the loaded bundle in React state and exposes friendly
- * mutation helpers to the traveller space, the navbar and the public pages.
+ * One provider, one hook, the same API the mock era exposed. The session
+ * comes from native Supabase Auth; the account bundle loads through React
+ * Query and every mutation swaps the fresh bundle it returns into the cache.
+ * Signing in or out changes what RLS reveals, so auth changes invalidate
+ * every cached read in the app.
  */
+import type { User } from "@supabase/supabase-js";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 
-import { accountService } from "./service";
+import { supabase } from "@/integrations/supabase/client";
+
+import { accountService, travellerSessionFrom } from "./service";
 import type {
   AccountData,
   TravellerPrefs,
@@ -36,6 +40,8 @@ interface SignUpInput {
 interface AccountValue {
   session: TravellerSession | null;
   data: AccountData | null;
+  /** True once the stored auth session has been restored (or ruled out). */
+  ready: boolean;
   /** True while a fresh session is loading its account bundle. */
   booting: boolean;
   /** Session present AND data loaded — the fully signed-in state. */
@@ -44,10 +50,7 @@ interface AccountValue {
 
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: SignUpInput) => Promise<void>;
-  /** Opens the session after signup / reset verification. */
-  openSession: () => Promise<void>;
   signOut: () => void;
-  deleteAccount: () => Promise<void>;
 
   updateProfile: (patch: Partial<TravellerProfile>) => Promise<void>;
   updatePrefs: (patch: Partial<TravellerPrefs>) => Promise<void>;
@@ -55,7 +58,7 @@ interface AccountValue {
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   toggleChecklistItem: (bookingId: string, itemId: string) => Promise<void>;
-  /** Confirms a paid booking into the traveller's world (My Trips, wallet, XP). */
+  /** Confirms a mock-gateway booking into this device's trip list (real in M7). */
   addBooking: (booking: TripBooking) => Promise<void>;
   addMemoryPhotos: (memoryId: string, sources: string[]) => Promise<void>;
   removeMemoryPhoto: (memoryId: string, photoId: string) => Promise<void>;
@@ -66,96 +69,86 @@ interface AccountValue {
 const AccountContext = createContext<AccountValue | null>(null);
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<TravellerSession | null>(() =>
-    accountService.getSession(),
-  );
-  const [data, setData] = useState<AccountData | null>(null);
-  const [booting, setBooting] = useState<boolean>(false);
-  const loadedFor = useRef<string | null>(null);
+  const queryClient = useQueryClient();
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [ready, setReady] = useState<boolean>(false);
 
-  /* Bootstrap the account bundle whenever a session appears. */
   useEffect(() => {
-    if (!session) {
-      setData(null);
-      loadedFor.current = null;
-      return;
-    }
-    if (loadedFor.current === session.userId && data) return;
-    let cancelled = false;
-    setBooting(true);
-    accountService
-      .loadAccount()
-      .then((bundle) => {
-        if (cancelled) return;
-        loadedFor.current = session.userId;
-        setData(bundle);
-      })
-      .catch((error: unknown) => {
-        console.warn("[account] Failed to load account:", error);
-      })
-      .finally(() => {
-        if (!cancelled) setBooting(false);
-      });
+    let mounted = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setAuthUser(data.session?.user ?? null);
+      setReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      setAuthUser(next?.user ?? null);
+      setReady(true);
+      // Auth flips what RLS reveals — every cached read must refetch.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        void queryClient.invalidateQueries();
+      }
+    });
     return () => {
-      cancelled = true;
+      mounted = false;
+      sub.subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [queryClient]);
+
+  const userId = authUser?.id ?? null;
+
+  const accountQuery = useQuery({
+    queryKey: ["account", userId ?? "anon"],
+    queryFn: () => accountService.loadAccount(userId ?? ""),
+    enabled: userId !== null,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const data = userId !== null ? (accountQuery.data ?? null) : null;
+
+  /** Chip data comes from the loaded profile; auth metadata bridges the gap. */
+  const session = useMemo<TravellerSession | null>(() => {
+    if (!authUser) return null;
+    if (data) {
+      return {
+        userId: authUser.id,
+        email: data.profile.email,
+        firstName: data.profile.firstName !== "" ? data.profile.firstName : "Traveller",
+        avatar: data.profile.avatar,
+        createdAt: authUser.created_at,
+      };
+    }
+    return travellerSessionFrom(authUser);
+  }, [authUser, data]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const next = await accountService.signIn(email, password);
-    setSession(next);
+    const user = await accountService.signIn(email, password);
+    setAuthUser(user);
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
-    await accountService.signUp(input);
-  }, []);
-
-  const openSession = useCallback(async () => {
-    const next = await accountService.openSession();
-    loadedFor.current = null;
-    setData(null);
-    setSession(next);
+    const user = await accountService.signUp(input);
+    setAuthUser(user);
   }, []);
 
   const signOut = useCallback(() => {
     accountService.signOut();
-    setSession(null);
-    setData(null);
-    loadedFor.current = null;
+    setAuthUser(null);
   }, []);
 
-  const deleteAccount = useCallback(async () => {
-    await accountService.deleteAccount();
-    setSession(null);
-    setData(null);
-    loadedFor.current = null;
-  }, []);
-
-  /** Shared wrapper — every mutation swaps in the fresh bundle it returns. */
-  const apply = useCallback(async (op: Promise<AccountData>) => {
-    const next = await op;
-    setData(next);
-  }, []);
-
-  const updateProfile = useCallback(
-    async (patch: Partial<TravellerProfile>) => {
-      await apply(accountService.updateProfile(patch));
-      // Keep the session chip (avatar / name) in step with the profile.
-      setSession((s) =>
-        s
-          ? {
-              ...s,
-              firstName: patch.firstName ?? s.firstName,
-              avatar: patch.avatar ?? s.avatar,
-              email: patch.email ?? s.email,
-            }
-          : s,
-      );
+  /** Shared wrapper — every mutation swaps the fresh bundle into the cache. */
+  const apply = useCallback(
+    async (op: Promise<AccountData>) => {
+      const next = await op;
+      queryClient.setQueryData(["account", userId ?? "anon"], next);
     },
-    [apply],
+    [queryClient, userId],
   );
 
+  const updateProfile = useCallback(
+    (patch: Partial<TravellerProfile>) => apply(accountService.updateProfile(patch)),
+    [apply],
+  );
   const updatePrefs = useCallback(
     (patch: Partial<TravellerPrefs>) => apply(accountService.updatePrefs(patch)),
     [apply],
@@ -199,13 +192,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   /** Fire-and-forget — public pages call this without awaiting. */
   const recordSpellView = useCallback(
     (slug: string) => {
-      if (!session) return;
-      accountService
-        .recordSpellView(slug)
-        .then(setData)
-        .catch(() => undefined);
+      if (userId === null || !accountQuery.data) return;
+      void apply(accountService.recordSpellView(slug)).catch(() => undefined);
     },
-    [session],
+    [userId, accountQuery.data, apply],
   );
 
   const unreadCount = useMemo(
@@ -217,14 +207,13 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     () => ({
       session,
       data,
-      booting,
+      ready,
+      booting: userId !== null && accountQuery.isPending,
       signedIn: session !== null && data !== null,
       unreadCount,
       signIn,
       signUp,
-      openSession,
       signOut,
-      deleteAccount,
       updateProfile,
       updatePrefs,
       toggleWishlist,
@@ -240,13 +229,13 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     [
       session,
       data,
-      booting,
+      ready,
+      userId,
+      accountQuery.isPending,
       unreadCount,
       signIn,
       signUp,
-      openSession,
       signOut,
-      deleteAccount,
       updateProfile,
       updatePrefs,
       toggleWishlist,

@@ -21,7 +21,9 @@ export const supabase = createClient<Database>(url, anonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    // M6: password-recovery links land on /reset-password with tokens in the
+    // URL hash — the client consumes them into a session automatically.
+    detectSessionInUrl: true,
   },
 });
 

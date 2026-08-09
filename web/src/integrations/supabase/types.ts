@@ -1,7 +1,3 @@
-/* eslint-disable */
-// AUTO-GENERATED — DO NOT EDIT
-// Run migrations to regenerate.
-
 export type Json =
   | string
   | number
@@ -321,6 +317,47 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["notification_kind"]
+          link: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["notification_kind"]
+          link?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["notification_kind"]
+          link?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       previous_spells: {
         Row: {
           caption: string
@@ -583,6 +620,39 @@ export type Database = {
             columns: ["previous_spell_id"]
             isOneToOne: false
             referencedRelation: "previous_spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_spells: {
+        Row: {
+          created_at: string
+          spell_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          spell_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          spell_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_spells_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_spells_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -867,6 +937,42 @@ export type Database = {
           },
         ]
       }
+      user_interests: {
+        Row: {
+          created_at: string
+          interest_id: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          interest_id: string
+          sort_order?: number
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          interest_id?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interests_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_interests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1009,6 +1115,13 @@ export type Database = {
       increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
       is_staff: { Args: never; Returns: boolean }
       next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
+      spell_wishlist_counts: {
+        Args: never
+        Returns: {
+          spell_id: string
+          wishlist_count: number
+        }[]
+      }
       submit_inquiry: {
         Args: {
           _email: string
@@ -1046,6 +1159,13 @@ export type Database = {
       form_status: "draft" | "published"
       form_style: "conversational" | "traditional"
       inquiry_status: "new" | "contacted" | "closed"
+      notification_kind:
+        | "trip"
+        | "payment"
+        | "memory"
+        | "offer"
+        | "referral"
+        | "system"
       response_status: "new" | "viewed"
       spell_category:
         | "gathering"
@@ -1215,6 +1335,14 @@ export const Constants = {
       form_status: ["draft", "published"],
       form_style: ["conversational", "traditional"],
       inquiry_status: ["new", "contacted", "closed"],
+      notification_kind: [
+        "trip",
+        "payment",
+        "memory",
+        "offer",
+        "referral",
+        "system",
+      ],
       response_status: ["new", "viewed"],
       spell_category: [
         "gathering",
@@ -1236,3 +1364,4 @@ export const Constants = {
     },
   },
 } as const
+

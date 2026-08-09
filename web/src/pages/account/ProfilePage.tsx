@@ -26,9 +26,9 @@ export default function ProfilePage() {
     const next = p.interests.includes(cat)
       ? p.interests.filter((c) => c !== cat)
       : [...p.interests, cat];
-    void updateProfile({ interests: next }).then(() =>
-      toast("Leanings updated — recommendations will follow ✦"),
-    );
+    void updateProfile({ interests: next })
+      .then(() => toast("Leanings updated — recommendations will follow ✦"))
+      .catch(() => toast("That didn't save — try again."));
   };
 
   return (
@@ -50,7 +50,18 @@ export default function ProfilePage() {
       {/* Identity card */}
       <section className="relative overflow-hidden rounded-3xl border border-cream/[0.09]">
         <div className="relative h-44 md:h-56">
-          <img src={p.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          {p.cover !== "" ? (
+            <img src={p.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div
+              aria-hidden
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 70% 80% at 25% 20%, rgba(184,150,62,0.22), transparent 65%), radial-gradient(ellipse 55% 65% at 85% 85%, rgba(184,150,62,0.12), transparent 70%), #201d15",
+              }}
+            />
+          )}
           <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#14130f] via-[#14130f]/40 to-transparent" />
         </div>
         <div className="relative bg-[#14130f] px-6 pb-6 md:px-9 md:pb-8">
@@ -68,7 +79,9 @@ export default function ProfilePage() {
                 {p.city} · In the circle since {fmtDayYear(p.joinedAt)}
               </p>
             </div>
-            <p className="hidden pb-1 font-hand text-2xl text-gold/60 md:block">— {p.instagram}</p>
+            {p.instagram !== "" && (
+              <p className="hidden pb-1 font-hand text-2xl text-gold/60 md:block">— {p.instagram}</p>
+            )}
           </div>
           <p className="mt-5 max-w-2xl font-serif text-[17px] italic leading-relaxed text-cream/65">
             “{p.bio}”
@@ -83,11 +96,11 @@ export default function ProfilePage() {
           <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
             {[
               { label: "Email", value: p.email },
-              { label: "Phone", value: p.phone },
-              { label: "Birthday", value: fmtDayYear(p.birthday) },
-              { label: "Languages", value: p.languages.join(", ") },
-              { label: "Dietary", value: p.dietary },
-              { label: "Instagram", value: p.instagram },
+              { label: "Phone", value: p.phone !== "" ? p.phone : "—" },
+              { label: "Birthday", value: p.birthday !== "" ? fmtDayYear(p.birthday) : "—" },
+              { label: "Languages", value: p.languages.length > 0 ? p.languages.join(", ") : "—" },
+              { label: "Dietary", value: p.dietary !== "" ? p.dietary : "—" },
+              { label: "Instagram", value: p.instagram !== "" ? p.instagram : "—" },
             ].map((row) => (
               <div key={row.label}>
                 <dt className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-cream/35">{row.label}</dt>
@@ -99,7 +112,9 @@ export default function ProfilePage() {
           <div className="mt-6 border-t border-cream/[0.07] pt-5">
             <p className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-cream/35">Emergency contact</p>
             <p className="mt-1.5 font-sans text-[13.5px] text-cream/80">
-              {p.emergency.name} ({p.emergency.relation}) · {p.emergency.phone}
+              {p.emergency.name !== ""
+                ? `${p.emergency.name} (${p.emergency.relation !== "" ? p.emergency.relation : "contact"}) · ${p.emergency.phone !== "" ? p.emergency.phone : "no number yet"}`
+                : "Not set yet — add it before your first spell."}
             </p>
             <p className="mt-1 font-sans text-[11px] text-cream/35">
               Travels with you on every booking — hosts have it before you arrive.
@@ -223,6 +238,7 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
         toast("Profile updated ✦");
         onClose();
       })
+      .catch(() => toast("Your profile couldn't be saved — try again."))
       .finally(() => setSaving(false));
   };
 

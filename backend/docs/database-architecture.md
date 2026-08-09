@@ -2,11 +2,12 @@
 
 > **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**), the spell
 > catalogue (**M2**), the journal/team/archive domain (**M3**), the forms domain
-> (**M4**), and the M5 integration objects (`submit_inquiry()` RPC,
-> `spell_active_departures` view) — and since **M5** the public website + founder
-> console read and write this schema directly under RLS. Sections still marked
-> design-only: bookings & money (§9), the traveller space (§10), and the M6 personal
-> tables in §5 (`user_interests`, `saved_spells`).
+> (**M4**), the M5 integration objects — and since **M6** the traveller layer:
+> `saved_spells`, `user_interests` (with `sort_order`, a reviewed delta vs the sketch
+> below), `notifications`, `spell_wishlist_counts()` and the `avatars` bucket. The
+> website, the founder console and the traveller account space all read and write
+> this schema under RLS. Still design-only: bookings & money (§9) and the memories
+> part of the traveller space (§10).
 > [migration-history.md](./migration-history.md) records what is actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every
@@ -228,13 +229,20 @@ RLS: SELECT anyone where active · write staff. Kept in the database (not client
 because it is the shared signal for future matching/community features.
 
 ### `user_interests` — a traveller's brewed dreams
-`user_id` → profiles cascade, `interest_id` → interests, `created_at`,
-PK `(user_id, interest_id)`. RLS: own only. Anonymous visitors keep using
-localStorage; rows sync on first login.
+Live since M6. `user_id` → profiles cascade (defaults `auth.uid()`), `interest_id` →
+interests, `sort_order int` default 0 (**added at the M6 review** — the cauldron is
+an ordered list and the first-login sync must not scramble it; the UPDATE grant is
+column-scoped to `sort_order` alone), `created_at`, PK `(user_id, interest_id)`.
+RLS: own only · insert requires the interest to exist **and** be active. Anonymous
+visitors keep using localStorage; rows merge up once on first login, order preserved.
 
 ### `saved_spells` — the wishlist
-`user_id` → profiles cascade, `spell_id` → spells cascade, `created_at`,
-PK `(user_id, spell_id)`, index on `spell_id` (counts). RLS: own only.
+Live since M6. `user_id` → profiles cascade (defaults `auth.uid()`), `spell_id` →
+spells cascade, `created_at`, PK `(user_id, spell_id)`, index on `spell_id` (counts).
+RLS: own only — even staff cannot list who saved a spell · insert requires the spell
+to be visible to the caller, so hearts on drafts physically fail. The console reads
+totals through `spell_wishlist_counts()` — a staff-gated SECURITY DEFINER aggregate
+returning counts only, never user ids.
 
 ---
 
@@ -447,11 +455,13 @@ are service-role only (they mint wallet credits).
 ## 10. Traveller space
 
 ### `notifications`
+Live since M6 — including the **welcome whisper** inserted by `handle_new_user()` on
+signup (decision D3; the insert is exception-wrapped so it can never cost a signup).
 `id`, `user_id` → profiles cascade, `kind notification_kind`, `title`, `body`,
 `link text`, `read_at timestamptz` null, `created_at`.
 Indexes: `(user_id, created_at desc)` · partial `(user_id) where read_at is null`
 (badge count). RLS: SELECT own · UPDATE own, column-granted to `read_at` only ·
-DELETE own · INSERT staff or service role. Realtime broadcast enabled in M8.
+DELETE own · INSERT staff or service role. Realtime broadcast still arrives in M8.
 
 ### `memories` + `memory_photos` — private trip albums
 `memories`: `id`, `user_id` → profiles cascade, `booking_id uuid` null unique

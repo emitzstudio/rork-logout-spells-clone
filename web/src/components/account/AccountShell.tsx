@@ -41,8 +41,22 @@ const SHELL_ITEMS: ShellItem[] = [
  * so the account always feels like another chapter of Logout Spells.
  */
 export default function AccountShell({ children }: { children: ReactNode }) {
-  const { session, data, booting } = useAccount();
+  const { session, data, booting, ready } = useAccount();
   const location = useLocation();
+
+  // Wait for the stored session to restore before deciding to redirect —
+  // otherwise a hard refresh inside the space would bounce to /login.
+  if (!ready) {
+    return (
+      <Page title="My Space">
+        <div className="relative min-h-[100svh] px-5 pb-24 pt-24 md:px-10 md:pt-28">
+          <div className="relative mx-auto w-full max-w-6xl">
+            <PageSkeleton />
+          </div>
+        </div>
+      </Page>
+    );
+  }
 
   if (!session) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;

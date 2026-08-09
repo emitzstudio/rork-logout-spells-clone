@@ -1,10 +1,12 @@
 -- ============================================================================
 -- M6 · Traveller accounts — backend objects
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT — under founder review. Nothing in this file has run anywhere.
+-- Status: APPROVED by Vidushi Verma (M6 review — D1 email confirmation OFF for
+-- now · D2 demo account retired · D3 welcome notification YES · D4 web first).
 -- Once applied, this file becomes the source of record and is never re-run.
 --
--- Creates exactly six things (no existing object is touched):
+-- Creates exactly six new things, then makes ONE reviewed edit to an applied
+-- object (§7, decision D3):
 --   §1  notification_kind enum
 --   §2  saved_spells            — the wishlist (own-only)
 --   §3  user_interests          — brewed dreams, ordered (own-only)
@@ -13,20 +15,22 @@
 --   §5  spell_wishlist_counts() — staff-gated console counts across travellers
 --   §6  avatars bucket          — public read · each user writes only their own
 --                                 folder
+--   §7  handle_new_user()       — D3: replaced to add the welcome notification.
+--       The FIRST edit ever to an applied object. The section reproduces the
+--       exact M1 body and marks the one added block — nothing else changes.
 --
--- Deliberate delta vs database-architecture.md §5 (flagged for review):
+-- Deliberate delta vs database-architecture.md §5 (flagged in review):
 --   user_interests gains `sort_order int` plus a column-scoped UPDATE grant.
 --   The Discover flow keeps brewed dreams as an ORDERED list; without it the
 --   first-login sync would scramble an order the traveller chose. Naming
 --   matches interests.sort_order and previous_spells.sort_order.
 --
--- Decision D3 (optional welcome notification) is NOT in this file. If approved
--- it modifies M1's handle_new_user() — the first edit ever to an applied
--- object — and will be added here as §7 before this file runs.
---
 -- No seeds: personal tables start empty by definition (seed policy §4) and the
--- avatars bucket starts empty. Contains NO destructive statements.
--- Depends on: M1 (profiles, is_staff) · M2 (spells, interests).
+-- avatars bucket starts empty. Contains NO destructive statements — §1–§6 are
+-- purely additive; §7 is a create-or-replace of one function, reviewed line by
+-- line, and can be reverted by re-running the M1 body verbatim.
+-- Depends on: M1 (profiles, user_settings, is_staff, handle_new_user) ·
+-- M2 (spells, interests).
 -- ============================================================================
 
 
@@ -286,6 +290,84 @@ create policy "avatars_delete_own_folder"
   );
 
 
--- §7 · Seeds -------------------------------------------------------------------
+-- §7 · D3 — the welcome whisper -------------------------------------------------
+-- Replaces M1's handle_new_user() (applied 2026-07-31) with a body that is
+-- IDENTICAL except for one added, self-contained block. For the reviewer,
+-- the exact change:
+--
+--   AS APPLIED IN M1 (backend/migrations/0001_identity_foundation.sql §6):
+--     … insert into public.profiles (…) …        -- retry loop, unchanged
+--     insert into public.user_settings (user_id)  -- unchanged
+--     values (new.id)
+--     on conflict (user_id) do nothing;
+--     return new;                                  -- unchanged
+--
+--   THIS VERSION ADDS, between user_settings and return new:
+--     begin
+--       insert into public.notifications (user_id, kind, title, body, link) …
+--     exception when others then null;
+--     end;
+--
+-- The added insert is wrapped in its own exception block so a notification
+-- hiccup can NEVER cost a signup — the account matters more than the
+-- greeting. Copy is the voice the founder already approved in the mock.
+-- SECURITY DEFINER (as in M1) is what permits the insert — the trigger runs
+-- as the function owner, exactly like the profiles insert above it; the
+-- staff-only INSERT policy on notifications still applies to every client.
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  _attempts int := 0;
+begin
+  loop
+    begin
+      insert into public.profiles (id, first_name, last_name, email, referral_code)
+      values (
+        new.id,
+        coalesce(trim(new.raw_user_meta_data ->> 'first_name'), ''),
+        coalesce(trim(new.raw_user_meta_data ->> 'last_name'), ''),
+        coalesce(new.email, ''),
+        public.generate_referral_code(new.raw_user_meta_data ->> 'first_name')
+      );
+      exit;
+    exception
+      when unique_violation then
+        _attempts := _attempts + 1;
+        if _attempts >= 3 then
+          raise;
+        end if;
+    end;
+  end loop;
+
+  insert into public.user_settings (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
+
+  -- D3 · the one added block — the welcome whisper (never blocks a signup).
+  begin
+    insert into public.notifications (user_id, kind, title, body, link)
+    values (
+      new.id,
+      'system'::public.notification_kind,
+      'Welcome to the circle',
+      'Your logout journey starts here. Every trip, memory and mile now counts toward your path.',
+      '/account/journey'
+    );
+  exception
+    when others then
+      null;
+  end;
+
+  return new;
+end;
+$$;
+
+
+-- §8 · Seeds -------------------------------------------------------------------
 -- None. Personal tables start empty by definition; the first real rows will
 -- be travellers' own. (Seed policy §4: production is never re-seeded.)

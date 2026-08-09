@@ -1,9 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, X } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useAccount } from "@/data/account/AccountProvider";
 import { AccountError } from "@/data/account/models";
 import { accountService } from "@/data/account/service";
@@ -12,7 +11,7 @@ import { cn } from "@/lib/utils";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 type AuthMode = "login" | "join" | "forgot";
-type AuthStep = "form" | "otp" | "reset" | "success";
+type AuthStep = "form" | "sent" | "success";
 
 interface FieldError {
   field: string | null;
@@ -52,9 +51,9 @@ const QUOTES: Record<AuthMode, { big: ReactNode; hand: string }> = {
   },
 };
 
-/** Auth screens — mock flows shaped exactly like the real ones to come. */
+/** Auth screens — real Supabase flows behind the same three doors (M6). */
 export default function AuthPage({ mode }: { mode: AuthMode }) {
-  const { session, signIn, signUp, openSession } = useAccount();
+  const { session, signIn, signUp } = useAccount();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/account";
@@ -64,8 +63,6 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [otp, setOtp] = useState<string>("");
   const [remember, setRemember] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<FieldError | null>(null);
@@ -100,36 +97,14 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     } else if (mode === "join") {
       void run(async () => {
         await signUp({ firstName, lastName, email, password });
-        setOtp("");
-        setStep("otp");
+        setStep("success");
       });
     } else {
       void run(async () => {
-        await accountService.requestOtp(email);
-        setOtp("");
-        setStep("otp");
+        await accountService.requestPasswordReset(email);
+        setStep("sent");
       });
     }
-  };
-
-  const onVerifyOtp = (): void => {
-    void run(async () => {
-      await accountService.verifyOtp(otp);
-      if (mode === "join") {
-        await openSession();
-        setStep("success");
-      } else {
-        setStep("reset");
-      }
-    });
-  };
-
-  const onReset = (e: FormEvent): void => {
-    e.preventDefault();
-    void run(async () => {
-      await accountService.resetPassword(newPassword);
-      setStep("success");
-    });
   };
 
   // Already signed in? The space is that way.
@@ -231,10 +206,10 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                   </h1>
                   <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
                     {mode === "login"
-                      ? "Your trips, memories and journey are waiting."
+                      ? "Your trips, wishlist and journey are waiting."
                       : mode === "join"
                         ? "One account for every spell you'll ever cast."
-                        : "Tell us your email — we'll send a 6-digit code to conjure a new one."}
+                        : "Tell us your email — we'll send a golden thread to forge a new key."}
                   </p>
 
                   <form onSubmit={onSubmitForm} className="mt-8 space-y-4" noValidate>
@@ -296,7 +271,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                     {error !== null && error.field === null && <ErrorBanner message={error.message} />}
 
                     <SubmitButton loading={loading}>
-                      {mode === "login" ? "Enter your space" : mode === "join" ? "Begin" : "Send the code"}
+                      {mode === "login" ? "Enter your space" : mode === "join" ? "Begin" : "Send the thread"}
                       <ArrowRight size={15} />
                     </SubmitButton>
                   </form>
@@ -310,74 +285,28 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                       <>Remembered it? <Link to="/login" className="text-gold hover:text-gold-light">Back to login</Link></>
                     )}
                   </p>
-                  <p className="mt-5 text-center font-hand text-[17px] text-gold/45">
-                    demo mode — any details work ✦
-                  </p>
                 </StepShell>
               )}
 
-              {/* ------------------------------- OTP ------------------------------- */}
-              {step === "otp" && (
-                <StepShell key="otp">
+              {/* ---------------------------- Thread sent --------------------------- */}
+              {step === "sent" && (
+                <StepShell key="sent">
                   <BackLink onClick={() => { setError(null); setStep("form"); }} />
-                  <p className="eyebrow">One-time code</p>
+                  <p className="eyebrow">The thread is sent</p>
                   <h1 className="heading-serif mt-3 text-4xl text-cream">Check your email</h1>
                   <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
-                    We whispered a 6-digit code to <span className="text-cream/80">{email || "your inbox"}</span>.
+                    We whispered a reset link to <span className="text-cream/80">{email || "your inbox"}</span>.
+                    Follow it and we'll forge you a new key — the link opens right back here.
                   </p>
 
-                  <div className="mt-8">
-                    <InputOTP
-                      maxLength={6}
-                      value={otp}
-                      onChange={(v) => { setOtp(v); setError(null); }}
-                      containerClassName="justify-center gap-2"
-                    >
-                      <InputOTPGroup className="gap-2">
-                        {[0, 1, 2, 3, 4, 5].map((i) => (
-                          <InputOTPSlot
-                            key={i}
-                            index={i}
-                            className="h-[52px] w-11 rounded-lg border border-cream/15 bg-charcoal-soft/60 font-serif text-xl text-gold-light first:rounded-l-lg last:rounded-r-lg"
-                          />
-                        ))}
-                      </InputOTPGroup>
-                    </InputOTP>
+                  <div className="mt-8 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
+                    <p className="font-serif text-[15px] italic leading-relaxed text-cream/70">
+                      Nothing in the inbox? Give it a minute, and peek at spam — golden threads
+                      sometimes land sideways.
+                    </p>
                   </div>
 
-                  {error !== null && <ErrorBanner message={error.message} className="mt-4" />}
-
-                  <SubmitButton loading={loading} onClick={onVerifyOtp} disabled={otp.length !== 6} className="mt-6">
-                    Verify <ArrowRight size={15} />
-                  </SubmitButton>
-
                   <ResendLine email={email} />
-                  <p className="mt-4 text-center font-hand text-[16px] text-gold/45">
-                    demo: any 6 digits verify — 000000 shows the error state
-                  </p>
-                </StepShell>
-              )}
-
-              {/* ------------------------------ Reset ------------------------------ */}
-              {step === "reset" && (
-                <StepShell key="reset">
-                  <p className="eyebrow">Almost there</p>
-                  <h1 className="heading-serif mt-3 text-4xl text-cream">New password</h1>
-                  <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
-                    Pick something you'll remember on a mountain with no signal.
-                  </p>
-                  <form onSubmit={onReset} className="mt-8 space-y-4" noValidate>
-                    <PasswordField
-                      label="New password"
-                      value={newPassword}
-                      onChange={setNewPassword}
-                      autoComplete="new-password"
-                      error={error?.field === "password" ? error.message : null}
-                    />
-                    <PasswordStrength value={newPassword} />
-                    {error !== null && error.field === null && <ErrorBanner message={error.message} />}
-                    <SubmitButton loading={loading}>Save new password</SubmitButton>
-                  </form>
                 </StepShell>
               )}
 
@@ -395,23 +324,18 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                       ✦
                     </motion.span>
                     <h1 className="heading-serif mt-7 text-4xl text-cream md:text-[42px]">
-                      {mode === "join" ? (
-                        <>Your circle <span className="italic text-gold-gradient">awaits.</span></>
-                      ) : (
-                        <>The key is <span className="italic text-gold-gradient">reforged.</span></>
-                      )}
+                      Your circle <span className="italic text-gold-gradient">awaits.</span>
                     </h1>
                     <p className="mx-auto mt-4 max-w-xs font-sans text-[13px] leading-relaxed text-cream/50">
-                      {mode === "join"
-                        ? "Account created. Your trips, wishlist and journey are ready for you."
-                        : "Password updated. Log in with it and step back inside."}
+                      Account created. Your trips, wishlist and journey are ready for you —
+                      there's even a first whisper waiting.
                     </p>
                     <button
                       type="button"
-                      onClick={() => navigate(mode === "join" ? "/account" : "/login", { replace: true })}
+                      onClick={() => navigate("/account", { replace: true })}
                       className="btn-gold mt-9 w-full !py-4"
                     >
-                      {mode === "join" ? "Enter your space" : "Back to login"} <ArrowRight size={15} />
+                      Enter your space <ArrowRight size={15} />
                     </button>
                   </div>
                 </StepShell>
@@ -516,32 +440,6 @@ function PasswordField({ label, value, onChange, autoComplete, error }: Omit<Fie
   );
 }
 
-function PasswordStrength({ value }: { value: string }) {
-  const score = useMemo<number>(() => {
-    let s = 0;
-    if (value.length >= 8) s++;
-    if (/[A-Z]/.test(value)) s++;
-    if (/\d/.test(value)) s++;
-    if (/[^A-Za-z0-9]/.test(value)) s++;
-    return s;
-  }, [value]);
-  if (value === "") return null;
-  const labels = ["a whisper", "getting there", "solid", "strong", "unbreakable"];
-  return (
-    <div>
-      <div className="flex gap-1.5">
-        {[0, 1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className={cn("h-1 flex-1 rounded-full transition-colors duration-300", i < score ? "bg-gold" : "bg-cream/10")}
-          />
-        ))}
-      </div>
-      <p className="mt-1.5 font-sans text-[11px] text-cream/40">{labels[score]}</p>
-    </div>
-  );
-}
-
 function ErrorBanner({ message, className }: { message: string; className?: string }) {
   return (
     <motion.p
@@ -583,9 +481,14 @@ function SubmitButton({ children, loading, onClick, disabled, className }: Submi
   );
 }
 
-/** Resend link with a small cooldown — like the real thing. */
+/**
+ * Resend with a real cooldown — the reset mailer is deliberately gentle
+ * (a couple of threads per hour) until the branded-email milestone.
+ */
 function ResendLine({ email }: { email: string }) {
   const [cooldown, setCooldown] = useState<number>(0);
+  const [note, setNote] = useState<string>("");
+
   useEffect(() => {
     if (cooldown <= 0) return undefined;
     const id = window.setTimeout(() => setCooldown((c) => c - 1), 1_000);
@@ -593,7 +496,7 @@ function ResendLine({ email }: { email: string }) {
   }, [cooldown]);
 
   return (
-    <p className="mt-5 text-center font-sans text-[12px] text-cream/40">
+    <p className="mt-6 text-center font-sans text-[12px] text-cream/40">
       Nothing arrived?{" "}
       {cooldown > 0 ? (
         <span className="text-cream/30">Resend in {cooldown}s</span>
@@ -601,14 +504,20 @@ function ResendLine({ email }: { email: string }) {
         <button
           type="button"
           onClick={() => {
-            setCooldown(30);
-            void accountService.requestOtp(email || "traveller@logoutspells.com").catch(() => undefined);
+            setCooldown(60);
+            setNote("");
+            void accountService
+              .requestPasswordReset(email)
+              .catch((e: unknown) => {
+                setNote(e instanceof AccountError ? e.message : "The courier is resting — try again soon.");
+              });
           }}
           className="text-gold transition-colors hover:text-gold-light"
         >
-          Resend the code
+          Resend the thread
         </button>
       )}
+      {note !== "" && <span className="mt-2 block text-red-300/80">{note}</span>}
     </p>
   );
 }

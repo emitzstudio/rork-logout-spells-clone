@@ -53,7 +53,7 @@ const safeName = (raw: string): string => {
 
 /** Uploads one local image and returns its permanent public URL. */
 export const uploadLocalImage = async (
-  bucket: "spell-media" | "blog-media" | "site-media",
+  bucket: "spell-media" | "blog-media" | "site-media" | "avatars",
   path: string,
   sourceUrl: string,
 ): Promise<string> => {
@@ -66,6 +66,21 @@ export const uploadLocalImage = async (
   if (error) throw new Error(`Image upload failed: ${error.message}`);
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 };
+
+/* ------------------------------ Traveller avatars --------------------------- */
+
+/**
+ * Uploads a traveller's avatar or profile cover into their own folder
+ * (avatars/{userId}/… — the storage policy checks that first segment) and
+ * returns the permanent public URL. Object names are never reused, so CDN
+ * caches stay valid; the caller deletes the replaced object after repointing.
+ */
+export const uploadProfileImage = async (
+  userId: string,
+  slot: "avatar" | "cover",
+  sourceUrl: string,
+): Promise<string> =>
+  uploadLocalImage("avatars", `${userId}/${slot}-${freshId()}.jpg`, sourceUrl);
 
 /* --------------------------------- Cleanup --------------------------------- */
 

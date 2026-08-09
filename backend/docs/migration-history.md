@@ -539,10 +539,98 @@ notifications, memories, wallet/XP — M6–M8.
 
 ---
 
-## Planned next: M6 — Traveller accounts (web)
+## M6 — Traveller accounts (web) · applied 2026-08-09
 
-Native Supabase Auth for travellers (login/join/reset), real profile & settings,
-`saved_spells`, `user_interests`, `notifications`, the `avatars` bucket, first-login
-sync of device-local Discover/wishlist state, and the console's real wishlist counts.
-Draft SQL at `backend/migrations/0006_traveller_accounts.sql` — full review before
-anything runs.
+| | |
+| --- | --- |
+| Migration | [`backend/migrations/0006_traveller_accounts.sql`](../migrations/0006_traveller_accounts.sql), applied byte-exact (HTTP 201) |
+| Approved by | Vidushi Verma — M6 review with all four decisions: **D1** email confirmation OFF for now · **D2** demo account retired · **D3** welcome notification YES (separate reviewed change, exact diff shown before execution) · **D4** web first, Expo (M6b) after |
+| Destructive statements | **None.** §1–§6 purely additive; §7 is the reviewed `create or replace` of one function |
+| App code | Second app-facing milestone — real traveller auth + account space on the web |
+
+### Backend objects
+
+- **`notification_kind`** enum (6 values) · **`saved_spells`** (own-only wishlist;
+  hearts only land on spells the caller can see) · **`user_interests`** (brewed
+  dreams — `sort_order` added vs the doc sketch so first-login sync preserves order,
+  flagged in review; update grant scoped to `sort_order` alone) · **`notifications`**
+  (own read / `read_at`-only update / own delete · staff-or-service-role insert) ·
+  **`spell_wishlist_counts()`** (staff-gated SECURITY DEFINER aggregate — counts
+  only, no user ids) · **`avatars` bucket** (public read, 5 MB, own-folder writes).
+
+### D3 — the first edit ever to an applied object
+
+`handle_new_user()` (M1) replaced with an identical body plus ONE added block: the
+welcome-notification insert, wrapped in its own exception handler so a notification
+hiccup can never cost a signup. The exact before/after is reproduced in the migration
+file (§7). Revert path: re-run the M1 body verbatim.
+
+### Auth configuration (D1 — project settings, not schema)
+
+- `mailer_autoconfirm: true` — email confirmation OFF until branded email (Resend)
+  lands; flips back ON in that milestone.
+- `site_url` + redirect allow-list → the live site (was `localhost:3000`); password
+  recovery lands on `/reset-password`.
+- `password_min_length` 6 → **8** (matches the UI rule).
+
+### The client swap (web)
+
+- Login / Join / Forgot are real Supabase Auth; join opens the session instantly (D1)
+  with the welcome whisper waiting in the inbox. New `/reset-password` page consumes
+  recovery links. Change-password re-verifies the current password first.
+- **Demo account retired (D2)** — legacy demo localStorage keys cleared on load; new
+  accounts start with honest empty states (trips, memories, wallet, journey XP all
+  derive from real — mostly empty — data; `friendsMade` is an honest 0).
+- Profile + Settings read/write the live M1 tables; avatar uploads go to
+  `avatars/{uid}/…` resized client-side, upload-new → repoint → delete-old. Empty
+  avatars render a generated gold-initial portrait (never uploaded, never stored).
+- Wishlist hearts ↔ `saved_spells`; brewed dreams ↔ `user_interests` +
+  `user_settings.brewed_at`, with a once-per-device **first-login merge** of the
+  anonymous localStorage state (order preserved, appended after existing rows; the
+  database copy mirrors back to the device afterwards).
+- Notifications inbox + navbar bell run on the real table (`read_at` marking).
+- Console SpellDrawer shows **real wishlist counts** via `spell_wishlist_counts()`.
+- Still device-local by design: mock-gateway test bookings + checklists (M7),
+  memory albums (M8), the recently-viewed trail (never a table). Account deletion is
+  a support handoff (mailto) until a service-role Edge Function exists.
+
+### Verification (live REST as two real throwaway travellers)
+
+All passed: signup returned an **instant session** (D1) and the trigger created
+profile + settings + the **welcome notification** (D3) · cross-account isolation (B
+sees zero of A's rows in every personal table) · heart on the draft spell **rejected**
+(42501), published spell accepted · unknown dream **rejected** · the client's exact
+merge upsert (`on_conflict` + ignore-duplicates) accepted, duplicates ignored, order
+preserved (stargazing 1 · bonfire 2 · trekking 5 after a reorder) · column locks hold
+(`sort_order`-only and `read_at`-only; `interest_id`, `title` and `email` tampering
+all 42501) · traveller notification insert rejected · counts RPC returns `[]` for
+travellers and 42501 for anon while the founder's claims see `{culinary: 2}` · staff
+sees **zero** traveller settings/hearts/dreams (own-only holds against staff too) ·
+staff notification insert delivered into A's inbox · avatar upload to own folder 200,
+into the other traveller's folder **RLS-rejected**, anon write rejected, public read
+200, own delete 200.
+
+**Net-zero:** both probe users admin-deleted (cascade) — all personal tables at 0,
+avatars bucket empty, `auth.users` back to 1 (the founder), `ref_counters` untouched.
+`handle_new_user` verified to carry the welcome block; `spell_wishlist_counts`
+verified SECURITY DEFINER.
+
+Types regenerated into `web/src/integrations/supabase/types.ts`.
+Builds: **web green** (static + build, live preview intact) · **Expo green**
+(untouched — M6b swaps it onto these same accounts later).
+
+### Still mock (by design, untouched)
+
+Door 2 payments (mock gateway; test bookings land device-local only), the reviews
+write path (M7), memories/albums (M8), referrals & wallet credits (parked), the Expo
+app's data layer (M6b).
+
+---
+
+## Planned next: M7 — Bookings & payments (web)
+
+The money milestone: real `bookings` + `payments` under RLS (client-readable, written
+only by Edge Functions with the service role), the Razorpay order + webhook flow,
+seat counters only the webhook can move, `LS-` booking refs from `next_ref()`, the
+reviews write path gated on completed trips, and real wallet/transactions. Full
+review before anything runs.

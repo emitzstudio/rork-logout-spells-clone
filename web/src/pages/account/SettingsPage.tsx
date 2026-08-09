@@ -1,10 +1,9 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { KeyRound, LogOut, ShieldAlert, X } from "lucide-react";
+import { KeyRound, LogOut, Mail, ShieldAlert } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import { AccountPage, EASE } from "@/components/account/bits";
+import { AccountPage } from "@/components/account/bits";
 import { Switch } from "@/components/ui/switch";
 import { useAccount } from "@/data/account/AccountProvider";
 import { AccountError } from "@/data/account/models";
@@ -36,16 +35,16 @@ const PRIVACY_ROWS: PrefRowDef[] = [
 
 /** Settings — preferences, privacy, password and the quiet exit. */
 export default function SettingsPage() {
-  const { data, updatePrefs, signOut, deleteAccount } = useAccount();
+  const { data, updatePrefs, signOut } = useAccount();
   const navigate = useNavigate();
-  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<boolean>(false);
 
   if (!data) return null;
   const prefs = data.prefs;
 
   const setPref = (key: keyof TravellerPrefs, value: boolean): void => {
-    void updatePrefs({ [key]: value }).then(() => toast("Preference saved"));
+    void updatePrefs({ [key]: value })
+      .then(() => toast("Preference saved"))
+      .catch(() => toast("That didn't save — try again."));
   };
 
   const renderRows = (rows: PrefRowDef[]): ReactNode =>
@@ -125,90 +124,19 @@ export default function SettingsPage() {
             <p className="flex items-center gap-2 font-serif text-xl text-cream">
               <ShieldAlert size={17} className="text-red-300/80" /> Leave the circle
             </p>
-            <p className="mt-1 font-sans text-[12px] text-cream/45">
-              Deletes your account and every trace of it. There's no undo spell.
+            <p className="mt-1 max-w-md font-sans text-[12px] leading-relaxed text-cream/45">
+              Write to us and a real person will erase your account and every trace of it —
+              usually within two days. There's no undo spell.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(true)}
-            className="rounded-md border border-red-400/30 px-5 py-2.5 font-sans text-[12px] tracking-[0.08em] text-red-300/90 transition-all hover:border-red-400/60 hover:bg-red-400/[0.08] active:scale-[0.98]"
+          <a
+            href={`mailto:hello@logoutspells.com?subject=${encodeURIComponent("Please erase my account")}&body=${encodeURIComponent(`Please erase the account for ${data.profile.email}.`)}`}
+            className="inline-flex items-center gap-2 rounded-md border border-red-400/30 px-5 py-2.5 font-sans text-[12px] tracking-[0.08em] text-red-300/90 transition-all hover:border-red-400/60 hover:bg-red-400/[0.08] active:scale-[0.98]"
           >
-            Delete account
-          </button>
+            <Mail size={13} /> Write to us
+          </a>
         </div>
       </section>
-
-      <p className="mt-8 text-center font-hand text-lg text-gold/40">
-        demo mode — everything here lives safely in your browser ✦
-      </p>
-
-      {/* Delete confirm */}
-      <AnimatePresence>
-        {confirmDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => setConfirmDelete(false)}
-            role="presentation"
-            className="fixed inset-0 z-[97] grid place-items-center bg-charcoal-deep/85 px-5 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              transition={{ duration: 0.3, ease: EASE }}
-              onClick={(e) => e.stopPropagation()}
-              role="alertdialog"
-              aria-modal="true"
-              aria-label="Confirm account deletion"
-              className="relative w-full max-w-sm rounded-2xl border border-red-400/25 bg-[#14130f] p-6 shadow-[0_40px_100px_rgba(0,0,0,0.65)]"
-            >
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                aria-label="Close"
-                className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg border border-cream/15 text-cream/60 transition-all hover:text-cream"
-              >
-                <X size={14} />
-              </button>
-              <span aria-hidden className="font-serif text-4xl text-red-300/70">☾</span>
-              <h3 className="heading-serif mt-3 text-2xl text-cream">Truly leave?</h3>
-              <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
-                Your {data.bookings.length} bookings, {data.memories.length} albums and every step of
-                your journey will fade. This cannot be undone.
-              </p>
-              <div className="mt-6 flex gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(false)}
-                  className="btn-ghost-gold flex-1 !py-3 !text-[12px]"
-                >
-                  Stay
-                </button>
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => {
-                    setDeleting(true);
-                    void deleteAccount()
-                      .then(() => {
-                        navigate("/");
-                        toast("Your account has faded. The door stays open.");
-                      })
-                      .finally(() => setDeleting(false));
-                  }}
-                  className="flex-1 rounded-md border border-red-400/40 bg-red-400/10 py-3 font-sans text-[12px] tracking-[0.08em] text-red-300 transition-all hover:bg-red-400/20 disabled:opacity-50"
-                >
-                  {deleting ? "Fading…" : "Delete forever"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </AccountPage>
   );
 }

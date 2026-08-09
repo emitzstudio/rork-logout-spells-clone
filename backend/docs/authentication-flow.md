@@ -1,12 +1,13 @@
 # Authentication Flow
 
-> **Status: LIVE as of 2026-07-31 (M1).** `profiles`, `user_settings`, `user_roles`,
-> the role helpers and both `auth.users` triggers are applied and verified on the
-> production project. The founder's admin grant is **done** (2026-08-07,
-> `m1-founder-bootstrap`). **Since M5 the founder console signs in with native
-> Supabase Auth** (email + password) behind a staff gate — the gate is client
-> convenience; every read and write is enforced by RLS regardless. Still outstanding:
-> the traveller-facing auth swap (login/join/reset + account space), which lands in M6.
+> **Status: LIVE — M1 (2026-07-31) foundations · M5 staff console sign-in · M6
+> (2026-08-09) traveller auth.** `profiles`, `user_settings`, `user_roles`, the role
+> helpers and both `auth.users` triggers are applied and verified; the founder's
+> admin grant is done (`m1-founder-bootstrap`). The console signs in with native
+> Supabase Auth behind a staff gate, and since **M6 travellers log in / join / reset
+> passwords with the same native auth** — the account space, wishlist, dreams and
+> notifications all run under RLS. Gates are client convenience; RLS is the
+> enforcement. The demo account is retired (decision D2).
 
 ## Model
 
@@ -31,18 +32,25 @@ company-owned.
 2. A `SECURITY DEFINER` trigger on `auth.users` (`handle_new_user`) inserts:
    - `profiles` — id, names from metadata, synced email, generated unique
      `referral_code` (short, human-friendly, collision-checked);
-   - `user_settings` — default notification/privacy toggles.
-3. The client then syncs device-local state into the account on first session:
-   bucket-list interests → `user_interests`, brewed flag → `user_settings.brewed_at`,
-   wishlist → `saved_spells`.
+   - `user_settings` — default notification/privacy toggles;
+   - `notifications` — the **welcome whisper** (M6, decision D3), wrapped in its own
+     exception block so a notification hiccup can never cost a signup.
+3. The client then syncs device-local state into the account on first session (live
+   since M6, once per device): bucket-list interests → `user_interests` with order
+   preserved, brewed flag → `user_settings.brewed_at`. Wishlist hearts are
+   account-only by design — they exist only for signed-in travellers, so there is
+   nothing anonymous to merge.
 
 The trigger is the **only** writer of `profiles` inserts — there is no client insert
 policy, so a profile can never exist without an auth user or vice versa.
 
-Email confirmation: recommended **ON** for production (Supabase default). Password
-resets use Supabase's built-in reset email with a redirect to `/account/auth`.
-Both emails use Supabase's built-in sender initially; custom-domain email (Resend +
-DNS) is a later, cosmetic upgrade.
+**Email confirmation (decision D1, 2026-08-09): OFF for now** — `mailer_autoconfirm`
+is enabled, so joining is instant and signup never depends on the unbranded,
+rate-limited default mailer. It flips back ON in the branded-email milestone
+(Resend). Password resets DO use the built-in mailer for now (gentle rate limit —
+the UI's resend cooldown says so honestly) with a redirect to `/reset-password`;
+`site_url` and the redirect allow-list point at the live site, and the server-side
+password minimum was raised 6 → 8 to match the UI rule.
 
 ## Roles & least privilege
 

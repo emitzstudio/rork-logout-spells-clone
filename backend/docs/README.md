@@ -1,14 +1,16 @@
 # Logout Spells — Backend Documentation
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
-> M4 · M5 (2026-08-09) applied.** Live today: identity, the spell catalogue, the
-> journal/team/archive domain, the forms domain, the `submit_inquiry()` RPC and the
-> `spell_active_departures` view — and since M5 **the public website and the founder
-> console run on this database** (public reads, the two public write paths, staff
-> sign-in, builder storage uploads). Still mock in the app: traveller accounts,
-> bookings & payments, wishlist, notifications, memories (M6–M8). No Edge Functions
-> exist yet. [migration-history.md](./migration-history.md) is the record of what is
-> actually live — if it is not listed there, it is not live.
+> M4 · M5 · M6 (2026-08-09) applied.** Live today: identity, the spell catalogue,
+> the journal/team/archive domain, the forms domain, the M5 integration objects —
+> and since M6 the **traveller layer**: `saved_spells`, `user_interests`,
+> `notifications` (incl. the welcome whisper on signup), `spell_wishlist_counts()`
+> and the `avatars` bucket. The public website, the founder console **and the
+> traveller account space** all run on this database with native Supabase Auth.
+> Still mock in the app: bookings & payments (Door 2), memories, wallet/XP ledgers
+> (M7–M8). No Edge Functions exist yet.
+> [migration-history.md](./migration-history.md) is the record of what is actually
+> live — if it is not listed there, it is not live.
 
 Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 
@@ -64,7 +66,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M3 | Journal, team & archive | `blog_posts`, `team_members`, `previous_spells` (immutable archive), `reviews`, buckets `blog-media` + `site-media`, seeds | **Applied 2026-08-07 — verified** |
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, `next_ref()` pipeline, `spells.form_id`, seeds | **Applied 2026-08-09 — verified** |
 | M5 | Public site integration | Provider swap (public site + console behind staff sign-in), `submit_inquiry()`, `spell_active_departures`, storage upload pipeline | **Applied 2026-08-09 — verified** |
-| M6 | Traveller accounts | Real auth UI, profile/settings, `saved_spells`, `user_interests`, `notifications` | Pending |
+| M6 | Traveller accounts | Real auth UI (login/join/reset), profile/settings, `saved_spells`, `user_interests`, `notifications` + welcome whisper, `avatars` bucket, first-login merge, console wishlist counts | **Applied 2026-08-09 — verified** |
 | M7 | Bookings & payments | `bookings`, `payments`, webhook events, Edge Functions, payment provider | Pending |
 | M8 | Memories & referrals | `memories`, `memory_photos`, private bucket, `referrals`, realtime notifications | Pending |
 | — | Future (designed only) | Loyalty ledger, spellcasters accounts, community, traveller matching | Documented |

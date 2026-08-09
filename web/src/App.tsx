@@ -33,11 +33,12 @@ const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
 /** Traveller space + auth — also lazy, same reasoning. */
 const Account = lazy(() => import("./pages/account/Account"));
 const AuthPage = lazy(() => import("./pages/account/AuthPage"));
+const ResetPasswordPage = lazy(() => import("./pages/account/ResetPasswordPage"));
 
 const queryClient = new QueryClient();
 
 /** Auth screens live at these top-level paths. */
-const AUTH_PATHS = ["/login", "/join", "/forgot-password"] as const;
+const AUTH_PATHS = ["/login", "/join", "/forgot-password", "/reset-password"] as const;
 
 const isAccountArea = (pathname: string): boolean =>
   pathname.startsWith("/account") || AUTH_PATHS.some((p) => pathname.startsWith(p));
@@ -98,7 +99,7 @@ const AnimatedRoutes = () => {
         <Route path="/spell/:slug" element={<LegacySpellRedirect />} />
         {/* Public form pages — share links open straight into the questions. */}
         <Route path="/forms/:slug" element={<FormPage />} />
-        {/* Traveller auth — mock flows until the backend phase. */}
+        {/* Traveller auth — native Supabase sessions (M6). */}
         <Route
           path="/login"
           element={
@@ -120,6 +121,15 @@ const AnimatedRoutes = () => {
           element={
             <Suspense fallback={<AccountFallback label="Opening" />}>
               <AuthPage mode="forgot" />
+            </Suspense>
+          }
+        />
+        {/* Where the password-recovery email lands. */}
+        <Route
+          path="/reset-password"
+          element={
+            <Suspense fallback={<AccountFallback label="Opening" />}>
+              <ResetPasswordPage />
             </Suspense>
           }
         />
@@ -183,7 +193,7 @@ const App = () => (
       <FormStoreProvider>
         {/* The Journal — blog posts managed in the console, rendered on the site. */}
         <BlogStoreProvider>
-        {/* Traveller session + account data — mock service until the backend phase. */}
+        {/* Traveller session + account data — native Supabase Auth (M6). */}
         <AccountProvider>
           {/* The traveller's bucket list — dreams dropped into the Discover cauldron. */}
           <BucketListProvider>

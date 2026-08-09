@@ -1,11 +1,11 @@
 # Storage Structure
 
-> **Status: PARTIALLY APPLIED — `spell-media` (M2), `blog-media` + `site-media` (M3,
-> 2026-08-07) are live**, each with four access policies, a 10 MB cap, an image-only
-> MIME list, and folder discipline enforced on write (`spells/…` · `posts/…` ·
-> `team/…`+`previous/…`). The `avatars` and `memories` buckets arrive in M6/M8.
-> Current mock imagery is Unsplash URLs or local `/team/*.jpg` files; builder uploads
-> land in Storage under these rules. **Watch item:** seeded team photos still point at
+> **Status: PARTIALLY APPLIED — `spell-media` (M2), `blog-media` + `site-media` (M3)
+> and `avatars` (M6, 2026-08-09) are live**, each with four access policies, folder
+> discipline enforced on write (`spells/…` · `posts/…` · `team/…`+`previous/…` ·
+> `{user_id}/…`), image-only MIME lists and per-bucket caps (10 MB staff buckets,
+> 5 MB avatars). The `memories` bucket arrives in M8. Builder and avatar uploads land
+> in Storage under these rules. **Watch item:** seeded team photos still point at
 > site-relative `/team/*.jpg` — copy into `site-media/team/…` (copy → repoint →
 > delete) before any non-web surface renders the roster.
 
@@ -33,8 +33,8 @@ blog-media/   posts/{post_id}/hero-{image_id}.jpg
               posts/{post_id}/blocks/{image_id}.jpg
 site-media/   team/{member_id}/{image_id}.jpg
               previous/{previous_spell_id}/{image_id}.jpg
-avatars/      {user_id}/avatar.jpg
-              {user_id}/cover.jpg
+avatars/      {user_id}/avatar-{image_id}.jpg
+              {user_id}/cover-{image_id}.jpg
 memories/     {user_id}/{memory_id}/{photo_id}.jpg
 ```
 

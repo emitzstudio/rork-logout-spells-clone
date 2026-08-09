@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { Check, Download, Plus, SearchX, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ import type { FilterOption, ViewMode } from "@/components/dashboard/spells/Spell
 import { CATEGORY_META, STATUS_META } from "@/data/spells";
 import type { ManagedSpell, ManagedStatus, SortId, SpellCategoryId } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
+import { supabase } from "@/integrations/supabase/client";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const VIEW_STORAGE_KEY = "ls-spells-view";
@@ -322,7 +324,22 @@ export default function Spells() {
     return chips;
   }, [query, category, status, locationFilter]);
 
-  const selected = selectedId ? (spells.find((s) => s.id === selectedId) ?? null) : null;
+  // Real wishlist counts across all travellers (M6). The database gates the
+  // aggregate on staff membership — non-staff callers receive zero rows.
+  const { data: wishlistCounts } = useQuery({
+    queryKey: ["wishlist-counts"],
+    queryFn: async (): Promise<Map<string, number>> => {
+      const { data, error } = await supabase.rpc("spell_wishlist_counts");
+      if (error) throw error;
+      return new Map(data.map((row) => [row.spell_id, Number(row.wishlist_count)]));
+    },
+    staleTime: 60_000,
+  });
+
+  const selectedBase = selectedId ? (spells.find((s) => s.id === selectedId) ?? null) : null;
+  const selected = selectedBase
+    ? { ...selectedBase, wishlists: wishlistCounts?.get(selectedBase.id) ?? 0 }
+    : null;
   const confirmTarget = confirmState ? (spells.find((s) => s.id === confirmState.id) ?? null) : null;
 
   /** “+ New Spell” now forks: craft manually, or import a Spell file. */
