@@ -108,6 +108,186 @@ export type Database = {
           },
         ]
       }
+      form_responses: {
+        Row: {
+          answers: Json
+          created_at: string
+          form_id: string
+          id: string
+          respondent_name: string
+          respondent_phone: string
+          spell_id: string | null
+          spell_name: string
+          status: Database["public"]["Enums"]["response_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          form_id: string
+          id?: string
+          respondent_name?: string
+          respondent_phone?: string
+          spell_id?: string | null
+          spell_name?: string
+          status?: Database["public"]["Enums"]["response_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          form_id?: string
+          id?: string
+          respondent_name?: string
+          respondent_phone?: string
+          spell_id?: string | null
+          spell_name?: string
+          status?: Database["public"]["Enums"]["response_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_responses_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_responses_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          questions: Json
+          redirect_url: string
+          slug: string
+          status: Database["public"]["Enums"]["form_status"]
+          style: Database["public"]["Enums"]["form_style"]
+          submit_label: string
+          success_message: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          questions?: Json
+          redirect_url?: string
+          slug: string
+          status?: Database["public"]["Enums"]["form_status"]
+          style?: Database["public"]["Enums"]["form_style"]
+          submit_label?: string
+          success_message?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          questions?: Json
+          redirect_url?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["form_status"]
+          style?: Database["public"]["Enums"]["form_style"]
+          submit_label?: string
+          success_message?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiries: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          note: string
+          ref: string
+          spell_id: string | null
+          spell_name: string
+          spell_slug: string
+          status: Database["public"]["Enums"]["inquiry_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          note?: string
+          ref: string
+          spell_id?: string | null
+          spell_name?: string
+          spell_slug?: string
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          note?: string
+          ref?: string
+          spell_id?: string | null
+          spell_name?: string
+          spell_slug?: string
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interests: {
         Row: {
           categories: Database["public"]["Enums"]["spell_category"][]
@@ -329,6 +509,24 @@ export type Database = {
         }
         Relationships: []
       }
+      ref_counters: {
+        Row: {
+          period: string
+          scope: string
+          value: number
+        }
+        Insert: {
+          period: string
+          scope: string
+          value?: number
+        }
+        Update: {
+          period?: string
+          scope?: string
+          value?: number
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           author_avatar: string
@@ -493,6 +691,7 @@ export type Database = {
           currency: string
           duration_days: number
           featured: boolean
+          form_id: string | null
           gradient: string
           hero_as_cover: boolean
           hero_url: string
@@ -524,6 +723,7 @@ export type Database = {
           currency?: string
           duration_days?: number
           featured?: boolean
+          form_id?: string | null
           gradient?: string
           hero_as_cover?: boolean
           hero_url?: string
@@ -555,6 +755,7 @@ export type Database = {
           currency?: string
           duration_days?: number
           featured?: boolean
+          form_id?: string | null
           gradient?: string
           hero_as_cover?: boolean
           hero_url?: string
@@ -584,6 +785,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spells_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
             referencedColumns: ["id"]
           },
         ]
@@ -785,6 +993,7 @@ export type Database = {
       }
       increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
       is_staff: { Args: never; Returns: boolean }
+      next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "staff"
@@ -808,6 +1017,10 @@ export type Database = {
         | "archived"
         | "restored"
       departure_status: "scheduled" | "closed" | "cancelled"
+      form_status: "draft" | "published"
+      form_style: "conversational" | "traditional"
+      inquiry_status: "new" | "contacted" | "closed"
+      response_status: "new" | "viewed"
       spell_category:
         | "gathering"
         | "movement"
@@ -973,6 +1186,10 @@ export const Constants = {
         "restored",
       ],
       departure_status: ["scheduled", "closed", "cancelled"],
+      form_status: ["draft", "published"],
+      form_style: ["conversational", "traditional"],
+      inquiry_status: ["new", "contacted", "closed"],
+      response_status: ["new", "viewed"],
       spell_category: [
         "gathering",
         "movement",

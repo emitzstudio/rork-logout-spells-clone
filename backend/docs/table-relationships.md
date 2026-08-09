@@ -2,11 +2,14 @@
 
 > **Status: PARTIALLY APPLIED.** Live branches: the identity tree (M1 — `auth.users →
 > profiles → user_settings / user_roles`), the catalogue tree (M2 — `spells →
-> spell_departures / spell_changes`, `interests`), and the journal/archive tree (M3 —
+> spell_departures / spell_changes`, `interests`), the journal/archive tree (M3 —
 > `team_members ← blog_posts.author_id`, `previous_spells ← reviews`,
 > `previous_spells.spell_id → spells`, `blog_posts.created_by / team_members.user_id /
-> reviews.author_id → profiles`), including the delete behaviour documented below.
-> Every other node in the map is still design-only. Companion to
+> reviews.author_id → profiles`), and the forms tree (M4 — `forms ← form_responses`,
+> `spells.form_id → forms`, `form_responses.spell_id / inquiries.spell_id → spells`,
+> `form_responses.user_id / inquiries.user_id / forms.created_by → profiles`, plus the
+> client-invisible `ref_counters`), including the delete behaviour documented below.
+> Still design-only: bookings & money, traveller space. Companion to
 > [database-architecture.md](./database-architecture.md).
 
 ## Entity map
@@ -101,6 +104,8 @@ is to stay unchanged when the source changes:
 - `bookings.spell_snapshot` — the trip card as sold; live spell may be edited/archived.
 - `bookings.lead_*` — contact details as given at purchase.
 - `reviews.author_name` / `author_avatar` — testimony as signed.
-- `inquiries.spell_name`, `referrals.booked_spell_name` — display continuity.
+- `inquiries.spell_slug` / `spell_name`, `form_responses.spell_name`,
+  `referrals.booked_spell_name` — display continuity.
+- `form_responses.answers[].questionTitle` — responses stay readable after form edits.
 
 Everything else joins live tables; no other field is stored twice.

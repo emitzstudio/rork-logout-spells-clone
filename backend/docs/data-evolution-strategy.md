@@ -52,7 +52,8 @@ and any future document.
 | `blog_posts.blocks` | **1** | `web/src/data/blog.ts` (`BlogBlock`, 11 kinds) | Live since M3: `{version, blocks: BlogBlock[]}`. Blocks may carry a client-generated `id` (builder reorder identity); renderers ignore it. Images are Storage URLs, never data URLs. |
 | `previous_spells.chapters` / `gallery` / `memory_notes` / `community` | **1** | `web/src/data/previousSpells.ts` item shapes | Live since M3: `{version, items: […]}` wrappers around the existing PastChapter / PastGalleryShot / PastMemoryNote / CommunityMoment shapes. |
 | `previous_spells.page_snapshot` | — | carries whatever `spells.page` version was live at archive time | Content is frozen (write-once column); document migrations may upgrade its **shape** only, never its content. |
-| `forms.questions` | — | arrives M4 | |
+| `forms.questions` | **1** | `web/src/data/forms.ts` (`FormQuestion`, 9 types) | Live since M4: `{version, questions: FormQuestion[]}`. Core questions are reorderable-not-deletable. Text-only — no media. Seeded option ids were stabilized (the mock regenerates them per load; responses reference option values, never ids). |
+| `form_responses.answers` | **1** | `web/src/data/forms.ts` (`ResponseAnswer`) | Live since M4: `{version, answers: [{questionId, questionTitle, type, value}]}`. `questionTitle` is a deliberate snapshot — responses stay readable after the founder edits the form. |
 
 ---
 

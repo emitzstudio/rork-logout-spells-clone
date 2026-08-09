@@ -63,6 +63,12 @@ Sends team email (Resend) on new inquiries/form responses. Requires the founder'
 Resend API key + DNS records (manual, guided). Until then the dashboard lists are the
 inbox.
 
+### `harden-public-submissions` — later, only if abuse appears
+Founder-approved posture (M4): the two public write paths (form responses, enquiries)
+run on Supabase's API rate limits. If spam ever becomes real, submissions move behind
+an Edge Function with rate limiting and a turnstile/CAPTCHA check — purely additive,
+no schema change; RLS already restricts what can be written and where.
+
 ## Conventions
 
 - Service-role key only inside functions; never shipped to clients.

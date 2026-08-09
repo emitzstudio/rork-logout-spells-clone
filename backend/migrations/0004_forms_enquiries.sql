@@ -1,8 +1,13 @@
 -- ============================================================================
 -- M4 · Forms & enquiries — Logout Spells
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT — pending founder review. NOTHING in this file has been
--- applied. Once approved it runs and this header is updated to APPLIED.
+-- Status: APPLIED 2026-08-09, after founder approval in chat (including the three
+-- highlighted decisions: public anonymous submission posture, the unanswered-only
+-- form delete guard, and server-generated IQ-MMYY-### refs). Applied BYTE-EXACT
+-- from this file via the Supabase management API as one atomic statement batch
+-- (HTTP 201). Verified by `m4-verify-assertions` + `m4-verify-behavior` (managed
+-- tool — all passed, types regenerated). See backend/docs/migration-history.md.
+-- Do NOT re-run: this file is the source of record, not an idempotent script.
 --
 -- Creates, in dependency order:
 --   §1  Enums: form_style · form_status · response_status · inquiry_status

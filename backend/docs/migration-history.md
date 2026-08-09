@@ -352,8 +352,107 @@ Before any non-web surface (the Expo app) renders the roster, copy them into
 
 ---
 
-## Planned next: M4 — Forms & enquiries
+## M4 — Forms & enquiries · applied 2026-08-09
 
-`forms`, `form_responses`, `inquiries`, the additive `spells.form_id` column with the
-seeded-spell re-links, the shared reference-number generator, and seeds. SQL will be
-drafted and reviewed in chat before anything runs.
+| | |
+| --- | --- |
+| Migration | [`backend/migrations/0004_forms_enquiries.sql`](../migrations/0004_forms_enquiries.sql), applied byte-exact |
+| Applied via | Supabase management API as one atomic statement batch (HTTP 201) — same proven path as M3; verification + type regeneration through the managed tool (`m4-verify-assertions`, `m4-verify-behavior`). |
+| Reviewed | Full architecture, SQL, JSON shapes, RLS, seeds and testing checklist posted in chat |
+| Approved by | Vidushi Verma — explicitly including the three highlighted decisions: (1) public anonymous submission paths with the current Supabase rate-limit posture, CAPTCHA/WAF/Edge hardening documented as future additive; (2) the unanswered-only form delete guard; (3) server-generated `IQ-MMYY-###` refs via `next_ref()`. |
+| Destructive statements | **None.** Pre-flight scan confirmed: no drop/truncate/rename/delete; the only M1–M3 touches are the additive `spells.form_id` ALTER, two additive column grants, and the approved seed backfill UPDATE on two seeded rows. File byte-identical to review (28,227 B). |
+
+### What went live
+
+**Enums (4)** — `form_style` (2) · `form_status` (2) · `response_status` (2) ·
+`inquiry_status` (3).
+
+**Tables (4)** — RLS enabled in the same migration:
+
+- `forms` — the dynamic form builder (D1: `questions` jsonb v1, 9 question types,
+  text-only). Deletable only while unanswered; retirement = unpublishing.
+- `form_responses` — **public write path #1**: anyone submits, but only into a
+  published form, and spell references must be visible to the caller. `user_id`
+  defaults to `auth.uid()` — bound automatically, never client-suppliable.
+  Respondents can never read responses back.
+- `inquiries` — **public write path #2** (Door 1): server-generated `ref` via BEFORE
+  INSERT trigger; no DELETE path, `closed` is terminal.
+- `ref_counters` — monthly counters behind `next_ref()`; RLS on with **zero policies
+  and zero grants** — invisible to every client role.
+
+**Reference pipeline** — `next_ref(scope, prefix)` (SECURITY DEFINER, pinned path,
+EXECUTE revoked from clients): row-locked upsert per Asia/Kolkata month — concurrent
+submissions serialize, refs never collide. M7 reuses it for `LS-` booking refs.
+
+**`spells.form_id`** — the additive ALTER promised since M2 (nullable, `set null`),
+extending the spells whitelists 24 → 25; backfill re-linked exactly **Culinary Spell**
+and **Movement Spell** to the Logout Interest Form.
+
+**Policies (11)** — forms 4 · responses 4 · inquiries 3 (+0 on `ref_counters`).
+**Triggers (4)** — 3 × `updated_at` + `inquiries_set_ref`.
+**Column grants** — forms 9/9 + guarded DELETE · responses: anon **and** authenticated
+INSERT exactly 6 columns, UPDATE `status` only, staff DELETE (spam) · inquiries: 6-col
+public INSERT, UPDATE `status` only, `ref`/`user_id`/`id` unwritable by anyone.
+
+**Seeds** — 2 forms (Logout Interest Form published · 7 questions v1; Bali Waitlist
+draft · 6 questions), 4 responses (verbatim mock, 2 new / 2 viewed, all v1,
+`user_id` null), inquiries **deliberately empty** (the mock starts empty — the first
+real enquiry becomes `IQ-<month>-001`), `ref_counters` empty. Fixed uuids `40…`/`41…`.
+Option ids inside seeded question documents were stabilized (the mock regenerates them
+per page load; responses reference option values, never ids — nothing breaks).
+
+### Verification
+
+`m4-verify-assertions` (read-only) — **all passed**: 4 enums with 2/2/2/3 values · RLS
+on all 4 tables · 11 policies + 0 on `ref_counters` · the forms DELETE qual carries the
+NOT EXISTS guard · both public INSERT policies include `anon` (responses
+published-gated) · 4 triggers · `next_ref`/`set_inquiry_ref` definer + pinned + not
+client-executable · `ref_counters` zero client privileges of any kind · zero table-wide
+writes except the two intended DELETEs · exact column whitelists (9/9 · 6×2/1 · 6×2/1) ·
+protected columns (`id`, `ref`, `status`, `user_id`, timestamps) hold no public write
+grants · spells 25/25 with SET NULL FK · 3 indexes incl. the partial · seeds 2/4/0/0 ·
+backfill exactly Culinary + Movement, nothing else.
+
+`m4-verify-behavior` (role-switched to `anon`, self-cleaning, net-zero rows) — **all
+passed**: anon sees exactly 1 form (the draft hidden) · anon submission into the
+published form accepted; into the draft form **rejected** · anon reads **zero**
+responses back · two anon enquiries received sequential server refs `IQ-0826-001` /
+`IQ-0826-002` with the counter at 2 · an enquiry referencing a draft spell **rejected**
+(uuid probing dead) · anon holds no privilege on `inquiries.ref` or `ref_counters` ·
+anon probe defaults correct (`user_id` null, `status` new) · probes and the counter row
+removed — the founder's first real enquiry will still be `-001`.
+
+Backfill spot-check (read-only query): `culinary-spell` and `movement-spell` →
+“Logout Interest Form”; total linked spells = 2.
+
+TypeScript types regenerated into `backend/types.ts`,
+`web/src/integrations/supabase/types.ts` and `expo/src/integrations/supabase/types.ts`.
+Web build green (live preview intact); Expo checks green.
+
+### Discovered during execution — M5 integration note
+
+The visitor-facing success screen shows the enquiry ref (`BookingFlow` renders
+`record.ref`), but anon deliberately has no SELECT on `inquiries` — so a plain
+`INSERT … RETURNING` cannot hand the ref back through the API. M4 is correct as
+reviewed (the write path works); **M5 adds a tiny `submit_inquiry()` SECURITY DEFINER
+RPC** that inserts and returns only the ref, re-checking spell visibility internally.
+Goes through the normal M5 review.
+
+### Deliberately NOT in M4
+
+- `notify-team` email function (Resend) — additive Edge Function later; the console
+  lists are the inbox until then.
+- Rate limiting / CAPTCHA on the public write paths — founder-approved posture:
+  Supabase API rate limits today; Edge/WAF hardening documented as future additive
+  (see edge-functions.md).
+- `bookings` and `LS-` refs — M7, reusing `next_ref`.
+- **No application code changed.** The site renders mock data until M5.
+
+---
+
+## Planned next: M5 — Public site integration (web)
+
+The website's data providers swap from mock/localStorage to Supabase — public reads,
+the two public write paths, the console behind a staff sign-in, and the builder image
+upload pipeline. Includes one small additive migration (`submit_inquiry()` RPC +
+`spell_active_departures` view). Full review before anything runs.

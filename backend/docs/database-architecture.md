@@ -1,13 +1,13 @@
 # Database Architecture
 
-> **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**, 2026-07-31 —
-> `profiles`, `user_settings`, `user_roles`, `app_role`/`spell_category`, role helpers,
-> signup pipeline) and the spell catalogue (**M2**, 2026-08-02 — `spells`,
-> `spell_departures`, `spell_changes`, `interests`, the catalogue enums,
-> `increment_spell_views()`, `guard_last_departure()`, `active_departure()`, and the
-> `spell-media` bucket), exactly as documented here. Every other table below is still
-> the reviewed target schema and is **not** applied.
-> [migration-history.md](./migration-history.md) records what is actually live.
+> **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**, 2026-07-31),
+> the spell catalogue (**M2**, 2026-08-02), the journal/team/archive domain (**M3**,
+> 2026-08-07), and the forms domain (**M4**, 2026-08-09 — `forms`, `form_responses`,
+> `inquiries`, `ref_counters` + `next_ref()`, and `spells.form_id`), exactly as
+> documented here. Sections still marked design-only: bookings & money (§9), the
+> traveller space (§10), and the M6 personal tables in §5 (`user_interests`,
+> `saved_spells`). [migration-history.md](./migration-history.md) records what is
+> actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every
 page already renders through service seams. Column names map 1:1 onto the existing
@@ -175,7 +175,7 @@ reviewed migration (see authentication-flow.md).
 | `gradient`, `symbol` | `text` | card art tokens |
 | `inclusions` | `text[]` | card-level list |
 | `page` | `jsonb` null | full Spell Builder document (D1-A) |
-| `form_id` | `uuid` null → forms `set null` | attached application form — **column arrives in M4** with the `forms` table (additive ALTER) |
+| `form_id` | `uuid` null → forms `set null` | attached application form — live since M4; many spells may share one form |
 | `views` | `bigint` default 0 | incremented via a `SECURITY DEFINER` RPC, never direct UPDATE |
 | `created_by` | `uuid` null → profiles `set null` | |
 | `published_at` | `timestamptz` null | |
@@ -322,31 +322,55 @@ Future expansion (multiple roles, achievements) is additive: join tables, no red
 
 ---
 
-## 8. Forms & enquiries
+## 8. Forms & enquiries — live since M4
 
 ### `forms` — the dynamic form builder
-`id`, `slug` unique, `title`, `description`, `style form_style`, `status form_status`,
-`questions jsonb` (ordered question list — existing `FormQuestion` shape),
-`success_message`, `redirect_url`, `submit_label`, `created_by`, timestamps.
-RLS: SELECT anyone where published (public application pages), staff all · write staff.
+`id`, `slug` unique (format-checked), `title`, `description`, `style form_style`,
+`status form_status` default `draft`, `questions jsonb` (v1: `{version, questions:
+FormQuestion[]}` — 9 question types, core questions reorderable-not-deletable,
+text-only so no bucket is needed), `success_message`, `redirect_url`, `submit_label`,
+`created_by`, timestamps.
+RLS: SELECT anyone where published (application pages work logged-out), staff all ·
+INSERT/UPDATE staff · DELETE staff **only while unanswered** (`NOT EXISTS` guard on
+responses) — once travellers have written into a form it is retired by unpublishing,
+never cascade-deleted.
 
-### `form_responses`
-`id`, `form_id` → forms cascade, `spell_id uuid` null → spells `set null` (the spell
-applied through), `user_id uuid` null (set when logged in), `respondent_name`,
-`respondent_phone`, `answers jsonb` (existing `ResponseAnswer[]` shape),
-`status response_status` default `new`, `created_at`.
-Index `(form_id, created_at desc)`.
-RLS: INSERT anyone (public forms accept anonymous applications — same as today; abuse
-controls move to an Edge Function + rate limiting when volume demands) · SELECT staff ·
-UPDATE staff (`status` only). Respondents cannot read responses back — they contain
-other people's PII pathways; the success screen is the receipt.
+### `form_responses` — public write path #1
+`id`, `form_id` → forms cascade, `spell_id uuid` null → spells `set null` +
+`spell_name` snapshot (the spell applied through), `user_id uuid` null — **defaults to
+`auth.uid()`**: logged-in submitters are bound automatically and the column is never
+client-suppliable — `respondent_name`, `respondent_phone` (display projections, as the
+shipped console computes them), `answers jsonb` (v1: `{version, answers:
+ResponseAnswer[]}` — `questionTitle` is a deliberate snapshot so responses stay
+readable after form edits), `status response_status` default `new`, timestamps.
+Indexes: `(form_id, created_at desc)` · partial on `status = 'new'` (inbox badge).
+RLS: INSERT anyone — but **only into a published form**, and any `spell_id` must be
+visible to the caller (the EXISTS runs under the caller's own RLS, killing uuid
+probing) · SELECT staff · UPDATE staff (`status` only) · DELETE staff (spam
+moderation). Respondents can never read responses back — the success screen is the
+receipt. Abuse posture (founder-approved, M4): Supabase API rate limits today; Edge
+Function + WAF/turnstile hardening is a documented additive upgrade if spam appears.
 
-### `inquiries` — Door 1 of "Join this Spell"
-`id`, `ref text` unique (IQ-MMYY-###), `spell_id uuid` null `set null`,
-`spell_name text` (snapshot), `name`, `email`, `note`,
-`status inquiry_status` default `new`, `user_id uuid` null, `created_at`.
-RLS: INSERT anyone · SELECT/UPDATE staff. Team email notification arrives with the
-Resend Edge Function (later milestone).
+### `inquiries` — Door 1 of "Join this Spell" · public write path #2
+`id`, **`ref text` unique — server-generated `IQ-MMYY-###`**, `spell_id uuid` null
+`set null`, `spell_slug` + `spell_name` snapshots, `name`, `email`, `note`,
+`status inquiry_status` default `new`, `user_id uuid` null (defaults `auth.uid()`),
+timestamps. Index `(status, created_at desc)`.
+RLS: INSERT anyone (spell reference must be visible-or-null) · SELECT/UPDATE staff
+(`status` only) · **no DELETE path** — `closed` is the terminal state. Team email
+notification arrives with the Resend Edge Function (later milestone). M5 adds a
+`submit_inquiry()` SECURITY DEFINER RPC so the visitor's success screen can receive
+the ref (anon deliberately has no SELECT on this table).
+
+### The reference pipeline — `ref_counters` + `next_ref()`
+`ref_counters (scope, period, value)` holds one monthly counter per ref family; RLS
+enabled with **zero policies and zero grants** — invisible to every client role.
+`next_ref('inquiry', 'IQ')` (SECURITY DEFINER, pinned `search_path`, EXECUTE revoked
+from clients) upserts the `(scope, period)` row under a row lock — concurrent
+submissions serialize, refs never collide, and past 999 the number simply grows. A
+BEFORE INSERT trigger overwrites `ref` unconditionally (belt); the column holds no
+client grant (suspenders). **M7 reuses `next_ref('booking', 'LS')`** — one mechanism,
+two consumers.
 
 ---
 
