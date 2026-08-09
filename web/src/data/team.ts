@@ -1,10 +1,15 @@
 /**
  * Team domain — the people behind Logout Spells.
  *
- * Same seam pattern as the account service: the About page only talks to
- * `teamService`, so the CMS/backend phase can serve members from a table
- * (unlimited entries) without touching a single component.
+ * M5: the roster is served from Supabase (`team_members`, active rows under
+ * RLS). The seeded constants below double as placeholder data — identical to
+ * the database seeds — so the About page paints instantly and settles onto
+ * live content.
  */
+import { useQuery } from "@tanstack/react-query";
+
+import { supabase } from "@/integrations/supabase/client";
+import { mapTeamMember } from "@/integrations/supabase/mappers";
 
 export interface TeamSocials {
   instagram: string;
@@ -158,12 +163,22 @@ const TEAM: TeamMember[] = [
   },
 ];
 
-/**
- * Team service — swap the internals for Supabase later; the About page
- * only ever calls `list()`.
- */
-export const teamService = {
-  list(): TeamMember[] {
-    return TEAM;
-  },
+const fetchTeam = async (): Promise<TeamMember[]> => {
+  const { data, error } = await supabase
+    .from("team_members")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data.map(mapTeamMember);
 };
+
+/** The coven roster — live from Supabase, seeded placeholder for first paint. */
+export function useTeamMembers(): TeamMember[] {
+  const { data } = useQuery({
+    queryKey: ["team"],
+    queryFn: fetchTeam,
+    placeholderData: TEAM,
+    staleTime: 60_000,
+  });
+  return data ?? TEAM;
+}

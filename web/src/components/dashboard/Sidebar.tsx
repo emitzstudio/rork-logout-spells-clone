@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, Globe, X } from "lucide-react";
+import { ChevronLeft, Globe, LogOut, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 
 import { DASH_NAV, FOUNDER } from "@/data/dashboard";
 import type { DashNavItem } from "@/data/dashboard";
+import { useStaffAuth } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -76,6 +77,7 @@ function NavEntry({
 
 /** Brand block, grouped nav, "view website" and founder chip — shared by desktop rail and mobile drawer. */
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const staff = useStaffAuth();
   return (
     <>
       <div className={cn("flex h-16 shrink-0 items-center border-b border-cream/[0.06] px-4", collapsed && "justify-center px-0")}>
@@ -131,6 +133,19 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
           <Globe className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-12" />
           {!collapsed && <span>View website</span>}
         </Link>
+        {staff !== null && (
+          <button
+            type="button"
+            onClick={() => void staff.signOut()}
+            className={cn(
+              "group flex h-9 w-full items-center gap-3 rounded-lg px-3 font-sans text-[12px] text-cream/45 transition-colors duration-200 hover:bg-cream/[0.04] hover:text-cream",
+              collapsed && "justify-center px-0",
+            )}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Sign out</span>}
+          </button>
+        )}
         <div
           className={cn(
             "mt-2 flex items-center gap-3 rounded-lg border border-cream/[0.06] bg-cream/[0.02] p-2.5",

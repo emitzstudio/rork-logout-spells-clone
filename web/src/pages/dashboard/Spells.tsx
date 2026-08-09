@@ -12,7 +12,7 @@ import SpellListRow, { SpellListHeader } from "@/components/dashboard/spells/Spe
 import SpellsEmptyState from "@/components/dashboard/spells/SpellsEmptyState";
 import SpellsToolbar from "@/components/dashboard/spells/SpellsToolbar";
 import type { FilterOption, ViewMode } from "@/components/dashboard/spells/SpellsToolbar";
-import { CATEGORY_META, MOCK_SPELLS, STATUS_META } from "@/data/spells";
+import { CATEGORY_META, STATUS_META } from "@/data/spells";
 import type { ManagedSpell, ManagedStatus, SortId, SpellCategoryId } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 
@@ -49,7 +49,13 @@ interface ToastState {
 export default function Spells() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { spells, setSpells, uniqueSlug } = useSpellStore();
+  const {
+    spells,
+    duplicateSpell: duplicateSpellInStore,
+    archiveSpell: archiveSpellInStore,
+    restoreSpell: restoreSpellInStore,
+    refresh,
+  } = useSpellStore();
   const [view, setView] = useState<ViewMode>(readStoredView);
   const [query, setQuery] = useState<string>("");
   const [category, setCategory] = useState<string>("all");
@@ -129,126 +135,63 @@ export default function Spells() {
     (id: string) => {
       const source = spells.find((s) => s.id === id);
       if (!source) return;
-      const copyId = `${source.id}-copy-${Date.now()}`;
-      const copyName = `${source.name} (Copy)`;
-      const copySlug = uniqueSlug(`${source.slug}-copy`);
-      const copy: ManagedSpell = {
-        ...source,
-        id: copyId,
-        name: copyName,
-        slug: copySlug,
-        draft: source.draft
-          ? { ...structuredClone(source.draft), name: copyName, slug: copySlug, status: "draft" }
-          : null,
-        status: "draft",
-        urgency: null,
-        seatsBooked: 0,
-        revenue: 0,
-        views: 0,
-        wishlists: 0,
-        createdAt: nowISO(),
-        updatedAt: nowISO(),
-        changes: [
-          {
-            id: `${copyId}-change`,
-            kind: "duplicated",
-            title: "Duplicated",
-            detail: `Created from “${source.name}”`,
-            time: "Just now",
-          },
-        ],
-      };
-      setSpells((list) => {
-        const index = list.findIndex((s) => s.id === id);
-        const next = [...list];
-        next.splice(index + 1, 0, copy);
-        return next;
-      });
-      setSelectedId(null);
-      setFreshId(copyId);
-      showToast(`“${source.name}” duplicated as a draft`);
+      void duplicateSpellInStore(id)
+        .then((copy) => {
+          if (!copy) return;
+          setSelectedId(null);
+          setFreshId(copy.id);
+          showToast(`“${source.name}” duplicated as a draft`);
+        })
+        .catch(() => showToast("Could not duplicate — please try again"));
     },
-    [spells, setSpells, uniqueSlug, showToast],
+    [spells, duplicateSpellInStore, showToast],
   );
 
   const archiveSpell = useCallback(
     (id: string) => {
       const target = spells.find((s) => s.id === id);
-      setSpells((list) =>
-        list.map((s) =>
-          s.id === id
-            ? {
-                ...s,
-                status: "archived" as ManagedStatus,
-                urgency: null,
-                updatedAt: nowISO(),
-                changes: [
-                  {
-                    id: `${id}-archived-${Date.now()}`,
-                    kind: "archived" as const,
-                    title: "Archived",
-                    detail: "Hidden from the public site",
-                    time: "Just now",
-                  },
-                  ...s.changes,
-                ].slice(0, 4),
-              }
-            : s,
-        ),
-      );
       setConfirmState(null);
       setSelectedId(null);
-      showToast(
-        target
-          ? `“${target.name}” archived${target.status === "published" || target.status === "soldout" ? " — removed from the site" : ""}`
-          : "Spell archived",
-      );
+      void archiveSpellInStore(id)
+        .then(() =>
+          showToast(
+            target
+              ? `“${target.name}” archived${target.status === "published" || target.status === "soldout" ? " — removed from the site" : ""}`
+              : "Spell archived",
+          ),
+        )
+        .catch(() => showToast("Could not archive — please try again"));
     },
-    [spells, setSpells, showToast],
+    [spells, archiveSpellInStore, showToast],
   );
 
   const restoreSpell = useCallback(
     (id: string) => {
       const target = spells.find((s) => s.id === id);
-      setSpells((list) =>
-        list.map((s) =>
-          s.id === id
-            ? {
-                ...s,
-                status: "draft" as ManagedStatus,
-                updatedAt: nowISO(),
-                changes: [
-                  {
-                    id: `${id}-restored-${Date.now()}`,
-                    kind: "restored" as const,
-                    title: "Restored from archive",
-                    detail: "Back in your drafts",
-                    time: "Just now",
-                  },
-                  ...s.changes,
-                ].slice(0, 4),
-              }
-            : s,
-        ),
-      );
-      showToast(target ? `“${target.name}” restored to drafts` : "Spell restored");
+      void restoreSpellInStore(id)
+        .then(() => showToast(target ? `“${target.name}” restored to drafts` : "Spell restored"))
+        .catch(() => showToast("Could not restore — please try again"));
     },
-    [spells, setSpells, showToast],
+    [spells, restoreSpellInStore, showToast],
   );
 
   const deleteSpell = useCallback(
     (id: string) => {
       const target = spells.find((s) => s.id === id);
-      setSpells((list) => list.filter((s) => s.id !== id));
       setConfirmState(null);
       setSelectedId(null);
-      showToast(
-        target
-          ? `“${target.name}” deleted${target.status === "published" || target.status === "soldout" ? " — removed from the site" : ""}`
-          : "Spell deleted",
-      );
+      /* Catalogue rows are never erased — the database allows archive only. */
+      void archiveSpellInStore(id)
+        .then(() =>
+          showToast(
+            target
+              ? `“${target.name}” moved to the archive — spells are never erased`
+              : "Spell archived",
+          ),
+        )
+        .catch(() => showToast("Could not archive — please try again"));
     },
-    [spells, setSpells, showToast],
+    [spells, archiveSpellInStore, showToast],
   );
 
   /** Archive needs confirmation; restoring an archived spell is instant. */
@@ -444,7 +387,7 @@ export default function Spells() {
       </div>
 
       {spells.length === 0 ? (
-        <SpellsEmptyState onNew={goNew} onRestore={() => setSpells(MOCK_SPELLS)} />
+        <SpellsEmptyState onNew={goNew} onRestore={refresh} />
       ) : (
         <>
           {/* Toolbar */}

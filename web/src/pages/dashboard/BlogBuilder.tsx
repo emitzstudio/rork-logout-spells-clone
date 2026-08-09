@@ -214,27 +214,29 @@ export default function BlogBuilder() {
   const handleSave = (): void => {
     if (saving || publishState !== null) return;
     setSaving(true);
-    try {
-      const existing = savedIdRef.current ? (getById(savedIdRef.current) ?? null) : null;
-      const slug = uniqueSlug(draftSlugSource(draft), existing?.id);
-      const keepLive = draft.status === "published";
-      const record = postFromDraft({
-        draft,
-        slug,
-        status: keepLive ? "published" : "draft",
-        existing,
-      });
-      savePost(record);
-      savedIdRef.current = record.id;
-      setDraft((d) => ({ ...d, slug }));
-      setDirty(false);
-      toast.success(keepLive ? "Saved — the live story is updated" : "Draft saved to the Journal");
-    } catch (error) {
-      console.error("[blog-builder] Save failed:", error);
-      toast.error("Could not save — please try again");
-    } finally {
-      setSaving(false);
-    }
+    void (async () => {
+      try {
+        const existing = savedIdRef.current ? (getById(savedIdRef.current) ?? null) : null;
+        const slug = uniqueSlug(draftSlugSource(draft), existing?.id);
+        const keepLive = draft.status === "published";
+        const record = postFromDraft({
+          draft,
+          slug,
+          status: keepLive ? "published" : "draft",
+          existing,
+        });
+        const saved = await savePost(record);
+        savedIdRef.current = saved.id;
+        setDraft((d) => ({ ...d, slug }));
+        setDirty(false);
+        toast.success(keepLive ? "Saved — the live story is updated" : "Draft saved to the Journal");
+      } catch (error) {
+        console.error("[blog-builder] Save failed:", error);
+        toast.error("Could not save — please try again");
+      } finally {
+        setSaving(false);
+      }
+    })();
   };
 
   const handlePublish = (): void => {
@@ -248,18 +250,20 @@ export default function BlogBuilder() {
     const slug = uniqueSlug(draftSlugSource(draft), existing?.id);
     setPublishState({ slug, done: false, recordId: null });
     window.setTimeout(() => {
-      try {
-        const record = postFromDraft({ draft, slug, status: "published", existing });
-        savePost(record);
-        savedIdRef.current = record.id;
-        setDraft((d) => ({ ...d, slug, status: "published" }));
-        setDirty(false);
-        setPublishState({ slug, done: true, recordId: record.id });
-      } catch (error) {
-        console.error("[blog-builder] Publish failed:", error);
-        setPublishState(null);
-        toast.error("Something interrupted the ritual — please try again");
-      }
+      void (async () => {
+        try {
+          const record = postFromDraft({ draft, slug, status: "published", existing });
+          const saved = await savePost(record);
+          savedIdRef.current = saved.id;
+          setDraft((d) => ({ ...d, slug, status: "published" }));
+          setDirty(false);
+          setPublishState({ slug, done: true, recordId: saved.id });
+        } catch (error) {
+          console.error("[blog-builder] Publish failed:", error);
+          setPublishState(null);
+          toast.error("Something interrupted the ritual — please try again");
+        }
+      })();
     }, 950);
   };
 

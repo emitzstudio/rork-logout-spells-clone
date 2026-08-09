@@ -1,16 +1,14 @@
 # Logout Spells — Backend Documentation
 
-> **Status: BUILD PHASE — M1 applied 2026-07-31 · M2 applied 2026-08-02 · M3 applied
-> 2026-08-07 · M4 applied 2026-08-09.** Live today: the identity layer (`profiles`,
-> `user_settings`, `user_roles`, signup pipeline, founder admin), the spell catalogue
-> (`spells` incl. `form_id`, `spell_departures`, `spell_changes`, `interests`,
-> `active_departure()`), the journal/team/archive domain (`blog_posts`,
-> `team_members`, `previous_spells`, `reviews`), and the forms domain (`forms`,
-> `form_responses`, `inquiries`, the `next_ref()` reference pipeline) — plus the
-> `spell-media`, `blog-media` and `site-media` buckets, all seeded. Everything else in
-> these documents is still the agreed target architecture, not yet applied. No Edge
-> Functions exist yet. [migration-history.md](./migration-history.md) is the record of
-> what is actually live — if it is not listed there, it is not live.
+> **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
+> M4 · M5 (2026-08-09) applied.** Live today: identity, the spell catalogue, the
+> journal/team/archive domain, the forms domain, the `submit_inquiry()` RPC and the
+> `spell_active_departures` view — and since M5 **the public website and the founder
+> console run on this database** (public reads, the two public write paths, staff
+> sign-in, builder storage uploads). Still mock in the app: traveller accounts,
+> bookings & payments, wishlist, notifications, memories (M6–M8). No Edge Functions
+> exist yet. [migration-history.md](./migration-history.md) is the record of what is
+> actually live — if it is not listed there, it is not live.
 
 Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 
@@ -65,7 +63,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M2 | Spell catalogue | `spells`, `spell_departures`, `spell_changes`, `interests`, `active_departure()`, storage bucket `spell-media`, seeds | **Applied 2026-08-02 — verified** |
 | M3 | Journal, team & archive | `blog_posts`, `team_members`, `previous_spells` (immutable archive), `reviews`, buckets `blog-media` + `site-media`, seeds | **Applied 2026-08-07 — verified** |
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, `next_ref()` pipeline, `spells.form_id`, seeds | **Applied 2026-08-09 — verified** |
-| M5 | Public site integration | Website store providers read from Supabase (no UI changes) | Pending |
+| M5 | Public site integration | Provider swap (public site + console behind staff sign-in), `submit_inquiry()`, `spell_active_departures`, storage upload pipeline | **Applied 2026-08-09 — verified** |
 | M6 | Traveller accounts | Real auth UI, profile/settings, `saved_spells`, `user_interests`, `notifications` | Pending |
 | M7 | Bookings & payments | `bookings`, `payments`, webhook events, Edge Functions, payment provider | Pending |
 | M8 | Memories & referrals | `memories`, `memory_photos`, private bucket, `referrals`, realtime notifications | Pending |

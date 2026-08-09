@@ -5,6 +5,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
 import { DASH_SECTIONS } from "@/data/dashboard";
+import { StaffGate } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
 
 import BlogBuilder from "./BlogBuilder";
@@ -78,6 +79,7 @@ export default function Dashboard() {
   }, [location.pathname]);
 
   return (
+    <StaffGate>
     <div className="min-h-screen bg-charcoal text-cream">
       {/* Quiet ambience: faint dot grid + two golden glows (no heavy 3D here) */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
@@ -125,5 +127,6 @@ export default function Dashboard() {
         </main>
       </div>
     </div>
+    </StaffGate>
   );
 }

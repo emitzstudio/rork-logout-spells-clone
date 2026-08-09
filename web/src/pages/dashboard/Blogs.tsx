@@ -20,7 +20,7 @@ import BlogPreview from "@/components/dashboard/blog/BlogPreview";
 import { DeviceToggle } from "@/components/dashboard/builder/SpellPreview";
 import { BLOG_CATEGORIES, fmtBlogDate } from "@/data/blog";
 import type { BlogCategoryId } from "@/data/blog";
-import { draftFromPost, seedManagedPosts, useBlogStore } from "@/data/blogStore";
+import { draftFromPost, useBlogStore } from "@/data/blogStore";
 import type { BlogStatus, ManagedBlogPost } from "@/data/blogStore";
 import type { PreviewDevice } from "@/data/builder";
 import { cn } from "@/lib/utils";
@@ -95,7 +95,7 @@ function IconAction({ label, onClick, danger, children }: IconActionProps) {
 export default function Blogs() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { posts, setPosts, savePost, removePost, uniqueSlug } = useBlogStore();
+  const { posts, savePost, removePost, uniqueSlug, refresh } = useBlogStore();
 
   const [query, setQuery] = useState<string>("");
   const [category, setCategory] = useState<string>("all");
@@ -173,28 +173,29 @@ export default function Blogs() {
         createdAt: now,
         updatedAt: now,
       };
-      setPosts((list) => {
-        const index = list.findIndex((p) => p.id === post.id);
-        const next = [...list];
-        next.splice(index + 1, 0, copy);
-        return next;
-      });
-      setFreshId(copy.id);
-      toast.success(`“${post.title}” duplicated as a draft`);
+      void savePost(copy)
+        .then((saved) => {
+          setFreshId(saved.id);
+          toast.success(`“${post.title}” duplicated as a draft`);
+        })
+        .catch(() => toast.error("Could not duplicate — please try again"));
     },
-    [setPosts, uniqueSlug],
+    [savePost, uniqueSlug],
   );
 
   const deletePost = useCallback(
     (id: string) => {
       const target = posts.find((p) => p.id === id);
-      removePost(id);
       setConfirmId(null);
-      toast.success(
-        target
-          ? `“${target.title}” deleted${target.status === "published" ? " — removed from the Journal" : ""}`
-          : "Story deleted",
-      );
+      void removePost(id)
+        .then((result) => {
+          if (result === "published-blocked") {
+            toast.error("A live story never vanishes in one motion — unpublish it first");
+          } else {
+            toast.success(target ? `“${target.title}” deleted` : "Story deleted");
+          }
+        })
+        .catch(() => toast.error("Could not delete — please try again"));
     },
     [posts, removePost],
   );
@@ -283,21 +284,14 @@ export default function Blogs() {
           </span>
           <p className="mt-4 font-serif text-2xl text-cream">The Journal awaits its first story</p>
           <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-            Write something new, or bring back the original team stories.
+            Write something new — the Journal is waiting.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-2.5">
             <button type="button" onClick={goNew} className="btn-gold !px-5 !py-2.5 !text-[12px]">
               <Plus className="h-3.5 w-3.5" /> Write a story
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPosts(seedManagedPosts());
-                toast.success("The team's stories are back in the Journal");
-              }}
-              className="btn-ghost-gold !px-5 !py-2.5 !text-[12px]"
-            >
-              Restore sample stories
+            <button type="button" onClick={refresh} className="btn-ghost-gold !px-5 !py-2.5 !text-[12px]">
+              Refresh
             </button>
           </div>
         </motion.div>

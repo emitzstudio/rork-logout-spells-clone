@@ -450,9 +450,99 @@ Goes through the normal M5 review.
 
 ---
 
-## Planned next: M5 — Public site integration (web)
+## M5 — Public site integration · applied 2026-08-09
 
-The website's data providers swap from mock/localStorage to Supabase — public reads,
-the two public write paths, the console behind a staff sign-in, and the builder image
-upload pipeline. Includes one small additive migration (`submit_inquiry()` RPC +
-`spell_active_departures` view). Full review before anything runs.
+| | |
+| --- | --- |
+| Migration | [`backend/migrations/0005_public_site_integration.sql`](../migrations/0005_public_site_integration.sql), applied byte-exact (HTTP 201) |
+| Approved by | Vidushi Verma — M5 review incl. **Option A** (console live behind staff sign-in), the `submit_inquiry()` RPC and the `spell_active_departures` view |
+| Destructive statements | **None.** Two new objects; no existing object touched. |
+| App code | **First milestone that changes the website** — the full provider swap (5A public + 5B console + storage pipeline). |
+
+### Backend objects (2)
+
+- **`submit_inquiry(...)`** — SECURITY DEFINER, pinned path, EXECUTE granted to
+  anon+authenticated: Door 1 submission that re-checks spell visibility (definer
+  bypasses the insert policy) and returns the server-generated `IQ-MMYY-###` ref —
+  anon deliberately has no SELECT on `inquiries`, so `INSERT…RETURNING` could not
+  hand the ref back.
+- **`spell_active_departures`** — `security_invoker` view batching the D2 resolver
+  for list pages (one query instead of N RPCs). Caller's RLS applies. *Rev note:*
+  the chat sketch selected `s.id as spell_id, d.*`, which would duplicate a column;
+  the applied view selects `d.*` only — identical information, flagged in the file.
+
+### The provider swap (web app)
+
+- **New layer** — `web/src/integrations/supabase/`: typed `client.ts` (anon key,
+  session-persisting), `mappers.ts` (row → existing TS models; the column whitelists
+  exist in exactly one place), `storage.ts` (resize ≤1440px · JPEG q0.78 → upload →
+  repoint → best-effort delete-old), `staffAuth.tsx` (StaffGate + branded sign-in;
+  RLS remains the real enforcement).
+- **5A public reads/writes** — `spellStore` (spells + active departures + activity
+  log), `blogStore` (the RLS read rule is the scheduler), `formStore` (forms,
+  responses, enquiries), `reviews` (hook + device-local add until M7), `team`,
+  `previousSpells`, `interests` (all React Query; identical seeds double as
+  placeholder data where instant paint matters), `booking.submitInquiry` → RPC,
+  spell pages call `increment_spell_views` once per session.
+- **5B console** — `/dashboard` gated by StaffGate (email+password → `is_staff()`
+  RPC; non-staff see a polite wall; sign-out in the sidebar). Spell Builder
+  (insert-then-upload-then-update; departure upsert; activity-log appends), Blog
+  Builder, Form Builder, responses inbox, enquiries inbox, duplicate/archive/restore
+  — all real writes under RLS.
+- **Auth-state cache flush** — signing in/out invalidates every React Query cache,
+  so staff immediately see drafts and visitors immediately stop.
+
+### Behaviour deltas (approved in review, or flagged here)
+
+- Console **revenue/wishlists show real zeros** until M7/M6 ledgers exist.
+- Movement Spell's card type line derives from category (“The Movement Spell”).
+- Console **Delete → archives** (the database allows no spell delete); the toast says
+  so honestly.
+- Blog **delete is draft-only** (M3 rule) — published stories must be unpublished
+  first; the mock-era “Restore sample stories” button became “Refresh” (re-seeding
+  production would violate seed policy §4).
+- Forms delete: answered forms are **retired (unpublished)** instead — M4 rule.
+- **Enquiries tab added** to the Forms page (style-matched `InquiriesPanel`) — the
+  approved verification list requires “admin can see enquiries”; the mock had no
+  surface for them.
+- Legacy mood page (`discover.ts`) reads the seeded archive constants — its fate is
+  an open product decision; content matches the database seeds.
+- Direct-URL pages (spell / story / form) gate their 404s on the first fetch — a
+  blank charcoal beat instead of a false “not found” flash.
+
+### Verification
+
+`m5-verify-backend` (managed tool) — all passed: RPC definer+pinned, anon-executable;
+sequential `IQ-0826-001/002`; draft-spell and empty-name rejections; view is
+`security_invoker`, resolves exactly one row per spell (10 owner / 8 anon); anon reads
+zero inquiries; probes + counter removed (net-zero).
+
+**Live REST as a real anonymous key** — all passed: reads 8 spells / 7 posts / 7 team /
+6 archives / 13 reviews / 1 form / 35 interests / 8 view rows; staff-only tables return
+0 rows; end-to-end enquiry returned **`IQ-0826-001`**; enquiry against a draft spell
+rejected (“This spell is not open for enquiries.”); response into the published form
+**201**, into the draft form **401**; views RPC 204. Probes then removed and the views
+bump reverted — **net-zero**, the founder's first real enquiry will still be `-001`.
+
+**Staff-path simulation** (founder's JWT claims under the `authenticated` role) — all
+passed: `is_staff()` true; sees 10 spells / 7 posts / 2 forms / 4 responses /
+0 inquiries / 27 log entries; staff UPDATE allowed; `views` and `seats_booked` stay
+unwritable.
+
+Builds: **web green** (static + build, live preview intact) · **Expo green**.
+
+### Still mock (by design, untouched)
+
+Traveller accounts, bookings & payments (Door 2 keeps the mock gateway — the locked
+`seats_booked` means it physically cannot corrupt real counters), wishlist hearts,
+notifications, memories, wallet/XP — M6–M8.
+
+---
+
+## Planned next: M6 — Traveller accounts (web)
+
+Native Supabase Auth for travellers (login/join/reset), real profile & settings,
+`saved_spells`, `user_interests`, `notifications`, the `avatars` bucket, first-login
+sync of device-local Discover/wishlist state, and the console's real wishlist counts.
+Draft SQL at `backend/migrations/0006_traveller_accounts.sql` — full review before
+anything runs.

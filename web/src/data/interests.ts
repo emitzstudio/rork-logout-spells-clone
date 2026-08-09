@@ -7,7 +7,11 @@
  * travellers with similar interests, community circles, companions, AI feeds
  * and friend discovery. Matching against spells is just the first consumer.
  */
+import { useQuery } from "@tanstack/react-query";
+
 import type { ManagedSpell, SpellCategoryId } from "@/data/spells";
+import { supabase } from "@/integrations/supabase/client";
+import { mapInterest } from "@/integrations/supabase/mappers";
 
 /* --------------------------------- Types --------------------------------- */
 
@@ -73,6 +77,32 @@ export const interestById = (id: string): Interest | undefined => BY_ID.get(id);
 
 export const isKnownInterest = (id: string): boolean => BY_ID.has(id);
 
+/* --------------------------------- Live data ------------------------------- */
+
+const fetchInterests = async (): Promise<Interest[]> => {
+  const { data, error } = await supabase
+    .from("interests")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data.map(mapInterest);
+};
+
+/**
+ * The cauldron catalogue — live from Supabase (active dreams under RLS), with
+ * the seeded constants (identical content) as placeholder so the ritual is
+ * interactive on first paint.
+ */
+export function useInterests(): Interest[] {
+  const { data } = useQuery({
+    queryKey: ["interests"],
+    queryFn: fetchInterests,
+    placeholderData: INTERESTS,
+    staleTime: 5 * 60_000,
+  });
+  return data ?? INTERESTS;
+}
+
 /* -------------------------------- Matching -------------------------------- */
 
 /** Full-text haystack per spell — cached so repeat matching stays cheap. */
@@ -110,9 +140,12 @@ const haystackOf = (spell: ManagedSpell): string => {
 export function matchSpellsToInterests(
   interestIds: string[],
   spells: ManagedSpell[],
+  catalogue: Interest[] = INTERESTS,
 ): SpellMatch[] {
+  const byId =
+    catalogue === INTERESTS ? BY_ID : new Map(catalogue.map((i) => [i.id, i]));
   const chosen = interestIds
-    .map((id) => BY_ID.get(id))
+    .map((id) => byId.get(id))
     .filter((i): i is Interest => i !== undefined);
   if (chosen.length === 0) return [];
 

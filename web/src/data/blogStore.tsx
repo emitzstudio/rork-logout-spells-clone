@@ -1,28 +1,24 @@
 /**
- * The Journal's local CMS — one shared post collection for the whole app.
+ * The Journal's CMS — live from Supabase since M5.
  *
- * The founder console writes it; the public Journal renders it. Everything
- * lives in React state snapshotted to localStorage, exactly like the spell
- * store. The backend phase swaps the inside of this provider only — every
- * consumer keeps the same API.
+ * The founder console writes it; the public Journal renders it. Reads go
+ * through React Query under RLS (visitors see published stories whose moment
+ * has arrived — the read rule IS the scheduler; staff see everything).
+ * Every consumer keeps the same API the localStorage era exposed.
  */
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type Dispatch,
-  type ReactNode,
-  type SetStateAction,
-} from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 
-import { blogService } from "./blog";
+import { supabase } from "@/integrations/supabase/client";
+import { blogWritePayload, mapBlogPost } from "@/integrations/supabase/mappers";
+import {
+  collectBlogStorageUrls,
+  deleteStorageUrls,
+  uploadBlogImages,
+} from "@/integrations/supabase/storage";
+
 import type { BlogBlock, BlogCategoryId, BlogPost } from "./blog";
 import { makeId, slugify } from "./builder";
-
-const STORAGE_KEY = "ls-blog-cms-v1";
 
 export type BlogStatus = "draft" | "published";
 
@@ -36,18 +32,6 @@ export interface ManagedBlogPost extends BlogPost {
   createdAt: string;
   updatedAt: string;
 }
-
-/** The original team posts, dressed as managed records — the seed collection. */
-export const seedManagedPosts = (): ManagedBlogPost[] =>
-  blogService.list().map((p) => ({
-    ...structuredClone(p),
-    status: "published" as BlogStatus,
-    seoTitle: p.title,
-    seoDescription: p.deck,
-    gallery: [],
-    createdAt: p.publishedAt,
-    updatedAt: p.publishedAt,
-  }));
 
 /* --------------------------------- Drafts ---------------------------------- */
 
@@ -209,96 +193,121 @@ export const postFromDraft = ({ draft, slug, status, existing }: PostFromDraftAr
 
 /* ---------------------------------- Store ---------------------------------- */
 
+const POSTS_KEY = ["blog-posts"] as const;
+
+const fetchPosts = async (): Promise<ManagedBlogPost[]> => {
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data.map(mapBlogPost);
+};
+
 interface BlogStoreValue {
-  /** Every post the founder manages — drafts and published alike. */
+  /** Every post the caller may see — staff get drafts, visitors don't. */
   posts: ManagedBlogPost[];
-  setPosts: Dispatch<SetStateAction<ManagedBlogPost[]>>;
-  /** Insert-or-replace by id — publishing again never duplicates. */
-  savePost: (record: ManagedBlogPost) => void;
-  removePost: (id: string) => void;
+  /** True once the first fetch has settled — pages gate their 404s on this. */
+  ready: boolean;
+  /** Insert-or-update by id; uploads local imagery and returns the saved record. */
+  savePost: (record: ManagedBlogPost) => Promise<ManagedBlogPost>;
+  /**
+   * Draft stories delete; published ones are blocked (unpublish first — the
+   * two-step is deliberate, nothing that was live vanishes in one motion).
+   */
+  removePost: (id: string) => Promise<"deleted" | "published-blocked">;
   getById: (id: string) => ManagedBlogPost | undefined;
   getBySlug: (slug: string) => ManagedBlogPost | undefined;
   uniqueSlug: (base: string, excludeId?: string) => string;
+  refresh: () => void;
   /** What the public Journal shows — newest first. */
   publicPosts: ManagedBlogPost[];
 }
 
 const BlogStoreContext = createContext<BlogStoreValue | null>(null);
 
-const isManagedBlogPost = (value: unknown): value is ManagedBlogPost => {
-  if (typeof value !== "object" || value === null) return false;
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.id === "string" &&
-    typeof record.slug === "string" &&
-    typeof record.title === "string" &&
-    typeof record.status === "string" &&
-    Array.isArray(record.blocks)
-  );
-};
-
-const loadPosts = (): ManagedBlogPost[] => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seedManagedPosts();
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return seedManagedPosts();
-    const valid = parsed.filter(isManagedBlogPost);
-    return valid.length > 0 ? valid : [];
-  } catch {
-    return seedManagedPosts();
-  }
-};
-
-const persistPosts = (posts: ManagedBlogPost[]): void => {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-  } catch (error) {
-    // Quota exceeded (image-heavy stories) — the session keeps working in memory.
-    console.warn("[blogStore] Could not persist the journal:", error);
-  }
-};
-
 export function BlogStoreProvider({ children }: { children: ReactNode }) {
-  const [posts, setPosts] = useState<ManagedBlogPost[]>(loadPosts);
+  const queryClient = useQueryClient();
+  const query = useQuery({ queryKey: POSTS_KEY, queryFn: fetchPosts, staleTime: 30_000 });
+  const posts = useMemo(() => query.data ?? [], [query.data]);
 
-  useEffect(() => {
-    persistPosts(posts);
-  }, [posts]);
+  const invalidate = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: POSTS_KEY }),
+    [queryClient],
+  );
 
-  // Cross-tab realtime — a save in the console lands on the public site instantly.
-  useEffect(() => {
-    const onStorage = (event: StorageEvent): void => {
-      if (event.key !== STORAGE_KEY || event.newValue === null) return;
-      try {
-        const parsed: unknown = JSON.parse(event.newValue);
-        if (!Array.isArray(parsed)) return;
-        setPosts(parsed.filter(isManagedBlogPost));
-      } catch {
-        // Malformed payload — keep the current in-memory collection.
+  const savePost = useCallback(
+    async (record: ManagedBlogPost): Promise<ManagedBlogPost> => {
+      const existing = posts.find((p) => p.id === record.id);
+      let id = existing !== undefined ? record.id : null;
+
+      /* New stories insert first (without imagery) — storage paths need the real id. */
+      if (id === null) {
+        const stub = blogWritePayload({ ...record, hero: "", gallery: [], blocks: [] });
+        const { data, error } = await supabase.from("blog_posts").insert(stub).select("id").single();
+        if (error) throw new Error(`Story save failed: ${error.message}`);
+        id = data.id;
       }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
 
-  const savePost = useCallback((record: ManagedBlogPost) => {
-    setPosts((list) => {
-      const index = list.findIndex((p) => p.id === record.id);
-      if (index < 0) return [record, ...list];
-      const next = [...list];
-      next[index] = record;
-      return next;
-    });
-  }, []);
+      const uploaded = await uploadBlogImages(id, {
+        hero: record.hero,
+        gallery: record.gallery,
+        blocks: record.blocks,
+      });
+      const next: ManagedBlogPost = {
+        ...record,
+        hero: uploaded.hero,
+        gallery: uploaded.gallery,
+        blocks: uploaded.blocks as BlogBlock[],
+      };
+      const { error: updateError } = await supabase
+        .from("blog_posts")
+        .update(blogWritePayload(next))
+        .eq("id", id);
+      if (updateError) throw new Error(`Story save failed: ${updateError.message}`);
 
-  const removePost = useCallback((id: string) => {
-    setPosts((list) => list.filter((p) => p.id !== id));
-  }, []);
+      if (existing) {
+        const kept = new Set(
+          collectBlogStorageUrls({ hero: next.hero, gallery: next.gallery, blocks: next.blocks }),
+        );
+        void deleteStorageUrls(
+          collectBlogStorageUrls({
+            hero: existing.hero,
+            gallery: existing.gallery,
+            blocks: existing.blocks,
+          }).filter((u) => !kept.has(u)),
+        );
+      }
+
+      await invalidate();
+      return { ...next, id };
+    },
+    [posts, invalidate],
+  );
+
+  const removePost = useCallback(
+    async (id: string): Promise<"deleted" | "published-blocked"> => {
+      const target = posts.find((p) => p.id === id);
+      if (target?.status === "published") return "published-blocked";
+      const urls = target
+        ? collectBlogStorageUrls({ hero: target.hero, gallery: target.gallery, blocks: target.blocks })
+        : [];
+      const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+      if (error) throw new Error(`Delete failed: ${error.message}`);
+      void deleteStorageUrls(urls);
+      await invalidate();
+      return "deleted";
+    },
+    [posts, invalidate],
+  );
 
   const getById = useCallback((id: string) => posts.find((p) => p.id === id), [posts]);
 
   const getBySlug = useCallback((slug: string) => posts.find((p) => p.slug === slug), [posts]);
+
+  const refresh = useCallback(() => {
+    void invalidate();
+  }, [invalidate]);
 
   const uniqueSlug = useCallback(
     (base: string, excludeId?: string): string => {
@@ -318,14 +327,24 @@ export function BlogStoreProvider({ children }: { children: ReactNode }) {
   const publicPosts = useMemo<ManagedBlogPost[]>(
     () =>
       posts
-        .filter((p) => p.status === "published")
+        .filter((p) => p.status === "published" && Date.parse(p.publishedAt) <= Date.now())
         .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)),
     [posts],
   );
 
   const value = useMemo<BlogStoreValue>(
-    () => ({ posts, setPosts, savePost, removePost, getById, getBySlug, uniqueSlug, publicPosts }),
-    [posts, savePost, removePost, getById, getBySlug, uniqueSlug, publicPosts],
+    () => ({
+      posts,
+      ready: query.isFetched,
+      savePost,
+      removePost,
+      getById,
+      getBySlug,
+      uniqueSlug,
+      refresh,
+      publicPosts,
+    }),
+    [posts, query.isFetched, savePost, removePost, getById, getBySlug, uniqueSlug, refresh, publicPosts],
   );
 
   return <BlogStoreContext.Provider value={value}>{children}</BlogStoreContext.Provider>;

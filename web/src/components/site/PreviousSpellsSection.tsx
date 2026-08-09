@@ -6,9 +6,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { RatingStars } from "@/components/site/RatingStars";
 import { Reveal } from "@/components/site/Reveal";
 import ShowcaseCarousel from "@/components/site/ShowcaseCarousel";
-import { previousSpellsService } from "@/data/previousSpells";
+import { usePreviousSpells } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
-import { ratingSummary, reviewService } from "@/data/reviews";
+import { ratingSummary, useSpellReviews } from "@/data/reviews";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -19,7 +19,8 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  */
 export function PastSpellCard({ past }: { past: PreviousSpell }) {
   const navigate = useNavigate();
-  const summary = useMemo(() => ratingSummary(reviewService.listSync(past.id)), [past.id]);
+  const reviews = useSpellReviews(past.id);
+  const summary = useMemo(() => ratingSummary(reviews), [reviews]);
 
   return (
     <motion.button
@@ -98,7 +99,8 @@ export default function PreviousSpellsSection({
   eyebrow = "A look back",
   className,
 }: PreviousSpellsSectionProps) {
-  const featured = useMemo(() => previousSpellsService.featured(6), []);
+  const all = usePreviousSpells();
+  const featured = useMemo(() => all.slice(0, 6), [all]);
   const itemKey = useCallback((past: PreviousSpell) => past.id, []);
   const renderItem = useCallback((past: PreviousSpell) => <PastSpellCard past={past} />, []);
 

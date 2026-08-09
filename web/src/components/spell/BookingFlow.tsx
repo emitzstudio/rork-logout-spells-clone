@@ -316,6 +316,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
       });
       setInqRef(record.ref);
       setStep("inquire-sent");
+    } catch {
+      setErrs({ inqEmail: "The message couldn't be sent just now — please try again." });
     } finally {
       setInqSending(false);
     }

@@ -958,7 +958,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      spell_active_departures: {
+        Row: {
+          created_at: string | null
+          date_label: string | null
+          end_date: string | null
+          id: string | null
+          price_minor: number | null
+          seats_booked: number | null
+          seats_total: number | null
+          spell_id: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["departure_status"] | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       active_departure: {
@@ -994,6 +1009,17 @@ export type Database = {
       increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
       is_staff: { Args: never; Returns: boolean }
       next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
+      submit_inquiry: {
+        Args: {
+          _email: string
+          _name: string
+          _note: string
+          _spell_id: string
+          _spell_name: string
+          _spell_slug: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "staff"

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import Page from "@/components/site/Layout";
 import { PastSpellCard } from "@/components/site/PreviousSpellsSection";
 import { Reveal } from "@/components/site/Reveal";
-import { previousSpellsService } from "@/data/previousSpells";
+import { usePreviousSpells } from "@/data/previousSpells";
 import { CATEGORY_META } from "@/data/spells";
 import type { SpellCategoryId } from "@/data/spells";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ type Filter = "all" | SpellCategoryId;
  * Route: /live-spells/previous. Each card opens its own memory page.
  */
 export default function PreviousSpells() {
-  const all = useMemo(() => previousSpellsService.list(), []);
+  const all = usePreviousSpells();
   const [filter, setFilter] = useState<Filter>("all");
 
   /** Only offer filters for families that actually have past journeys. */

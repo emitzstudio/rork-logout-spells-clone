@@ -55,7 +55,6 @@ import type {
 import {
   draftSlugBase,
   incompleteSections,
-  inlineDraftImages,
   spellFromDraft,
 } from "@/data/publish";
 import type { ManagedSpell, ManagedStatus } from "@/data/spells";
@@ -660,10 +659,9 @@ export default function SpellBuilder() {
       : "draft";
     void (async () => {
       try {
-        const prepared = await inlineDraftImages(draft);
-        const record = spellFromDraft({ draft: prepared, slug, status, existing });
-        saveSpell(record);
-        savedIdRef.current = record.id;
+        const record = spellFromDraft({ draft, slug, status, existing });
+        const saved = await saveSpell(record);
+        savedIdRef.current = saved.id;
         setDraft((d) => ({ ...d, slug }));
         setDirty(false);
         showToast(
@@ -696,13 +694,12 @@ export default function SpellBuilder() {
     setPublishState({ slug, done: false, recordId: null });
     void (async () => {
       try {
-        const prepared = await inlineDraftImages(draft);
-        const record = spellFromDraft({ draft: prepared, slug, status, existing });
-        saveSpell(record);
-        savedIdRef.current = record.id;
+        const record = spellFromDraft({ draft, slug, status, existing });
+        const saved = await saveSpell(record);
+        savedIdRef.current = saved.id;
         setDraft((d) => ({ ...d, slug, status: "published" }));
         setDirty(false);
-        setPublishState({ slug, done: true, recordId: record.id });
+        setPublishState({ slug, done: true, recordId: saved.id });
       } catch (error) {
         console.error("[builder] Publish failed:", error);
         setPublishState(null);

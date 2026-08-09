@@ -195,9 +195,12 @@ export default function FormBuilder() {
       slug: uniqueFormSlug(slugBase(form), form.id),
       updatedAt: new Date().toISOString(),
     };
-    saveForm(record);
-    setForm(record);
-    showToast(wasLive ? "Moved to draft — the public link is paused" : "Draft saved ✦");
+    void saveForm(record)
+      .then((saved) => {
+        setForm(saved);
+        showToast(wasLive ? "Moved to draft — the public link is paused" : "Draft saved ✦");
+      })
+      .catch(() => showToast("Could not save — please try again"));
   };
 
   const publish = (): void => {
@@ -216,16 +219,19 @@ export default function FormBuilder() {
       slug,
       updatedAt: new Date().toISOString(),
     };
-    saveForm(record);
-    navigate("/dashboard/forms", {
-      state: {
-        freshId: record.id,
-        notice:
-          form.status === "published"
-            ? `“${title}” updated — live at /forms/${slug} ✦`
-            : `“${title}” is live at /forms/${slug} ✦`,
-      },
-    });
+    void saveForm(record)
+      .then((saved) =>
+        navigate("/dashboard/forms", {
+          state: {
+            freshId: saved.id,
+            notice:
+              form.status === "published"
+                ? `“${title}” updated — live at /forms/${slug} ✦`
+                : `“${title}” is live at /forms/${slug} ✦`,
+          },
+        }),
+      )
+      .catch(() => showToast("Could not publish — please try again"));
   };
 
   const copyLink = (): void => {

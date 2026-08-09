@@ -14,7 +14,7 @@ import { useState } from "react";
 
 import { MagicDust } from "@/components/site/MagicDust";
 import { Reveal } from "@/components/site/Reveal";
-import { teamService } from "@/data/team";
+import { useTeamMembers } from "@/data/team";
 import type { TeamDepartment, TeamMember } from "@/data/team";
 import { cn } from "@/lib/utils";
 
@@ -320,7 +320,7 @@ function TeamCard({ member }: { member: TeamMember }) {
  * this component.
  */
 export default function TeamCards() {
-  const members = teamService.list();
+  const members = useTeamMembers();
   const founder = members.find((m) => m.featured === true);
   const circle = members.filter((m) => m.id !== founder?.id);
 

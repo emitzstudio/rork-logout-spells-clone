@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import DeleteFormDialog from "@/components/dashboard/forms/DeleteFormDialog";
 import FormCard from "@/components/dashboard/forms/FormCard";
+import InquiriesPanel from "@/components/dashboard/forms/InquiriesPanel";
 import ResponsesPanel from "@/components/dashboard/forms/ResponsesPanel";
 import ShareFormDialog from "@/components/dashboard/forms/ShareFormDialog";
 import { makeId } from "@/data/builder";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-type TabId = "forms" | "responses";
+type TabId = "forms" | "responses" | "enquiries";
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 16 },
@@ -36,8 +37,8 @@ interface ToastState {
 export default function Forms() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { forms, setForms, deleteForm, uniqueFormSlug, responses } = useFormStore();
-  const { spells, setSpells } = useSpellStore();
+  const { forms, saveForm, deleteForm, uniqueFormSlug, responses, inquiries } = useFormStore();
+  const { spells, detachFormFromSpells } = useSpellStore();
 
   const [tab, setTab] = useState<TabId>("forms");
   const [shareId, setShareId] = useState<string | null>(null);
@@ -144,16 +145,14 @@ export default function Forms() {
         createdAt: now,
         updatedAt: now,
       };
-      setForms((list) => {
-        const index = list.findIndex((f) => f.id === id);
-        const next = [...list];
-        next.splice(index + 1, 0, copy);
-        return next;
-      });
-      setFreshId(copy.id);
-      showToast(`“${source.title}” duplicated as a draft`);
+      void saveForm(copy)
+        .then((saved) => {
+          setFreshId(saved.id);
+          showToast(`“${source.title}” duplicated as a draft`);
+        })
+        .catch(() => showToast("Could not duplicate — please try again"));
     },
-    [forms, setForms, uniqueFormSlug, showToast],
+    [forms, saveForm, uniqueFormSlug, showToast],
   );
 
   const preview = useCallback(
@@ -170,15 +169,24 @@ export default function Forms() {
   const remove = useCallback(
     (id: string) => {
       const target = forms.find((f) => f.id === id);
-      deleteForm(id);
-      // Spells pointing at this form fall back to the standard booking dialog.
-      setSpells((list) =>
-        list.map((spell) => (spell.formId === id ? { ...spell, formId: null } : spell)),
-      );
       setConfirmId(null);
-      showToast(target ? `“${target.title}” deleted — responses kept in the inbox` : "Form deleted");
+      void deleteForm(id)
+        .then((result) => {
+          if (result === "deleted") {
+            // Spells pointing at this form fall back to the standard booking dialog.
+            void detachFormFromSpells(id);
+            showToast(target ? `“${target.title}” deleted` : "Form deleted");
+          } else {
+            showToast(
+              target
+                ? `“${target.title}” has responses — unpublished instead, link paused`
+                : "Form unpublished",
+            );
+          }
+        })
+        .catch(() => showToast("Could not delete — please try again"));
     },
-    [forms, deleteForm, setSpells, showToast],
+    [forms, deleteForm, detachFormFromSpells, showToast],
   );
 
   /* -------------------------------- Render -------------------------------- */
@@ -186,6 +194,7 @@ export default function Forms() {
   const tabs: { id: TabId; label: string; count: number }[] = [
     { id: "forms", label: "Forms", count: forms.length },
     { id: "responses", label: "Responses", count: responses.length },
+    { id: "enquiries", label: "Enquiries", count: inquiries.length },
   ];
 
   return (
@@ -306,8 +315,10 @@ export default function Forms() {
               </AnimatePresence>
             </motion.div>
           )
-        ) : (
+        ) : tab === "responses" ? (
           <ResponsesPanel />
+        ) : (
+          <InquiriesPanel />
         )}
       </div>
 

@@ -174,10 +174,18 @@ function Article({ post }: { post: ManagedBlogPost }) {
 /** The premium article page — /blog/{slug}. */
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getBySlug } = useBlogStore();
+  const { getBySlug, ready } = useBlogStore();
   const managed = slug !== undefined ? getBySlug(slug) : undefined;
   /* Drafts stay invisible until the founder publishes them. */
   const post = managed !== undefined && managed.status === "published" ? managed : undefined;
+
+  if (!ready && !post) {
+    return (
+      <Page title="The Journal">
+        <section className="min-h-[100svh]" aria-hidden />
+      </Page>
+    );
+  }
 
   if (!post) {
     return (

@@ -8,7 +8,12 @@
  * Service-seam pattern: pages only call `previousSpellsService`, so the
  * backend phase can move this to a table without touching components.
  */
+import { useQuery } from "@tanstack/react-query";
+
 import type { SpellCategoryId } from "@/data/spells";
+import { supabase } from "@/integrations/supabase/client";
+import { mapPreviousSpell } from "@/integrations/supabase/mappers";
+import type { PreviousSpellRow } from "@/integrations/supabase/mappers";
 
 /* --------------------------------- Types --------------------------------- */
 
@@ -89,7 +94,7 @@ const shot = (id: string, unsplashId: string, caption: string, tall?: boolean): 
 
 /* --------------------------------- Seeds ---------------------------------- */
 
-const PREVIOUS_SPELLS: PreviousSpell[] = [
+export const PREVIOUS_SPELLS: PreviousSpell[] = [
   {
     id: "ps-himalayan",
     slug: "himalayan-reset",
@@ -399,19 +404,31 @@ const PREVIOUS_SPELLS: PreviousSpell[] = [
 
 /* --------------------------------- Service -------------------------------- */
 
-/**
- * Previous spells service — the future backend replaces these internals
- * with real queries; call signatures stay identical.
- */
-export const previousSpellsService = {
-  list(): PreviousSpell[] {
-    return PREVIOUS_SPELLS;
-  },
-  bySlug(slug: string): PreviousSpell | undefined {
-    return PREVIOUS_SPELLS.find((s) => s.slug === slug);
-  },
-  /** A short set for carousels — newest seasons first (seed order). */
-  featured(max = 6): PreviousSpell[] {
-    return PREVIOUS_SPELLS.slice(0, max);
-  },
+const fetchPreviousSpells = async (): Promise<PreviousSpell[]> => {
+  const { data, error } = await supabase
+    .from("previous_spells")
+    .select("*, spells(slug)")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data as unknown as PreviousSpellRow[]).map(mapPreviousSpell);
 };
+
+/**
+ * The archive — live from Supabase (published journeys under RLS), with the
+ * seeded constants (identical content) as placeholder for instant first paint.
+ */
+export function usePreviousSpells(): PreviousSpell[] {
+  const { data } = useQuery({
+    queryKey: ["previous-spells"],
+    queryFn: fetchPreviousSpells,
+    placeholderData: PREVIOUS_SPELLS,
+    staleTime: 60_000,
+  });
+  return data ?? PREVIOUS_SPELLS;
+}
+
+/** One memory page by its public slug. */
+export function usePreviousSpell(slug: string | undefined): PreviousSpell | undefined {
+  const all = usePreviousSpells();
+  return slug !== undefined ? all.find((s) => s.slug === slug) : undefined;
+}

@@ -25,15 +25,19 @@ import { draftFromSpell } from "@/data/builder";
 import type { SpellDraft } from "@/data/builder";
 import { useFormStore } from "@/data/formStore";
 import { isPublic, useSpellStore } from "@/data/spellStore";
+import { isUuid, supabase } from "@/integrations/supabase/client";
 
 /**
  * The public Spell page — rendered dynamically from the local CMS at full,
  * natural editorial scale. "Join this Spell" opens the two-door flow:
  * a light Inquiry, or the full Book Now payment journey.
  */
+/** Spell ids whose view was already counted this session. */
+const viewedSpellIds = new Set<string>();
+
 export default function SpellPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getBySlug } = useSpellStore();
+  const { getBySlug, ready } = useSpellStore();
   const { getFormById } = useFormStore();
   const { recordSpellView } = useAccount();
 
@@ -51,11 +55,27 @@ export default function SpellPage() {
     if (visibleSlug !== null) recordSpellView(visibleSlug);
   }, [visibleSlug, recordSpellView]);
 
+  // Public page views bump the real counter — once per spell per session.
+  const spellDbId = spell !== undefined && visible && isUuid(spell.id) ? spell.id : null;
+  useEffect(() => {
+    if (spellDbId !== null && !viewedSpellIds.has(spellDbId)) {
+      viewedSpellIds.add(spellDbId);
+      void supabase.rpc("increment_spell_views", { _spell_id: spellDbId });
+    }
+  }, [spellDbId]);
+
   const draft = useMemo<SpellDraft | null>(() => {
     if (!spell || !visible) return null;
     return spell.draft ?? draftFromSpell(spell);
   }, [spell, visible]);
 
+  if (!ready && !spell) {
+    return (
+      <Page title="Live Spell">
+        <section className="min-h-[100svh]" aria-hidden />
+      </Page>
+    );
+  }
   if (!spell || !visible || !draft) return <SpellNotFound />;
 
   // A spell with an attached (and published) form routes its Inquire door

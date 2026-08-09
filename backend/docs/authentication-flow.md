@@ -2,9 +2,11 @@
 
 > **Status: LIVE as of 2026-07-31 (M1).** `profiles`, `user_settings`, `user_roles`,
 > the role helpers and both `auth.users` triggers are applied and verified on the
-> production project. The founder's admin grant is **done** — applied 2026-08-07 as
-> `m1-founder-bootstrap` after her first real signup (see migration-history.md).
-> Still outstanding: the client-side auth UI swap, which lands in M6.
+> production project. The founder's admin grant is **done** (2026-08-07,
+> `m1-founder-bootstrap`). **Since M5 the founder console signs in with native
+> Supabase Auth** (email + password) behind a staff gate — the gate is client
+> convenience; every read and write is enforced by RLS regardless. Still outstanding:
+> the traveller-facing auth swap (login/join/reset + account space), which lands in M6.
 
 ## Model
 

@@ -16,13 +16,14 @@ import Page from "@/components/site/Layout";
 import { RatingStars, StarPicker } from "@/components/site/RatingStars";
 import { Reveal } from "@/components/site/Reveal";
 import { useAccount } from "@/data/account/AccountProvider";
-import { previousSpellsService } from "@/data/previousSpells";
+import { usePreviousSpell } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
 import {
   canReviewSpell,
   hasReviewed,
   ratingSummary,
   reviewService,
+  useSpellReviews,
 } from "@/data/reviews";
 import type { SpellReview } from "@/data/reviews";
 import { CATEGORY_META } from "@/data/spells";
@@ -33,7 +34,8 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /* --------------------------------- Hero ----------------------------------- */
 
 function MemoryHero({ past }: { past: PreviousSpell }) {
-  const summary = useMemo(() => ratingSummary(reviewService.listSync(past.id)), [past.id]);
+  const reviews = useSpellReviews(past.id);
+  const summary = useMemo(() => ratingSummary(reviews), [reviews]);
 
   return (
     <section className="relative flex min-h-[86svh] items-end overflow-hidden">
@@ -270,7 +272,7 @@ function ReviewForm({ past, onDone, onCancel }: ReviewFormProps) {
 
 function ReviewsSection({ past }: { past: PreviousSpell }) {
   const { session, data } = useAccount();
-  const [reviews, setReviews] = useState<SpellReview[]>(() => reviewService.listSync(past.id));
+  const [reviews, setReviews] = useState<SpellReview[]>([]);
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -413,7 +415,7 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
  */
 export default function PreviousSpellPage() {
   const { slug } = useParams<{ slug: string }>();
-  const past = slug ? previousSpellsService.bySlug(slug) : undefined;
+  const past = usePreviousSpell(slug);
 
   if (!past) return <MemoryNotFound />;
 

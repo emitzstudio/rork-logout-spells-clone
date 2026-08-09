@@ -1,13 +1,13 @@
 # Database Architecture
 
-> **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**, 2026-07-31),
-> the spell catalogue (**M2**, 2026-08-02), the journal/team/archive domain (**M3**,
-> 2026-08-07), and the forms domain (**M4**, 2026-08-09 — `forms`, `form_responses`,
-> `inquiries`, `ref_counters` + `next_ref()`, and `spells.form_id`), exactly as
-> documented here. Sections still marked design-only: bookings & money (§9), the
-> traveller space (§10), and the M6 personal tables in §5 (`user_interests`,
-> `saved_spells`). [migration-history.md](./migration-history.md) records what is
-> actually live.
+> **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**), the spell
+> catalogue (**M2**), the journal/team/archive domain (**M3**), the forms domain
+> (**M4**), and the M5 integration objects (`submit_inquiry()` RPC,
+> `spell_active_departures` view) — and since **M5** the public website + founder
+> console read and write this schema directly under RLS. Sections still marked
+> design-only: bookings & money (§9), the traveller space (§10), and the M6 personal
+> tables in §5 (`user_interests`, `saved_spells`).
+> [migration-history.md](./migration-history.md) records what is actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every
 page already renders through service seams. Column names map 1:1 onto the existing
@@ -358,9 +358,10 @@ Function + WAF/turnstile hardening is a documented additive upgrade if spam appe
 timestamps. Index `(status, created_at desc)`.
 RLS: INSERT anyone (spell reference must be visible-or-null) · SELECT/UPDATE staff
 (`status` only) · **no DELETE path** — `closed` is the terminal state. Team email
-notification arrives with the Resend Edge Function (later milestone). M5 adds a
-`submit_inquiry()` SECURITY DEFINER RPC so the visitor's success screen can receive
-the ref (anon deliberately has no SELECT on this table).
+notification arrives with the Resend Edge Function (later milestone). **Live since
+M5:** the client submits through `submit_inquiry()` — a SECURITY DEFINER RPC that
+re-checks spell visibility internally and returns only the server-generated ref
+(anon deliberately has no SELECT on this table).
 
 ### The reference pipeline — `ref_counters` + `next_ref()`
 `ref_counters (scope, period, value)` holds one monthly counter per ref family; RLS
@@ -504,7 +505,9 @@ story, the base price, and the marketing state.
   Final tiebreak everywhere: `created_at` asc, then `id` asc — no two clients can
   disagree. A closed or cancelled nearest run is skipped in favour of the next
   scheduled one; the ≥1-departure guard means the function always resolves.
-  SECURITY INVOKER — RLS applies to the caller.
+  SECURITY INVOKER — RLS applies to the caller. **Live since M5:**
+  `spell_active_departures`, a `security_invoker` view over the resolver, batches it
+  for list pages (one query instead of N RPC calls); the web providers read it.
 - The provider layer maps the active departure onto the existing card fields
   (`dates`, `seatsTotal`, `seatsBooked`) — every component keeps its exact shape.
 - The Spell Builder's Basic Information section reads/writes the spell's single run

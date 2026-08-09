@@ -16,7 +16,7 @@ import Page from "@/components/site/Layout";
 import { MagicDust } from "@/components/site/MagicDust";
 import { Reveal } from "@/components/site/Reveal";
 import { MIN_BREW, TARGET_BREW, useBucketList } from "@/data/bucketList";
-import { INTERESTS, interestById, matchSpellsToInterests } from "@/data/interests";
+import { matchSpellsToInterests, useInterests } from "@/data/interests";
 import type { Interest, SpellMatch } from "@/data/interests";
 import { formatINR } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
@@ -76,11 +76,11 @@ const RING_OFFSET = [0.4, 2.2, 4.5] as const;
  * neighbours apart, expel anything from the safe zone, and keep everything
  * inside the stage. Organic, never gridded, never cramped.
  */
-function computePlacements(): Record<string, Placement> {
-  const pts: { x: number; y: number }[] = INTERESTS.map((_, i) => {
+function computePlacements(catalogue: Interest[]): Record<string, Placement> {
+  const pts: { x: number; y: number }[] = catalogue.map((_, i) => {
     const ring = i % 3;
     const j = Math.floor(i / 3);
-    const per = Math.ceil(INTERESTS.length / 3);
+    const per = Math.ceil(catalogue.length / 3);
     const angle =
       RING_OFFSET[ring] + (j / per) * Math.PI * 2 + (prand(i * 7 + 1) - 0.5) * 0.55;
     const k = RING_K[ring] * (1 + (prand(i * 13 + 2) - 0.5) * 0.16);
@@ -124,7 +124,7 @@ function computePlacements(): Record<string, Placement> {
   }
 
   const out: Record<string, Placement> = {};
-  INTERESTS.forEach((interest, i) => {
+  catalogue.forEach((interest, i) => {
     const durX = 7 + prand(i * 11 + 6) * 4.5;
     const durY = 8 + prand(i * 19 + 7) * 4.5;
     out[interest.id] = {
@@ -340,6 +340,7 @@ export default function Discover() {
   const isDesktop = useIsDesktop();
   const { interests: selectedIds, brewed, add, remove, brew, clear } = useBucketList();
   const { publicSpells } = useSpellStore();
+  const catalogue = useInterests();
 
   const [phase, setPhase] = useState<RitualPhase>(() => (brewed ? "revealed" : "brewing"));
   const [altar, setAltar] = useState<AltarState>(() => (brewed ? "gone" : "standing"));
@@ -350,7 +351,10 @@ export default function Discover() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [flying, setFlying] = useState<ReadonlySet<string>>(new Set());
   const [offsets, setOffsets] = useState<CardOffset[] | null>(null);
-  const [placements] = useState<Record<string, Placement>>(computePlacements);
+  const placements = useMemo<Record<string, Placement>>(
+    () => computePlacements(catalogue),
+    [catalogue],
+  );
 
   const phaseRef = useRef<RitualPhase>(phase);
   const countRef = useRef<number>(selectedIds.length);
@@ -379,18 +383,21 @@ export default function Discover() {
   const intensity = Math.min(1, count / MIN_BREW);
 
   const available = useMemo<Interest[]>(
-    () => INTERESTS.filter((i) => !selectedIds.includes(i.id) && !flying.has(i.id)),
-    [selectedIds, flying],
+    () => catalogue.filter((i) => !selectedIds.includes(i.id) && !flying.has(i.id)),
+    [catalogue, selectedIds, flying],
   );
 
   const selectedInterests = useMemo<Interest[]>(
-    () => selectedIds.map((id) => interestById(id)).filter((i): i is Interest => i !== undefined),
-    [selectedIds],
+    () =>
+      selectedIds
+        .map((id) => catalogue.find((i) => i.id === id))
+        .filter((i): i is Interest => i !== undefined),
+    [catalogue, selectedIds],
   );
 
   const matches = useMemo<SpellMatch[]>(
-    () => matchSpellsToInterests(selectedIds, publicSpells).slice(0, 6),
-    [selectedIds, publicSpells],
+    () => matchSpellsToInterests(selectedIds, publicSpells, catalogue).slice(0, 6),
+    [selectedIds, publicSpells, catalogue],
   );
 
   /* ------------------------------ The conjuring ----------------------------- */

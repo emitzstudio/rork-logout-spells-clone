@@ -61,13 +61,14 @@ from the earlier fixed-name sketch).
   `image/avif`). Enforced per bucket via `allowed_mime_types`.
 - Size limits: 10 MB per file on staff buckets, 5 MB on `avatars`, 8 MB on `memories`
   (`file_size_limit` per bucket).
-- The builder's current canvas pipeline (resize to ≤1440px, JPEG q0.78) moves
-  client-side **before** upload — uploads are already display-sized, keeping storage
-  and bandwidth honest.
-- **No data URLs in the database.** The current localStorage publish pipeline inlines
-  images as data URLs; the Supabase pipeline replaces every `DraftImage.url` with its
-  Storage public URL at save time. Seed migrations may keep existing Unsplash URLs
-  (they are plain URLs, not uploads).
+- The builder's canvas pipeline (resize to ≤1440px, JPEG q0.78) runs client-side
+  **before** upload — uploads are already display-sized, keeping storage and
+  bandwidth honest. **Live since M5** (`web/src/integrations/supabase/storage.ts`).
+- **No data URLs in the database.** Live since M5: every locally-added image is
+  uploaded at save time and its permanent public URL written instead (new spells
+  insert first so the storage path carries the real id). Replacement order: upload
+  new → repoint the row → best-effort delete old. Seeds keep their Unsplash URLs
+  (plain URLs, not uploads) and fade out as the founder re-publishes.
 
 ## Cleanup discipline
 

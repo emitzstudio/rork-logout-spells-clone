@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 import { Reveal } from "@/components/site/Reveal";
 import { useBucketList } from "@/data/bucketList";
-import { dreamLine, matchSpellsToInterests } from "@/data/interests";
+import { dreamLine, matchSpellsToInterests, useInterests } from "@/data/interests";
 import type { SpellMatch } from "@/data/interests";
 import { formatINR } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
@@ -51,10 +51,11 @@ function MatchRailCard({ match }: { match: SpellMatch }) {
 export default function BucketListSection() {
   const { interests, brewed } = useBucketList();
   const { publicSpells } = useSpellStore();
+  const catalogue = useInterests();
 
   const matches = useMemo<SpellMatch[]>(
-    () => (brewed ? matchSpellsToInterests(interests, publicSpells).slice(0, 6) : []),
-    [brewed, interests, publicSpells],
+    () => (brewed ? matchSpellsToInterests(interests, publicSpells, catalogue).slice(0, 6) : []),
+    [brewed, interests, publicSpells, catalogue],
   );
 
   if (brewed && matches.length > 0) {

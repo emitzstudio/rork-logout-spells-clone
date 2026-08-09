@@ -17,7 +17,7 @@ export default function FormPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
-  const { getFormBySlug, addResponse } = useFormStore();
+  const { getFormBySlug, addResponse, ready } = useFormStore();
 
   const form = slug ? getFormBySlug(slug) : undefined;
   const visible = form !== undefined && (form.status === "published" || isPreview);
@@ -28,6 +28,7 @@ export default function FormPage() {
       : "Form — Logout Spells";
   }, [form]);
 
+  if (!ready && !form) return <section className="min-h-[100svh]" aria-hidden />;
   if (!form || !visible) return <FormNotFound />;
 
   const previewingDraft = isPreview && form.status !== "published";
