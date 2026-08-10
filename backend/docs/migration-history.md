@@ -627,10 +627,25 @@ app's data layer (M6b).
 
 ---
 
-## Planned next: M7 — Bookings & payments (web)
+## Planned next: M7 — Bookings & payments (web) · draft REVISED 2026-08-10
 
-The money milestone: real `bookings` + `payments` under RLS (client-readable, written
-only by Edge Functions with the service role), the Razorpay order + webhook flow,
-seat counters only the webhook can move, `LS-` booking refs from `next_ref()`, the
-reviews write path gated on completed trips, and real wallet/transactions. Full
+Business requirements received; the payment gateway is **TBD (Razorpay vs
+Cashfree — decision F)**, so the entire draft is provider-NEUTRAL: gateway
+calls live behind a `PaymentProvider` abstraction, and the schema uses neutral
+`provider` / `provider_order_id` / `provider_payment_id` / `provider_refund_id`
+columns plus controlled jsonb metadata. Scope: real `bookings` + per-seat
+`booking_participants`, server-side `booking_terms_acceptances`, the 30%/70%
+advance/balance model computed server-side, hold-aware atomic seat locking,
+`booking_waitlist`, staff-approved `booking_change_requests` (changes,
+transfers, cancellations), an append-only `booking_events` audit spine, the
+provider-neutral `payments` ledger + webhook idempotency, audited admin RPCs
+for manual money (`record_manual_payment`, `admin_confirm_booking`), the
+reviews write path (verified completed booking → staff approval; authors can
+never edit/delete), and a provider-neutral `notification_outbox`. Draft SQL:
+[`backend/migrations/0007_bookings_payments.sql`](../migrations/0007_bookings_payments.sql);
+function drafts under `backend/functions/`. ⛔ Unresolved decisions A–I
+(traveller-refund math, seat-hold window, taxes/fees, TBC dates, balance
+mechanism, gateway, waitlist allocation, refund authority, notification
+providers) are flagged in the file header — the cancel and pricing paths are
+hard-gated until ruled. The mock payment flow stays live in the app. Full
 review before anything runs.

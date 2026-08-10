@@ -1,68 +1,67 @@
 /**
  * M7 · payment-webhook — the ONLY path that confirms money.
- * Status: DRAFT — NOT DEPLOYED. Ships in phase 7B after founder approval.
+ * Status: DRAFT / REVIEW ONLY — NOT DEPLOYED. Provider-neutral (gateway TBD).
  *
- * Public endpoint (gateway JWT off); trust comes from the Razorpay signature:
- *   1. verify X-Razorpay-Signature (HMAC-SHA256 of the RAW body) — 401 if bad
- *   2. record the event; a duplicate x-razorpay-event-id is a no-op (replay
- *      idempotency via the UNIQUE constraint)
- *   3. payment.captured → payments row captured · booking confirmed ·
- *      amount_paid += amount · deposit/paid rollup · traveller notification ·
- *      console activity-log entry
- *   4. payment.failed → payments row failed (booking stays pending; the seat
- *      hold window is decision H1 — NOT auto-released here)
- * Always 200 once the signature checks out — Razorpay retries non-2xx, and a
- * processing hiccup must not trigger an endless redelivery storm; failures
- * are recorded on the event row for staff audit.
+ * Public endpoint (gateway JWT off). Trust comes from PROVIDER AUTHENTICITY:
+ * the configured adapter verifies the signature over the RAW body per the
+ * selected gateway's scheme (deferred with decision F) and returns one
+ * normalized event — this pipeline never sees provider-specific payloads.
+ *
+ *   1. bad signature → 401; unconfigured provider → 503 (defense in depth —
+ *      this function only deploys after the gateway decision)
+ *   2. record the event; a duplicate (provider, provider_event_id) is a
+ *      recorded no-op (replay idempotency via the UNIQUE constraint)
+ *   3. payment_captured → ledger row created→captured (state-guarded) ·
+ *      booking pending→confirmed · paid rollup · deposit/paid state ·
+ *      notifications (in-app + outbox) · console activity · audit event.
+ *      A booking can NEVER be double-confirmed and a payment can NEVER be
+ *      double-recorded: unique event id + status-transition guard + unique
+ *      captured-payment index are three independent shields.
+ *   4. payment_failed → ledger row → failed (booking stays pending; the
+ *      seat-hold window is decision B — NO auto-release is coded)
+ *   5. refund_processed → refund ledger row → refunded · booking stamped ·
+ *      traveller notified
+ * Always 200 once authenticity is proven — providers retry non-2xx, and a
+ * processing hiccup must not trigger a redelivery storm; failures are
+ * recorded on the event row for staff audit.
  */
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 import { adminClient } from "../_shared/auth.ts";
 import { fail, json } from "../_shared/http.ts";
-import { verifyWebhookSignature } from "../_shared/razorpay.ts";
-
-interface RazorpayPaymentEntity {
-  id: string;
-  order_id: string;
-  amount: number;
-  method?: string;
-  vpa?: string | null;
-  card?: { last4?: string } | null;
-  error_code?: string | null;
-  error_description?: string | null;
-}
+import {
+  getPaymentProvider,
+  PaymentProviderNotConfiguredError,
+  WebhookVerificationError,
+} from "../_shared/paymentProvider.ts";
+import type { NormalizedWebhookEvent, PaymentProvider } from "../_shared/paymentProvider.ts";
 
 const rupees = (minor: number): string => `₹${Math.round(minor / 100).toLocaleString("en-IN")}`;
 
-const methodLabel = (entity: RazorpayPaymentEntity): { method: string; label: string } => {
-  if (entity.method === "upi") return { method: "upi", label: `UPI · ${entity.vpa ?? ""}`.trim() };
-  if (entity.method === "card")
-    return { method: "card", label: `Card ·· ${entity.card?.last4 ?? "····"}` };
-  return { method: entity.method ?? "", label: entity.method ?? "" };
-};
+/* ------------------------------ Event handlers ------------------------------ */
 
-/** payment.captured — confirm the booking and roll the paid amount up. */
 const handleCaptured = async (
   admin: SupabaseClient,
-  entity: RazorpayPaymentEntity,
+  provider: PaymentProvider,
+  event: NormalizedWebhookEvent,
 ): Promise<string> => {
   const { data: paymentRow } = await admin
     .from("payments")
     .select("id, booking_id, user_id, status, amount_minor")
-    .eq("provider_order_id", entity.order_id)
+    .eq("provider", provider.name)
+    .eq("provider_order_id", event.orderRef)
     .in("kind", ["advance", "balance"])
     .maybeSingle();
-  if (!paymentRow) return `no payments row for order ${entity.order_id}`;
+  if (!paymentRow) return `no payments row for order ${event.orderRef}`;
   if (paymentRow.status === "captured") return ""; // second idempotency belt
 
-  const { method, label } = methodLabel(entity);
   const { error: captureError } = await admin
     .from("payments")
     .update({
       status: "captured",
-      provider_payment_id: entity.id,
-      method,
-      method_label: label,
+      provider_payment_id: event.paymentRef,
+      method: event.method,
+      method_label: event.methodLabel,
       captured_at: new Date().toISOString(),
     })
     .eq("id", paymentRow.id)
@@ -72,35 +71,63 @@ const handleCaptured = async (
   if (!paymentRow.booking_id) return "captured (no booking linked)";
   const { data: booking } = await admin
     .from("bookings")
-    .select("id, ref, user_id, spell_id, status, seats, amount_total_minor, amount_paid_minor, spell_snapshot")
+    .select("id, ref, user_id, spell_id, departure_id, status, seats, amount_total_minor, amount_paid_minor, spell_snapshot")
     .eq("id", paymentRow.booking_id)
     .maybeSingle();
   if (!booking) return "captured (booking missing)";
 
-  const paidMinor = Number(booking.amount_paid_minor) + Number(entity.amount);
+  const paidMinor = Number(booking.amount_paid_minor) + event.amountMinor;
   const fullyPaid = paidMinor >= Number(booking.amount_total_minor);
+  const wasPending = booking.status === "pending";
   const { error: bookingError } = await admin
     .from("bookings")
     .update({
-      status: booking.status === "pending" ? "confirmed" : booking.status,
+      status: wasPending ? "confirmed" : booking.status,
       amount_paid_minor: paidMinor,
       payment_state: fullyPaid ? "paid" : "deposit",
-      payment_method: label,
+      payment_method: event.methodLabel,
       timeline_step: "payment",
     })
     .eq("id", booking.id);
   if (bookingError) return `booking confirm update failed: ${bookingError.message}`;
 
   // Side effects are best-effort — money state above is already consistent.
-  const snapshot = (booking.spell_snapshot ?? {}) as { card?: { name?: string; location?: string } };
+  const snapshot = (booking.spell_snapshot ?? {}) as { card?: { name?: string } };
   const spellName = snapshot.card?.name ?? "your spell";
+  const seatsLabel = `${booking.seats} seat${booking.seats > 1 ? "s" : ""}`;
+
   if (booking.user_id) {
+    if (wasPending) {
+      await admin.from("notifications").insert({
+        user_id: booking.user_id,
+        kind: "trip",
+        title: `Booking confirmed — ${booking.ref}`,
+        body: `${seatsLabel} on ${spellName}. Your seat in the circle is held ✦`,
+        link: `/account/trips/${booking.id}`,
+      });
+      await admin.from("notification_outbox").insert({
+        user_id: booking.user_id,
+        booking_id: booking.id,
+        event_type: "booking_confirmed",
+        title: `Booking confirmed — ${booking.ref}`,
+        body: `${seatsLabel} on ${spellName} confirmed.`,
+        link: `/account/trips/${booking.id}`,
+      });
+    }
     await admin.from("notifications").insert({
       user_id: booking.user_id,
       kind: "payment",
-      title: `Payment received — ${rupees(Number(entity.amount))}`,
-      body: `${booking.seats} seat${booking.seats > 1 ? "s" : ""} on ${spellName} ${fullyPaid ? "fully paid" : "reserved with your advance"}. Ref ${booking.ref}.`,
-      link: `/account/trips/${booking.id}`,
+      title: `Payment received — ${rupees(event.amountMinor)}`,
+      body: `${fullyPaid ? "Fully paid" : "Advance received"} for ${spellName}. Ref ${booking.ref}.`,
+      link: "/account/transactions",
+    });
+    await admin.from("notification_outbox").insert({
+      user_id: booking.user_id,
+      booking_id: booking.id,
+      event_type: "payment_confirmed",
+      title: `Payment received — ${rupees(event.amountMinor)}`,
+      body: `Payment recorded for ${booking.ref}.`,
+      link: "/account/transactions",
     });
   }
   if (booking.spell_id) {
@@ -108,70 +135,156 @@ const handleCaptured = async (
       spell_id: booking.spell_id,
       kind: "booking",
       title: `Booking confirmed — ${booking.ref}`,
-      detail: `${booking.seats} seat${booking.seats > 1 ? "s" : ""} · ${rupees(Number(entity.amount))} received`,
+      detail: `${seatsLabel} · ${rupees(event.amountMinor)} received`,
       actor_id: null,
+    });
+  }
+  await admin.from("booking_events").insert({
+    booking_id: booking.id,
+    departure_id: booking.departure_id,
+    actor_kind: "provider",
+    event_type: "payment_captured",
+    detail: `${rupees(event.amountMinor)} captured via ${provider.name}`,
+    data: {
+      payment_id: paymentRow.id,
+      amount_minor: event.amountMinor,
+      paid_after: paidMinor,
+      order_ref: event.orderRef,
+      payment_ref: event.paymentRef,
+      booking_confirmed: wasPending,
+    },
+  });
+  return "";
+};
+
+const handleFailed = async (
+  admin: SupabaseClient,
+  provider: PaymentProvider,
+  event: NormalizedWebhookEvent,
+): Promise<string> => {
+  const { data: rows, error } = await admin
+    .from("payments")
+    .update({
+      status: "failed",
+      provider_payment_id: event.paymentRef,
+      error_code: event.errorCode,
+      error_message: event.errorMessage,
+    })
+    .eq("provider", provider.name)
+    .eq("provider_order_id", event.orderRef)
+    .eq("status", "created")
+    .select("id, booking_id, user_id, amount_minor");
+  if (error) return `failed-payment update failed: ${error.message}`;
+  const row = rows?.[0];
+  if (!row) return `no transitionable payments row for order ${event.orderRef}`;
+
+  // ⛔ Decision B (OPEN): the seats stay reserved — no auto-release window
+  // is coded. Staff see the pending booking and decide.
+  await admin.from("booking_events").insert({
+    booking_id: row.booking_id,
+    actor_kind: "provider",
+    event_type: "payment_failed",
+    detail: `Payment failed via ${provider.name}`,
+    data: { order_ref: event.orderRef, error_code: event.errorCode, error_message: event.errorMessage },
+  });
+  if (row.user_id) {
+    await admin.from("notifications").insert({
+      user_id: row.user_id,
+      kind: "payment",
+      title: "Payment didn't go through",
+      body: "No money moved. Your seats are still held — try again from your trip page.",
+      link: "/account/trips",
     });
   }
   return "";
 };
 
-/** payment.failed — record it; the booking stays pending (H1 decides seats). */
-const handleFailed = async (
+const handleRefundProcessed = async (
   admin: SupabaseClient,
-  entity: RazorpayPaymentEntity,
+  provider: PaymentProvider,
+  event: NormalizedWebhookEvent,
 ): Promise<string> => {
-  const { error } = await admin
+  const { data: rows, error } = await admin
     .from("payments")
-    .update({
-      status: "failed",
-      provider_payment_id: entity.id,
-      error_code: entity.error_code ?? "",
-      error_message: entity.error_description ?? "",
-    })
-    .eq("provider_order_id", entity.order_id)
-    .eq("status", "created");
-  return error ? `failed-payment update failed: ${error.message}` : "";
+    .update({ status: "refunded", captured_at: new Date().toISOString() })
+    .eq("provider", provider.name)
+    .eq("provider_refund_id", event.refundRef)
+    .eq("kind", "refund")
+    .neq("status", "refunded")
+    .select("id, booking_id, user_id, amount_minor");
+  if (error) return `refund update failed: ${error.message}`;
+  const row = rows?.[0];
+  if (!row) return `refund ${event.refundRef} already recorded or unknown`;
+
+  if (row.booking_id) {
+    await admin.from("bookings").update({ refunded_at: new Date().toISOString() }).eq("id", row.booking_id);
+  }
+  await admin.from("booking_events").insert({
+    booking_id: row.booking_id,
+    actor_kind: "provider",
+    event_type: "refund_processed",
+    detail: `${rupees(Number(row.amount_minor))} refund completed via ${provider.name}`,
+    data: { refund_ref: event.refundRef },
+  });
+  if (row.user_id) {
+    await admin.from("notifications").insert({
+      user_id: row.user_id,
+      kind: "payment",
+      title: `Refund completed — ${rupees(Number(row.amount_minor))}`,
+      body: "The refund has reached your original payment method.",
+      link: "/account/transactions",
+    });
+  }
+  return "";
 };
+
+/* ---------------------------------- Handler --------------------------------- */
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return fail(405, "METHOD_NOT_ALLOWED", "POST only.");
 
-  // 1 · Signature over the RAW body — read text before any parsing.
   const rawBody = await req.text();
-  const signature = req.headers.get("x-razorpay-signature") ?? "";
-  if (!(await verifyWebhookSignature(rawBody, signature))) {
-    console.error("[payment-webhook] bad signature");
-    return fail(401, "BAD_SIGNATURE", "Signature verification failed.");
-  }
 
-  let event: { event?: string; payload?: { payment?: { entity?: RazorpayPaymentEntity } } };
+  let provider: PaymentProvider;
+  let event: NormalizedWebhookEvent;
   try {
-    event = JSON.parse(rawBody) as typeof event;
-  } catch {
-    return fail(400, "BAD_JSON", "Unparseable webhook body.");
+    provider = getPaymentProvider();
+    event = await provider.processWebhook(rawBody, req.headers);
+  } catch (error) {
+    if (error instanceof WebhookVerificationError) {
+      console.error("[payment-webhook] signature verification failed");
+      return fail(401, "BAD_SIGNATURE", "Webhook authenticity could not be proven.");
+    }
+    if (error instanceof PaymentProviderNotConfiguredError) {
+      return fail(503, "PROVIDER_NOT_CONFIGURED", "No payment provider is configured.");
+    }
+    console.error("[payment-webhook] unparseable webhook", error);
+    return fail(400, "BAD_WEBHOOK", "Unparseable webhook payload.");
   }
-  const eventType = event.event ?? "";
-  const eventId = req.headers.get("x-razorpay-event-id") ?? `no-id:${eventType}:${rawBody.length}`;
 
   const admin = adminClient();
 
-  // 2 · Record-or-replay: the UNIQUE provider_event_id does the deduping.
+  // Record-or-replay: the UNIQUE (provider, provider_event_id) dedupes.
   const { data: inserted } = await admin
     .from("payment_webhook_events")
     .upsert(
-      { provider: "razorpay", provider_event_id: eventId, event_type: eventType, payload: event },
-      { onConflict: "provider_event_id", ignoreDuplicates: true },
+      {
+        provider: provider.name,
+        provider_event_id: event.providerEventId,
+        event_type: event.eventType,
+        payload: { normalized: { ...event, raw: undefined }, raw: event.raw },
+      },
+      { onConflict: "provider,provider_event_id", ignoreDuplicates: true },
     )
     .select("id");
   if (!inserted || inserted.length === 0) return json({ ok: true, replay: true });
   const eventRowId = inserted[0].id as string;
 
-  // 3/4 · Handle what we understand; store what we don't.
   let note = "";
-  const entity = event.payload?.payment?.entity;
-  if (eventType === "payment.captured" && entity) note = await handleCaptured(admin, entity);
-  else if (eventType === "payment.failed" && entity) note = await handleFailed(admin, entity);
-  else note = `ignored: ${eventType}`;
+  if (event.kind === "payment_captured") note = await handleCaptured(admin, provider, event);
+  else if (event.kind === "payment_failed") note = await handleFailed(admin, provider, event);
+  else if (event.kind === "refund_processed") note = await handleRefundProcessed(admin, provider, event);
+  else note = `ignored: ${event.eventType}`;
 
   await admin
     .from("payment_webhook_events")

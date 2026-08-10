@@ -385,6 +385,16 @@ two consumers.
 
 ## 9. Bookings & money
 
+> **Rev note (2026-08-10):** the reviewed M7 draft
+> ([`0007_bookings_payments.sql`](../migrations/0007_bookings_payments.sql))
+> supersedes this sketch — provider-NEUTRAL payments (gateway TBD: Razorpay vs
+> Cashfree), per-seat `booking_participants`, server-side
+> `booking_terms_acceptances`, the 30%/70% advance/balance model, hold-aware
+> seat locking + `booking_waitlist`, staff-approved `booking_change_requests`,
+> append-only `booking_events`, audited manual-payment RPCs, staff-moderated
+> reviews and a `notification_outbox`. This section remains the conceptual
+> overview; the draft file is the review source of truth.
+
 Design rules: the client **never** computes prices, never writes money rows, never
 touches seat counts. `create-booking` (Edge Function, M7) recomputes the breakdown
 server-side from the run's effective price (`spell_departures.price_minor` ??
