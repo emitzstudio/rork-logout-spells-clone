@@ -433,7 +433,114 @@ function HowSection() {
   );
 }
 
-/** Section 4 — Creator deliverables: before, during, after. */
+/** Section 4 — What you earn: 10% commission on organic bookings. */
+function CommissionSection() {
+  return (
+    <section
+      aria-labelledby="commission-heading"
+      className="relative overflow-hidden px-5 py-24 md:px-10 md:py-32"
+    >
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 45% 55% at 50% 38%, rgba(184,150,62,0.11), transparent 70%)",
+        }}
+      />
+      <div className="relative mx-auto max-w-5xl">
+        <Reveal className="text-center">
+          <p className="eyebrow">Section four</p>
+          <h2 id="commission-heading" className="heading-serif mt-4 text-5xl text-cream md:text-7xl">
+            What You <span className="italic text-gold-gradient">Earn</span>
+          </h2>
+          <p className="mx-auto mt-5 max-w-md font-sans text-[15px] leading-relaxed text-cream/50">
+            One number, no fine print — the same promise to every Spellcaster.
+          </p>
+        </Reveal>
+
+        {/* The seal — 10%, held like a wax stamp, not a pricing card. */}
+        <Reveal delay={0.12} className="mt-16 flex flex-col items-center">
+          <div className="relative flex h-[250px] w-[250px] items-center justify-center md:h-[300px] md:w-[300px]">
+            <div
+              aria-hidden
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "radial-gradient(circle, rgba(184,150,62,0.18), transparent 62%)",
+                filter: "blur(8px)",
+              }}
+            />
+            {/* The outer ring turns imperceptibly — a seal, alive. */}
+            <div
+              aria-hidden
+              className="absolute inset-0 rounded-full border border-dashed border-gold/25"
+              style={{ animation: "ls-spin 90s linear infinite" }}
+            >
+              <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 font-serif text-[11px] text-gold/50">✦</span>
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 font-serif text-[11px] text-gold/50">✦</span>
+              <span className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[11px] text-gold/50">✦</span>
+              <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 font-serif text-[11px] text-gold/50">✦</span>
+            </div>
+            <div
+              aria-hidden
+              className="absolute inset-[16px] rounded-full border border-gold/35 bg-charcoal-deep/70 backdrop-blur-sm"
+              style={{
+                boxShadow:
+                  "inset 0 0 44px rgba(184,150,62,0.1), 0 24px 70px -30px rgba(0,0,0,0.8)",
+              }}
+            />
+            <div className="relative text-center">
+              <p className="heading-serif text-[88px] leading-none md:text-[110px]">
+                <span className="italic text-gold-gradient">10%</span>
+              </p>
+              <p className="mt-3 font-sans text-[10.5px] uppercase tracking-[0.34em] text-cream/70">
+                Commission
+              </p>
+              <p className="mt-1.5 font-sans text-[9px] uppercase tracking-[0.26em] text-gold/70">
+                on organic bookings
+              </p>
+            </div>
+          </div>
+          <p className="mt-9 max-w-md text-center font-serif text-2xl italic leading-snug text-cream/75 md:text-3xl">
+            Earn from the travellers you <span className="text-gold-gradient">genuinely inspire.</span>
+          </p>
+        </Reveal>
+
+        {/* The honest definition — what counts, and what doesn't. */}
+        <div className="mx-auto mt-14 grid max-w-4xl gap-5 md:grid-cols-2">
+          <Reveal delay={0.08}>
+            <div className="card-glass h-full rounded-[16px] p-8 transition-colors duration-500 hover:!border-gold/40">
+              <span className="font-serif text-3xl text-gold/70" aria-hidden>✦</span>
+              <h3 className="heading-serif mt-4 text-3xl italic text-cream">Organic bookings only</h3>
+              <p className="mt-3 font-sans text-sm leading-relaxed text-cream/60">
+                You earn a 10% commission when your content genuinely influences someone to
+                discover and book a Logout Spells trip — a traveller who found the journey
+                through you, and chose it because of you.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={0.16}>
+            <div className="card-glass h-full rounded-[16px] p-8 transition-colors duration-500 hover:!border-gold/40">
+              <span className="font-serif text-3xl text-gold/50" aria-hidden>☾</span>
+              <h3 className="heading-serif mt-4 text-3xl italic text-cream">What doesn't count</h3>
+              <p className="mt-3 font-sans text-sm leading-relaxed text-cream/60">
+                Bookings from your friends, family or personal circle — or from travellers who
+                would have booked on their own anyway — aren't counted as organic. The
+                commission honours genuine influence, not proximity.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+
+        <Reveal delay={0.2} className="mt-10 text-center">
+          <p className="font-hand text-xl text-gold/50">honest earnings for honest influence ✦</p>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/** Section 5 — Creator deliverables: before, during, after. */
 function DeliverablesSection() {
   return (
     <section aria-labelledby="deliverables-heading" className="relative overflow-hidden bg-charcoal-deep/40 px-5 py-24 md:px-10 md:py-32">
@@ -446,7 +553,7 @@ function DeliverablesSection() {
       />
       <div className="relative mx-auto max-w-6xl">
         <Reveal className="text-center">
-          <p className="eyebrow">Section four</p>
+          <p className="eyebrow">Section five</p>
           <h2 id="deliverables-heading" className="heading-serif mt-4 text-5xl text-cream md:text-7xl">
             What You <span className="italic text-gold-gradient">Bring</span>
           </h2>
@@ -523,8 +630,8 @@ function CreatorFinalCta() {
 
 /**
  * Become a Spellcaster — pure storytelling: why, who, how it works in four
- * stages, and what creators bring before / during / after. (The earnings
- * calculator retired with the old page.)
+ * stages, what you earn (10% on organic bookings), and what creators bring
+ * before / during / after.
  */
 export default function Creators() {
   return (
@@ -533,6 +640,7 @@ export default function Creators() {
       <WhySection />
       <WhoSection />
       <HowSection />
+      <CommissionSection />
       <DeliverablesSection />
       <CreatorFinalCta />
     </Page>

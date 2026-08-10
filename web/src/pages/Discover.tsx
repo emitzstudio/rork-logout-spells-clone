@@ -41,8 +41,96 @@ const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.m
 
 const TRAIL_GOLDS = ["#CFA85A", "#F0DFAE", "#E8CE8C", "#B8963E"] as const;
 
-const CHIP_CLASS =
-  "inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-charcoal-deep/90 px-4 py-2 font-sans text-[10.5px] uppercase tracking-[0.16em] text-cream/80";
+/* ------------------------------ Dream bubbles ------------------------------ */
+
+/**
+ * Deterministic orb diameter — wide enough that the longest word in the
+ * label never clips, with seeded variety so no two orbs feel stamped.
+ */
+const bubbleSize = (interest: Interest, seed: number): number => {
+  const longest = interest.label.split(" ").reduce((m, w) => Math.max(m, w.length), 0);
+  const base =
+    longest >= 10
+      ? 108
+      : longest >= 8
+        ? 98
+        : interest.label.length >= 12
+          ? 92
+          : interest.label.length >= 7
+            ? 84
+            : 76;
+  return Math.round(base + (prand(seed * 17 + 3) - 0.5) * 8);
+};
+
+interface DreamBubbleProps {
+  label: string;
+  size: number;
+  /** Mid-flight styling — the orb glows as the cauldron pulls it in. */
+  lit?: boolean;
+  className?: string;
+}
+
+/**
+ * The orb itself — a glassy golden bubble, shared by the floating buttons
+ * and the flights so what you tap is exactly what the cauldron swallows.
+ */
+function DreamBubble({ label, size, lit, className }: DreamBubbleProps) {
+  return (
+    <span
+      className={cn(
+        "relative flex items-center justify-center rounded-full border border-gold/30 bg-charcoal-deep/85 text-center backdrop-blur-[2px]",
+        className,
+      )}
+      style={{
+        width: size,
+        height: size,
+        backgroundImage:
+          "radial-gradient(circle at 33% 28%, rgba(240,223,174,0.16) 0%, rgba(184,150,62,0.07) 38%, rgba(14,12,8,0.92) 100%)",
+        boxShadow:
+          "inset 0 0 20px rgba(184,150,62,0.12), inset 0 -10px 18px rgba(0,0,0,0.5), 0 0 22px -8px rgba(207,168,90,0.35)",
+      }}
+    >
+      {/* Hover / in-flight glow — its own layer so inline shadows never fight. */}
+      <span
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0 rounded-full transition-opacity duration-300",
+          lit ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+        )}
+        style={{
+          boxShadow:
+            "0 0 36px -6px rgba(207,168,90,0.7), inset 0 0 24px rgba(184,150,62,0.18)",
+        }}
+      />
+      {/* Specular glint — what makes it read as a bubble, not a disc. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute rounded-full"
+        style={{
+          left: "18%",
+          top: "12%",
+          width: "34%",
+          height: "20%",
+          background: "radial-gradient(ellipse, rgba(250,242,216,0.45), transparent 70%)",
+          transform: "rotate(-24deg)",
+          filter: "blur(1.5px)",
+        }}
+      />
+      <span
+        className={cn(
+          "relative px-2.5 font-sans uppercase leading-[1.35] tracking-[0.14em] transition-colors duration-300",
+          lit ? "text-gold-light" : "text-cream/85 group-hover:text-gold-light",
+        )}
+        style={{ fontSize: size < 88 ? 8.5 : 9.5 }}
+      >
+        <span aria-hidden className={cn("mb-0.5 block text-[10px]", lit ? "text-gold" : "text-gold/60")}>
+          ✦
+        </span>
+        {label}
+      </span>
+    </span>
+  );
+}
 
 /* ------------------------- Floating constellation ------------------------- */
 
@@ -64,8 +152,8 @@ interface Placement {
 const EXCLUDE = { x: 50, y: 45, rx: 26, ry: 32 } as const;
 /** Converts height-% into width-% so distances are roughly isotropic. */
 const Y_SCALE = 0.7;
-/** Minimum spacing between tag centres, in width-% (~118px on a 1152px stage). */
-const MIN_DIST = 10.2;
+/** Minimum spacing between orb centres, in width-% (~124px on a 1152px stage). */
+const MIN_DIST = 10.8;
 
 const RING_K = [1.18, 1.45, 1.78] as const;
 const RING_OFFSET = [0.4, 2.2, 4.5] as const;
@@ -119,7 +207,8 @@ function computePlacements(catalogue: Interest[]): Record<string, Placement> {
         p.y = EXCLUDE.y + (p.y - EXCLUDE.y) * t;
       }
       p.x = clamp(p.x, 4, 96);
-      p.y = clamp(p.y, 4, 94);
+      /* Orbs are taller than the old pills — keep them off the hero above. */
+      p.y = clamp(p.y, 7, 92);
     }
   }
 
@@ -169,6 +258,8 @@ interface TrailMote {
 interface Flight {
   key: string;
   label: string;
+  /** Rendered orb diameter, captured from the tapped bubble. */
+  size: number;
   xs: number[];
   ys: number[];
   times: number[];
@@ -176,33 +267,33 @@ interface Flight {
   trail: TrailMote[];
 }
 
-/* ------------------------------- Tag button ------------------------------- */
+/* ------------------------------ Bubble button ------------------------------ */
 
 interface TagButtonProps {
   interest: Interest;
+  size: number;
   delayIn: number;
   onPick: (interest: Interest, el: HTMLElement) => void;
 }
 
-function TagButton({ interest, delayIn, onPick }: TagButtonProps) {
+function TagButton({ interest, size, delayIn, onPick }: TagButtonProps) {
   return (
     <motion.button
       type="button"
+      aria-label={`Drop ${interest.label} into the cauldron`}
       onClick={(e) => onPick(interest, e.currentTarget)}
-      initial={{ opacity: 0, scale: 0.5 }}
+      initial={{ opacity: 0, scale: 0.3 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 22, delay: delayIn }}
-      whileHover={{ scale: 1.07, y: -2 }}
+      transition={{ type: "spring", stiffness: 210, damping: 16, delay: delayIn }}
+      whileHover={{ scale: 1.09, y: -4 }}
       whileTap={{ scale: 0.86 }}
-      className={cn(
-        CHIP_CLASS,
-        "transition-[border-color,color,box-shadow] duration-300 hover:border-gold/60 hover:text-gold-light hover:shadow-[0_0_26px_-6px_rgba(207,168,90,0.55)]",
-      )}
+      className="group rounded-full"
     >
-      <span aria-hidden className="text-gold/60">
-        ✦
-      </span>
-      {interest.label}
+      <DreamBubble
+        label={interest.label}
+        size={size}
+        className="transition-[border-color] duration-300 group-hover:border-gold/70"
+      />
     </motion.button>
   );
 }
@@ -329,8 +420,8 @@ interface CardOffset {
 const summonTilt = (i: number): number => (i % 2 === 0 ? -1 : 1) * (2.5 + (i % 3) * 1.2);
 
 /**
- * Discover Your Spell — an enchanted cauldron surrounded by floating dreams.
- * Tap a dream and it is pulled along a golden trail into the brew. At five
+ * Discover Your Spell — an enchanted cauldron surrounded by floating dream
+ * bubbles. Tap an orb and it is pulled along a golden trail into the brew. At five
  * the traveller may reveal; at ten the cauldron acts on its own: the magic
  * builds, bursts, and the matching spells are summoned out of the smoke —
  * in place, no scrolling. The cauldron then bows out, leaving only spells.
@@ -355,6 +446,10 @@ export default function Discover() {
     () => computePlacements(catalogue),
     [catalogue],
   );
+  const sizes = useMemo<Map<string, number>>(
+    () => new Map(catalogue.map((interest, i) => [interest.id, bubbleSize(interest, i)])),
+    [catalogue],
+  );
 
   const phaseRef = useRef<RitualPhase>(phase);
   const countRef = useRef<number>(selectedIds.length);
@@ -362,6 +457,8 @@ export default function Discover() {
   const cauldronBoxRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timeouts = useRef<number[]>([]);
+  /** Synchronous mirror of `flying` — double-taps outrun React state. */
+  const flyingRef = useRef<Set<string>>(new Set());
 
   const setPhaseSafe = useCallback((p: RitualPhase) => {
     phaseRef.current = p;
@@ -474,14 +571,17 @@ export default function Discover() {
     setFinale(0);
     setFlights([]);
     setFlying(new Set());
+    flyingRef.current.clear();
   }, [clear, setPhaseSafe]);
 
   /* --------------------------------- Flights -------------------------------- */
 
-  /** Send a dream flying into the cauldron along a curved, sparkling path. */
+  /** Send a dream-bubble flying into the cauldron along a curved, sparkling path. */
   const onPick = useCallback(
     (interest: Interest, el: HTMLElement): void => {
       if (phaseRef.current !== "brewing") return;
+      /* Double-tap guard — one bubble, one flight, one selection. */
+      if (flyingRef.current.has(interest.id)) return;
       const stage = stageRef.current;
       const box = cauldronBoxRef.current;
       if (!stage || !box || reduced) {
@@ -534,7 +634,9 @@ export default function Discover() {
       }
 
       const key = `${interest.id}-${Date.now()}`;
-      setFlights((f) => [...f, { key, label: interest.label, xs, ys, times, dur, trail }]);
+      const size = el.offsetWidth || 92;
+      flyingRef.current.add(interest.id);
+      setFlights((f) => [...f, { key, label: interest.label, size, xs, ys, times, dur, trail }]);
       setFlying((prev) => new Set(prev).add(interest.id));
 
       timeouts.current.push(
@@ -543,6 +645,7 @@ export default function Discover() {
           setStir((v) => v + 1);
         }, dur * 1000),
         window.setTimeout(() => {
+          flyingRef.current.delete(interest.id);
           setFlights((f) => f.filter((x) => x.key !== key));
           setFlying((prev) => {
             const next = new Set(prev);
@@ -893,7 +996,12 @@ export default function Discover() {
                         }}
                       >
                         <BobbingTag placement={p} reduced={reduced}>
-                          <TagButton interest={interest} delayIn={p.delayIn} onPick={onPick} />
+                          <TagButton
+                            interest={interest}
+                            size={sizes.get(interest.id) ?? 92}
+                            delayIn={p.delayIn}
+                            onPick={onPick}
+                          />
                         </BobbingTag>
                       </div>
                     );
@@ -949,6 +1057,7 @@ export default function Discover() {
                         >
                           <TagButton
                             interest={interest}
+                            size={Math.round((sizes.get(interest.id) ?? 92) * 0.8)}
                             delayIn={prand(i * 41 + 13) * 0.4}
                             onPick={onPick}
                           />
@@ -970,8 +1079,8 @@ export default function Discover() {
                 <div key={f.key}>
                   <motion.div
                     className="absolute left-0 top-0"
-                    initial={{ x: f.xs[0], y: f.ys[0], scale: 0.92, opacity: 1 }}
-                    animate={{ x: f.xs, y: f.ys, scale: [0.92, 0.78, 0.34], opacity: [1, 1, 0] }}
+                    initial={{ x: f.xs[0], y: f.ys[0], scale: 1, opacity: 1 }}
+                    animate={{ x: f.xs, y: f.ys, scale: [1, 0.78, 0.2], opacity: [1, 1, 0] }}
                     transition={{
                       x: { duration: f.dur, times: f.times, ease: "linear" },
                       y: { duration: f.dur, times: f.times, ease: "linear" },
@@ -979,14 +1088,8 @@ export default function Discover() {
                       opacity: { duration: f.dur, times: [0, 0.82, 1] },
                     }}
                   >
-                    <span
-                      className={cn(
-                        CHIP_CLASS,
-                        "-translate-x-1/2 -translate-y-1/2 border-gold/50 text-gold-light shadow-[0_0_26px_-4px_rgba(207,168,90,0.6)]",
-                      )}
-                    >
-                      <span className="text-gold/70">✦</span>
-                      {f.label}
+                    <span className="block -translate-x-1/2 -translate-y-1/2">
+                      <DreamBubble label={f.label} size={f.size} lit className="border-gold/60" />
                     </span>
                   </motion.div>
 
