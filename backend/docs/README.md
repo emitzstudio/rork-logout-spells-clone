@@ -67,7 +67,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, `next_ref()` pipeline, `spells.form_id`, seeds | **Applied 2026-08-09 — verified** |
 | M5 | Public site integration | Provider swap (public site + console behind staff sign-in), `submit_inquiry()`, `spell_active_departures`, storage upload pipeline | **Applied 2026-08-09 — verified** |
 | M6 | Traveller accounts | Real auth UI (login/join/reset), profile/settings, `saved_spells`, `user_interests`, `notifications` + welcome whisper, `avatars` bucket, first-login merge, console wishlist counts | **Applied 2026-08-09 — verified** |
-| M7 | Bookings & payments | `bookings`, `payments`, webhook events, Edge Functions, payment provider | Pending |
+| M7 | Bookings & payments | 10 tables (`bookings`, participants, terms, `payments` ledger, webhook events, waitlist/holds, change requests, staff notes, audit spine, outbox), seat machinery, admin RPCs, reviews write path | **M7A applied 2026-08-13 — verified.** Money-moving layer (gateway adapter, function deploys, Door 2 swap) pending decision F + 7C |
 | M8 | Memories & referrals | `memories`, `memory_photos`, private bucket, `referrals`, realtime notifications | Pending |
 | — | Future (designed only) | Loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
 
@@ -77,6 +77,6 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | --- | --- | --- |
 | D1 | Page/article/form document content | **Decided — hybrid**: queryable fields are columns, the page document is one `jsonb` field |
 | D2 | Trip dates | **Decided — `spell_departures` table**: one spell page, many dated runs |
-| D3 | Payment provider | **Decided — Razorpay** (`stripe` enum value reserved for the future) |
+| D3 | Payment provider | **Reopened 2026-08-10 (decision F)** — Razorpay vs Cashfree. M7A schema + pipeline are provider-neutral; the choice lands as one adapter file + one secret, zero schema change |
 | D4 | Sign-in at launch | **Decided — email + password only**; Google/Apple additive later with company-owned OAuth credentials |
 | D5 | Initial content | **Decided — seed everything the site shows today**; founder replaces via builders over time |

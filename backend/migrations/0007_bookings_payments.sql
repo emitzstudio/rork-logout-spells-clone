@@ -1,8 +1,15 @@
 -- ============================================================================
 -- M7 · Bookings & payments — backend objects (REVISED per business answers)
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT / REVIEW ONLY — NOTHING in this file has run anywhere.
--- Once applied, this file becomes the source of record and is never re-run.
+-- Status: M7A APPROVED & EXECUTED (founder go, 2026-08-13) — the gateway-
+-- agnostic booking infrastructure. Applied byte-exact via the Supabase
+-- management API as one atomic statement batch (HTTP 201), the proven
+-- M3–M6 path. Verified by m7-verify-assertions + m7-verify-behavior
+-- (managed tool + live RLS probes, net-zero). Source of record — never re-run.
+-- ⛔ M7 is NOT payment-ready: the money-moving layer (gateway adapter,
+-- provider webhook, refunds, Door 2 checkout) stays PENDING behind the
+-- PaymentProvider seam until decision F lands and the chosen gateway
+-- passes the complete test-mode payment flow (7C).
 --
 -- Business requirements received 2026-08-10. Key rulings encoded here:
 --   · 30% advance at booking · 70% balance due 30 days before start

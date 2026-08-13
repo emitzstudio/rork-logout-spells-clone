@@ -1,8 +1,16 @@
 # Edge Functions
 
-> **Status: DESIGN — none deployed.** Functions are written in Deno TypeScript under
-> `backend/functions/<name>/index.ts` and deploy into the company Supabase project —
-> they run on Supabase's infrastructure with zero dev-tool runtime dependency.
+> **Status: reviewed drafts on disk — NONE deployed.** Functions are written in Deno
+> TypeScript under `backend/functions/<name>/index.ts` and deploy into the company
+> Supabase project — they run on Supabase's infrastructure with zero dev-tool runtime
+> dependency.
+>
+> **2026-08-13 (M7A):** the database layer these functions write to is now LIVE and
+> verified. The functions themselves are the isolated pending layer — they deploy
+> only after decision F (gateway) lands and the adapter passes review. Two stray v1
+> deployments (`cancel-booking`, `payment-webhook`) from the early draft era were
+> found ACTIVE and **deleted** during M7A execution; `listEdgeFunctions` now returns
+> zero functions.
 
 ## Why functions exist at all
 
