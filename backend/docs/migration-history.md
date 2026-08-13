@@ -627,125 +627,25 @@ app's data layer (M6b).
 
 ---
 
-## M7A — Bookings & payments, the gateway-agnostic layer · applied 2026-08-13
+## Planned next: M7 — Bookings & payments (web) · draft REVISED 2026-08-10
 
-| | |
-| --- | --- |
-| Migration | [`backend/migrations/0007_bookings_payments.sql`](../migrations/0007_bookings_payments.sql), applied byte-exact via the management API as one atomic statement batch (HTTP 201) — the proven M3–M6 path |
-| Approved by | Vidushi Verma — "the booking infrastructure can be finished now": everything gateway-agnostic executes; the gateway adapter + provider webhook/payment implementation stay a **clearly isolated pending layer** until the provider is chosen and passes the complete test-mode flow |
-| Destructive statements | **None.** Fully additive. Touches to applied objects, each reviewed: **T1** `next_ref` service-role grant · **T2** `reviews` + `status`/`booking_id`, SELECT policy tightened to approved-only-for-public, new INSERT/staff-UPDATE policies · **T3** `spell_active_departures` replaced with `seats_on_hold` appended · **T4** departures audit trigger |
-| App code | None — **Door 2 stays on the mock gateway by design** (the mock switches off only after the chosen gateway passes the 7C test-mode suite) |
-
-### Backend objects
-
-13 enums · 10 tables, all RLS-on and born empty — **`bookings`** (traveller
-drafts + pipeline-only real bookings; per-role column discipline via a guard
-trigger: travellers = checklist + post-trip rating, staff = stay/meeting/host
-notes + timeline step; money/status/ref/seat columns hold **no client grant**
-at all) · **`booking_participants`** (per-seat details, draft-editable,
-append-and-mark-removed after) · **`booking_terms_acceptances`** (server-side
-consent proof, service-role writes only) · **`payments`** (ONE provider-neutral
-ledger for every money movement; `source` separates gateway/manual/system;
-idempotency backstops: unique captured charge + unique refund per provider id)
-· **`payment_webhook_events`** (raw provider events; `(provider, event_id)`
-unique = replay shield) · **`booking_waitlist`** (doubles as the HOLD
-mechanism — offered rows keep seats out of public reach; one live entry per
-traveller per departure) · **`booking_change_requests`** (travellers request,
-staff decide; transition guard stamps `decided_by/decided_at` and audits every
-move) · **`booking_staff_notes`** (staff-only) · **`booking_events`** (append-only
-audit spine — no UPDATE/DELETE policies exist) · **`notification_outbox`**
-(provider-neutral delivery queue, decision I open).
-
-**Seat machinery** — availability = `seats_total − seats_booked − active
-offered holds`, one source of truth: `departure_seats_on_hold()` (definer
-counter, numbers only, anon-callable for honest public availability) ·
-`reserve_departure_seats()` (single atomic UPDATE re-checking capacity inside
-the row lock, hold-aware, can consume the caller's own offered hold and mark it
-converted) · `release_departure_seats()` (pre-booking failure path) ·
-`release_booking_seats()` (**exactly-once** — `seats_released_at` flips once;
-retries return false). All service-role only, all audited. Staff capacity
-edits keep their M2 grant; M2's `seats_booked <= seats_total` CHECK is the
-physical backstop and a new audit trigger logs every capacity/status change.
-
-**Admin manual operations** — `record_manual_payment()` (bank transfer / cash
-/ UPI recorded with `source='manual'`, permanently distinguishable from
-gateway money; rolls the booking up exactly like a webhook capture; refund
-kind refused — refunds only via the cancellation pipeline) and
-`admin_confirm_booking()` (no-money confirmation, reason mandatory). Both
-admin-gated INSIDE the function, fully audited, traveller notified (in-app +
-outbox). Decision H (roles/second approval) open — gate is `admin` for now.
-
-**Reviews write path (T2)** — insert requires author = caller, `verified =
-true`, `status = 'pending'` pinned by policy, and an RLS-checked completed
-booking for that journey's spell; staff moderate via a `status`-only column
-grant; authors can never edit or delete; the public sees approved only. The 13
-seeded reviews were backfilled `approved`; the column default then flipped to
-`pending`.
-
-### ⛔ The isolated pending layer (NOT part of this milestone)
-
-- **Decision F** — Razorpay vs Cashfree. Everything provider-facing sits
-  behind `PaymentProvider` (`backend/functions/_shared/paymentProvider.ts`),
-  whose factory throws `PaymentProviderNotConfiguredError` until an adapter +
-  `PAYMENT_PROVIDER` secret exist.
-- **Edge Functions deployed: ZERO.** `create-booking`, `payment-webhook`,
-  `cancel-booking` remain reviewed drafts on disk. During execution, two stray
-  v1 deployments (`cancel-booking`, `payment-webhook`) from the early draft era
-  were found ACTIVE on the project and **deleted** before the migration ran —
-  the pending layer now exists on disk only.
-- Open decisions **A** (traveller-refund math — cancel path hard-gated), **B**
-  (seat-hold window), **C** (taxes/service fee — create-booking pricing
-  null-gate), **D** (TBC-date departures refused), **E** (balance collection
-  mechanism), **G** (waitlist auto-allocation — manual only), **H**, **I**.
-- **M7 is NOT payment-ready** until the chosen gateway passes the complete
-  test-mode payment flow (7C) — only then does Door 2 leave the mock.
-
-### Verification
-
-**`m7-verify-assertions`** (managed tool, read-only) — all passed: 10 tables
-RLS-on and empty · exact policy-name sets per table · exact column-grant sets
-(bookings INSERT 11 / UPDATE 6; participants 13/15; waitlist 10/5;
-change-requests 3/2; staff-notes 2; reviews 10/1) · zero client write surface
-on payments/terms/webhook-events/events/outbox and zero anon privilege on all
-ten tables · status/money/ref/user_id unwritable on bookings · function
-privilege matrix (seat functions + `next_ref` service-role only; RPCs
-authenticated-but-gated; hold counter anon-callable; guards locked) · SECURITY
-DEFINER + pinned `search_path` on all ten definer functions · trigger sets ·
-24 indexes with 5 unique backstops · 14 named constraints · view v2
-(`seats_on_hold` appended last, `security_invoker` intact) · reviews 13/13
-approved with default flipped · 13 enums value-exact.
-
-**`m7-verify-behavior`** (live suite as two throwaway travellers + probe admin;
-full inventory in that migration's comment) — all passed: 24 traveller-side
-REST probes (forged status/money 42501; guard blocks staff columns and
-pre-completion rating; cross-account invisibility; waitlist join/dupe/forged
-offered/leave; change request on a draft refused; review without a completed
-booking refused; `record_manual_payment` "Only admins"; `reserve` permission
-denied) · seat machinery on an invisible probe departure (capacity clamp,
-holds block, hold-consume converts, generic + exactly-once booking release,
-double-release refused, capacity CHECK 23514 below booked) · admin pipeline
-via REST (manual advance → ledger row `manual/manual/captured` with reference
-kept, booking pending→confirmed/deposit/timeline-payment, traveller notified
-in-app + outbox; refund kind refused; confirm requires reason, pending-only) ·
-staff guard branch re-proven on a real diff (both checklist and rating
-rejected) · change-request lifecycle (approve stamps decider; requested →
-completed refused; approved → completed lands) · review happy path 201 pending
-(anon saw exactly 13 approved throughout), duplicate 23505, author
-self-approve/delete 0 rows, staff reject audited · 10 audit event types
-asserted on the spine · `next_ref('probe','ZZ')` → `ZZ-0826-001`.
-
-**Net-zero confirmed** (asserted in the managed record): all ten M7 tables 0
-rows · reviews 13 approved · spells 10 / departures 10 / **62 booked seats
-unchanged** · `auth.users` 1 (founder) · profiles/roles founder-only ·
-notifications 0 · `ref_counters` 0 · `spell_changes` 27 · no probe slugs
-remain. The first real booking will still mint `LS-…-001`.
-
-Types regenerated into `backend/types.ts` + web + Expo
-`src/integrations/supabase/types.ts`. Builds: **web green** · **Expo green**.
-
-### Still mock / still ahead (by design)
-
-Door 2 checkout (mock gateway, device-local test bookings) until 7C · console
-bookings desk + traveller account views on the live tables (M7B) · the
-gateway adapter, function deploys and test-mode suite (7C, after decision F) ·
-memories & referrals (M8).
+Business requirements received; the payment gateway is **TBD (Razorpay vs
+Cashfree — decision F)**, so the entire draft is provider-NEUTRAL: gateway
+calls live behind a `PaymentProvider` abstraction, and the schema uses neutral
+`provider` / `provider_order_id` / `provider_payment_id` / `provider_refund_id`
+columns plus controlled jsonb metadata. Scope: real `bookings` + per-seat
+`booking_participants`, server-side `booking_terms_acceptances`, the 30%/70%
+advance/balance model computed server-side, hold-aware atomic seat locking,
+`booking_waitlist`, staff-approved `booking_change_requests` (changes,
+transfers, cancellations), an append-only `booking_events` audit spine, the
+provider-neutral `payments` ledger + webhook idempotency, audited admin RPCs
+for manual money (`record_manual_payment`, `admin_confirm_booking`), the
+reviews write path (verified completed booking → staff approval; authors can
+never edit/delete), and a provider-neutral `notification_outbox`. Draft SQL:
+[`backend/migrations/0007_bookings_payments.sql`](../migrations/0007_bookings_payments.sql);
+function drafts under `backend/functions/`. ⛔ Unresolved decisions A–I
+(traveller-refund math, seat-hold window, taxes/fees, TBC dates, balance
+mechanism, gateway, waitlist allocation, refund authority, notification
+providers) are flagged in the file header — the cancel and pricing paths are
+hard-gated until ruled. The mock payment flow stays live in the app. Full
+review before anything runs.
