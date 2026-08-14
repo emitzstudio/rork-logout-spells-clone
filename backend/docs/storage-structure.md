@@ -1,13 +1,15 @@
 # Storage Structure
 
-> **Status: PARTIALLY APPLIED — `spell-media` (M2), `blog-media` + `site-media` (M3)
-> and `avatars` (M6, 2026-08-09) are live**, each with four access policies, folder
-> discipline enforced on write (`spells/…` · `posts/…` · `team/…`+`previous/…` ·
-> `{user_id}/…`), image-only MIME lists and per-bucket caps (10 MB staff buckets,
-> 5 MB avatars). The `memories` bucket arrives in M8. Builder and avatar uploads land
-> in Storage under these rules. **Watch item:** seeded team photos still point at
-> site-relative `/team/*.jpg` — copy into `site-media/team/…` (copy → repoint →
-> delete) before any non-web surface renders the roster.
+> **Status: ALL FIVE BUCKETS LIVE — `spell-media` (M2), `blog-media` + `site-media`
+> (M3), `avatars` (M6, 2026-08-09) and `memories` (M8, 2026-08-14)**, each with
+> folder discipline enforced on write (`spells/…` · `posts/…` · `team/…`+`previous/…`
+> · `{user_id}/…`), image-only MIME lists and per-bucket caps (10 MB staff buckets,
+> 5 MB avatars, 8 MB memories). `memories` is the only PRIVATE bucket — signed URLs
+> only, exactly three own-folder policies, no UPDATE, no staff clause. Builder,
+> avatar and keepsake uploads land in Storage under these rules. **Watch item:**
+> seeded team photos still point at site-relative `/team/*.jpg` — copy into
+> `site-media/team/…` (copy → repoint → delete) before any non-web surface renders
+> the roster.
 
 ## Buckets
 
@@ -50,10 +52,18 @@ from the earlier fixed-name sketch).
   SELECT: anyone. INSERT/UPDATE/DELETE: `is_staff()` only.
 - **`avatars`**: SELECT anyone. INSERT/UPDATE/DELETE: authenticated where
   `(storage.foldername(name))[1] = auth.uid()::text` — users manage only their folder.
-- **`memories`**: no public access. SELECT/INSERT/DELETE: authenticated where folder
-  owner = `auth.uid()`. The app renders photos through short-lived signed URLs.
-  Album size is capped by `memories.photo_limit` (default 60), enforced by a database
-  trigger on `memory_photos` — the storage policy alone cannot count.
+- **`memories`** (live since M8): no public access, no staff clause, and NO UPDATE
+  policy — objects are immutable; replacement is a new object id, never reused.
+  SELECT/INSERT/DELETE: authenticated where folder owner = `auth.uid()`. The app
+  renders photos through **1-hour signed URLs** (decision Q), minted in one batch at
+  bundle load and quietly re-minted on refetch — signed URLs are NEVER written to
+  the database (rows store paths only; signing re-checks the SELECT policy
+  server-side). Album size is capped by `memories.photo_limit` (default **12**,
+  decision N), enforced by a database trigger on `memory_photos` — the storage
+  policy alone cannot count — and a second trigger pins every row's path inside
+  `{owner}/{memory_id}/…`, so a row can never name a foreign object. The client
+  re-encode to JPEG also strips EXIF/GPS before upload — location metadata never
+  reaches storage.
 
 ## Upload rules
 

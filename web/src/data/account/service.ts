@@ -5,12 +5,14 @@
  * Supabase (email + password, confirmation off per decision D1), profile and
  * settings live in the M1 tables, the wishlist in `saved_spells`, the inbox
  * in `notifications` — and, since M7C, bookings, participants and the
- * payments ledger come straight from the M7 tables. RLS scopes every read to
- * the signed-in traveller; the SERVER derives all money — this file only
- * renders what it stored (paise → rupees, nothing computed).
+ * payments ledger come straight from the M7 tables. Since M8, memory albums
+ * live in `memories` + `memory_photos` with keepsakes in the PRIVATE
+ * `memories` bucket (signed URLs, never persisted; staff have no access).
+ * RLS scopes every read to the signed-in traveller; the SERVER derives all
+ * money — this file only renders what it stored (paise → rupees, nothing
+ * computed).
  *
- * Still device-local until their milestones: memory albums (M8) and the
- * recently-viewed trail (deliberately never a table).
+ * Still device-local, deliberately forever: the recently-viewed trail.
  */
 import type { User } from "@supabase/supabase-js";
 
@@ -18,9 +20,12 @@ import { CATEGORY_FAMILY } from "@/data/builder";
 import type { SpellCategoryId } from "@/data/spells";
 import { isUuid, supabase } from "@/integrations/supabase/client";
 import {
+  deleteMemoryPaths,
   deleteStorageUrls,
   isLocalImageUrl,
   isOwnStorageUrl,
+  signMemoryPaths,
+  uploadMemoryPhoto,
   uploadProfileImage,
 } from "@/integrations/supabase/storage";
 import type { Database, Json } from "@/integrations/supabase/types";
@@ -30,6 +35,7 @@ import type {
   AccountData,
   AppNotification,
   ChecklistItem,
+  MemoryPhoto,
   SpellSnapshot,
   TravellerPrefs,
   TravellerProfile,
@@ -49,6 +55,8 @@ type NotificationRow = Tables["notifications"]["Row"];
 type BookingRow = Tables["bookings"]["Row"];
 type ParticipantRow = Tables["booking_participants"]["Row"];
 type PaymentRow = Tables["payments"]["Row"];
+type MemoryRow = Tables["memories"]["Row"];
+type MemoryPhotoRow = Tables["memory_photos"]["Row"];
 
 /* -------------------------------- Validation ------------------------------- */
 
@@ -158,7 +166,8 @@ const mapPrefs = (row: SettingsRow): TravellerPrefs => ({
   showMemories: row.show_memories,
 });
 
-const mapNotification = (row: NotificationRow): AppNotification => ({
+/** Exported for the realtime inbox (M8) — one row → one rendered whisper. */
+export const mapNotification = (row: NotificationRow): AppNotification => ({
   id: row.id,
   kind: row.kind,
   title: row.title,
@@ -290,6 +299,57 @@ const mapBooking = (row: BookingRow, participants: ParticipantRow[]): TripBookin
   };
 };
 
+/* --------------------------- Memories (M8, live) ----------------------------- */
+
+/**
+ * Decision R: the chosen keepsake fronts the album; before one is chosen the
+ * first keepsake stands in; an empty album borrows the trip's spell image;
+ * an empty album whose booking was ever removed renders a quiet gradient.
+ */
+const coverFor = (memory: TripMemory, bookings: TripBooking[]): string => {
+  const coverPhoto =
+    memory.coverPhotoId !== undefined
+      ? (memory.photos.find((p) => p.id === memory.coverPhotoId) ?? null)
+      : null;
+  const booking =
+    memory.bookingId !== "" ? (bookings.find((b) => b.id === memory.bookingId) ?? null) : null;
+  return coverPhoto?.src ?? memory.photos[0]?.src ?? booking?.spell.image ?? "";
+};
+
+const mapMemory = (
+  row: MemoryRow,
+  photoRows: MemoryPhotoRow[],
+  bookings: TripBooking[],
+  signed: Map<string, string>,
+): TripMemory => {
+  const photos: MemoryPhoto[] = photoRows
+    .filter((p) => p.memory_id === row.id)
+    .map((p) => ({
+      id: p.id,
+      src: signed.get(p.storage_path) ?? "",
+      addedAt: p.added_at,
+      own: p.is_own,
+    }));
+  const booking =
+    row.booking_id !== null ? (bookings.find((b) => b.id === row.booking_id) ?? null) : null;
+  const start = row.start_date ?? booking?.start ?? row.created_at.slice(0, 10);
+  const base: TripMemory = {
+    id: row.id,
+    bookingId: row.booking_id ?? "",
+    title: row.title,
+    location: row.location !== "" ? row.location : (booking?.spell.location ?? ""),
+    cover: "",
+    start,
+    end: row.end_date ?? booking?.end ?? start,
+    photoLimit: row.photo_limit,
+    photos,
+    note: row.note,
+    highlights: row.highlights,
+    coverPhotoId: row.cover_photo_id ?? undefined,
+  };
+  return { ...base, cover: coverFor(base, bookings) };
+};
+
 const PAYMENT_KIND_LABEL: Record<PaymentRow["kind"], string> = {
   advance: "Advance payment",
   balance: "Balance payment",
@@ -325,12 +385,11 @@ const mapPaymentTx = (row: PaymentRow, bookings: TripBooking[]): WalletTransacti
 /* ------------------------------- Device store ------------------------------- */
 
 /**
- * Per-user, this-device-only state: memory albums (M8) and the
- * recently-viewed trail. Nothing here pretends to be server data —
- * bookings left this store in M7C and now come from the live tables.
+ * Per-user, this-device-only state: just the recently-viewed trail now.
+ * Bookings left this store in M7C; memory albums left in M8. The trail is
+ * deliberately never a table — it's a browsing habit, not data to keep.
  */
 interface DeviceStore {
-  memories: TripMemory[];
   recentlyViewed: string[];
 }
 
@@ -339,7 +398,7 @@ const DEVICE_KEY_PREFIX = "ls-traveller-device-v1:";
 /** The retired demo account's keys — cleared once, per decision D2. */
 const LEGACY_KEYS = ["ls-traveller-session-v1", "ls-traveller-account-v2"];
 
-const emptyDevice = (): DeviceStore => ({ memories: [], recentlyViewed: [] });
+const emptyDevice = (): DeviceStore => ({ recentlyViewed: [] });
 
 const readDevice = (userId: string): DeviceStore => {
   try {
@@ -349,7 +408,6 @@ const readDevice = (userId: string): DeviceStore => {
     if (typeof parsed !== "object" || parsed === null) return emptyDevice();
     const record = parsed as Partial<DeviceStore>;
     return {
-      memories: Array.isArray(record.memories) ? record.memories : [],
       recentlyViewed: Array.isArray(record.recentlyViewed)
         ? record.recentlyViewed.filter((s): s is string => typeof s === "string")
         : [],
@@ -373,6 +431,8 @@ class TravellerAccountService {
   /** In-memory bundle — every mutation returns a fresh copy of it. */
   private db: AccountData | null = null;
   private userId: string | null = null;
+  /** photoId → private storage path — for cleanup only; URLs never persist. */
+  private photoPaths = new Map<string, string>();
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -398,10 +458,7 @@ class TravellerAccountService {
   }
 
   private commitDevice(userId: string, db: AccountData): void {
-    writeDevice(userId, {
-      memories: db.memories,
-      recentlyViewed: db.recentlyViewed,
-    });
+    writeDevice(userId, { recentlyViewed: db.recentlyViewed });
   }
 
   /* --------------------------------- Auth ---------------------------------- */
@@ -482,13 +539,14 @@ class TravellerAccountService {
   signOut(): void {
     this.db = null;
     this.userId = null;
+    this.photoPaths.clear();
     void supabase.auth.signOut();
   }
 
   /* --------------------------------- Data ---------------------------------- */
 
   async loadAccount(userId: string): Promise<AccountData> {
-    const [profileRes, settingsRes, savedRes, notifRes, bookingsRes, paymentsRes] =
+    const [profileRes, settingsRes, savedRes, notifRes, bookingsRes, paymentsRes, memoriesRes, memoryPhotosRes] =
       await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
@@ -510,6 +568,15 @@ class TravellerAccountService {
           .eq("user_id", userId)
           .in("status", ["captured", "refunded"])
           .order("created_at", { ascending: false }),
+        // Albums are own-only for EVERYONE — staff have no read path at all.
+        supabase
+          .from("memories")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("memory_photos")
+          .select("*")
+          .order("added_at", { ascending: true }),
       ]);
     if (profileRes.error || !profileRes.data)
       throw new AccountError("Your space couldn't be reached — try again in a moment.", null);
@@ -540,6 +607,14 @@ class TravellerAccountService {
     const bookings = bookingRows.map((row) => mapBooking(row, participantRows));
     const transactions = (paymentsRes.data ?? []).map((row) => mapPaymentTx(row, bookings));
 
+    // Keepsakes render through 1-hour signed URLs (decision Q) minted here in
+    // one batch; any bundle refetch quietly re-signs them.
+    const memoryRows: MemoryRow[] = memoriesRes.data ?? [];
+    const photoRows: MemoryPhotoRow[] = memoryPhotosRes.data ?? [];
+    const signed = await signMemoryPaths(photoRows.map((p) => p.storage_path));
+    this.photoPaths = new Map(photoRows.map((p) => [p.id, p.storage_path]));
+    const memories = memoryRows.map((row) => mapMemory(row, photoRows, bookings, signed));
+
     const device = readDevice(userId);
     this.userId = userId;
     return this.commit({
@@ -547,7 +622,7 @@ class TravellerAccountService {
       prefs: settings ? mapPrefs(settings) : DEFAULT_PREFS,
       bookings,
       transactions,
-      memories: device.memories,
+      memories,
       notifications: (notifRes.data ?? []).map(mapNotification),
       referrals: [],
       wishlist: (savedRes.data ?? []).map((row) => row.spell_id),
@@ -757,7 +832,214 @@ class TravellerAccountService {
     );
   }
 
-  /* ------------------- Device-local until M8 (honest edges) ------------------ */
+  /* --------------------------- Memories (M8, live) --------------------------- */
+
+  /** The server's album guards speak user-ready copy — pass it through. */
+  private memoryError(
+    error: { code?: string; message?: string } | null,
+    fallback: string,
+  ): AccountError {
+    if (error?.code === "P0001" && typeof error.message === "string" && error.message !== "") {
+      return new AccountError(error.message, null);
+    }
+    return new AccountError(fallback, null);
+  }
+
+  private swapMemory(db: AccountData, fresh: TripMemory): AccountData {
+    return this.commit({
+      ...db,
+      memories: db.memories.map((m) => (m.id === fresh.id ? fresh : m)),
+    });
+  }
+
+  /**
+   * The ONLY traveller-writable album columns are title, note, highlights and
+   * the cover — the column grants reject everything else, so this helper is
+   * deliberately incapable of sending more.
+   */
+  private async patchMemory(
+    memoryId: string,
+    payload: Pick<
+      Tables["memories"]["Update"],
+      "title" | "note" | "highlights" | "cover_photo_id"
+    >,
+    message: string,
+  ): Promise<AccountData> {
+    const { db } = this.expectLoaded();
+    const memory = db.memories.find((m) => m.id === memoryId);
+    if (!memory) throw new AccountError("This memory has faded.", null);
+    const { data, error } = await supabase
+      .from("memories")
+      .update(payload)
+      .eq("id", memoryId)
+      .select()
+      .single();
+    if (error || !data) throw this.memoryError(error, message);
+    const row = data as MemoryRow;
+    const fresh: TripMemory = {
+      ...memory,
+      title: row.title,
+      note: row.note,
+      highlights: row.highlights,
+      coverPhotoId: row.cover_photo_id ?? undefined,
+    };
+    fresh.cover = coverFor(fresh, db.bookings);
+    return this.swapMemory(db, fresh);
+  }
+
+  /**
+   * Decision O: the traveller begins the album from a finished trip. The
+   * server allows it only under the rating guard's trip-over predicate (P)
+   * and only once per booking. Snapshots title/location/dates so the album
+   * outlives the booking.
+   */
+  async beginAlbum(bookingId: string): Promise<{ data: AccountData; memoryId: string }> {
+    const { db } = this.expectLoaded();
+    const existing = db.memories.find((m) => m.bookingId === bookingId);
+    if (existing) return { data: db, memoryId: existing.id };
+    const booking = db.bookings.find((b) => b.id === bookingId);
+    if (!booking) throw new AccountError("This booking has faded.", null);
+    const { data, error } = await supabase
+      .from("memories")
+      .insert({
+        booking_id: bookingId,
+        title: (booking.spell.name !== "" ? booking.spell.name : "A Logout Spell").slice(0, 160),
+        location: booking.spell.location.slice(0, 160),
+        start_date: booking.start !== "" ? booking.start : null,
+        end_date: booking.end !== "" ? booking.end : null,
+      })
+      .select()
+      .single();
+    if (error || !data) {
+      if (error?.code === "42501")
+        throw new AccountError("The album opens once the trip is over.", null);
+      if (error?.code === "23505")
+        throw new AccountError("This trip already keeps an album.", null);
+      throw this.memoryError(error, "The album couldn't begin — try again.");
+    }
+    const memory = mapMemory(data as MemoryRow, [], db.bookings, new Map<string, string>());
+    const next = this.commit({ ...db, memories: [memory, ...db.memories] });
+    return { data: next, memoryId: memory.id };
+  }
+
+  /**
+   * Upload → row → sign, one keepsake at a time. If a row is refused (quota,
+   * path law), the just-uploaded object is removed — an orphan is a cost
+   * nuisance, a dangling row would be a broken image.
+   */
+  async addMemoryPhotos(memoryId: string, sources: string[]): Promise<AccountData> {
+    const { db, userId } = this.expectLoaded();
+    const memory = db.memories.find((m) => m.id === memoryId);
+    if (!memory) throw new AccountError("This memory has faded.", null);
+    const room = memory.photoLimit - memory.photos.length;
+    if (room <= 0)
+      throw new AccountError(
+        `This album keeps ${memory.photoLimit} keepsakes — remove one to add another.`,
+        null,
+      );
+    const added: MemoryPhoto[] = [];
+    let failure: AccountError | null = null;
+    for (const src of sources.slice(0, room)) {
+      let path: string;
+      try {
+        path = await uploadMemoryPhoto(userId, memoryId, src);
+      } catch {
+        failure = new AccountError("That keepsake couldn't be uploaded — try again.", null);
+        break;
+      }
+      const { data, error } = await supabase
+        .from("memory_photos")
+        .insert({ memory_id: memoryId, storage_path: path })
+        .select()
+        .single();
+      if (error || !data) {
+        void deleteMemoryPaths([path]);
+        failure = this.memoryError(error, "Those photos couldn't be added — try again.");
+        break;
+      }
+      const signed = await signMemoryPaths([path]);
+      this.photoPaths.set(data.id, path);
+      added.push({
+        id: data.id,
+        src: signed.get(path) ?? "",
+        addedAt: data.added_at,
+        own: data.is_own,
+      });
+    }
+    if (added.length === 0 && failure !== null) throw failure;
+    const fresh: TripMemory = { ...memory, photos: [...memory.photos, ...added] };
+    fresh.cover = coverFor(fresh, db.bookings);
+    return this.swapMemory(db, fresh);
+  }
+
+  /** Row first, object second — the order never reverses. */
+  async removeMemoryPhoto(memoryId: string, photoId: string): Promise<AccountData> {
+    const { db } = this.expectLoaded();
+    const memory = db.memories.find((m) => m.id === memoryId);
+    if (!memory) throw new AccountError("This memory has faded.", null);
+    const { error } = await supabase.from("memory_photos").delete().eq("id", photoId);
+    if (error) throw new AccountError("That keepsake couldn't be removed — try again.", null);
+    const path = this.photoPaths.get(photoId);
+    if (path !== undefined) {
+      void deleteMemoryPaths([path]);
+      this.photoPaths.delete(photoId);
+    }
+    const fresh: TripMemory = {
+      ...memory,
+      photos: memory.photos.filter((p) => p.id !== photoId),
+      // The FK already nulled the cover server-side if we removed it.
+      coverPhotoId: memory.coverPhotoId === photoId ? undefined : memory.coverPhotoId,
+    };
+    fresh.cover = coverFor(fresh, db.bookings);
+    return this.swapMemory(db, fresh);
+  }
+
+  async saveMemoryNote(memoryId: string, note: string): Promise<AccountData> {
+    return this.patchMemory(
+      memoryId,
+      { note: note.slice(0, 2000) },
+      "Your note couldn't be kept — try again.",
+    );
+  }
+
+  /** Decision S: up to six little moments, trimmed and de-blanked. */
+  async saveMemoryHighlights(memoryId: string, highlights: string[]): Promise<AccountData> {
+    const cleaned = highlights
+      .map((h) => h.trim())
+      .filter((h) => h !== "")
+      .slice(0, 6);
+    return this.patchMemory(
+      memoryId,
+      { highlights: cleaned },
+      "Those little moments couldn't be kept — try again.",
+    );
+  }
+
+  /** The server refuses covers from other albums (guard trigger). */
+  async setMemoryCover(memoryId: string, photoId: string | null): Promise<AccountData> {
+    return this.patchMemory(
+      memoryId,
+      { cover_photo_id: photoId },
+      "The cover couldn't be changed — try again.",
+    );
+  }
+
+  /** Decision T: an album may be let go. Rows cascade; objects best-effort. */
+  async deleteMemory(memoryId: string): Promise<AccountData> {
+    const { db } = this.expectLoaded();
+    const memory = db.memories.find((m) => m.id === memoryId);
+    if (!memory) throw new AccountError("This memory has faded.", null);
+    const paths = memory.photos
+      .map((p) => this.photoPaths.get(p.id))
+      .filter((p): p is string => p !== undefined);
+    const { error } = await supabase.from("memories").delete().eq("id", memoryId);
+    if (error) throw new AccountError("This album couldn't be let go — try again.", null);
+    void deleteMemoryPaths(paths);
+    for (const p of memory.photos) this.photoPaths.delete(p.id);
+    return this.commit({ ...db, memories: db.memories.filter((m) => m.id !== memoryId) });
+  }
+
+  /* ----------------------- Device-local (deliberately) ----------------------- */
 
   /** Shared patch path for the device-local corners of the bundle. */
   private patchDevice(fn: (data: AccountData) => AccountData): AccountData {
@@ -766,47 +1048,6 @@ class TravellerAccountService {
     this.commit(next);
     this.commitDevice(userId, next);
     return next;
-  }
-
-  async addMemoryPhotos(memoryId: string, sources: string[]): Promise<AccountData> {
-    return this.patchDevice((data) => {
-      const memory = data.memories.find((m) => m.id === memoryId);
-      if (!memory) throw new AccountError("This memory has faded.", null);
-      const room = memory.photoLimit - memory.photos.length;
-      if (room <= 0)
-        throw new AccountError(
-          `This album keeps ${memory.photoLimit} keepsakes — remove one to add another.`,
-          null,
-        );
-      const accepted = sources.slice(0, room).map((src, i) => ({
-        id: `own-${Date.now().toString(36)}-${i}`,
-        src,
-        addedAt: new Date().toISOString(),
-        own: true,
-      }));
-      return {
-        ...data,
-        memories: data.memories.map((m) =>
-          m.id === memoryId ? { ...m, photos: [...m.photos, ...accepted] } : m,
-        ),
-      };
-    });
-  }
-
-  async removeMemoryPhoto(memoryId: string, photoId: string): Promise<AccountData> {
-    return this.patchDevice((data) => ({
-      ...data,
-      memories: data.memories.map((m) =>
-        m.id === memoryId ? { ...m, photos: m.photos.filter((p) => p.id !== photoId) } : m,
-      ),
-    }));
-  }
-
-  async saveMemoryNote(memoryId: string, note: string): Promise<AccountData> {
-    return this.patchDevice((data) => ({
-      ...data,
-      memories: data.memories.map((m) => (m.id === memoryId ? { ...m, note } : m)),
-    }));
   }
 
   /** Remembers spells opened on the public site (drives "recently viewed"). */

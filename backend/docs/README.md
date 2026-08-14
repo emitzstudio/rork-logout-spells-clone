@@ -1,7 +1,8 @@
 # Logout Spells — Backend Documentation
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
-> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 (2026-08-14) applied.**
+> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 · M8 + 0009
+> (2026-08-14) applied.**
 > Live today: identity, the spell catalogue, the journal/team/archive domain,
 > the forms domain, the M5 integration objects, the M6 **traveller layer**,
 > the M7A **gateway-agnostic booking layer** (bookings + per-seat participants
@@ -15,13 +16,18 @@
 > join/leave, verified reviews (author sees own state — 0008), and a Door 2
 > that files an honest **reserve request** through the live inquiries
 > pipeline (the fake checkout — invented taxes and ₹5,000 advance — is
-> retired). Three Edge Functions are deployed **GATED** (`create-booking` ·
-> `payment-webhook` · `cancel-booking`).
-> ⛔ **M7 is NOT payment-ready**: the gateway (decision F) is unchosen — no
+> retired). Since **M8** the traveller keeps **private trip albums for real**:
+> `memories` + `memory_photos` under own-only RLS (**staff have zero access**
+> — probe-proven), keepsakes in the private `memories` bucket behind 1-hour
+> signed URLs, quota/path/cover guard triggers, album creation gated to
+> finished trips — and the **inbox went live** (`notifications` joined the
+> realtime publication; the web app receives whispers as they land). Three
+> Edge Functions are deployed **GATED** (`create-booking` · `payment-webhook`
+> · `cancel-booking`).
+> ⛔ **Still NOT payment-ready**: the gateway (decision F) is unchosen — no
 > provider code, no credentials — online payment stays absent (words-only 30%
 > advance policy) until phase 7B passes its test-mode end-to-end run. Still
-> device-local in the app: memory albums (M8) and the Expo app's data layer
-> (M6b).
+> device-local in the app: the Expo app's data layer (M6b — next).
 > [migration-history.md](./migration-history.md) is the record of what is actually
 > live — if it is not listed there, it is not live.
 
@@ -81,8 +87,8 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M5 | Public site integration | Provider swap (public site + console behind staff sign-in), `submit_inquiry()`, `spell_active_departures`, storage upload pipeline | **Applied 2026-08-09 — verified** |
 | M6 | Traveller accounts | Real auth UI (login/join/reset), profile/settings, `saved_spells`, `user_interests`, `notifications` + welcome whisper, `avatars` bucket, first-login merge, console wishlist counts | **Applied 2026-08-09 — verified** |
 | M7 | Bookings & payments | **7A (applied 2026-08-13 — verified):** the full gateway-agnostic layer — bookings/participants/terms, provider-neutral payments ledger, seat locking, waitlist, change requests, audit spine, outbox, manual-era admin RPCs, reviews write path, `booking_report`, gated Edge Functions. **7B (pending):** gateway adapter (decision F), secrets, test-mode E2E, app switch off the mock | **7A applied — NOT payment-ready** |
-| M8 | Memories & referrals | `memories`, `memory_photos`, private bucket, `referrals`, realtime notifications | Pending |
-| — | Future (designed only) | Loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
+| M8 | Memories & trip albums | `memories`, `memory_photos`, guard triggers, private `memories` bucket (signed URLs), realtime notifications, live album UI (web) | **Applied 2026-08-14 — verified** |
+| — | Future (designed only) | `referrals`, loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
 
 ## Decision log
 

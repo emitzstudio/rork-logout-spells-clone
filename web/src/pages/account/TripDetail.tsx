@@ -23,7 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   CountdownUnits,
@@ -100,7 +100,7 @@ const STEP_META: Record<TimelineStepId, StepMeta> = {
 /** One booking, in full — status, payments, checklist, host and help. */
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data, toggleChecklistItem, startChecklist, setTripRating } = useAccount();
+  const { data, toggleChecklistItem, startChecklist, setTripRating, beginAlbum } = useAccount();
   const [invoiceOpen, setInvoiceOpen] = useState<boolean>(false);
 
   const booking = useMemo(
@@ -394,10 +394,11 @@ export default function TripDetail() {
             <AfterTripCard
               booking={booking}
               memoryId={memory?.id ?? null}
-              memoryCover={memory?.cover ?? null}
+              memoryCover={memory !== null && memory.cover !== "" ? memory.cover : null}
               authorName={`${data.profile.firstName} ${data.profile.lastName}`.trim()}
               authorAvatar={data.profile.avatar.startsWith("data:") ? "" : data.profile.avatar}
               onRate={(stars) => setTripRating(booking.id, stars)}
+              onBeginAlbum={() => beginAlbum(booking.id)}
             />
           )}
 
@@ -578,6 +579,8 @@ interface AfterTripCardProps {
   authorName: string;
   authorAvatar: string;
   onRate: (stars: number) => Promise<void>;
+  /** Creates the album (decision O) and resolves with its id. */
+  onBeginAlbum: () => Promise<string>;
 }
 
 /**
@@ -593,8 +596,12 @@ function AfterTripCard({
   authorName,
   authorAvatar,
   onRate,
+  onBeginAlbum,
 }: AfterTripCardProps) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [albumBusy, setAlbumBusy] = useState<boolean>(false);
+  const [albumError, setAlbumError] = useState<string>("");
   const [rateBusy, setRateBusy] = useState<boolean>(false);
   const [rateError, setRateError] = useState<string>("");
   const [reviewOpen, setReviewOpen] = useState<boolean>(false);
@@ -618,6 +625,19 @@ function AfterTripCard({
 
   const target = targetQuery.data ?? null;
   const myReview = myReviewQuery.data ?? null;
+
+  const begin = async (): Promise<void> => {
+    setAlbumBusy(true);
+    setAlbumError("");
+    try {
+      const freshId = await onBeginAlbum();
+      navigate(`/account/memories/${freshId}`);
+    } catch (error) {
+      setAlbumError(error instanceof Error ? error.message : "The album couldn't begin.");
+    } finally {
+      setAlbumBusy(false);
+    }
+  };
 
   const rate = async (n: number): Promise<void> => {
     setRateBusy(true);
@@ -674,17 +694,36 @@ function AfterTripCard({
         )}
         <div className="min-w-0 flex-1">
           <p className="eyebrow !text-[10px]">After the spell</p>
-          <h2 className="heading-serif mt-1.5 text-2xl text-cream">The memory lives on.</h2>
+          <h2 className="heading-serif mt-1.5 text-2xl text-cream">
+            {memoryId !== null ? "The memory lives on." : "Keep this one."}
+          </h2>
+          {memoryId === null && (
+            <p className="mt-1 font-sans text-[11.5px] text-cream/40">
+              A small private album — a dozen keepsakes, a journal line, yours alone.
+            </p>
+          )}
         </div>
-        {memoryId !== null && (
+        {memoryId !== null ? (
           <Link
             to={`/account/memories/${memoryId}`}
             className="btn-gold shrink-0 !px-5 !py-2.5 !text-[12px]"
           >
             Open album <ArrowRight size={13} />
           </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void begin()}
+            disabled={albumBusy}
+            className="btn-gold shrink-0 !px-5 !py-2.5 !text-[12px] disabled:opacity-60"
+          >
+            {albumBusy ? "Opening…" : "Begin the album"} <ArrowRight size={13} />
+          </button>
         )}
       </div>
+      {albumError !== "" && (
+        <p className="mt-2 font-sans text-xs text-[#d98a7f]">{albumError}</p>
+      )}
 
       {/* Private star — bookings.rating, yours alone */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cream/[0.08] bg-charcoal-deep/40 px-4 py-3.5">

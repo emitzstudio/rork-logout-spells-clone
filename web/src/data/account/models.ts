@@ -149,17 +149,20 @@ export interface TripBooking {
 
 export interface MemoryPhoto {
   id: string;
+  /** A short-lived SIGNED url (M8) — private bucket, never persisted. */
   src: string;
   addedAt: string;
-  /** True when the traveller added it themselves (vs. the seeded circle set). */
+  /** True when the traveller added it themselves (vs. a future circle drop). */
   own?: boolean;
 }
 
 export interface TripMemory {
   id: string;
+  /** Empty string when the booking behind it was ever removed (album survives). */
   bookingId: string;
   title: string;
   location: string;
+  /** Chosen keepsake (signed) → first keepsake → the trip's spell image. */
   cover: string;
   start: string;
   end: string;
@@ -168,6 +171,8 @@ export interface TripMemory {
   photos: MemoryPhoto[];
   note: string;
   highlights: string[];
+  /** The keepsake chosen as cover, when one is. */
+  coverPhotoId?: string;
 }
 
 /* ------------------------------ Notifications ----------------------------- */

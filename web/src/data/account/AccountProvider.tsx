@@ -5,7 +5,8 @@
  * comes from native Supabase Auth; the account bundle loads through React
  * Query and every mutation swaps the fresh bundle it returns into the cache.
  * Signing in or out changes what RLS reveals, so auth changes invalidate
- * every cached read in the app.
+ * every cached read in the app. Since M8 the inbox is also LIVE: a realtime
+ * subscription (RLS-scoped server-side) prepends new whispers as they land.
  */
 import type { User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,16 +19,20 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-import { accountService, travellerSessionFrom } from "./service";
+import { accountService, mapNotification, travellerSessionFrom } from "./service";
 import type {
   AccountData,
   TravellerPrefs,
   TravellerProfile,
   TravellerSession,
 } from "./models";
+
+type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
 
 interface SignUpInput {
   firstName: string;
@@ -61,9 +66,14 @@ interface AccountValue {
   startChecklist: (bookingId: string) => Promise<void>;
   /** The private post-trip star — server-enforced to completed trips. */
   setTripRating: (bookingId: string, rating: number) => Promise<void>;
+  /** Creates the album on a finished trip and returns its id (M8). */
+  beginAlbum: (bookingId: string) => Promise<string>;
   addMemoryPhotos: (memoryId: string, sources: string[]) => Promise<void>;
   removeMemoryPhoto: (memoryId: string, photoId: string) => Promise<void>;
   saveMemoryNote: (memoryId: string, note: string) => Promise<void>;
+  saveMemoryHighlights: (memoryId: string, highlights: string[]) => Promise<void>;
+  setMemoryCover: (memoryId: string, photoId: string | null) => Promise<void>;
+  deleteMemory: (memoryId: string) => Promise<void>;
   recordSpellView: (slug: string) => void;
 }
 
@@ -106,6 +116,48 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   });
 
   const data = userId !== null ? (accountQuery.data ?? null) : null;
+
+  // M8 · the live inbox. postgres_changes enforces RLS per subscriber, so this
+  // socket only ever carries the signed-in traveller's own rows. A dropped
+  // connection heals on the next bundle refetch — no missed-event bookkeeping.
+  useEffect(() => {
+    if (userId === null) return;
+    const channel = supabase
+      .channel(`inbox-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const row = payload.new as NotificationRow;
+          const fresh = mapNotification(row);
+          queryClient.setQueryData<AccountData | undefined>(
+            ["account", userId],
+            (prev) =>
+              prev
+                ? {
+                    ...prev,
+                    notifications: [
+                      fresh,
+                      ...prev.notifications.filter((n) => n.id !== fresh.id),
+                    ],
+                  }
+                : prev,
+          );
+          toast(fresh.title, {
+            description: fresh.body !== "" ? fresh.body : undefined,
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
 
   /** Chip data comes from the loaded profile; auth metadata bridges the gap. */
   const session = useMemo<TravellerSession | null>(() => {
@@ -179,6 +231,14 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     (bookingId: string, rating: number) => apply(accountService.setTripRating(bookingId, rating)),
     [apply],
   );
+  const beginAlbum = useCallback(
+    async (bookingId: string) => {
+      const { data: next, memoryId } = await accountService.beginAlbum(bookingId);
+      queryClient.setQueryData(["account", userId ?? "anon"], next);
+      return memoryId;
+    },
+    [queryClient, userId],
+  );
   const addMemoryPhotos = useCallback(
     (memoryId: string, sources: string[]) =>
       apply(accountService.addMemoryPhotos(memoryId, sources)),
@@ -191,6 +251,20 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   );
   const saveMemoryNote = useCallback(
     (memoryId: string, note: string) => apply(accountService.saveMemoryNote(memoryId, note)),
+    [apply],
+  );
+  const saveMemoryHighlights = useCallback(
+    (memoryId: string, highlights: string[]) =>
+      apply(accountService.saveMemoryHighlights(memoryId, highlights)),
+    [apply],
+  );
+  const setMemoryCover = useCallback(
+    (memoryId: string, photoId: string | null) =>
+      apply(accountService.setMemoryCover(memoryId, photoId)),
+    [apply],
+  );
+  const deleteMemory = useCallback(
+    (memoryId: string) => apply(accountService.deleteMemory(memoryId)),
     [apply],
   );
 
@@ -227,9 +301,13 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       toggleChecklistItem,
       startChecklist,
       setTripRating,
+      beginAlbum,
       addMemoryPhotos,
       removeMemoryPhoto,
       saveMemoryNote,
+      saveMemoryHighlights,
+      setMemoryCover,
+      deleteMemory,
       recordSpellView,
     }),
     [
@@ -250,9 +328,13 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       toggleChecklistItem,
       startChecklist,
       setTripRating,
+      beginAlbum,
       addMemoryPhotos,
       removeMemoryPhoto,
       saveMemoryNote,
+      saveMemoryHighlights,
+      setMemoryCover,
+      deleteMemory,
       recordSpellView,
     ],
   );

@@ -1,13 +1,15 @@
 # Database Architecture
 
-> **Status: PARTIALLY APPLIED.** Live so far: the identity layer (**M1**), the spell
+> **Status: APPLIED THROUGH M8.** Live so far: the identity layer (**M1**), the spell
 > catalogue (**M2**), the journal/team/archive domain (**M3**), the forms domain
-> (**M4**), the M5 integration objects — and since **M6** the traveller layer:
-> `saved_spells`, `user_interests` (with `sort_order`, a reviewed delta vs the sketch
-> below), `notifications`, `spell_wishlist_counts()` and the `avatars` bucket. The
-> website, the founder console and the traveller account space all read and write
-> this schema under RLS. Still design-only: bookings & money (§9) and the memories
-> part of the traveller space (§10).
+> (**M4**), the M5 integration objects, since **M6** the traveller layer
+> (`saved_spells`, `user_interests` with `sort_order` — a reviewed delta vs the sketch
+> below — `notifications`, `spell_wishlist_counts()`, the `avatars` bucket), since
+> **M7** the gateway-agnostic booking & payments layer (§9 — still NOT
+> payment-ready; decision F open), and since **M8** the private memories domain
+> (§10 — `memories` + `memory_photos`, the private `memories` bucket, realtime
+> notifications). The website, the founder console and the traveller account space
+> all read and write this schema under RLS.
 > [migration-history.md](./migration-history.md) records what is actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every
@@ -476,18 +478,39 @@ signup (decision D3; the insert is exception-wrapped so it can never cost a sign
 `link text`, `read_at timestamptz` null, `created_at`.
 Indexes: `(user_id, created_at desc)` · partial `(user_id) where read_at is null`
 (badge count). RLS: SELECT own · UPDATE own, column-granted to `read_at` only ·
-DELETE own · INSERT staff or service role. Realtime broadcast still arrives in M8.
+DELETE own · INSERT staff or service role. **Realtime live since M8**: the table is
+a member of the `supabase_realtime` publication; `postgres_changes` enforces RLS
+per subscriber, so a socket only ever carries the signed-in traveller's own rows.
 
-### `memories` + `memory_photos` — private trip albums
-`memories`: `id`, `user_id` → profiles cascade, `booking_id uuid` null unique
-`set null`, `title`, `location`, `cover_url`, `start_date`, `end_date`,
-`photo_limit int` default 60 (per-trip quota, as today), `note text`,
-`highlights text[]`, timestamps.
-`memory_photos`: `id`, `memory_id` → memories cascade, `storage_path text`,
-`is_own boolean`, `added_at`. Insert trigger enforces `photo_limit`.
-RLS: own only — **staff have no access**; memories are private by principle
-(`show_memories` gates future sharing, nothing else). Photos live in the private
-`memories` bucket (see storage-structure.md).
+### `memories` + `memory_photos` — private trip albums (LIVE since M8, 0009)
+`memories`: `id`, `user_id` → profiles cascade (default `auth.uid()`),
+`booking_id uuid` null `set null` + partial unique (one album per booking; the
+INSERT policy requires it non-null — null only ever arises from the FK),
+`title` (1–160), `location`, `start_date`, `end_date` (snapshots from the booking
+— the album outlives it), `cover_photo_id uuid` → memory_photos `set null`
+(**as-built delta vs the earlier `cover_url` sketch**: the bucket is private, so a
+stored URL would expire — the row points at the chosen keepsake and the client
+signs it, falling back to the trip's spell image — decision R), `photo_limit int`
+default **12** (decision N; check 1–60 keeps the sketch's outer bound; excluded
+from every client grant), `note text` (≤2000), `highlights text[]` (≤6 — decision
+S), timestamps.
+`memory_photos`: `id`, `memory_id` → memories cascade, `storage_path text` unique
+(NEVER a URL), `is_own boolean` default true (excluded from grants — forward-compat
+for circle drops), `added_at`. **No UPDATE path exists at all** — keepsakes are
+added or removed, never edited.
+Guard triggers (SECURITY DEFINER, friendly P0001 copy): quota (FOR UPDATE lock +
+count — "This album keeps N keepsakes…"), path law (`{owner}/{memory_id}/…` — a
+row can never name a foreign object), cover ownership (the cover must be one of
+this album's keepsakes).
+RLS: own only in every direction — **staff have no access** (no policy clause
+references `is_staff` on either table or the bucket — probe-proven); memories are
+private by principle (`show_memories` gates future sharing, nothing else).
+Eligibility (decisions O+P): the traveller begins the album on their own booking
+only once the trip is over — the SAME predicate as the post-trip rating guard
+(`completed`, or `confirmed` with a past `end_date`). Deletion (decision T): the
+traveller may delete an album (cascade); the UI confirms first. Photos live in the
+private `memories` bucket, rendered via 1-hour signed URLs never persisted
+(decision Q — see storage-structure.md).
 
 Kept client-side on purpose: `recently_viewed` (device-local browsing trail —
 localStorage, not personal data worth a table).

@@ -880,14 +880,101 @@ through the console's audited offline-sale workflow.
 
 ---
 
-## Planned next (founder-approved order: M8 → M6b → gateway last)
+## M8 — Memories & trip albums + the live inbox · applied 2026-08-14
 
-1. **M8 — Memories & trip albums**: the designed `memories` schema + private
-   photo storage + the live album UI (the last device-local corner of the
-   traveller space).
-2. **M6b — Expo app onto the live backend**: one swap pass over the
-   web-proven data layer; the mobile app leaves its mocks.
-3. **7B — gateway integration (LAST; blocked on founder decisions)**: one
+Migration: `0009_memories_albums.sql` · attestation: `m8-verify-memories`.
+Founder-approved decisions locked at the M8 review: **N** photo_limit default
+12 (db constraint keeps 1–60; no staff adjustment UI) · **O** albums are
+traveller-created ("Begin the album"), never auto-created · **P** eligibility
+= the rating guard's trip-over predicate (`completed`, or `confirmed` with a
+past `end_date`) · **Q** private bucket, 1-hour signed URLs, never persisted ·
+**R** empty-album cover falls back to the trip's spell image · **S**
+traveller-editable highlights, max 6, server-enforced · **T** whole-album
+deletion allowed behind a confirm step.
+
+### What went live (backend)
+
+- **`memories`** — one row per trip album: `user_id` → profiles cascade
+  (default `auth.uid()`), `booking_id` null `set null` with a partial unique
+  index (one album per booking; the INSERT policy requires it non-null),
+  snapshot `title`/`location`/`start_date`/`end_date` (the album outlives the
+  booking — probe-proven), `cover_photo_id` → memory_photos `set null`
+  (**approved delta vs the §10 sketch's `cover_url`** — a stored URL would
+  expire in a private bucket), `photo_limit` default 12 (check 1–60, excluded
+  from all client grants), `note` ≤2000, `highlights` ≤6 items.
+- **`memory_photos`** — one row per keepsake: `storage_path` unique (a PATH,
+  never a URL), `is_own` default true (grant-excluded; forward-compat for
+  circle drops). **No UPDATE policy or grant exists** — keepsakes are added or
+  removed, never edited.
+- **Guard triggers** (SECURITY DEFINER, execute revoked, friendly P0001 copy):
+  quota (FOR UPDATE lock + count — "This album keeps N keepsakes — remove one
+  to add another."), path law (`{owner}/{memory_id}/…` — a row can never name
+  a foreign object), cover ownership (the cover must be one of this album's
+  keepsakes), plus the shared `set_updated_at()`.
+- **RLS** — own-only in every direction; column grants narrow writes to
+  `title, note, highlights, cover_photo_id` after creation. **No staff clause
+  exists on either table or the bucket** — the first domain where staff have
+  no read path at all (`show_memories` gates future sharing only).
+- **`memories` bucket** — the only PRIVATE bucket: 8 MB, jpeg/png/webp,
+  exactly three own-folder policies (SELECT/INSERT/DELETE), no UPDATE, no
+  public read. Renders via 1-hour signed URLs minted client-side in one batch.
+- **Realtime** — `notifications` joined the `supabase_realtime` publication
+  (the promise M6 left open). `postgres_changes` enforces RLS per subscriber.
+
+### The swap (web app)
+
+- The Memories shelf and album detail render LIVE albums (same `TripMemory`
+  contract — no page shape changed). Keepsake upload rides the house pipeline
+  (client re-encode ≤JPEG — also strips EXIF/GPS → upload to own folder → row
+  insert → sign); a refused row removes the just-uploaded object.
+- Completed trips gained **"Begin the album"** (creates + navigates); the
+  card becomes "Open album" once it exists.
+- New album tools: highlights chips (add/remove, 6 max), "make this the
+  cover", and "Let this album go" behind a tap-again confirm (decision T).
+  Journal note autosave unchanged — the server now speaks the same quota copy
+  the UI always used.
+- **The inbox went live**: the account provider subscribes to its own
+  notification INSERTs (RLS-scoped socket), prepends them to the bundle and
+  shows a quiet toast — the bell badge moves without a reload.
+- `DeviceStore` shrank to `recentlyViewed` only — the dead album shell
+  (empty by construction since M7C) was removed. Memory XP, `photosKept` and
+  the Memory Keeper badge now light up from real data (derive.ts untouched).
+
+### Verification (attestation `m8-verify-memories`)
+
+17 structure asserts + 40 behavior probes, all green — highlights: pending
+booking refused · duplicate album refused (unique index) · foreign booking &
+forged `user_id` refused · confirmed-past branch accepted · B uploading into
+A's folder refused · foreign/mixed paths refused · quota P0001 with the
+keepsake sentence · `is_own`/`photo_limit` forgeries refused · **staff C saw
+zero rows, updated zero rows, signed nothing, listed nothing** · anon refused ·
+seven highlights refused · cover-from-another-album refused · FK nulled the
+cover on keepsake delete · album delete cascaded · album survived a
+service-role booking delete with `booking_id` NULL. Fixtures used
+`departure_id` NULL so seat counters never moved. Net-zero re-asserted:
+au=1 · approved reviews=13 · Σseats_booked=62 · bookings=0 · memories=0 ·
+memory_photos=0 · `memories` bucket objects=0 · no probe residue.
+
+### Deliberately NOT in M8
+
+- Expo albums — M6b is the swap milestone; the contracts are shared.
+- The "your album awaits" nudge at trip end — needs a scheduler; lands with
+  the decision-I delivery workers. Realtime makes EXISTING whispers live.
+- `show_memories` actual sharing surfaces · circle photo drops (`is_own`
+  ships forward-compatible) · the orphan-sweep Edge Function · a `referrals`
+  table (the M0 sketch bundled it here; it ships with its own milestone).
+- ⛔ Anything payment-shaped — no provider, no credentials, no taxes/fees/
+  refund math. Decisions F and C stay open; the booking architecture is
+  untouched.
+
+---
+
+## Planned next (founder-approved order: M6b → gateway last)
+
+1. **M6b — Expo app onto the live backend**: one swap pass over the
+   web-proven data layer (now including live memories); the mobile app
+   leaves its mocks.
+2. **7B — gateway integration (LAST; blocked on founder decisions)**: one
    adapter file (`_shared/providers/{razorpay|cashfree}.ts`) + the
    `PAYMENT_PROVIDER`/key secrets via the secure widget + the webhook URL
    pasted into the provider dashboard — zero schema or pipeline changes —

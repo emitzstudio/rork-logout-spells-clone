@@ -865,6 +865,115 @@ export type Database = {
         }
         Relationships: []
       }
+      memories: {
+        Row: {
+          booking_id: string | null
+          cover_photo_id: string | null
+          created_at: string
+          end_date: string | null
+          highlights: string[]
+          id: string
+          location: string
+          note: string
+          photo_limit: number
+          start_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          cover_photo_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          highlights?: string[]
+          id?: string
+          location?: string
+          note?: string
+          photo_limit?: number
+          start_date?: string | null
+          title: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          booking_id?: string | null
+          cover_photo_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          highlights?: string[]
+          id?: string
+          location?: string
+          note?: string
+          photo_limit?: number
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memories_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memories_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memories_cover_photo_id_fkey"
+            columns: ["cover_photo_id"]
+            isOneToOne: false
+            referencedRelation: "memory_photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_photos: {
+        Row: {
+          added_at: string
+          id: string
+          is_own: boolean
+          memory_id: string
+          storage_path: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          is_own?: boolean
+          memory_id: string
+          storage_path: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          is_own?: boolean
+          memory_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_photos_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_outbox: {
         Row: {
           body: string

@@ -67,6 +67,80 @@ export const uploadLocalImage = async (
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 };
 
+/* ------------------------------ Memories (M8) -------------------------------- */
+
+/**
+ * The `memories` bucket is the only PRIVATE bucket: no public URLs exist.
+ * Paths follow {userId}/{memoryId}/{generatedId}.jpg — the storage policy
+ * checks the first segment, the database path-guard trigger checks the first
+ * two. Renders go through short-lived signed URLs (1 hour, decision Q) which
+ * are NEVER persisted; rows store paths only.
+ */
+
+const MEMORY_SIGN_TTL_SECONDS = 3600;
+
+const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
+  const response = await fetch(dataUrl);
+  return response.blob();
+};
+
+/**
+ * Uploads one keepsake into the traveller's own album folder and returns its
+ * storage PATH (not a URL). Already-encoded JPEG data URLs (the keepsake
+ * pipeline resizes before this call) upload as-is; anything else passes
+ * through the resize pipeline first.
+ */
+export const uploadMemoryPhoto = async (
+  userId: string,
+  memoryId: string,
+  sourceUrl: string,
+): Promise<string> => {
+  const blob = sourceUrl.startsWith("data:image/jpeg")
+    ? await dataUrlToBlob(sourceUrl)
+    : await toResizedJpeg(sourceUrl);
+  const path = `${userId}/${memoryId}/${freshId()}.jpg`;
+  const { error } = await supabase.storage.from("memories").upload(path, blob, {
+    contentType: "image/jpeg",
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (error) throw new Error(`Keepsake upload failed: ${error.message}`);
+  return path;
+};
+
+/** Batch-signs private keepsake paths → Map(path → 1-hour signed URL). */
+export const signMemoryPaths = async (paths: string[]): Promise<Map<string, string>> => {
+  const signed = new Map<string, string>();
+  if (paths.length === 0) return signed;
+  const { data, error } = await supabase.storage
+    .from("memories")
+    .createSignedUrls(paths, MEMORY_SIGN_TTL_SECONDS);
+  if (error || !data) {
+    console.warn("[storage] Keepsake signing failed:", error?.message);
+    return signed;
+  }
+  for (const item of data) {
+    if (item.path !== null && item.signedUrl !== "" && item.error === null) {
+      signed.set(item.path, item.signedUrl);
+    }
+  }
+  return signed;
+};
+
+/**
+ * Best-effort removal of private keepsake objects by path. Row deletes come
+ * FIRST (a dangling row is a broken image; an orphaned object is only a cost
+ * nuisance) — failures are logged, never surfaced.
+ */
+export const deleteMemoryPaths = async (paths: string[]): Promise<void> => {
+  if (paths.length === 0) return;
+  try {
+    await supabase.storage.from("memories").remove(paths);
+  } catch (error) {
+    console.warn("[storage] Keepsake cleanup skipped:", error);
+  }
+};
+
 /* ------------------------------ Traveller avatars --------------------------- */
 
 /**

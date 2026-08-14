@@ -40,12 +40,19 @@ export default function MemoriesPage() {
               className="card-glass group relative flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:border-gold/30 hover:shadow-[0_22px_60px_-20px_rgba(184,150,62,0.3)]"
             >
               <div className="relative h-52 overflow-hidden">
-                <img
-                  src={memory.cover}
-                  alt=""
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.05]"
-                />
+                {memory.cover !== "" ? (
+                  <img
+                    src={memory.cover}
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.05]"
+                  />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-[radial-gradient(120%_120%_at_20%_0%,#26221580_0%,#0a0806_60%)]"
+                  />
+                )}
                 <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a0806]/90 via-[#0a0806]/30 to-transparent" />
                 {/* Little photo stack hint */}
                 <div className="absolute bottom-3 left-3 flex -space-x-2">
@@ -75,7 +82,7 @@ export default function MemoriesPage() {
                 </h3>
                 <p className="mt-0.5 font-sans text-[12px] text-cream/45">{memory.location}</p>
                 <p className="mt-3 line-clamp-2 font-serif text-[14.5px] italic leading-relaxed text-cream/55">
-                  “{memory.note}”
+                  {memory.note !== "" ? `“${memory.note}”` : "The journal waits for its first line."}
                 </p>
 
                 <div className="mt-4 border-t border-cream/[0.07] pt-3.5">
