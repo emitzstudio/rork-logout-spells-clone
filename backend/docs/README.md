@@ -1,8 +1,8 @@
 # Logout Spells — Backend Documentation
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
-> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 · M8 + 0009
-> (2026-08-14) applied.**
+> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 · M8 + 0009 ·
+> M6b (2026-08-14) applied.**
 > Live today: identity, the spell catalogue, the journal/team/archive domain,
 > the forms domain, the M5 integration objects, the M6 **traveller layer**,
 > the M7A **gateway-agnostic booking layer** (bookings + per-seat participants
@@ -24,10 +24,17 @@
 > realtime publication; the web app receives whispers as they land). Three
 > Edge Functions are deployed **GATED** (`create-booking` · `payment-webhook`
 > · `cancel-booking`).
+> Since **M6b** the **mobile app runs on this same live backend** — its mock
+> world is retired: the same auth (one account, app + website), the live
+> catalogue/journal/archive/roster, the account bundle with the real payments
+> ledger, private albums with native EXIF-stripping uploads, the realtime
+> inbox as a quiet in-app banner, and honest booking doors (inquiries +
+> reserve requests through the live pipeline). Team portraits now live in
+> `site-media/team/*` (repointed from site-relative paths). Attestation:
+> `m6b-verify-expo-live`.
 > ⛔ **Still NOT payment-ready**: the gateway (decision F) is unchosen — no
 > provider code, no credentials — online payment stays absent (words-only 30%
-> advance policy) until phase 7B passes its test-mode end-to-end run. Still
-> device-local in the app: the Expo app's data layer (M6b — next).
+> advance policy) until phase 7B passes its test-mode end-to-end run.
 > [migration-history.md](./migration-history.md) is the record of what is actually
 > live — if it is not listed there, it is not live.
 
@@ -88,6 +95,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M6 | Traveller accounts | Real auth UI (login/join/reset), profile/settings, `saved_spells`, `user_interests`, `notifications` + welcome whisper, `avatars` bucket, first-login merge, console wishlist counts | **Applied 2026-08-09 — verified** |
 | M7 | Bookings & payments | **7A (applied 2026-08-13 — verified):** the full gateway-agnostic layer — bookings/participants/terms, provider-neutral payments ledger, seat locking, waitlist, change requests, audit spine, outbox, manual-era admin RPCs, reviews write path, `booking_report`, gated Edge Functions. **7B (pending):** gateway adapter (decision F), secrets, test-mode E2E, app switch off the mock | **7A applied — NOT payment-ready** |
 | M8 | Memories & trip albums | `memories`, `memory_photos`, guard triggers, private `memories` bucket (signed URLs), realtime notifications, live album UI (web) | **Applied 2026-08-14 — verified** |
+| M6b | Expo app onto the live backend | ZERO schema change — client swap only: native Supabase client (AsyncStorage sessions), live account bundle + catalogue + albums + realtime inbox, honest booking doors (W), forms in-app browser (X), demo world retired (Z), team portraits repointed into `site-media/team/*`; attestation `m6b-verify-expo-live` | **Applied 2026-08-14 — verified** |
 | — | Future (designed only) | `referrals`, loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
 
 ## Decision log

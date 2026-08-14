@@ -57,7 +57,7 @@ function EditField({
 
 /** Settings — profile, preferences, support and the quiet exit. */
 export default function SettingsScreen() {
-  const { data, updateProfile, updatePrefs, deleteAccount } = useAccount();
+  const { data, updateProfile, updatePrefs } = useAccount();
 
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -100,19 +100,15 @@ export default function SettingsScreen() {
     }
   };
 
-  const confirmDelete = (): void => {
-    Alert.alert(
-      "Delete your account?",
-      "Trips, memories, wallet and journey — everything goes. This can't be undone.",
-      [
-        { text: "Keep my space", style: "cancel" },
-        {
-          text: "Delete everything",
-          style: "destructive",
-          onPress: () => void deleteAccount(),
-        },
-      ],
-    );
+  /**
+   * Decision V — the same honest exit the website offers: a real person
+   * erases the account. No silent machinery, no fake instant delete.
+   */
+  const leaveCircle = (): void => {
+    composeEmail(
+      "Please erase my account",
+      `Please erase the account for ${data?.profile.email ?? ""}.`,
+    ).catch(() => undefined);
   };
 
   return (
@@ -199,14 +195,16 @@ export default function SettingsScreen() {
             </PressableScale>
           </View>
 
-          {/* Danger zone */}
+          {/* Leave the circle — decision V, mirrored from the website. */}
           <View style={styles.section}>
-            <PressableScale onPress={confirmDelete} scaleTo={0.98} style={styles.deleteBtn} testID="settings-delete">
-              <Text style={styles.deleteText}>Delete my account</Text>
-            </PressableScale>
-            <Text style={styles.deleteNote}>
-              Everything is erased from this device. There's no undo.
+            <Text style={styles.sectionTitle}>Leave the circle</Text>
+            <Text style={styles.sectionSub}>
+              Write to us and a real person will erase your account and every trace of it —
+              usually within two days. There's no undo spell.
             </Text>
+            <PressableScale onPress={leaveCircle} scaleTo={0.98} style={styles.deleteBtn} testID="settings-delete">
+              <Text style={styles.deleteText}>Write to us</Text>
+            </PressableScale>
           </View>
         </>
       ) : null}
@@ -354,6 +352,7 @@ const styles = StyleSheet.create({
     color: "rgba(245,240,232,0.55)",
   },
   deleteBtn: {
+    marginTop: 16,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(201,111,90,0.4)",
@@ -364,12 +363,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: 13.5,
     color: "rgba(201,111,90,0.95)",
-  },
-  deleteNote: {
-    marginTop: 10,
-    textAlign: "center",
-    fontFamily: Fonts.serifItalic,
-    fontSize: 12,
-    color: "rgba(245,240,232,0.35)",
   },
 });

@@ -3,7 +3,7 @@
  * from the one account bundle (+ the live spell collection). Nothing is
  * hand-maintained twice: book a trip and the wallet, stats, XP, badges,
  * activity feed and calendar all move together.
- * Mirrors web/src/data/account/derive.ts.
+ * Mirrors web/src/data/account/derive.ts (M6b: identical, ledger-era).
  */
 import { CATEGORY_META } from "@/data/spells";
 import type { ManagedSpell, SpellCategoryId } from "@/data/spells";
@@ -94,56 +94,8 @@ export const nextTrip = (bookings: TripBooking[]): TripBooking | null => {
 
 /* -------------------------------- Wallet ---------------------------------- */
 
-export const deriveTransactions = (data: AccountData): WalletTransaction[] => {
-  const txns: WalletTransaction[] = [];
-
-  for (const b of data.bookings) {
-    if (b.status === "draft" || b.amountPaid <= 0) continue;
-    txns.push({
-      id: `t-pay-${b.id}`,
-      kind: "payment",
-      title: b.spell.name,
-      subtitle:
-        b.payment === "deposit"
-          ? `Deposit · ${b.seats} seat${b.seats > 1 ? "s" : ""} · ${b.spell.location}`
-          : `${b.seats} seat${b.seats > 1 ? "s" : ""} · ${b.spell.location}`,
-      amount: b.amountPaid,
-      date: b.bookedAt,
-      method: b.paymentMethod,
-      status: "completed",
-      bookingId: b.id,
-    });
-    if (b.status === "cancelled" && (b.refundAmount ?? 0) > 0) {
-      txns.push({
-        id: `t-ref-${b.id}`,
-        kind: "refund",
-        title: `${b.spell.name} — refund`,
-        subtitle: "90% refund · cancelled 22 days out",
-        amount: b.refundAmount ?? 0,
-        date: b.refundedAt ?? b.cancelledAt ?? b.bookedAt,
-        method: b.paymentMethod,
-        status: "completed",
-        bookingId: b.id,
-      });
-    }
-  }
-
-  for (const r of data.referrals) {
-    if (r.status !== "booked" || r.reward <= 0) continue;
-    txns.push({
-      id: `t-credit-${r.id}`,
-      kind: "credit",
-      title: `Referral reward — ${r.name}`,
-      subtitle: r.bookedSpell ? `${r.name} booked the ${r.bookedSpell}` : "Friend booked a spell",
-      amount: r.reward,
-      date: r.rewardedAt ?? r.invitedAt,
-      method: "Travel credit",
-      status: "completed",
-    });
-  }
-
-  return txns.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-};
+// deriveTransactions is gone (M6b): the ledger is no longer derived from
+// bookings — `AccountData.transactions` carries the REAL payments rows.
 
 export interface WalletSummary {
   credits: number;
@@ -185,8 +137,6 @@ export const XP_RULES: { label: string; xp: string }[] = [
   { label: "Book a spell", xp: "+120" },
   { label: "Complete a trip", xp: "+200" },
   { label: "Keep a memory album", xp: "+40" },
-  { label: "A friend joins with your code", xp: "+40" },
-  { label: "A friend books their first spell", xp: "+150" },
   { label: "Save a spell to your wishlist", xp: "+8" },
 ];
 
@@ -254,27 +204,7 @@ export const deriveJourney = (data: AccountData): JourneyState => {
     });
   }
 
-  for (const r of data.referrals) {
-    if (r.status === "invited") continue;
-    push({
-      id: `xp-refjoin-${r.id}`,
-      label: `${r.name} joined with your code`,
-      detail: "Your circle grew by one",
-      xp: 40,
-      date: r.invitedAt,
-      kind: "referral",
-    });
-    if (r.status === "booked") {
-      push({
-        id: `xp-refbook-${r.id}`,
-        label: `${r.name} booked their first spell`,
-        detail: r.bookedSpell ? `The ${r.bookedSpell} · reward unlocked` : "Reward unlocked",
-        xp: 150,
-        date: r.rewardedAt ?? r.invitedAt,
-        kind: "referral",
-      });
-    }
-  }
+  // Referral XP is paused with the referral programme — events return when it does.
 
   if (data.wishlist.length > 0) {
     push({
@@ -366,14 +296,6 @@ export const deriveBadges = (data: AccountData, journey: JourneyState): TravelBa
       hint: "Complete a Gathering spell.",
     },
     {
-      id: "circle-builder",
-      name: "Circle Builder",
-      line: "You brought someone with you.",
-      symbol: "✧",
-      unlocked: data.referrals.some((r) => r.status === "booked"),
-      hint: "A friend books through your code.",
-    },
-    {
       id: "memory-keeper",
       name: "Memory Keeper",
       line: "Ten keepsakes, chosen slowly.",
@@ -395,7 +317,7 @@ export const deriveBadges = (data: AccountData, journey: JourneyState): TravelBa
       line: "Sunrise practice, mountain air.",
       symbol: "◐",
       unlocked: completedCategory("movement"),
-      hint: "Your Manali sunrise will unlock this.",
+      hint: "A sunrise circle will unlock this.",
     },
     {
       id: "the-maker",
@@ -411,7 +333,7 @@ export const deriveBadges = (data: AccountData, journey: JourneyState): TravelBa
       line: "Past the border of the familiar.",
       symbol: "☾",
       unlocked: abroad,
-      hint: "Bali is still waiting for you.",
+      hint: "Somewhere beyond India is waiting.",
     },
     {
       id: "luminary",

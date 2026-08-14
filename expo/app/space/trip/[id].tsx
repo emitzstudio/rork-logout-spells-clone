@@ -17,7 +17,7 @@ import {
 } from "@/data/account/derive";
 import { TIMELINE_ORDER } from "@/data/account/models";
 import type { TimelineStepId } from "@/data/account/models";
-import { previousSpellsService } from "@/data/previousSpells";
+import { usePreviousSpells } from "@/data/previousSpells";
 import { formatINR } from "@/data/spells";
 import { useAccount } from "@/providers/AccountProvider";
 
@@ -35,6 +35,7 @@ export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data, toggleChecklistItem } = useAccount();
+  const archive = usePreviousSpells();
 
   const booking = useMemo(
     () => data?.bookings.find((b) => b.id === id) ?? null,
@@ -46,11 +47,9 @@ export default function TripDetailScreen() {
   const reviewTarget = useMemo(() => {
     if (!booking || status !== "completed") return null;
     return (
-      previousSpellsService
-        .list()
-        .find((p) => p.spellSlug !== null && p.spellSlug === booking.spell.slug) ?? null
+      archive.find((p) => p.spellSlug !== null && p.spellSlug === booking.spell.slug) ?? null
     );
-  }, [booking, status]);
+  }, [booking, status, archive]);
 
   const stepIndex = booking ? TIMELINE_ORDER.indexOf(booking.timelineStep) : 0;
   const packedCount = booking ? booking.checklist.filter((c) => c.done).length : 0;

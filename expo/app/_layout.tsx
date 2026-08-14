@@ -23,6 +23,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ApplyHostSheet from "@/components/ApplyHostSheet";
 import PortalGate from "@/components/PortalGate";
 import Starfield from "@/components/Starfield";
+import WhisperBanner from "@/components/WhisperBanner";
 import { Colors } from "@/constants/theme";
 import { SpellStoreProvider } from "@/data/spellStore";
 import { AccountProvider } from "@/providers/AccountProvider";
@@ -61,6 +62,8 @@ function AppShell() {
         <Stack.Screen name="auth" options={{ presentation: "modal" }} />
       </Stack>
       <ApplyHostSheet />
+      {/* Decision Y — realtime whispers land as a quiet banner over everything. */}
+      <WhisperBanner />
       {!portalDone ? <PortalGate onDone={() => setPortalDone(true)} /> : null}
     </View>
   );

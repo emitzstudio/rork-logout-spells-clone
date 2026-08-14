@@ -3,9 +3,9 @@
  *
  * Discover no longer lists live spells; it showcases moods. Each category
  * curates live spells (via category mapping + explicit picks) and past
- * journeys for inspiration. Mirrors web/src/data/discover.ts.
+ * journeys for inspiration. Mirrors web/src/data/discover.ts — M6b: related
+ * past journeys resolve against the LIVE archive the caller passes in.
  */
-import { previousSpellsService } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
 import type { ManagedSpell, SpellCategoryId } from "@/data/spells";
 
@@ -173,11 +173,11 @@ export const discoverService = {
     const families = new Set(category.spellCategories);
     return publicSpells.filter((s) => picked.has(s.slug) || families.has(s.category));
   },
-  /** Past journeys that carry the category's mood. */
-  relatedPast(category: DiscoverCategory): PreviousSpell[] {
+  /** Past journeys that carry the category's mood — from the live archive. */
+  relatedPast(category: DiscoverCategory, archive: PreviousSpell[]): PreviousSpell[] {
     const out: PreviousSpell[] = [];
     for (const slug of category.pastSlugs) {
-      const past = previousSpellsService.bySlug(slug);
+      const past = archive.find((s) => s.slug === slug);
       if (past) out.push(past);
     }
     return out;

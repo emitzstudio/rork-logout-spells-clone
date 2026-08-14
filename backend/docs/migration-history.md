@@ -969,12 +969,121 @@ memory_photos=0 · `memories` bucket objects=0 · no probe residue.
 
 ---
 
-## Planned next (founder-approved order: M6b → gateway last)
+## M6b — The Expo app onto the live backend · applied 2026-08-14
 
-1. **M6b — Expo app onto the live backend**: one swap pass over the
-   web-proven data layer (now including live memories); the mobile app
-   leaves its mocks.
-2. **7B — gateway integration (LAST; blocked on founder decisions)**: one
+| | |
+| --- | --- |
+| Approved by | Vidushi Verma — "Approve M6b — all decisions U–Z as recommended" |
+| Migration | **NONE — zero schema change.** `0009` remains the newest structural migration; attestation `m6b-verify-expo-live` records this pass in the ledger (its DO block re-asserts net-zero at apply time) |
+| Deployed | The Expo app's entire data layer, swapped from mocks to the live backend (Expo checks green); web re-verified untouched (checks green, live preview intact) |
+
+Founder-approved decisions as executed: **U** recovery (adapted — see below) ·
+**V** "Leave the circle" = the write-to-us mail flow, no service-role deletion
+machinery · **W** the mock checkout RETIRED — honest inquiry/reserve pipeline +
+the real waitlist · **X** attached published forms open on the website in the
+in-app browser · **Y** realtime whispers = quiet banner + soft haptic + moving
+badge (sockets only — push stays behind gate I) · **Z** the demo world fully
+retired (legacy device keys cleared once; no hidden fallback can return fake
+data).
+
+### What swapped (client only — one pass over the web-proven layer)
+
+- **One native Supabase client**: AsyncStorage-persisted sessions,
+  foreground-only token refresh, the same public env names, the `isUuid`
+  legacy-id guard. The app signs into the SAME auth as the website — one
+  account, two surfaces.
+- **Contracts synced**: the app's models/derive now mirror the web canonical
+  (payments-ledger `transactions`, `balanceDueDate`, `coverPhotoId`); the
+  wallet renders the REAL ledger; the mock `deriveTransactions` fabricator is
+  deleted.
+- **Account service = a port of the web live service**: the same 8-read
+  bundle, batch 1-hour keepsake signing, friendly-error pass-through,
+  self-healing settings row, checklist/rating column-guard writes, album
+  quota/path/cover flows, avatar/cover uploads (repoint first, cleanup
+  after).
+- **Catalogue live under visitor RLS**: spells + hold-aware departures — the
+  FULL published page documents render from `spells.page` now — plus the
+  journal, the archive, the roster and 13 approved reviews. Every static
+  mock array is deleted.
+- **Booking doors (W)**: Door 1 files `submit_inquiry` (server IQ refs);
+  Door 2 ends in the honest reserve REQUEST (30% advance policy as WORDS,
+  nothing computed); full circles offer the real waitlist (join/leave). The
+  mock gateway, invented 5% tax and ₹5,000 advance are gone — retired, not
+  migrated.
+- **Memories native pipeline**: picker → ≤1440px JPEG q0.78 re-encode
+  (EXIF/GPS stripped on device) → own-folder upload → row → sign.
+  Begin-album cards for finished trips, cover crowning, highlights, and
+  "let this album go" — all against the M8 server guards.
+- **Realtime inbox (Y)**: the provider subscribes to the RLS-scoped
+  `inbox-{userId}` channel; a fresh whisper prepends into the bundle, plays
+  a soft haptic and slides in as a quiet banner; the tab badge moves itself.
+- **Reviews**: archive pages read live testimony; the write path is the
+  server-verified `submitReview` (completed-booking proof, pending
+  moderation, one story per trip — the device-local mock add is gone).
+- Housekeeping: `zustand` removed; regenerated types stay in lockstep.
+
+### Decision U as executed (platform gate, adapted honestly)
+
+The approved plan was a 6-digit code line in the recovery email. The email
+provider's plan gate refused: **template editing is unavailable on the free
+tier with the default email provider** (`PATCH /config/auth` → 400). A code
+prompt the email can't fulfil would be a fake flow, so:
+
+- App-initiated recovery sends the SAME proven email, now explicitly aimed
+  at `{site}/reset-password` (allow-listed); the app walks the traveller
+  through the link honestly and straight back to sign-in.
+- `verifyRecoveryCode` (verifyOtp, type `recovery`) ships DORMANT in the
+  service: the day custom SMTP (or a plan upgrade) arrives, one template
+  PATCH adding `{{ .Token }}` + one small screen change turns the in-app
+  code flow on. Web recovery is unchanged.
+
+### Operations executed (config/storage only — no schema)
+
+- **Team roster repoint (the long-flagged watch item)**: 7 portraits
+  uploaded to `site-media/team/{name}.jpg`, each verified HTTP 200 BEFORE
+  the repoint, then `team_members.photo_url` updated from site-relative
+  `/team/*.jpg` to the public storage URLs (verified again after). Both
+  surfaces now render the roster from the same URLs.
+
+### Verification (attestation `m6b-verify-expo-live` — disposable probe traveller, net-zero)
+
+34/35 on the first pass; the realtime smoke passed on the immediate retry
+with explicit socket auth (a bare-script artifact — the app's client sets
+realtime auth automatically on sign-in). Highlights: signup delivers an
+immediate session (D1) · trigger rows present · visitor RLS exact (8 spells
+all published/soldout, drafts invisible, 7 journal stories, 6 archive
+journeys, 13 approved reviews, 7 portraits on storage URLs) · wishlist
+on/off · inquiry `IQ-0826-001` + reserve request `IQ-0826-002` · a realtime
+whisper over the RLS-scoped socket · fixture completed booking → album
+(`photo_limit` 12 from the server) → keepsake upload + row → foreign-path
+row refused (P0001) → signed URL fetched 200 → cover crowned → highlights +
+note → row-first removal → album let go (T) · traveller money-column write
+refused (42501) · foreign notifications invisible · foreign-folder storage
+upload refused · password rotate + fresh sign-in. Every probe row, object,
+inquiry, notification and the probe user erased.
+
+**Net-zero re-asserted** (and enforced by the attestation's DO block):
+au=1 · reviews=13 approved · Σseats_booked=62 · bookings=0 · memories=0 ·
+memory_photos=0 · inquiries=0 · notifications=0 · payments=0 · waitlist=0 ·
+`memories` bucket objects=0 · profiles=1.
+
+### Deliberately NOT in M6b
+
+- ⛔ Anything payment-shaped — no gateway, no credentials, no taxes/fees/
+  refund math. Decisions F + C stay open; **7B remains LAST**.
+- Push notification infrastructure (gate I) — the banner is socket-only.
+- Automated in-app account deletion (V) — lands with App Store prep as its
+  own reviewed piece; the write-to-us flow is the honest path meanwhile.
+- A native form renderer (X) — the web-proven form opens in-app instead.
+- A `referrals` table — the app screen shows its true empty state + the
+  traveller's real code.
+- The founder console on mobile — web-only, unchanged.
+
+---
+
+## Planned next
+
+1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
    adapter file (`_shared/providers/{razorpay|cashfree}.ts`) + the
    `PAYMENT_PROVIDER`/key secrets via the secure widget + the webhook URL
    pasted into the provider dashboard — zero schema or pipeline changes —

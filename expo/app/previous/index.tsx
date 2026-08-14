@@ -13,13 +13,22 @@ import GradientText from "@/components/GradientText";
 import { Reveal, RevealScrollView } from "@/components/RevealScroll";
 import StackHeader from "@/components/StackHeader";
 import { Colors, Fonts } from "@/constants/theme";
-import { previousSpellsService } from "@/data/previousSpells";
+import { usePreviousSpells } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
-import { ratingSummary, reviewService } from "@/data/reviews";
+import { ratingSummary, useAllReviews } from "@/data/reviews";
+import type { SpellReview } from "@/data/reviews";
 
-function PastCard({ spell, index }: { spell: PreviousSpell; index: number }) {
+function PastCard({
+  spell,
+  index,
+  reviews,
+}: {
+  spell: PreviousSpell;
+  index: number;
+  reviews: SpellReview[];
+}) {
   const router = useRouter();
-  const summary = ratingSummary(reviewService.listSync(spell.id));
+  const summary = ratingSummary(reviews);
 
   return (
     <Reveal delay={Math.min(index * 80, 320)}>
@@ -64,7 +73,8 @@ function PastCard({ spell, index }: { spell: PreviousSpell; index: number }) {
 
 /** Previous Spells — completed journeys kept as memory pages. */
 export default function PreviousSpellsScreen() {
-  const spells = previousSpellsService.list();
+  const spells = usePreviousSpells();
+  const allReviews = useAllReviews();
 
   return (
     <View style={styles.flex}>
@@ -86,7 +96,12 @@ export default function PreviousSpellsScreen() {
 
         <View style={styles.cards}>
           {spells.map((spell, i) => (
-            <PastCard key={spell.id} spell={spell} index={i} />
+            <PastCard
+              key={spell.id}
+              spell={spell}
+              index={i}
+              reviews={allReviews.filter((r) => r.spellId === spell.id)}
+            />
           ))}
         </View>
 

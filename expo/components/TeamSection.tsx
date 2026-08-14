@@ -19,7 +19,7 @@ import Eyebrow from "@/components/Eyebrow";
 import GradientText from "@/components/GradientText";
 import MagicDust from "@/components/MagicDust";
 import { Colors, Fonts } from "@/constants/theme";
-import { teamService } from "@/data/team";
+import { useTeamMembers } from "@/data/team";
 import type { TeamMember } from "@/data/team";
 import { hapticLight } from "@/lib/haptics";
 
@@ -168,7 +168,7 @@ function FlipCard({ member, width }: { member: TeamMember; width: number }) {
  */
 export default function TeamSection() {
   const { width } = useWindowDimensions();
-  const members = teamService.list();
+  const members = useTeamMembers();
   const founder = members.find((m) => m.featured === true);
   const rest = members.filter((m) => m.featured !== true);
   const cardWidth = Math.min(300, width * 0.74);

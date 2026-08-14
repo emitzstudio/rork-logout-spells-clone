@@ -1,8 +1,8 @@
 /**
  * Traveller account domain model.
- * Mirrors web/src/data/account/models.ts — the canonical contract. The mock
- * service implements these shapes today; the future Supabase phase implements
- * the same contracts against real tables with no screen changes required.
+ * Mirrors web/src/data/account/models.ts — the canonical contract, now
+ * implemented LIVE (M6b): the account service talks to the same Supabase
+ * tables the website proved, and every screen renders these same shapes.
  */
 import type { SpellCategoryId } from "@/data/spells";
 
@@ -90,7 +90,8 @@ export interface ChecklistItem {
 
 /**
  * Frozen copy of the spell at booking time. Trips stay renderable even if the
- * founder later edits or archives the live spell.
+ * founder later edits or archives the live spell; `slug` still links through
+ * when the page exists.
  */
 export interface SpellSnapshot {
   spellId: string;
@@ -122,6 +123,8 @@ export interface TripBooking {
   amountPaid: number;
   payment: PaymentState;
   paymentMethod: string;
+  /** Server-set 70% due date — absent when paid in full at booking. */
+  balanceDueDate?: string;
   bookedAt: string;
   timelineStep: TimelineStepId;
   checklist: ChecklistItem[];
@@ -144,25 +147,30 @@ export interface TripBooking {
 
 export interface MemoryPhoto {
   id: string;
+  /** A short-lived SIGNED url (M8) — private bucket, never persisted. */
   src: string;
   addedAt: string;
-  /** True when the traveller added it themselves (vs. the seeded circle set). */
+  /** True when the traveller added it themselves (vs. a future circle drop). */
   own?: boolean;
 }
 
 export interface TripMemory {
   id: string;
+  /** Empty string when the booking behind it was ever removed (album survives). */
   bookingId: string;
   title: string;
   location: string;
+  /** Chosen keepsake (signed) → first keepsake → the trip's spell image. */
   cover: string;
   start: string;
   end: string;
-  /** Per-trip storage quota — keeps every album curated. */
+  /** Per-trip storage quota — keeps every album curated (and storage honest). */
   photoLimit: number;
   photos: MemoryPhoto[];
   note: string;
   highlights: string[];
+  /** The keepsake chosen as cover, when one is. */
+  coverPhotoId?: string;
 }
 
 /* ------------------------------ Notifications ----------------------------- */
@@ -291,12 +299,14 @@ export interface AccountData {
   profile: TravellerProfile;
   prefs: TravellerPrefs;
   bookings: TripBooking[];
+  /** The real payments ledger (M7C) — advances, balances, refunds. */
+  transactions: WalletTransaction[];
   memories: TripMemory[];
   notifications: AppNotification[];
   referrals: Referral[];
   /** Spell ids saved to the wishlist. */
   wishlist: string[];
-  /** Spell slugs recently opened — newest first. */
+  /** Spell slugs recently opened in the app — newest first. */
   recentlyViewed: string[];
   friendsMade: number;
 }

@@ -10,6 +10,7 @@ import SpellRail from "@/components/SpellRail";
 import StackHeader from "@/components/StackHeader";
 import { Colors, Fonts } from "@/constants/theme";
 import { discoverService } from "@/data/discover";
+import { usePreviousSpells } from "@/data/previousSpells";
 import { useSpellStore } from "@/data/spellStore";
 
 /** One Discover category — mood board, curated live spells, past journeys. */
@@ -18,6 +19,7 @@ export default function DiscoverCategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { publicSpells } = useSpellStore();
+  const archive = usePreviousSpells();
 
   const category = slug ? discoverService.bySlug(slug) : undefined;
   const curated = useMemo(
@@ -25,8 +27,8 @@ export default function DiscoverCategoryScreen() {
     [category, publicSpells],
   );
   const past = useMemo(
-    () => (category ? discoverService.relatedPast(category) : []),
-    [category],
+    () => (category ? discoverService.relatedPast(category, archive) : []),
+    [category, archive],
   );
   const gallery = useMemo(
     () => (category ? discoverService.galleryUrls(category) : []),

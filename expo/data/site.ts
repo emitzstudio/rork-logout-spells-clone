@@ -5,6 +5,9 @@
 
 export const CONTACT_EMAIL = "vidushi@logoutspells.com";
 
+/** The live website — attached forms open there in the in-app browser (M6b). */
+export const SITE_URL = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
+
 export const SOCIALS = {
   linkedin: "https://www.linkedin.com/in/vidushiverma2409/",
   instagram: "https://www.instagram.com/veedoshe",

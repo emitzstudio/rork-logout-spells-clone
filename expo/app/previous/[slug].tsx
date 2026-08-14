@@ -2,9 +2,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { BadgeCheck, PenLine } from "lucide-react-native";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -19,12 +21,14 @@ import { GoldProgress, Stars } from "@/components/AccountBits";
 import { GoldButton, PressableScale } from "@/components/Buttons";
 import StackHeader from "@/components/StackHeader";
 import { Colors, Fonts } from "@/constants/theme";
-import { previousSpellsService } from "@/data/previousSpells";
+import { effectiveStatus } from "@/data/account/derive";
+import { submitReview as submitLiveReview } from "@/data/account/selfService";
+import { usePreviousSpells } from "@/data/previousSpells";
 import {
   canReviewSpell,
   hasReviewed,
   ratingSummary,
-  reviewService,
+  useSpellReviews,
 } from "@/data/reviews";
 import type { SpellReview } from "@/data/reviews";
 import { hapticSuccess } from "@/lib/haptics";
@@ -65,60 +69,76 @@ export default function PreviousSpellScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, session, signedIn } = useAccount();
+  const queryClient = useQueryClient();
 
-  const spell = slug ? previousSpellsService.bySlug(slug) : undefined;
+  const archive = usePreviousSpells();
+  const spell = slug ? archive.find((s) => s.slug === slug) : undefined;
 
-  const [reviews, setReviews] = useState<SpellReview[]>([]);
-  const [loadingReviews, setLoadingReviews] = useState<boolean>(true);
+  const reviews: SpellReview[] = useSpellReviews(spell?.id ?? "");
+  const loadingReviews = spell !== undefined && reviews.length === 0 && archive.length === 0;
   const [rating, setRating] = useState<number>(5);
   const [reviewTitle, setReviewTitle] = useState<string>("");
   const [reviewBody, setReviewBody] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
-  const loadReviews = useCallback(async () => {
-    if (!spell) return;
-    setLoadingReviews(true);
-    try {
-      const list = await reviewService.list(spell.id);
-      setReviews(list);
-    } finally {
-      setLoadingReviews(false);
-    }
-  }, [spell]);
-
-  useEffect(() => {
-    void loadReviews();
-  }, [loadReviews]);
-
   const summary = useMemo(() => ratingSummary(reviews), [reviews]);
   const eligible = spell ? canReviewSpell(data, spell) : false;
   const alreadyReviewed = hasReviewed(reviews, session?.userId ?? null);
 
+  /** The completed booking that PROVES this traveller sat in the circle. */
+  const completedBooking = useMemo(() => {
+    if (!data || !spell || spell.spellSlug === null) return null;
+    return (
+      data.bookings.find(
+        (b) => b.spell.slug === spell.spellSlug && effectiveStatus(b) === "completed",
+      ) ?? null
+    );
+  }, [data, spell]);
+
   const submitReview = async (): Promise<void> => {
-    if (!spell || !session || !data) return;
+    if (!spell || !session || !data || !completedBooking) return;
     if (reviewTitle.trim().length < 3 || reviewBody.trim().length < 10) return;
     setSubmitting(true);
     try {
-      await reviewService.add({
-        spellId: spell.id,
-        authorId: session.userId,
-        author: `${data.profile.firstName} ${data.profile.lastName}`.trim(),
-        avatar: session.avatar,
+      // The live write path: server-verified against the completed booking,
+      // lands 'pending' for moderation, one story per trip (unique index).
+      await submitLiveReview({
+        previousSpellId: spell.id,
+        bookingId: completedBooking.id,
         rating,
         title: reviewTitle,
         body: reviewBody,
         travelledOn: spell.season,
+        authorName: `${data.profile.firstName} ${data.profile.lastName}`.trim(),
+        authorAvatar: data.profile.avatar.startsWith("http") ? data.profile.avatar : "",
       });
       hapticSuccess();
       setFormOpen(false);
       setReviewTitle("");
       setReviewBody("");
-      await loadReviews();
+      await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+    } catch (error) {
+      Alert.alert(
+        "Your story couldn't be sent",
+        error instanceof Error ? error.message : "Try again in a moment.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
+
+  /* The archive is still opening — hold the page rather than call it faded. */
+  if (!spell && archive.length === 0) {
+    return (
+      <View style={styles.flex}>
+        <StackHeader title="Previous Spells" fallback="/previous" />
+        <View style={styles.missing}>
+          <ActivityIndicator color={Colors.goldLight} />
+        </View>
+      </View>
+    );
+  }
 
   if (!spell) {
     return (
@@ -303,7 +323,7 @@ export default function PreviousSpellScreen() {
             ) : null}
 
             {/* Review gate */}
-            {eligible && !alreadyReviewed ? (
+            {eligible && !alreadyReviewed && completedBooking !== null ? (
               formOpen ? (
                 <View style={styles.form}>
                   <Text style={styles.formTitle}>Your review</Text>
@@ -379,7 +399,7 @@ export default function PreviousSpellScreen() {
 
             {alreadyReviewed ? (
               <Text style={styles.reviewedNote}>
-                ✦ Your review is here — thank you for writing it down.
+                ✦ Your story is kept — it appears for everyone once the team approves it.
               </Text>
             ) : null}
 

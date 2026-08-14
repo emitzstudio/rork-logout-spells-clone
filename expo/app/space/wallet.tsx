@@ -4,11 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import SpaceShell from "@/components/SpaceShell";
 import { Colors, Fonts } from "@/constants/theme";
-import {
-  deriveTransactions,
-  deriveWalletSummary,
-  fmtDayYear,
-} from "@/data/account/derive";
+import { deriveWalletSummary, fmtDayYear } from "@/data/account/derive";
 import type { WalletTransaction } from "@/data/account/models";
 import { formatINR } from "@/data/spells";
 import { useAccount } from "@/providers/AccountProvider";
@@ -47,7 +43,8 @@ function TxnRow({ txn }: { txn: WalletTransaction }) {
 export default function WalletScreen() {
   const { data } = useAccount();
 
-  const txns = useMemo(() => (data ? deriveTransactions(data) : []), [data]);
+  /** The REAL payments ledger (M7C tables) — server-derived amounts only. */
+  const txns = useMemo(() => data?.transactions ?? [], [data]);
   const summary = useMemo(() => deriveWalletSummary(txns), [txns]);
 
   return (

@@ -8,8 +8,10 @@
 > **M7** the gateway-agnostic booking & payments layer (§9 — still NOT
 > payment-ready; decision F open), and since **M8** the private memories domain
 > (§10 — `memories` + `memory_photos`, the private `memories` bucket, realtime
-> notifications). The website, the founder console and the traveller account space
-> all read and write this schema under RLS.
+> notifications). Since **M6b** (2026-08-14, ZERO schema change — attestation
+> `m6b-verify-expo-live`) the **mobile app** reads and writes this same schema
+> under the same RLS: the website, the founder console, the traveller account
+> space and the app are one backend.
 > [migration-history.md](./migration-history.md) records what is actually live.
 
 The schema is derived from the shipped mock data layer (`web/src/data/*`), which every

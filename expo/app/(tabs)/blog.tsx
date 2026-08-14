@@ -13,7 +13,7 @@ import GradientText from "@/components/GradientText";
 import { Reveal, RevealScrollView } from "@/components/RevealScroll";
 import SiteHeader from "@/components/SiteHeader";
 import { Colors, Fonts, TAB_BAR_SPACE } from "@/constants/theme";
-import { BLOG_CATEGORIES, blogService, fmtBlogDate } from "@/data/blog";
+import { BLOG_CATEGORIES, featuredOf, fmtBlogDate, useBlogPosts } from "@/data/blog";
 import type { BlogCategoryId, BlogPost } from "@/data/blog";
 
 type Filter = "all" | BlogCategoryId;
@@ -110,12 +110,12 @@ function PostCard({ post, index }: { post: BlogPost; index: number }) {
 export default function BlogScreen() {
   const [filter, setFilter] = useState<Filter>("all");
 
-  const posts = useMemo(() => blogService.list(), []);
-  const featured = useMemo(() => blogService.featured(), []);
+  const posts = useBlogPosts();
+  const featured = useMemo(() => featuredOf(posts) ?? null, [posts]);
   const visible = useMemo(
     () =>
       (filter === "all" ? posts : posts.filter((p) => p.category === filter)).filter(
-        (p) => filter !== "all" || p.id !== featured.id,
+        (p) => filter !== "all" || p.id !== featured?.id,
       ),
     [filter, posts, featured],
   );
@@ -138,7 +138,7 @@ export default function BlogScreen() {
           </Reveal>
         </View>
 
-        {filter === "all" ? (
+        {filter === "all" && featured ? (
           <Reveal style={styles.featuredWrap}>
             <FeaturedCard post={featured} />
           </Reveal>

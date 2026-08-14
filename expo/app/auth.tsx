@@ -23,7 +23,7 @@ import { hapticSuccess } from "@/lib/haptics";
 import { useAccount } from "@/providers/AccountProvider";
 
 type Mode = "signin" | "join" | "forgot";
-type Phase = "form" | "otp" | "reset";
+type Phase = "form" | "sent";
 
 const MODE_COPY: Record<Mode, { title: string; italic: string; sub: string; cta: string }> = {
   signin: {
@@ -41,8 +41,8 @@ const MODE_COPY: Record<Mode, { title: string; italic: string; sub: string; cta:
   forgot: {
     title: "Find your",
     italic: "way back.",
-    sub: "We'll send a one-time code to your email and set a fresh password.",
-    cta: "SEND CODE",
+    sub: "We'll email you a reset link — it opens our website, where you choose a fresh password.",
+    cta: "SEND RESET LINK",
   },
 };
 
@@ -84,14 +84,15 @@ function AuthField({
 }
 
 /**
- * The traveller doorway — sign in, join, or recover access. Mock auth today
- * (any 6-digit code verifies; 000000 fails), the Supabase phase swaps the
- * service internals only.
+ * The traveller doorway — sign in, join, or recover access. LIVE (M6b):
+ * real Supabase auth, the same account the website opens. Recovery rides
+ * the emailed link to the website's proven reset page (decision U, adapted —
+ * the emailed 6-digit code arrives once custom SMTP is configured).
  */
 export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signIn, signUp, openSession } = useAccount();
+  const { signIn, signUp } = useAccount();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [phase, setPhase] = useState<Phase>("form");
@@ -102,8 +103,6 @@ export default function AuthScreen() {
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [otp, setOtp] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>("");
 
   const copy = MODE_COPY[mode];
 
@@ -137,43 +136,26 @@ export default function AuthScreen() {
       });
     } else if (mode === "join") {
       void run(async () => {
-        await signUp({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), password });
-        await accountService.requestOtp(email.trim());
-        setPhase("otp");
+        await signUp({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          password,
+        });
+        finish();
       });
     } else {
       void run(async () => {
-        await accountService.requestOtp(email.trim());
-        setPhase("otp");
+        await accountService.requestPasswordReset(email.trim());
+        setPhase("sent");
       });
     }
-  };
-
-  const submitOtp = (): void => {
-    void run(async () => {
-      await accountService.verifyOtp(otp.trim());
-      if (mode === "forgot") {
-        setPhase("reset");
-      } else {
-        await openSession();
-        finish();
-      }
-    });
-  };
-
-  const submitReset = (): void => {
-    void run(async () => {
-      await accountService.resetPassword(newPassword);
-      await openSession();
-      finish();
-    });
   };
 
   const switchMode = (next: Mode): void => {
     setMode(next);
     setPhase("form");
     setError(null);
-    setOtp("");
   };
 
   return (
@@ -273,7 +255,7 @@ export default function AuthScreen() {
             </>
           ) : null}
 
-          {phase === "otp" ? (
+          {phase === "sent" ? (
             <>
               <View style={styles.otpBadge}>
                 <ShieldCheck size={22} color={Colors.goldLight} />
@@ -283,25 +265,16 @@ export default function AuthScreen() {
                 <GradientText style={styles.titleItalic}>email.</GradientText>
               </View>
               <Text style={styles.sub}>
-                We sent a 6-digit code to {email.trim() || "your inbox"}. Enter it below — any code
-                works in this demo, except 000000.
+                We sent a reset link to {email.trim() || "your inbox"}. It opens our website,
+                where you choose a fresh password — then come back here and sign in with it.
               </Text>
-              <TextInput
-                value={otp}
-                onChangeText={(v) => setOtp(v.replace(/[^0-9]/g, "").slice(0, 6))}
-                placeholder="••••••"
-                placeholderTextColor="rgba(245,240,232,0.25)"
-                keyboardType="number-pad"
-                style={styles.otpInput}
-                testID="auth-otp"
-              />
-              {error ? <Text style={styles.error}>{error}</Text> : null}
-              <PressableScale onPress={submitOtp} haptic="medium" style={styles.primary} testID="auth-verify">
-                {busy ? (
-                  <ActivityIndicator color={Colors.charcoalDeep} />
-                ) : (
-                  <Text style={styles.primaryText}>VERIFY CODE</Text>
-                )}
+              <PressableScale
+                onPress={() => switchMode("signin")}
+                haptic="medium"
+                style={styles.primary}
+                testID="auth-back-to-signin"
+              >
+                <Text style={styles.primaryText}>I'VE RESET IT — SIGN IN</Text>
               </PressableScale>
               <PressableScale onPress={() => setPhase("form")} scaleTo={0.97}>
                 <Text style={styles.link}>Use a different email</Text>
@@ -309,36 +282,8 @@ export default function AuthScreen() {
             </>
           ) : null}
 
-          {phase === "reset" ? (
-            <>
-              <View style={styles.titleRow}>
-                <Text style={styles.title}>A fresh </Text>
-                <GradientText style={styles.titleItalic}>key.</GradientText>
-              </View>
-              <Text style={styles.sub}>Choose a new password — 8 characters or more.</Text>
-              <View style={styles.form}>
-                <AuthField
-                  icon={<KeyRound size={16} color="rgba(184,150,62,0.7)" />}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  placeholder="New password"
-                  secure
-                  testID="auth-new-password"
-                />
-              </View>
-              {error ? <Text style={styles.error}>{error}</Text> : null}
-              <PressableScale onPress={submitReset} haptic="medium" style={styles.primary} testID="auth-reset">
-                {busy ? (
-                  <ActivityIndicator color={Colors.charcoalDeep} />
-                ) : (
-                  <Text style={styles.primaryText}>SET PASSWORD & SIGN IN</Text>
-                )}
-              </PressableScale>
-            </>
-          ) : null}
-
-          <Text style={styles.demoNote}>
-            Demo account — everything you see is seeded and stored on this device only.
+          <Text style={styles.footNote}>
+            One account for the app and the website — the same door, the same circle.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -472,21 +417,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  otpInput: {
-    alignSelf: "stretch",
-    marginTop: 28,
-    borderWidth: 1,
-    borderColor: "rgba(184,150,62,0.35)",
-    backgroundColor: "rgba(245,240,232,0.03)",
-    borderRadius: 14,
-    paddingVertical: 18,
-    textAlign: "center",
-    fontFamily: Fonts.serif,
-    fontSize: 30,
-    letterSpacing: 14,
-    color: Colors.goldHi,
-  },
-  demoNote: {
+  footNote: {
     marginTop: 34,
     textAlign: "center",
     fontFamily: Fonts.serifItalic,

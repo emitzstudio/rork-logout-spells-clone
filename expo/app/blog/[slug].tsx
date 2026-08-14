@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Clock } from "lucide-react-native";
 import React, { useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -16,7 +17,7 @@ import { GoldButton, PressableScale } from "@/components/Buttons";
 import GradientText from "@/components/GradientText";
 import StackHeader from "@/components/StackHeader";
 import { Colors, Fonts } from "@/constants/theme";
-import { BLOG_CATEGORIES, blogService, fmtBlogDate } from "@/data/blog";
+import { BLOG_CATEGORIES, fmtBlogDate, relatedTo, useBlogPosts } from "@/data/blog";
 import type { BlogBlock, BlogPost } from "@/data/blog";
 
 function Block({ block }: { block: BlogBlock }) {
@@ -48,8 +49,38 @@ function Block({ block }: { block: BlogBlock }) {
           {block.caption ? <Text style={styles.blockCaption}>{block.caption}</Text> : null}
         </View>
       );
-    default:
+    case "gallery":
+      return (
+        <View style={styles.blockGallery}>
+          {block.images.map((image) => (
+            <View key={image.src} style={styles.blockImageWrap}>
+              <Image source={{ uri: image.src }} style={styles.blockImage} contentFit="cover" transition={300} />
+              {image.caption ? <Text style={styles.blockCaption}>{image.caption}</Text> : null}
+            </View>
+          ))}
+        </View>
+      );
+    case "highlight":
+      return (
+        <View style={styles.blockQuote}>
+          {block.title ? <Text style={styles.blockQuoteBy}>{block.title}</Text> : null}
+          <Text style={styles.blockQuoteText}>{block.text}</Text>
+        </View>
+      );
+    case "columns":
+      return (
+        <View style={styles.blockGallery}>
+          <Text style={styles.blockParagraph}>{block.left}</Text>
+          <Text style={styles.blockParagraph}>{block.right}</Text>
+        </View>
+      );
+    case "divider":
+      return <Text style={styles.blockDivider}>✦</Text>;
+    case "paragraph":
       return <Text style={styles.blockParagraph}>{block.text}</Text>;
+    default:
+      /* video / cta blocks are web-first — the story reads on without them. */
+      return null;
   }
 }
 
@@ -84,14 +115,27 @@ export default function BlogPostScreen() {
   const [contentHeight, setContentHeight] = useState<number>(1);
   const [viewportHeight, setViewportHeight] = useState<number>(1);
 
-  const post = slug ? blogService.bySlug(slug) : undefined;
-  const related = useMemo(() => (post ? blogService.related(post) : []), [post]);
+  const posts = useBlogPosts();
+  const post = slug ? posts.find((p) => p.slug === slug) : undefined;
+  const related = useMemo(() => (post ? relatedTo(posts, post) : []), [posts, post]);
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
     const max = Math.max(1, contentHeight - viewportHeight);
     const value = Math.max(0, Math.min(1, event.nativeEvent.contentOffset.y / max));
     progress.setValue(value);
   };
+
+  /* The journal is still opening — hold the page rather than call it gone. */
+  if (!post && posts.length === 0) {
+    return (
+      <View style={styles.flex}>
+        <StackHeader title="The Journal" fallback="/blog" />
+        <View style={styles.missing}>
+          <ActivityIndicator color={Colors.goldLight} />
+        </View>
+      </View>
+    );
+  }
 
   if (!post) {
     return (
@@ -364,6 +408,16 @@ const styles = StyleSheet.create({
   blockImage: {
     height: 220,
     borderRadius: 14,
+  },
+  blockGallery: {
+    gap: 18,
+  },
+  blockDivider: {
+    textAlign: "center",
+    fontFamily: Fonts.serif,
+    fontSize: 18,
+    color: "rgba(184,150,62,0.55)",
+    paddingVertical: 4,
   },
   blockCaption: {
     fontFamily: Fonts.serifItalic,

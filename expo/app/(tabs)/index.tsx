@@ -23,9 +23,9 @@ import { Reveal, RevealScrollView } from "@/components/RevealScroll";
 import SiteHeader from "@/components/SiteHeader";
 import SpellRail from "@/components/SpellRail";
 import { Colors, Fonts, TAB_BAR_SPACE } from "@/constants/theme";
-import { BLOG_CATEGORIES, blogService, fmtBlogDate } from "@/data/blog";
+import { BLOG_CATEGORIES, fmtBlogDate, useBlogPosts } from "@/data/blog";
 import { discoverService } from "@/data/discover";
-import { previousSpellsService } from "@/data/previousSpells";
+import { usePreviousSpells } from "@/data/previousSpells";
 import { MARQUEE_ITEMS } from "@/data/site";
 import { useSpellStore } from "@/data/spellStore";
 import { useApp } from "@/providers/AppProvider";
@@ -222,9 +222,9 @@ export default function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const spellsY = useRef<number>(0);
 
-  const previous = previousSpellsService.featured(6);
+  const previous = usePreviousSpells().slice(0, 6);
   const categories = discoverService.list();
-  const posts = blogService.list().slice(0, 2);
+  const posts = useBlogPosts().slice(0, 2);
 
   return (
     <View style={styles.flex}>

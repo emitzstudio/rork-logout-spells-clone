@@ -6,10 +6,11 @@
 > · `{user_id}/…`), image-only MIME lists and per-bucket caps (10 MB staff buckets,
 > 5 MB avatars, 8 MB memories). `memories` is the only PRIVATE bucket — signed URLs
 > only, exactly three own-folder policies, no UPDATE, no staff clause. Builder,
-> avatar and keepsake uploads land in Storage under these rules. **Watch item:**
-> seeded team photos still point at site-relative `/team/*.jpg` — copy into
-> `site-media/team/…` (copy → repoint → delete) before any non-web surface renders
-> the roster.
+> avatar and keepsake uploads land in Storage under these rules. **Watch item
+> RESOLVED (M6b, 2026-08-14):** the seven seeded team portraits were copied into
+> `site-media/team/{name}.jpg` (each verified HTTP 200) and `team_members.photo_url`
+> repointed from site-relative `/team/*.jpg` to the public storage URLs — the
+> mobile app renders the roster from the same URLs the website now reads.
 
 ## Buckets
 
@@ -33,7 +34,8 @@ spell-media/  spells/{spell_id}/hero-{image_id}.jpg · mobile-hero-{image_id}.jp
               spells/{spell_id}/page/{image_id}.jpg      (about/itinerary/host/stay images)
 blog-media/   posts/{post_id}/hero-{image_id}.jpg
               posts/{post_id}/blocks/{image_id}.jpg
-site-media/   team/{member_id}/{image_id}.jpg
+site-media/   team/{name}.jpg                            (the 7 seeded portraits — M6b repoint)
+              team/{member_id}/{image_id}.jpg            (future console-uploaded portraits)
               previous/{previous_spell_id}/{image_id}.jpg
 avatars/      {user_id}/avatar-{image_id}.jpg
               {user_id}/cover-{image_id}.jpg
