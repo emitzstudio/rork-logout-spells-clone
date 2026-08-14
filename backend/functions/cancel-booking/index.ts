@@ -1,7 +1,9 @@
 /**
  * M7 · cancel-booking — cancellation + refund pipeline.
- * Status: DRAFT / REVIEW ONLY — NOT DEPLOYED, and deployment is BLOCKED on
- * decision A (refund math) and decision F (payment gateway).
+ * Status: DEPLOYED GATED (M7A, 2026-08-13). Traveller-mode refunds answer
+ * 501 until decision A (refund math) is ruled; provider refunds require
+ * decision F (gateway). Manual-era cancellations (bank-transfer money) run
+ * through the audited admin_cancel_booking() SQL RPC instead.
  *
  * Traveller cancellations are REQUESTS (`booking_change_requests`, kind
  * 'cancellation') decided by staff — this function EXECUTES an approved

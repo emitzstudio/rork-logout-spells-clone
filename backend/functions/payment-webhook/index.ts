@@ -1,6 +1,8 @@
 /**
  * M7 · payment-webhook — the ONLY path that confirms money.
- * Status: DRAFT / REVIEW ONLY — NOT DEPLOYED. Provider-neutral (gateway TBD).
+ * Status: DEPLOYED GATED (M7A, 2026-08-13). Provider-neutral (gateway TBD):
+ * with no adapter configured every delivery answers 503 and nothing is
+ * processed — the endpoint comes alive in phase 7B.
  *
  * Public endpoint (gateway JWT off). Trust comes from PROVIDER AUTHENTICITY:
  * the configured adapter verifies the signature over the RAW body per the

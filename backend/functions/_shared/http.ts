@@ -1,6 +1,6 @@
 /**
  * M7 · Shared HTTP helpers for Edge Functions.
- * Status: DRAFT — NOT DEPLOYED. Ships in phase 7B after founder approval.
+ * Status: DEPLOYED (M7A, 2026-08-13) — shared module of the gated functions.
  */
 
 export const CORS_HEADERS: Record<string, string> = {

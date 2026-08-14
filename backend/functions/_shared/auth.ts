@@ -1,6 +1,6 @@
 /**
  * M7 · Shared auth/client helpers for Edge Functions.
- * Status: DRAFT — NOT DEPLOYED. Ships in phase 7B after founder approval.
+ * Status: DEPLOYED (M7A, 2026-08-13) — shared module of the gated functions.
  *
  * The gateway runs with JWT verification OFF, so every function does its own
  * auth: requireUser() validates the caller's bearer token against Supabase

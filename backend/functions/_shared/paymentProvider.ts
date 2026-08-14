@@ -1,6 +1,8 @@
 /**
  * M7 · PaymentProvider — the provider abstraction seam.
- * Status: DRAFT / REVIEW ONLY — NOT DEPLOYED.
+ * Status: DEPLOYED (M7A, 2026-08-13) — and PENDING by design: this is the
+ * clearly isolated gateway layer. The factory throws for EVERY caller until
+ * decision F is made and an approved adapter + secrets land in phase 7B.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * PAYMENT GATEWAY = TBD (decision F): Razorpay OR Cashfree.

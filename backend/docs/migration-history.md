@@ -627,25 +627,108 @@ app's data layer (M6b).
 
 ---
 
-## Planned next: M7 — Bookings & payments (web) · draft REVISED 2026-08-10
+## M7A — Bookings & payments: the gateway-AGNOSTIC layer (applied 2026-08-13)
 
-Business requirements received; the payment gateway is **TBD (Razorpay vs
-Cashfree — decision F)**, so the entire draft is provider-NEUTRAL: gateway
-calls live behind a `PaymentProvider` abstraction, and the schema uses neutral
-`provider` / `provider_order_id` / `provider_payment_id` / `provider_refund_id`
-columns plus controlled jsonb metadata. Scope: real `bookings` + per-seat
-`booking_participants`, server-side `booking_terms_acceptances`, the 30%/70%
-advance/balance model computed server-side, hold-aware atomic seat locking,
-`booking_waitlist`, staff-approved `booking_change_requests` (changes,
-transfers, cancellations), an append-only `booking_events` audit spine, the
-provider-neutral `payments` ledger + webhook idempotency, audited admin RPCs
-for manual money (`record_manual_payment`, `admin_confirm_booking`), the
-reviews write path (verified completed booking → staff approval; authors can
-never edit/delete), and a provider-neutral `notification_outbox`. Draft SQL:
-[`backend/migrations/0007_bookings_payments.sql`](../migrations/0007_bookings_payments.sql);
-function drafts under `backend/functions/`. ⛔ Unresolved decisions A–I
-(traveller-refund math, seat-hold window, taxes/fees, TBC dates, balance
-mechanism, gateway, waitlist allocation, refund authority, notification
-providers) are flagged in the file header — the cancel and pricing paths are
-hard-gated until ruled. The mock payment flow stays live in the app. Full
-review before anything runs.
+| | |
+| --- | --- |
+| Approved by | Vidushi Verma — "Proceed with M7A and all gateway-agnostic booking infrastructure … keep the payment-provider implementation abstract … don't mark M7 payment-ready until the actual gateway integration has been tested end-to-end." |
+| Applied | [`0007_bookings_payments.sql`](../migrations/0007_bookings_payments.sql) (base) · [`0007b_bookings_manual_era.sql`](../migrations/0007b_bookings_manual_era.sql) (recorded `m7a-manual-era-ops`) · [`0007c_report_grant_fix.sql`](../migrations/0007c_report_grant_fix.sql) (recorded `m7a-report-grant-fix`) |
+| Verified | `m7-verify-assertions` + `m7-verify-behavior` (base suites, net-zero) · `m7a-verify-manual-era` (delta attestation, net-zero) — all in the migration ledger |
+| Deployed | Edge Functions `create-booking` · `payment-webhook` · `cancel-booking` — all **GATED** |
+
+⛔ **NOT PAYMENT-READY — by explicit founder instruction.** The gateway
+(decision F: Razorpay vs Cashfree) is unchosen. No provider SDK, no webhook
+signature code, no credentials exist anywhere; the `PaymentProvider` factory
+throws for every caller and the `PAYMENT_PROVIDER` secret is deliberately
+unset. The app's Door 2 checkout stays on the **mock** (device-local, writes
+nothing here). M7 is complete only when the chosen gateway passes its
+test-mode end-to-end run (phase 7B).
+
+### What went live (server-side)
+
+- **13 enums · 10 tables**, all RLS-on with whitelist column grants:
+  `bookings` (draft→pending→confirmed→completed · cancelled; 30/70 money
+  columns; guard trigger splits traveller vs staff columns), per-seat
+  `booking_participants` (one active lead enforced), append-only
+  `booking_terms_acceptances`, the provider-neutral `payments` ledger
+  (`source` gateway/manual/system · unique capture & refund backstops),
+  `payment_webhook_events` (replay-proof), `booking_waitlist` (doubles as the
+  offered-hold mechanism), `booking_change_requests` (+ traveller withdraw,
+  0007b), `booking_staff_notes`, `booking_events` (audit spine, no
+  update/delete path), `notification_outbox` (provider-neutral, decision I).
+- **Seat machinery**: `reserve_departure_seats()` — one row-locked UPDATE
+  re-checks capacity minus active holds inside the lock;
+  `release_booking_seats()` idempotent by construction; availability stays
+  derived (`spell_active_departures` v2 adds `seats_on_hold`); departures
+  capacity/status audit trigger (T4).
+- **Reviews write path (T2)**: verified-completed-booking INSERT policy,
+  submissions land `pending`, public reads approved-only (13 seeded rows
+  backfilled approved), staff-only moderation with audit; authors can never
+  edit or delete.
+- **Manual-era admin RPCs** (audited, admin-gated inside the function —
+  decision H interim): `record_manual_payment()`, `admin_confirm_booking()`
+  (base) + `admin_create_booking()`, `admin_cancel_booking()` (0007b) — the
+  business can take offline/bank-transfer bookings, confirm, and cancel with
+  manually-settled refunds TODAY, with zero gateway. Traveller-mode refunds
+  take an **explicit admin-entered amount** — decision A math is NOT encoded.
+- **Reporting**: `booking_report` view (security_invoker — travellers see own
+  rows, staff see all; authenticated-only after the 0007c belt fix).
+
+### Deployed gates — verified live
+
+`create-booking`: 401 unauthenticated · **501 PRICING_NOT_CONFIGURED**
+(decision C) and the decision-F provider gate both fire BEFORE any seat or
+money work · `cancel-booking`: 403 STAFF_ONLY for travellers; traveller-mode
+refunds 501 until decision A · `payment-webhook`: **503
+PROVIDER_NOT_CONFIGURED** on every delivery · `booking_report` denied to anon.
+
+### Behavior verification (probe traveller + probe admin — net-zero)
+
+All passed, live via PostgREST + the deployed endpoints: traveller rejected
+from every admin RPC · probe admin created `LS-0826-001` on a real departure —
+30/70 math exact (₹48,000 → ₹14,400 advance · balance due start−30d) with
+participant, channel-tagged offline terms, traveller notification, outbox,
+console activity and audit rows, seats 4→5 under the lock · change request
+filed → traveller "approve" blocked by the guard → withdraw succeeded
+(decided_by stamped, audit actor `traveller`) · `record_manual_payment` rolled
+pending→confirmed with a `manual`-source captured ledger row ·
+`admin_cancel_booking` refused traveller mode without an explicit amount
+(decision A gate), executed company mode as a FULL refund of amount paid
+(refund ledger row, booking stamped, `payment_state` refunded, seats released
+5→4 exactly once) and refused a second cancellation.
+
+**Net-zero:** every probe row and both probe users removed — all ten M7
+tables at 0, `auth.users` back to 1 (the founder), seats_booked Σ 62, spell
+changes 27, `ref_counters` empty, reviews 13 approved.
+
+### Operational notes
+
+- The base 0007 apply + its two verify suites landed via the management query
+  path earlier the same day (an interrupted run); this session reconciled the
+  workspace against the live schema — 0007's header records it, and the
+  0007b/0007c deltas are recorded, named migrations. Ground truth was
+  re-checked object-by-object before anything new ran.
+- Types regenerated into `web/src/integrations/supabase/types.ts`. Builds:
+  **web green** (static + build, live preview intact) · **Expo untouched**.
+- The web app was deliberately NOT switched off the mock — no app code
+  changed in M7A. Until the console booking UI ships, the manual-era RPCs are
+  callable by the founder from the Supabase SQL editor (admin-gated + audited
+  regardless of caller).
+
+---
+
+## Planned next: 7B — gateway integration (blocked on founder decisions)
+
+One adapter file (`_shared/providers/{razorpay|cashfree}.ts`) + the
+`PAYMENT_PROVIDER`/key secrets via the secure widget + the webhook URL pasted
+into the provider dashboard — zero schema or pipeline changes — then the full
+test-mode E2E (order → capture → confirm · failure · replay · tampered
+signature · last-seat race · refund round-trip) before Door 2 leaves the mock.
+⛔ Blocking decisions: **F** (gateway) and **C** (taxes/fees — online checkout
+refuses until confirmed). Still open behind their gates: **A** (traveller
+refund math — cancel path 501; admin path takes explicit amounts), **B**
+(seat-hold window), **D** (TBC-dates bookability — refused), **E** (balance
+collection mechanism), **G** (waitlist allocation — manual), **H** (refund
+authority — admin-only), **I** (email/WhatsApp providers — outbox is neutral).
+Also queued: the console booking-operations UI (bookings list/detail, manual
+payment + cancel forms, waitlist board, CSV export over `booking_report`).

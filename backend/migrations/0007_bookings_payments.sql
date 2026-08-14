@@ -1,8 +1,12 @@
 -- ============================================================================
 -- M7 · Bookings & payments — backend objects (REVISED per business answers)
 -- Target: company Supabase project (ultwonqxcgoadthneqqn)
--- Status: DRAFT / REVIEW ONLY — NOTHING in this file has run anywhere.
--- Once applied, this file becomes the source of record and is never re-run.
+-- Status: APPLIED 2026-08-13 (M7A execution, founder-approved) — this file is
+-- the source of record for the M7 base and is never re-run. Verified the same
+-- day by `m7-verify-assertions` + `m7-verify-behavior` (net-zero attestation).
+-- The M7A manual-era additions live in 0007b_bookings_manual_era.sql.
+-- The payment-provider layer stays a PENDING seam (decision F): M7 is NOT
+-- payment-ready until the chosen gateway passes its test-mode E2E run (7B).
 --
 -- Business requirements received 2026-08-10. Key rulings encoded here:
 --   · 30% advance at booking · 70% balance due 30 days before start

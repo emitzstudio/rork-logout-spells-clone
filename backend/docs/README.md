@@ -1,14 +1,19 @@
 # Logout Spells — Backend Documentation
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
-> M4 · M5 · M6 (2026-08-09) applied.** Live today: identity, the spell catalogue,
-> the journal/team/archive domain, the forms domain, the M5 integration objects —
-> and since M6 the **traveller layer**: `saved_spells`, `user_interests`,
-> `notifications` (incl. the welcome whisper on signup), `spell_wishlist_counts()`
-> and the `avatars` bucket. The public website, the founder console **and the
-> traveller account space** all run on this database with native Supabase Auth.
-> Still mock in the app: bookings & payments (Door 2), memories, wallet/XP ledgers
-> (M7–M8). No Edge Functions exist yet.
+> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) applied.** Live today: identity,
+> the spell catalogue, the journal/team/archive domain, the forms domain, the M5
+> integration objects, the M6 **traveller layer** — and since M7A the complete
+> **gateway-agnostic booking layer**: bookings + per-seat participants + consent
+> records, the provider-neutral payments ledger, hold-aware seat locking,
+> waitlist, staff-approved change requests, the append-only audit spine, the
+> notification outbox, the manual-era admin RPCs, the reviews write path and the
+> `booking_report` reporting view. Three Edge Functions are deployed **GATED**
+> (`create-booking` · `payment-webhook` · `cancel-booking`).
+> ⛔ **M7 is NOT payment-ready**: the gateway (decision F) is unchosen — no
+> provider code, no credentials — and the app's Door 2 checkout stays on the
+> mock until phase 7B passes its test-mode end-to-end run. Still mock in the
+> app: bookings & payments UI (Door 2), memories, wallet/XP ledgers (M8).
 > [migration-history.md](./migration-history.md) is the record of what is actually
 > live — if it is not listed there, it is not live.
 
@@ -23,7 +28,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | [storage-structure.md](./storage-structure.md) | Buckets, folder layout, access policies, limits |
 | [data-evolution-strategy.md](./data-evolution-strategy.md) | How documents, enums, storage files, seeds and the schema evolve safely over time |
 | [authentication-flow.md](./authentication-flow.md) | Auth model, signup pipeline, roles, RLS identity |
-| [edge-functions.md](./edge-functions.md) | Planned server-side functions and why each exists |
+| [edge-functions.md](./edge-functions.md) | Deployed (gated) and planned server-side functions, and why each exists |
 | [migration-history.md](./migration-history.md) | Chronological log of every migration actually applied |
 
 ## Engineering principles (agreed)
@@ -67,7 +72,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M4 | Forms & enquiries | `forms`, `form_responses`, `inquiries`, `next_ref()` pipeline, `spells.form_id`, seeds | **Applied 2026-08-09 — verified** |
 | M5 | Public site integration | Provider swap (public site + console behind staff sign-in), `submit_inquiry()`, `spell_active_departures`, storage upload pipeline | **Applied 2026-08-09 — verified** |
 | M6 | Traveller accounts | Real auth UI (login/join/reset), profile/settings, `saved_spells`, `user_interests`, `notifications` + welcome whisper, `avatars` bucket, first-login merge, console wishlist counts | **Applied 2026-08-09 — verified** |
-| M7 | Bookings & payments | `bookings`, `payments`, webhook events, Edge Functions, payment provider | Pending |
+| M7 | Bookings & payments | **7A (applied 2026-08-13 — verified):** the full gateway-agnostic layer — bookings/participants/terms, provider-neutral payments ledger, seat locking, waitlist, change requests, audit spine, outbox, manual-era admin RPCs, reviews write path, `booking_report`, gated Edge Functions. **7B (pending):** gateway adapter (decision F), secrets, test-mode E2E, app switch off the mock | **7A applied — NOT payment-ready** |
 | M8 | Memories & referrals | `memories`, `memory_photos`, private bucket, `referrals`, realtime notifications | Pending |
 | — | Future (designed only) | Loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
 
@@ -77,6 +82,6 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | --- | --- | --- |
 | D1 | Page/article/form document content | **Decided — hybrid**: queryable fields are columns, the page document is one `jsonb` field |
 | D2 | Trip dates | **Decided — `spell_departures` table**: one spell page, many dated runs |
-| D3 | Payment provider | **Decided — Razorpay** (`stripe` enum value reserved for the future) |
+| D3 | Payment provider | **REOPENED 2026-08-10 → decision F: Razorpay vs Cashfree, TBD.** The payment layer is provider-neutral behind the `PaymentProvider` seam — choosing later costs one adapter file + one secret, zero schema change |
 | D4 | Sign-in at launch | **Decided — email + password only**; Google/Apple additive later with company-owned OAuth credentials |
 | D5 | Initial content | **Decided — seed everything the site shows today**; founder replaces via builders over time |

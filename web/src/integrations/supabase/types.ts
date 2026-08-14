@@ -104,6 +104,550 @@ export type Database = {
           },
         ]
       }
+      booking_change_requests: {
+        Row: {
+          booking_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          details: Json
+          id: string
+          kind: Database["public"]["Enums"]["change_request_kind"]
+          requested_by: string | null
+          staff_note: string
+          status: Database["public"]["Enums"]["change_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          details?: Json
+          id?: string
+          kind: Database["public"]["Enums"]["change_request_kind"]
+          requested_by?: string | null
+          staff_note?: string
+          status?: Database["public"]["Enums"]["change_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          details?: Json
+          id?: string
+          kind?: Database["public"]["Enums"]["change_request_kind"]
+          requested_by?: string | null
+          staff_note?: string
+          status?: Database["public"]["Enums"]["change_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_change_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_change_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_change_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_change_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_events: {
+        Row: {
+          actor_id: string | null
+          actor_kind: Database["public"]["Enums"]["event_actor"]
+          booking_id: string | null
+          created_at: string
+          data: Json
+          departure_id: string | null
+          detail: string
+          event_type: string
+          id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_kind?: Database["public"]["Enums"]["event_actor"]
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          departure_id?: string | null
+          detail?: string
+          event_type: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_kind?: Database["public"]["Enums"]["event_actor"]
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          departure_id?: string | null
+          detail?: string
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_events_departure_id_fkey"
+            columns: ["departure_id"]
+            isOneToOne: false
+            referencedRelation: "spell_departures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_participants: {
+        Row: {
+          accessibility: string
+          allergies: string
+          booking_id: string
+          created_at: string
+          date_of_birth: string | null
+          dietary: string
+          email: string
+          emergency_name: string
+          emergency_phone: string
+          emergency_relation: string
+          full_name: string
+          id: string
+          is_lead: boolean
+          phone: string
+          removed_at: string | null
+          removed_reason: string
+          special_requests: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+        }
+        Insert: {
+          accessibility?: string
+          allergies?: string
+          booking_id: string
+          created_at?: string
+          date_of_birth?: string | null
+          dietary?: string
+          email?: string
+          emergency_name?: string
+          emergency_phone?: string
+          emergency_relation?: string
+          full_name?: string
+          id?: string
+          is_lead?: boolean
+          phone?: string
+          removed_at?: string | null
+          removed_reason?: string
+          special_requests?: string
+          status?: Database["public"]["Enums"]["participant_status"]
+          updated_at?: string
+        }
+        Update: {
+          accessibility?: string
+          allergies?: string
+          booking_id?: string
+          created_at?: string
+          date_of_birth?: string | null
+          dietary?: string
+          email?: string
+          emergency_name?: string
+          emergency_phone?: string
+          emergency_relation?: string
+          full_name?: string
+          id?: string
+          is_lead?: boolean
+          phone?: string
+          removed_at?: string | null
+          removed_reason?: string
+          special_requests?: string
+          status?: Database["public"]["Enums"]["participant_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_participants_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_participants_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_staff_notes: {
+        Row: {
+          author_id: string | null
+          booking_id: string
+          created_at: string
+          id: string
+          note: string
+        }
+        Insert: {
+          author_id?: string | null
+          booking_id: string
+          created_at?: string
+          id?: string
+          note: string
+        }
+        Update: {
+          author_id?: string | null
+          booking_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_staff_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_staff_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_staff_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_terms_acceptances: {
+        Row: {
+          accepted_at: string
+          booking_id: string | null
+          id: string
+          metadata: Json
+          policy_key: string
+          policy_version: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          booking_id?: string | null
+          id?: string
+          metadata?: Json
+          policy_key: string
+          policy_version: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          booking_id?: string | null
+          id?: string
+          metadata?: Json
+          policy_key?: string
+          policy_version?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_terms_acceptances_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_terms_acceptances_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_terms_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_waitlist: {
+        Row: {
+          converted_booking_id: string | null
+          created_at: string
+          created_by: string | null
+          departure_id: string
+          email: string
+          expires_at: string | null
+          id: string
+          name: string
+          note: string
+          offered_at: string | null
+          phone: string
+          seats_requested: number
+          status: Database["public"]["Enums"]["waitlist_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          converted_booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          departure_id: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          name?: string
+          note?: string
+          offered_at?: string | null
+          phone?: string
+          seats_requested?: number
+          status?: Database["public"]["Enums"]["waitlist_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          converted_booking_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          departure_id?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          name?: string
+          note?: string
+          offered_at?: string | null
+          phone?: string
+          seats_requested?: number
+          status?: Database["public"]["Enums"]["waitlist_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_waitlist_converted_booking_id_fkey"
+            columns: ["converted_booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_waitlist_converted_booking_id_fkey"
+            columns: ["converted_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_waitlist_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_waitlist_departure_id_fkey"
+            columns: ["departure_id"]
+            isOneToOne: false
+            referencedRelation: "spell_departures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_waitlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          amount_advance_minor: number
+          amount_paid_minor: number
+          amount_total_minor: number
+          balance_due_date: string | null
+          booked_at: string
+          cancellation_reason: string
+          cancelled_at: string | null
+          checklist: Json
+          created_at: string
+          currency: string
+          departure_id: string | null
+          duration_days: number
+          end_date: string | null
+          host_note: string
+          id: string
+          lead_email: string
+          lead_name: string
+          lead_phone: string
+          meeting_point: string
+          payment_method: string
+          payment_state: Database["public"]["Enums"]["payment_state"]
+          price_per_seat_minor: number
+          rating: number | null
+          ref: string | null
+          refund_amount_minor: number | null
+          refunded_at: string | null
+          seats: number
+          seats_released_at: string | null
+          spell_id: string | null
+          spell_snapshot: Json
+          start_date: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          stay_note: string
+          timeline_step: Database["public"]["Enums"]["timeline_step"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_advance_minor?: number
+          amount_paid_minor?: number
+          amount_total_minor?: number
+          balance_due_date?: string | null
+          booked_at?: string
+          cancellation_reason?: string
+          cancelled_at?: string | null
+          checklist?: Json
+          created_at?: string
+          currency?: string
+          departure_id?: string | null
+          duration_days?: number
+          end_date?: string | null
+          host_note?: string
+          id?: string
+          lead_email?: string
+          lead_name?: string
+          lead_phone?: string
+          meeting_point?: string
+          payment_method?: string
+          payment_state?: Database["public"]["Enums"]["payment_state"]
+          price_per_seat_minor?: number
+          rating?: number | null
+          ref?: string | null
+          refund_amount_minor?: number | null
+          refunded_at?: string | null
+          seats?: number
+          seats_released_at?: string | null
+          spell_id?: string | null
+          spell_snapshot?: Json
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          stay_note?: string
+          timeline_step?: Database["public"]["Enums"]["timeline_step"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_advance_minor?: number
+          amount_paid_minor?: number
+          amount_total_minor?: number
+          balance_due_date?: string | null
+          booked_at?: string
+          cancellation_reason?: string
+          cancelled_at?: string | null
+          checklist?: Json
+          created_at?: string
+          currency?: string
+          departure_id?: string | null
+          duration_days?: number
+          end_date?: string | null
+          host_note?: string
+          id?: string
+          lead_email?: string
+          lead_name?: string
+          lead_phone?: string
+          meeting_point?: string
+          payment_method?: string
+          payment_state?: Database["public"]["Enums"]["payment_state"]
+          price_per_seat_minor?: number
+          rating?: number | null
+          ref?: string | null
+          refund_amount_minor?: number | null
+          refunded_at?: string | null
+          seats?: number
+          seats_released_at?: string | null
+          spell_id?: string | null
+          spell_snapshot?: Json
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          stay_note?: string
+          timeline_step?: Database["public"]["Enums"]["timeline_step"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_departure_id_fkey"
+            columns: ["departure_id"]
+            isOneToOne: false
+            referencedRelation: "spell_departures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_responses: {
         Row: {
           answers: Json
@@ -317,6 +861,76 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_outbox: {
+        Row: {
+          body: string
+          booking_id: string | null
+          channels: string[]
+          created_at: string
+          error: string
+          event_type: string
+          id: string
+          link: string
+          payload: Json
+          processed_at: string | null
+          status: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          body?: string
+          booking_id?: string | null
+          channels?: string[]
+          created_at?: string
+          error?: string
+          event_type: string
+          id?: string
+          link?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+          title?: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          booking_id?: string | null
+          channels?: string[]
+          created_at?: string
+          error?: string
+          event_type?: string
+          id?: string
+          link?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -351,6 +965,146 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_webhook_events: {
+        Row: {
+          created_at: string
+          error: string
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean
+          processed_at: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_event_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_event_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_minor: number
+          booking_id: string | null
+          captured_at: string | null
+          created_at: string
+          currency: string
+          error_code: string
+          error_message: string
+          id: string
+          kind: Database["public"]["Enums"]["payment_kind"]
+          metadata: Json
+          method: string
+          method_label: string
+          note: string
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_order_id: string
+          provider_payment_id: string
+          provider_refund_id: string
+          provider_signature: string
+          recorded_by: string | null
+          source: Database["public"]["Enums"]["payment_source"]
+          status: Database["public"]["Enums"]["payment_status"]
+          user_id: string | null
+        }
+        Insert: {
+          amount_minor: number
+          booking_id?: string | null
+          captured_at?: string | null
+          created_at?: string
+          currency?: string
+          error_code?: string
+          error_message?: string
+          id?: string
+          kind: Database["public"]["Enums"]["payment_kind"]
+          metadata?: Json
+          method?: string
+          method_label?: string
+          note?: string
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_order_id?: string
+          provider_payment_id?: string
+          provider_refund_id?: string
+          provider_signature?: string
+          recorded_by?: string | null
+          source?: Database["public"]["Enums"]["payment_source"]
+          status?: Database["public"]["Enums"]["payment_status"]
+          user_id?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          booking_id?: string | null
+          captured_at?: string | null
+          created_at?: string
+          currency?: string
+          error_code?: string
+          error_message?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["payment_kind"]
+          metadata?: Json
+          method?: string
+          method_label?: string
+          note?: string
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_order_id?: string
+          provider_payment_id?: string
+          provider_refund_id?: string
+          provider_signature?: string
+          recorded_by?: string | null
+          source?: Database["public"]["Enums"]["payment_source"]
+          status?: Database["public"]["Enums"]["payment_status"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -570,10 +1324,12 @@ export type Database = {
           author_id: string | null
           author_name: string
           body: string
+          booking_id: string | null
           created_at: string
           id: string
           previous_spell_id: string
           rating: number
+          status: Database["public"]["Enums"]["review_status"]
           title: string
           travelled_on: string
           updated_at: string
@@ -584,10 +1340,12 @@ export type Database = {
           author_id?: string | null
           author_name?: string
           body?: string
+          booking_id?: string | null
           created_at?: string
           id?: string
           previous_spell_id: string
           rating: number
+          status?: Database["public"]["Enums"]["review_status"]
           title?: string
           travelled_on?: string
           updated_at?: string
@@ -598,10 +1356,12 @@ export type Database = {
           author_id?: string | null
           author_name?: string
           body?: string
+          booking_id?: string | null
           created_at?: string
           id?: string
           previous_spell_id?: string
           rating?: number
+          status?: Database["public"]["Enums"]["review_status"]
           title?: string
           travelled_on?: string
           updated_at?: string
@@ -613,6 +1373,20 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
           {
@@ -1064,6 +1838,38 @@ export type Database = {
       }
     }
     Views: {
+      booking_report: {
+        Row: {
+          amount_advance_minor: number | null
+          amount_paid_minor: number | null
+          amount_total_minor: number | null
+          balance_due_date: string | null
+          booked_at: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          currency: string | null
+          departure_label: string | null
+          departure_status:
+            | Database["public"]["Enums"]["departure_status"]
+            | null
+          end_date: string | null
+          id: string | null
+          lead_email: string | null
+          lead_name: string | null
+          lead_phone: string | null
+          payment_state: Database["public"]["Enums"]["payment_state"] | null
+          price_per_seat_minor: number | null
+          ref: string | null
+          refund_amount_minor: number | null
+          seats: number | null
+          spell_name: string | null
+          spell_slug: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          timeline_step: Database["public"]["Enums"]["timeline_step"] | null
+        }
+        Relationships: []
+      }
       spell_active_departures: {
         Row: {
           created_at: string | null
@@ -1072,6 +1878,7 @@ export type Database = {
           id: string | null
           price_minor: number | null
           seats_booked: number | null
+          seats_on_hold: number | null
           seats_total: number | null
           spell_id: string | null
           start_date: string | null
@@ -1104,6 +1911,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      admin_cancel_booking: {
+        Args: {
+          _booking_id: string
+          _mode: string
+          _reason: string
+          _refund_minor?: number
+        }
+        Returns: Json
+      }
+      admin_confirm_booking: {
+        Args: { _booking_id: string; _reason: string }
+        Returns: Json
+      }
+      admin_create_booking: {
+        Args: {
+          _departure_id: string
+          _note?: string
+          _participants?: Json
+          _seats: number
+          _terms?: Json
+          _user_email: string
+          _waitlist_entry?: string
+        }
+        Returns: Json
+      }
+      departure_seats_on_hold: {
+        Args: { _departure_id: string }
+        Returns: number
+      }
       generate_referral_code: { Args: { _first_name: string }; Returns: string }
       has_role: {
         Args: {
@@ -1115,6 +1951,31 @@ export type Database = {
       increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
       is_staff: { Args: never; Returns: boolean }
       next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
+      record_manual_payment: {
+        Args: {
+          _amount_minor: number
+          _booking_id: string
+          _kind: Database["public"]["Enums"]["payment_kind"]
+          _method_label?: string
+          _note?: string
+          _paid_at?: string
+          _reference?: string
+        }
+        Returns: Json
+      }
+      release_booking_seats: { Args: { _booking_id: string }; Returns: boolean }
+      release_departure_seats: {
+        Args: { _departure_id: string; _seats: number }
+        Returns: boolean
+      }
+      reserve_departure_seats: {
+        Args: {
+          _departure_id: string
+          _seats: number
+          _waitlist_entry?: string
+        }
+        Returns: boolean
+      }
       spell_wishlist_counts: {
         Args: never
         Returns: {
@@ -1145,6 +2006,12 @@ export type Database = {
         | "travel-tips"
         | "founder-letters"
       blog_status: "draft" | "published"
+      booking_status:
+        | "draft"
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
       change_kind:
         | "created"
         | "edited"
@@ -1155,7 +2022,15 @@ export type Database = {
         | "duplicated"
         | "archived"
         | "restored"
+      change_request_kind: "seat_change" | "transfer" | "cancellation" | "other"
+      change_request_status:
+        | "requested"
+        | "approved"
+        | "rejected"
+        | "completed"
+        | "withdrawn"
       departure_status: "scheduled" | "closed" | "cancelled"
+      event_actor: "traveller" | "staff" | "system" | "provider"
       form_status: "draft" | "published"
       form_style: "conversational" | "traditional"
       inquiry_status: "new" | "contacted" | "closed"
@@ -1166,7 +2041,19 @@ export type Database = {
         | "offer"
         | "referral"
         | "system"
+      participant_status: "active" | "removed"
+      payment_kind: "advance" | "balance" | "refund" | "credit" | "adjustment"
+      payment_provider: "mock" | "manual" | "razorpay" | "cashfree"
+      payment_source: "gateway" | "manual" | "system"
+      payment_state: "pending" | "deposit" | "paid" | "refunded"
+      payment_status:
+        | "created"
+        | "authorized"
+        | "captured"
+        | "failed"
+        | "refunded"
       response_status: "new" | "viewed"
+      review_status: "pending" | "approved" | "rejected"
       spell_category:
         | "gathering"
         | "movement"
@@ -1182,6 +2069,19 @@ export type Database = {
         | "sales"
         | "social-media"
         | "operations"
+      timeline_step:
+        | "booked"
+        | "payment"
+        | "host"
+        | "documents"
+        | "begins"
+        | "completed"
+      waitlist_status:
+        | "waiting"
+        | "offered"
+        | "converted"
+        | "expired"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1320,6 +2220,13 @@ export const Constants = {
         "founder-letters",
       ],
       blog_status: ["draft", "published"],
+      booking_status: [
+        "draft",
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled",
+      ],
       change_kind: [
         "created",
         "edited",
@@ -1331,7 +2238,16 @@ export const Constants = {
         "archived",
         "restored",
       ],
+      change_request_kind: ["seat_change", "transfer", "cancellation", "other"],
+      change_request_status: [
+        "requested",
+        "approved",
+        "rejected",
+        "completed",
+        "withdrawn",
+      ],
       departure_status: ["scheduled", "closed", "cancelled"],
+      event_actor: ["traveller", "staff", "system", "provider"],
       form_status: ["draft", "published"],
       form_style: ["conversational", "traditional"],
       inquiry_status: ["new", "contacted", "closed"],
@@ -1343,7 +2259,20 @@ export const Constants = {
         "referral",
         "system",
       ],
+      participant_status: ["active", "removed"],
+      payment_kind: ["advance", "balance", "refund", "credit", "adjustment"],
+      payment_provider: ["mock", "manual", "razorpay", "cashfree"],
+      payment_source: ["gateway", "manual", "system"],
+      payment_state: ["pending", "deposit", "paid", "refunded"],
+      payment_status: [
+        "created",
+        "authorized",
+        "captured",
+        "failed",
+        "refunded",
+      ],
       response_status: ["new", "viewed"],
+      review_status: ["pending", "approved", "rejected"],
       spell_category: [
         "gathering",
         "movement",
@@ -1360,6 +2289,21 @@ export const Constants = {
         "sales",
         "social-media",
         "operations",
+      ],
+      timeline_step: [
+        "booked",
+        "payment",
+        "host",
+        "documents",
+        "begins",
+        "completed",
+      ],
+      waitlist_status: [
+        "waiting",
+        "offered",
+        "converted",
+        "expired",
+        "cancelled",
       ],
     },
   },

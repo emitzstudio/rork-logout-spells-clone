@@ -1,6 +1,9 @@
 # Edge Functions
 
-> **Status: DESIGN — none deployed.** Functions are written in Deno TypeScript under
+> **Status: M7A (2026-08-13) — `create-booking`, `payment-webhook` and
+> `cancel-booking` are DEPLOYED, all GATED** (pricing 501 · provider 501/503 ·
+> staff-only 403 — verified live; none can move seats or money until decisions
+> C/F land in phase 7B). Functions are written in Deno TypeScript under
 > `backend/functions/<name>/index.ts` and deploy into the company Supabase project —
 > they run on Supabase's infrastructure with zero dev-tool runtime dependency.
 
@@ -16,7 +19,7 @@ when an operation must not trust the client:
 
 Everything else stays a direct Supabase query. Fewer moving parts, less to maintain.
 
-## Planned functions (M7–M8)
+## Functions (M7 deployed-gated · M8 planned)
 
 > **Rev 2026-08-10 — provider-neutral.** The payment gateway is TBD (Razorpay vs
 > Cashfree, decision F). All gateway touchpoints go through the `PaymentProvider`
@@ -25,7 +28,7 @@ Everything else stays a direct Supabase query. Fewer moving parts, less to maint
 > changes. Until then the factory throws `PaymentProviderNotConfiguredError` and
 > nothing can touch a gateway even if deployed prematurely.
 
-### `create-booking` — M7 · JWT required · provider-neutral
+### `create-booking` — DEPLOYED GATED (M7A) · JWT required · provider-neutral
 The only path that creates a real booking.
 1. Authenticates the traveller; validates seats (1–6), **one participant per
    seat** (full per-traveller record — name, DOB, phone, email, emergency
@@ -36,8 +39,9 @@ The only path that creates a real booking.
    (`spell_departures.price_minor` ?? `spells.price_minor`): total, the **30%
    advance** (100% when the trip starts <30 days out), `balance_due_date`
    (start − 30 days). Taxes/fees are a null-gated config — ⛔ decision C — the
-   function refuses (`501 PRICING_NOT_CONFIGURED`) until confirmed. Client-sent
-   amounts are ignored.
+   function refuses (`501 PRICING_NOT_CONFIGURED`) until confirmed. The provider
+   gate (decision F) fires right after — `501` BEFORE any seats or money move.
+   Client-sent amounts are ignored.
 3. Reserves seats atomically via `reserve_departure_seats()` — one row-locked
    UPDATE re-checks capacity (including active waitlist holds) inside the lock;
    two rivals for the last seat cannot both win. "Dates TBC" departures are
@@ -51,7 +55,9 @@ The only path that creates a real booking.
 Every failure path after the reservation releases the seats and rolls the
 inserts back.
 
-### `payment-webhook` — M7 · public endpoint, JWT off · provider-neutral
+### `payment-webhook` — DEPLOYED GATED (M7A) · public endpoint, JWT off · provider-neutral
+
+Today every delivery answers `503 PROVIDER_NOT_CONFIGURED` — no adapter exists.
 The only path that confirms money. The adapter authenticates the provider
 (signature verification over the RAW body per the selected gateway — deferred
 with decision F) and returns one normalized event; the pipeline is
@@ -72,7 +78,7 @@ provider-agnostic.
 The founder pastes the function URL into the chosen gateway's dashboard once
 (manual step, after decision F).
 
-### `cancel-booking` — M7 · staff-executed · ⛔ deploy-blocked on decisions A + F
+### `cancel-booking` — DEPLOYED GATED (M7A) · staff-executed · ⛔ gated on decisions A + F
 Cancellation + refund pipeline. Traveller cancellations arrive as
 `booking_change_requests` (kind `cancellation`) and are EXECUTED here by staff
 after approval — travellers never trigger refunds directly. Modes:
@@ -89,13 +95,20 @@ payment method within 7–10 working days"), a manual-refund flag when the money
 was recorded manually, and a staff outbox nudge to work the waitlist
 (allocation is manual — decision G).
 
-### Admin manual operations — not Edge Functions
-`record_manual_payment()` and `admin_confirm_booking()` are audited,
-admin-gated SQL RPCs (migration 0007 §16): they work with NO gateway, mark
-ledger rows `source = 'manual'` (permanently distinguishable from gateway
-money), roll bookings up exactly like a capture, and write full
-old/new-state audit events. ⛔ Decision H (which roles authorize, second
-approval for high value) is open — gated to the `admin` role until ruled.
+### Admin manual operations — not Edge Functions · LIVE (M7A, verified)
+Four audited, admin-gated SQL RPCs (0007 §16 + 0007b) form the complete
+**manual era** — the business operates with NO gateway:
+`admin_create_booking()` (offline/phone sale → real pending booking: 30/70
+money server-side, hold-aware seat lock, optional offline terms recording) ·
+`record_manual_payment()` (bank-transfer money → `source='manual'` ledger row,
+rolls pending→confirmed like a capture) · `admin_confirm_booking()` (comp
+seats, reason mandatory) · `admin_cancel_booking()` (company/reschedule modes
+= FULL refund of amount paid; ⛔ traveller mode takes an EXPLICIT admin-entered
+amount — decision A math is NOT encoded; refuses gateway-money bookings).
+Every call writes old/new-state audit events; `booking_report` (security-
+invoker view) is the reporting/export surface. ⛔ Decision H (which roles
+authorize, second approval for high value) is open — gated to the `admin`
+role until ruled.
 
 ### Notification delivery worker — later · provider-neutral
 `notification_outbox` rows carry every email/WhatsApp-worthy event

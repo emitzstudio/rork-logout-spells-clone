@@ -1,6 +1,8 @@
 /**
  * M7 · create-booking — the ONLY path that creates a real booking.
- * Status: DRAFT / REVIEW ONLY — NOT DEPLOYED. Provider-neutral (gateway TBD).
+ * Status: DEPLOYED GATED (M7A, 2026-08-13). Provider-neutral (gateway TBD):
+ * refuses at the pricing gate (decision C) and the provider gate (decision F)
+ * BEFORE touching seats or money — zero side effects until 7B go-live.
  *
  * Flow (JWT required):
  *   1. authenticate the traveller
@@ -173,6 +175,19 @@ Deno.serve(async (req) => {
   if (PRICING.taxRate === null || PRICING.serviceFeeMinor === null) {
     return fail(501, "PRICING_NOT_CONFIGURED",
       "Booking opens once pricing (taxes/fees) is confirmed by the business.");
+  }
+
+  // ⛔ Decision F gate — refuse BEFORE any seats are touched when no gateway
+  // adapter is configured (the later createPaymentOrder call still runs
+  // through the same abstraction).
+  try {
+    getPaymentProvider();
+  } catch (error) {
+    if (error instanceof PaymentProviderNotConfiguredError) {
+      return fail(501, "PAYMENT_PROVIDER_NOT_CONFIGURED",
+        "Online payment opens once the payment gateway is selected and configured.");
+    }
+    throw error;
   }
 
   const admin = adminClient();
