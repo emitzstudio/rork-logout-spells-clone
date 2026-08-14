@@ -9,6 +9,8 @@ import { StaffGate } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
 
 import BlogBuilder from "./BlogBuilder";
+import BookingDetail from "./BookingDetail";
+import Bookings from "./Bookings";
 import Blogs from "./Blogs";
 import FormBuilder from "./FormBuilder";
 import Forms from "./Forms";
@@ -17,6 +19,7 @@ import Section from "./Section";
 import SpellBuilder from "./SpellBuilder";
 import SpellImport from "./SpellImport";
 import Spells from "./Spells";
+import Testimonials from "./Testimonials";
 
 const STORAGE_KEY = "ls-dash-collapsed";
 
@@ -74,6 +77,14 @@ export default function Dashboard() {
       document.title = "Blog · Dashboard — Logout Spells";
       return;
     }
+    if (location.pathname.startsWith("/dashboard/bookings")) {
+      document.title = "Bookings · Dashboard — Logout Spells";
+      return;
+    }
+    if (location.pathname === "/dashboard/testimonials") {
+      document.title = "Testimonials · Dashboard — Logout Spells";
+      return;
+    }
     const section = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
     document.title = `${section ? `${section.label} · ` : ""}Dashboard — Logout Spells`;
   }, [location.pathname]);
@@ -117,7 +128,13 @@ export default function Dashboard() {
                 <Route path="blog" element={<Blogs />} />
                 <Route path="blog/new" element={<BlogBuilder />} />
                 <Route path="blog/:id/edit" element={<BlogBuilder />} />
-                {DASH_SECTIONS.filter((section) => section.slug !== "spells").map((section) => (
+                {/* Booking operations — live over the M7A backend. */}
+                <Route path="bookings" element={<Bookings tab="bookings" />} />
+                <Route path="bookings/waitlist" element={<Bookings tab="waitlist" />} />
+                <Route path="bookings/requests" element={<Bookings tab="requests" />} />
+                <Route path="bookings/:id" element={<BookingDetail />} />
+                <Route path="testimonials" element={<Testimonials />} />
+                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials"].includes(section.slug)).map((section) => (
                   <Route key={section.slug} path={section.slug} element={<Section section={section} />} />
                 ))}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

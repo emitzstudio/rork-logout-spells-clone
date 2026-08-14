@@ -1,15 +1,19 @@
 # Logout Spells — Backend Documentation
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
-> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) applied.** Live today: identity,
-> the spell catalogue, the journal/team/archive domain, the forms domain, the M5
-> integration objects, the M6 **traveller layer** — and since M7A the complete
-> **gateway-agnostic booking layer**: bookings + per-seat participants + consent
-> records, the provider-neutral payments ledger, hold-aware seat locking,
-> waitlist, staff-approved change requests, the append-only audit spine, the
-> notification outbox, the manual-era admin RPCs, the reviews write path and the
-> `booking_report` reporting view. Three Edge Functions are deployed **GATED**
-> (`create-booking` · `payment-webhook` · `cancel-booking`).
+> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B (2026-08-14) applied.**
+> Live today: identity, the spell catalogue, the journal/team/archive domain,
+> the forms domain, the M5 integration objects, the M6 **traveller layer**,
+> the M7A **gateway-agnostic booking layer** (bookings + per-seat participants
+> + consent records, provider-neutral payments ledger, hold-aware seat
+> locking, waitlist, staff-approved change requests, append-only audit spine,
+> notification outbox, manual-era admin RPCs, reviews write path,
+> `booking_report`) — and since M7B the **founder console operates all of it**:
+> bookings list/detail, offline sales, manual payments, confirmations,
+> cancellations, waitlist & holds, change requests, review moderation and CSV
+> exports at `/dashboard/bookings` + `/dashboard/testimonials`. Three Edge
+> Functions are deployed **GATED** (`create-booking` · `payment-webhook` ·
+> `cancel-booking`).
 > ⛔ **M7 is NOT payment-ready**: the gateway (decision F) is unchosen — no
 > provider code, no credentials — and the app's Door 2 checkout stays on the
 > mock until phase 7B passes its test-mode end-to-end run. Still mock in the

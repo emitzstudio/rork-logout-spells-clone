@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, Globe, LogOut, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 
+import { useOpsBadges } from "@/data/bookingOps";
 import { DASH_NAV, FOUNDER } from "@/data/dashboard";
 import type { DashNavItem } from "@/data/dashboard";
 import { useStaffAuth } from "@/integrations/supabase/staffAuth";
@@ -78,6 +79,21 @@ function NavEntry({
 /** Brand block, grouped nav, "view website" and founder chip — shared by desktop rail and mobile drawer. */
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const staff = useStaffAuth();
+  const badges = useOpsBadges();
+
+  /** Live operational counts replace any static badge for these entries. */
+  const withLiveBadge = (item: DashNavItem): DashNavItem => {
+    if (item.to === "/dashboard/bookings") {
+      const count = (badges.data?.pendingBookings ?? 0) + (badges.data?.openRequests ?? 0);
+      return { ...item, badge: count > 0 ? count : undefined };
+    }
+    if (item.to === "/dashboard/testimonials") {
+      const count = badges.data?.pendingReviews ?? 0;
+      return { ...item, badge: count > 0 ? count : undefined };
+    }
+    return item;
+  };
+
   return (
     <>
       <div className={cn("flex h-16 shrink-0 items-center border-b border-cream/[0.06] px-4", collapsed && "justify-center px-0")}>
@@ -114,7 +130,7 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
             )}
             <div className="space-y-1">
               {group.items.map((item) => (
-                <NavEntry key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+                <NavEntry key={item.to} item={withLiveBadge(item)} collapsed={collapsed} onNavigate={onNavigate} />
               ))}
             </div>
           </div>

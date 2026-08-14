@@ -717,6 +717,91 @@ changes 27, `ref_counters` empty, reviews 13 approved.
 
 ---
 
+## M7B — Console booking operations (shipped 2026-08-14)
+
+| | |
+| --- | --- |
+| Approved by | Vidushi Verma — "Proceed with M7B — Console Booking Operations … use the existing audited RPCs, RLS, grants, triggers and backend workflows. Do not bypass or weaken any existing security controls. Keep Cashfree vs Razorpay completely undecided." |
+| Applied | **No schema change.** Web console UI only — `web/src/pages/dashboard/{Bookings,BookingDetail,Testimonials}.tsx`, `web/src/components/dashboard/bookings/*`, `web/src/data/bookingOps.ts` |
+| Verified | `m7b-verify-console-ops` (attestation in the migration ledger — full console-era suite, net-zero) |
+| Deployed | Founder console at `/dashboard/bookings` + `/dashboard/testimonials` (web build green) |
+
+The founder console now OPERATES the entire M7A layer — no more SQL editor
+for daily work. Every read runs under the staff session's RLS; every
+privileged write goes through the audited RPCs or a column-whitelisted grant.
+The console computes **nothing** authoritative: money, seats and state all
+come from the server.
+
+### What shipped (console-side)
+
+- **Bookings hub** (`/dashboard/bookings`): live stats (pending/confirmed/
+  seats/collected/outstanding), search + status filters, list over
+  `booking_report`, row → full detail page.
+- **Booking detail**: participants (lead/removed states), the payments
+  ledger, consent records (channel-tagged), per-booking change requests,
+  staff notes (staff-only table), the append-only audit timeline with
+  old/new-state proof, and the staff operational fields (stay/meeting/host
+  notes + timeline step — the guard-enforced whitelist).
+- **Audited actions**: record manual payment (`record_manual_payment`),
+  confirm without money (`admin_confirm_booking`), cancel with modes
+  (`admin_cancel_booking` — company/reschedule = full refund shown; traveller
+  mode requires an explicit amount with a visible ⛔ decision-A notice), and
+  offline sale (`admin_create_booking` — hold-aware, waitlist-consuming,
+  server-side 30/70 with a display-only preview).
+- **Waitlist & holds board**: waiting → offer (with expiry) → convert to
+  booking · staff holds (user-less offered rows) · back-to-waiting/expire/
+  cancel — allocation stays MANUAL (decision G).
+- **Change-request queue**: approve/reject with staff notes (decision
+  stamping via the guard), completed transition, and an "execute on booking"
+  path for approved cancellations — approving never executes.
+- **Review moderation** (`/dashboard/testimonials`): pending/approved/
+  rejected tabs, approve/reject (status-only grant), permanent remove;
+  copy makes clear authors can never edit after submission.
+- **CSV exports**: bookings (current filtered view over `booking_report`)
+  and the full payments ledger — both RLS-scoped to the caller.
+- Live sidebar badges (pending bookings + open requests · pending reviews)
+  replace the old mock numbers.
+
+### Verification (`m7b-verify-console-ops` — probe traveller + probe admin, net-zero)
+
+- **Cross-account security**: traveller saw zero rows in `booking_report`,
+  `booking_events`, `booking_staff_notes`, `notification_outbox`,
+  `payment_webhook_events`; staff-note/payments inserts 42501; waitlist and
+  review updates 0 rows; all four admin RPCs refused; change-request approve
+  blocked ("Travellers may only withdraw a pending request").
+- **Admin permissions + booking integrity**: `LS-0826-001` — 2 × ₹48,000 =
+  ₹96,000, advance ₹28,800 (30%), balance due start−30d; a <30-day departure
+  charged in full (advance = total, no balance date); participants with one
+  enforced lead; offline consent channel-tagged; notification + outbox +
+  console activity + audit all written.
+- **Manual payment auditing**: advance → `manual`-source captured ledger row,
+  pending→confirmed rollup, `manual_payment_recorded` event with old/new
+  state; staff column guard fired on a traveller-column edit; money columns
+  42501.
+- **Seat/hold integrity**: a 3-seat staff hold blocked an overbook inside the
+  row lock; an offered entry converted at zero raw availability (own hold
+  excluded); cancels released seats exactly once; double-cancel refused;
+  counters returned to baseline (Σ62 · -006=4 · -003=6).
+- **Waitlist behaviour**: waiting → offered (hold counted) → converted with
+  `converted_booking_id` linked.
+- **Review moderation**: approved→rejected→approved flip moved the public
+  read count 13→12→13; unqualified traveller review insert 42501.
+- **Exports**: traveller saw exactly their own rows (3), admin all, anon
+  42501; payments RLS own-only (2 rows).
+- **Cancellation modes**: traveller mode refused without an explicit amount
+  (⛔ decision A NOT encoded); company mode refunded the full ₹28,800.
+- **Builds**: web static checks + production build green; Expo untouched.
+
+**Net-zero:** all ten M7 tables at 0, `auth.users` back to 1 (the founder),
+seats Σ62, spell_changes 27, `ref_counters` empty, reviews 13 approved, both
+probe users deleted.
+
+⛔ **Still NOT payment-ready — unchanged by design.** No gateway chosen, no
+provider code, no credentials, Door 2 stays on the mock, decisions A–I remain
+exactly as gated in M7A.
+
+---
+
 ## Planned next: 7B — gateway integration (blocked on founder decisions)
 
 One adapter file (`_shared/providers/{razorpay|cashfree}.ts`) + the
@@ -730,5 +815,3 @@ refund math — cancel path 501; admin path takes explicit amounts), **B**
 (seat-hold window), **D** (TBC-dates bookability — refused), **E** (balance
 collection mechanism), **G** (waitlist allocation — manual), **H** (refund
 authority — admin-only), **I** (email/WhatsApp providers — outbox is neutral).
-Also queued: the console booking-operations UI (bookings list/detail, manual
-payment + cancel forms, waitlist board, CSV export over `booking_report`).
