@@ -142,8 +142,8 @@ export default function InvoiceDialog({ booking, profile, onClose }: InvoiceDial
               </div>
 
               <p className="font-sans text-[10.5px] leading-relaxed text-cream/35">
-                Booked {fmtDayYear(booking.bookedAt)} · Taxes included · Demo invoice — real billing
-                arrives with the payments phase.
+                Booked {fmtDayYear(booking.bookedAt)} · A record of your booking and payments as
+                kept by Logout Spells — a formal tax invoice is available from the team on request.
               </p>
 
               <button type="button" onClick={() => printInvoice(booking, profile)} className="btn-gold w-full !py-3.5 !text-[13px]">
@@ -190,7 +190,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 <h2 style="font-size:22px;margin:26px 0 2px">${booking.spell.name}</h2>
 <p class="mono" style="font-size:12px;color:#777;margin:0 0 18px">${booking.spell.location} · ${fmtRange(booking.start, booking.end)} · ${booking.seats} seat${booking.seats > 1 ? "s" : ""} × ${formatINR(booking.pricePerSeat)}</p>
 <table class="mono">${rows}<tr class="total"><td><em style="font-family:Georgia,serif">Total</em></td><td style="text-align:right;font-weight:600">${formatINR(booking.amountTotal)}</td></tr></table>
-<p class="mono" style="font-size:10px;color:#999;margin-top:32px">Booked ${fmtDayYear(booking.bookedAt)} · Taxes included · Generated in demo mode — Logout Spells ✦</p>
+<p class="mono" style="font-size:10px;color:#999;margin-top:32px">Booked ${fmtDayYear(booking.bookedAt)} · A record of your booking and payments — formal tax invoice available on request · Logout Spells ✦</p>
 <script>window.onload=function(){window.print()}</script></body></html>`;
 
   const win = window.open("", "_blank", "width=760,height=920");

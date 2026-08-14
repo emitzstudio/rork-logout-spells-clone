@@ -802,16 +802,102 @@ exactly as gated in M7A.
 
 ---
 
-## Planned next: 7B — gateway integration (blocked on founder decisions)
+## 0008 + M7C — Traveller self-service (shipped 2026-08-14)
 
-One adapter file (`_shared/providers/{razorpay|cashfree}.ts`) + the
-`PAYMENT_PROVIDER`/key secrets via the secure widget + the webhook URL pasted
-into the provider dashboard — zero schema or pipeline changes — then the full
-test-mode E2E (order → capture → confirm · failure · replay · tampered
-signature · last-seat race · refund round-trip) before Door 2 leaves the mock.
-⛔ Blocking decisions: **F** (gateway) and **C** (taxes/fees — online checkout
-refuses until confirmed). Still open behind their gates: **A** (traveller
-refund math — cancel path 501; admin path takes explicit amounts), **B**
-(seat-hold window), **D** (TBC-dates bookability — refused), **E** (balance
-collection mechanism), **G** (waitlist allocation — manual), **H** (refund
-authority — admin-only), **I** (email/WhatsApp providers — outbox is neutral).
+| | |
+| --- | --- |
+| Approved by | Vidushi Verma — "Approved as recommended": **J1** (retire the fake checkout; keep the Door 2 journey; honest reserve-request through the live pipeline; 30% advance policy as TEXT, nothing computed or collected; real waitlist when full; no gateway work), **K** (defer draft applications), **L** (0008 exactly as proposed), **M** (roadmap M7C → M8 → M6b) |
+| Applied | `0008_traveller_selfservice.sql` — ledger `0008-traveller-selfservice` (additive only: `reviews_select_own` policy + `reviews_one_per_booking` partial unique index) |
+| Verified | `m7c-verify-traveller-selfservice` (attestation in the migration ledger — full traveller-side suite, net-zero) |
+| Deployed | Web traveller space (`/account/*`) + reworked Door 2 on the spell pages (web build green; Expo untouched — M6b later) |
+
+The traveller now has a LIVE window onto everything the console operates.
+Every read/write below rides on the M7 RLS policies and grants — 0008 added
+only the two author-visibility pieces; nothing was widened or weakened.
+
+### What shipped (traveller-side, web)
+
+- **My Trips + Trip detail — real.** Own bookings under RLS with participants,
+  the frozen spell snapshot, and the server's money verbatim (paise → rupees
+  display only): total, paid, refund, and the real `balance_due_date`
+  ("due 21 days out" mock copy is gone).
+- **Transactions/Wallet — the real payments ledger.** `payments` own rows
+  (captured/refunded) mapped 1:1; the old bookings-derived ledger — and its
+  invented "90% refund" copy — deleted. Per-booking mini-ledger on the trip
+  page; invoice copy no longer claims "taxes included"/"demo".
+- **Checklist + private star — the ONLY two traveller-writable columns.**
+  Checklist toggles write `bookings.checklist`; an empty list offers "start
+  the ritual" (seeds the same six items the console pipeline writes); the
+  post-trip star writes `bookings.rating` (guard rejects it until the trip
+  is over).
+- **Change requests.** File seat-change/cancellation/other on a
+  pending/confirmed booking, withdraw while still `requested`, read the
+  staff decision + note. Execution stays in the console.
+- **Waitlist.** Join a full departure (policy pins `waiting`, own row),
+  "you're in the queue" states on the spell page + a strip on My Trips,
+  leave while waiting; offered seats are marked held-by-the-team.
+- **Reviews.** Submit once per completed trip (server-verified) → `pending`;
+  the author now SEES their submission state (0008) and duplicates are
+  impossible (0008 index layered on the M3 per-traveller one). Moderation
+  stays in the console; authors still can never edit or delete.
+- **Door 2 reworked (ruling J1).** Journey kept: departure → seats → details
+  → review. The fake payment step is RETIRED — fake UPI/card fields, the
+  invented 5% tax and the ₹5,000/seat advance are deleted, not migrated.
+  The review step files an honest **reserve request** through the live
+  `submit_inquiry` pipeline (structured `[BOOKING REQUEST]` note → the
+  console inbox, IQ ref returned); the 30% advance / <30-day policy appears
+  as words only; no fake success, nothing charged. Door 1 inquiries also
+  went live (they previously landed in localStorage and never reached the
+  console).
+- **Device-local now honestly reduced to**: memory albums (M8) and the
+  recently-viewed trail.
+
+### Verification (`m7c-verify-traveller-selfservice` — probe travellers A/B + probe admin C, net-zero)
+
+- Console RPCs created `LS-0826-001` (2 seats): server derived ₹84,000 and
+  fired the <30-day FULL-payment rule; manual advance → confirmed/paid.
+- A read exactly own booking/payments/participants; B zero; anon 42501.
+- Guard boundaries: checklist allowed; money column 42501; `stay_note`
+  P0001; rating before trip end P0001, after end allowed.
+- Change requests: file → requested; self-approve refused; withdraw →
+  withdrawn; second withdraw 0 rows; B saw nothing.
+- Waitlist: `waiting` pinned (forged status/user_id 42501); B couldn't see
+  or delete; own leave OK.
+- Reviews: submit → pending+verified; duplicate 23505; forged author 42501;
+  author sees own pending (0008); B sees none; public count stayed 13.
+  (Found + fixed during probes: `reviews.author_id` has no default — the
+  client now sends it explicitly.)
+- Reserve pipeline: anon `submit_inquiry` → `IQ-0826-001`; traveller read of
+  inquiries empty; staff saw it in the inbox.
+- **Net-zero**: every probe row/user removed, seats Σ62 restored, reviews 13
+  approved, `ref_counters` empty — final counts equal the pre-probe baseline
+  exactly.
+
+⛔ **Still NOT payment-ready — unchanged by design.** No provider chosen, no
+provider code or credentials, no taxes/fees/refund math anywhere client-side.
+The reserve request is a REQUEST: seats move only when the team converts it
+through the console's audited offline-sale workflow.
+
+---
+
+## Planned next (founder-approved order: M8 → M6b → gateway last)
+
+1. **M8 — Memories & trip albums**: the designed `memories` schema + private
+   photo storage + the live album UI (the last device-local corner of the
+   traveller space).
+2. **M6b — Expo app onto the live backend**: one swap pass over the
+   web-proven data layer; the mobile app leaves its mocks.
+3. **7B — gateway integration (LAST; blocked on founder decisions)**: one
+   adapter file (`_shared/providers/{razorpay|cashfree}.ts`) + the
+   `PAYMENT_PROVIDER`/key secrets via the secure widget + the webhook URL
+   pasted into the provider dashboard — zero schema or pipeline changes —
+   then the full test-mode E2E (order → capture → confirm · failure · replay
+   · tampered signature · last-seat race · refund round-trip) before the
+   reserve-request step swaps for real payment.
+   ⛔ Blocking decisions: **F** (gateway) and **C** (taxes/fees — online
+   checkout refuses until confirmed). Still open behind their gates: **A**
+   (traveller refund math — cancel path 501; admin path takes explicit
+   amounts), **B** (seat-hold window), **D** (TBC-dates bookability —
+   refused), **E** (balance collection mechanism), **G** (waitlist
+   allocation — manual), **H** (refund authority — admin-only), **I**
+   (email/WhatsApp providers — outbox is neutral).

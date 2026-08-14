@@ -1,3 +1,7 @@
+/* eslint-disable */
+// AUTO-GENERATED — DO NOT EDIT
+// Run migrations to regenerate.
+
 export type Json =
   | string
   | number
@@ -2308,4 +2312,3 @@ export const Constants = {
     },
   },
 } as const
-

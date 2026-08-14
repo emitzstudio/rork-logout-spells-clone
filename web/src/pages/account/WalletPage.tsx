@@ -6,7 +6,7 @@ import { AccountPage, EmptyState } from "@/components/account/bits";
 import InvoiceDialog from "@/components/account/InvoiceDialog";
 import { CountUp } from "@/components/site/Reveal";
 import { useAccount } from "@/data/account/AccountProvider";
-import { deriveTransactions, deriveWalletSummary, fmtDayYear } from "@/data/account/derive";
+import { deriveWalletSummary, fmtDayYear } from "@/data/account/derive";
 import type { TransactionKind, TripBooking } from "@/data/account/models";
 import { formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,8 @@ export default function WalletPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [invoiceBooking, setInvoiceBooking] = useState<TripBooking | null>(null);
 
-  const txns = useMemo(() => (data ? deriveTransactions(data) : []), [data]);
+  /* The REAL payments ledger (M7C) — every row server-recorded. */
+  const txns = useMemo(() => data?.transactions ?? [], [data]);
   const summary = useMemo(() => deriveWalletSummary(txns), [txns]);
 
   if (!data) return null;

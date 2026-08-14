@@ -1,34 +1,35 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
   Check,
-  CreditCard,
-  Lock,
+  Hourglass,
   MessageCircle,
   Minus,
   Plus,
   ShieldCheck,
-  Smartphone,
   Ticket,
   Users,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { useAccount } from "@/data/account/AccountProvider";
-import type { TripBooking } from "@/data/account/models";
+import {
+  fetchActiveDeparture,
+  fetchMyWaitlist,
+  joinWaitlist,
+  leaveWaitlist,
+} from "@/data/account/selfService";
+import type { DepartureInfo, MyWaitlistEntry } from "@/data/account/selfService";
 import { bookingService } from "@/data/booking";
-import type {
-  PaymentMethodId,
-  PriceBreakdown,
-  TravellerDetails,
-  TripDates,
-} from "@/data/booking";
+import type { PriceInfo, TravellerDetails, TripDates } from "@/data/booking";
 import { formatINR } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
+import { isUuid } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -36,22 +37,24 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * The steps of the two-door flow. "choice" branches into the light Inquire
- * path or the full Book Now journey:
- * travellers → summary → details → payment → processing → success.
- * Trip dates are fixed by the host — the flow shows them, never asks.
+ * path, the Book Now journey, or — when the circle is full — the waitlist.
+ * The journey keeps its original shape (travellers → summary → details →
+ * review); the old fake payment step is retired and the review step files an
+ * honest reserve REQUEST instead. Trip dates stay fixed by the host.
  */
 type FlowStep =
   | "choice"
   | "inquire"
   | "inquire-sent"
+  | "waitlist"
   | "travellers"
   | "summary"
   | "details"
-  | "payment"
-  | "processing"
-  | "success";
+  | "review"
+  | "sending"
+  | "requested";
 
-const BOOK_STEPS: FlowStep[] = ["travellers", "summary", "details", "payment"];
+const BOOK_STEPS: FlowStep[] = ["travellers", "summary", "details", "review"];
 
 const INPUT =
   "w-full rounded-xl border border-cream/[0.12] bg-charcoal-deep/50 px-4 py-3.5 font-sans text-[15px] text-cream outline-none transition-all duration-300 placeholder:text-cream/30 focus:border-gold/60 focus:shadow-[0_0_0_3px_rgba(184,150,62,0.14)]";
@@ -111,6 +114,28 @@ function SuccessBurst() {
   );
 }
 
+/** The drawn gold ring + tick shared by every "received" moment. */
+function ReceivedMark({ size = 72 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 52 52" fill="none" aria-hidden>
+      <motion.circle
+        cx="26" cy="26" r="24" stroke="#B8963E" strokeWidth="1.4"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.7, ease: [0.3, 0, 0.2, 1] }}
+        style={{ filter: "drop-shadow(0 0 10px rgba(184,150,62,0.5))" }}
+      />
+      <motion.path
+        d="M15.5 27l7.5 7.5L37 19.5" stroke="#CFA85A" strokeWidth="2.2"
+        strokeLinecap="round" strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ delay: 0.45, duration: 0.45, ease: "easeOut" }}
+      />
+    </svg>
+  );
+}
+
 /* --------------------------------- Pieces ---------------------------------- */
 
 function StepShell({
@@ -153,6 +178,79 @@ function ProgressRail({ step }: { step: FlowStep }) {
   );
 }
 
+/** Seat stepper shared by the journey and the waitlist. */
+function SeatStepper({
+  seats,
+  maxSeats,
+  onChange,
+  hint,
+}: {
+  seats: number;
+  maxSeats: number;
+  onChange: (next: number) => void;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-cream/[0.1] bg-cream/[0.02] p-5">
+      <div className="flex items-center gap-3">
+        <Users size={17} className="text-gold/80" aria-hidden />
+        <div>
+          <p className="font-sans text-sm text-cream/85">Seats</p>
+          <p className="font-sans text-[11px] text-cream/40">{hint}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(1, seats - 1))}
+          disabled={seats <= 1}
+          aria-label="One seat fewer"
+          className="grid h-10 w-10 place-items-center rounded-full border border-cream/20 text-cream/70 transition-all duration-200 hover:border-gold/50 hover:text-gold-light active:scale-90 disabled:opacity-35"
+        >
+          <Minus size={15} />
+        </button>
+        <motion.span
+          key={seats}
+          initial={{ scale: 1.35, color: "#CFA85A" }}
+          animate={{ scale: 1, color: "#F5F0E8" }}
+          transition={{ duration: 0.3, ease: EASE }}
+          className="w-8 text-center font-serif text-3xl"
+        >
+          {seats}
+        </motion.span>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(maxSeats, seats + 1))}
+          disabled={seats >= maxSeats}
+          aria-label="One seat more"
+          className="grid h-10 w-10 place-items-center rounded-full border border-cream/20 text-cream/70 transition-all duration-200 hover:border-gold/50 hover:text-gold-light active:scale-90 disabled:opacity-35"
+        >
+          <Plus size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The honest arithmetic of the manual era, shown as WORDS: the 30% advance
+ * policy is stated, never computed — advances, taxes and every payable rupee
+ * are confirmed personally by the team until online payment opens.
+ */
+function PaymentPolicyNote() {
+  return (
+    <div className="mt-3.5 space-y-2 rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-4">
+      <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">How payment works</p>
+      <ul className="space-y-1.5 font-sans text-[12px] leading-relaxed text-cream/60">
+        <li>· Nothing is paid online today — online payment opens soon.</li>
+        <li>· A 30% advance confirms your seats; the balance is settled before departure.</li>
+        <li>· Departures under 30 days away are confirmed with full payment.</li>
+        <li>· Our team confirms the exact payable amount with you personally.</li>
+      </ul>
+    </div>
+  );
+}
+
 interface FieldErrs {
   [key: string]: string | undefined;
 }
@@ -172,16 +270,15 @@ export interface BookingFlowProps {
 }
 
 /**
- * "Join this Spell" opens two doors: a light Inquiry, or the full Book Now
- * journey — travellers, price summary, details, payment, processing and a
- * celebratory success. Trip dates are fixed by the host and shown read-only.
- * Payment collects only the booking advance — the balance is settled before
- * departure — through the gateway seam in `bookingService`, so Razorpay
- * later swaps in with no UI changes.
+ * "Join this Spell" opens two doors: a light Inquiry, or the Book Now journey
+ * — travellers, price summary, details, and an honest booking review that
+ * RESERVES seats through the live request pipeline (online payment opens with
+ * the payments milestone; nothing fake happens meanwhile). Full circles offer
+ * the real waitlist instead.
  */
 export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: BookingFlowProps) {
-  const navigate = useNavigate();
-  const { session, data, addBooking } = useAccount();
+  const { session, data } = useAccount();
+  const queryClient = useQueryClient();
 
   const [step, setStep] = useState<FlowStep>("choice");
   const [errs, setErrs] = useState<FieldErrs>({});
@@ -194,24 +291,57 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   const [inqSending, setInqSending] = useState<boolean>(false);
 
   /* Book Now — dates are fixed by the host; travellers only pick seats. */
-  const dates = useMemo<TripDates>(() => bookingService.tripDates(spell), [spell]);
+  const fallbackDates = useMemo<TripDates>(() => bookingService.tripDates(spell), [spell]);
   const [seats, setSeats] = useState<number>(1);
   const [companions, setCompanions] = useState<string[]>([]);
   const [lead, setLead] = useState<TravellerDetails>({ fullName: "", email: "", phone: "" });
-  const [method, setMethod] = useState<PaymentMethodId>("upi");
-  const [upiId, setUpiId] = useState<string>("");
-  const [cardNumber, setCardNumber] = useState<string>("");
-  const [cardName, setCardName] = useState<string>("");
-  const [cardExpiry, setCardExpiry] = useState<string>("");
-  const [cardCvv, setCardCvv] = useState<string>("");
-  const [booking, setBooking] = useState<TripBooking | null>(null);
-  const processingRef = useRef<boolean>(false);
+  const [requestNote, setRequestNote] = useState<string>("");
+  const [requestRef, setRequestRef] = useState<string>("");
 
-  const maxSeats = Math.max(1, Math.min(dates.seatsLeft, 6));
-  const breakdown = useMemo<PriceBreakdown>(
-    () => bookingService.price(spell, seats),
-    [spell, seats],
-  );
+  /* Waitlist */
+  const [waitSeats, setWaitSeats] = useState<number>(1);
+  const [waitNote, setWaitNote] = useState<string>("");
+  const [waitBusy, setWaitBusy] = useState<boolean>(false);
+
+  const liveSpell = isUuid(spell.id);
+
+  /** The real departure row — hold-aware availability for live spells. */
+  const departureQuery = useQuery({
+    queryKey: ["active-departure", spell.id],
+    queryFn: () => fetchActiveDeparture(spell.id),
+    enabled: open && liveSpell,
+    staleTime: 30_000,
+  });
+  const departure: DepartureInfo | null = departureQuery.data ?? null;
+
+  const waitlistQuery = useQuery({
+    queryKey: ["my-waitlist", session?.userId ?? "anon"],
+    queryFn: () => fetchMyWaitlist(session?.userId ?? ""),
+    enabled: open && session !== null,
+    staleTime: 30_000,
+  });
+  const myEntry: MyWaitlistEntry | null = useMemo(() => {
+    if (!departure) return null;
+    return (
+      (waitlistQuery.data ?? []).find(
+        (e) => e.departureId === departure.id && (e.status === "waiting" || e.status === "offered"),
+      ) ?? null
+    );
+  }, [waitlistQuery.data, departure]);
+
+  const dates = useMemo<TripDates>(() => {
+    if (!departure) return fallbackDates;
+    return {
+      label: departure.label !== "" ? departure.label : fallbackDates.label,
+      start: departure.start ?? fallbackDates.start,
+      end: departure.end ?? fallbackDates.end,
+      seatsLeft: departure.seatsLeft,
+    };
+  }, [departure, fallbackDates]);
+
+  const seatsLeft = dates.seatsLeft;
+  const maxSeats = Math.max(1, Math.min(seatsLeft, 6));
+  const price = useMemo<PriceInfo>(() => bookingService.price(spell, seats), [spell, seats]);
 
   /* Reset the journey every time the doors open. */
   useEffect(() => {
@@ -222,8 +352,10 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     setInqNote("");
     setSeats(1);
     setCompanions([]);
-    setBooking(null);
-    processingRef.current = false;
+    setRequestNote("");
+    setRequestRef("");
+    setWaitSeats(1);
+    setWaitNote("");
     /* Signed-in travellers arrive pre-filled. */
     if (data) {
       const fullName = `${data.profile.firstName} ${data.profile.lastName}`.trim();
@@ -237,13 +369,18 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     }
   }, [open, data]);
 
-  /* Lock scroll + Escape to close (never mid-payment). */
+  /* Keep the seat pick honest if live availability tightens. */
+  useEffect(() => {
+    setSeats((s) => Math.max(1, Math.min(s, maxSeats)));
+  }, [maxSeats]);
+
+  /* Lock scroll + Escape to close (never mid-send). */
   useEffect(() => {
     if (!open) return undefined;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === "Escape" && step !== "processing") onClose();
+      if (e.key === "Escape" && step !== "sending") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -251,52 +388,6 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
       window.removeEventListener("keydown", onKey);
     };
   }, [open, step, onClose]);
-
-  /* The processing act — gateway, booking, account. Runs exactly once. */
-  useEffect(() => {
-    if (step !== "processing" || processingRef.current) return;
-    processingRef.current = true;
-    let cancelled = false;
-
-    const run = async (): Promise<void> => {
-      const methodLabel =
-        method === "upi"
-          ? `UPI · ${upiId.trim()}`
-          : `Card ·· ${cardNumber.replace(/\s/g, "").slice(-4)}`;
-      /* Only the booking advance moves today — the balance follows later. */
-      const payment = await bookingService.gateway.pay({
-        amountInr: breakdown.advance,
-        method,
-        methodLabel,
-      });
-      const built = bookingService.buildBooking({
-        spell,
-        dates,
-        seats,
-        lead,
-        companions,
-        breakdown,
-        payment,
-      });
-      /* Signed-in travellers get the trip in their space immediately. */
-      if (session) {
-        try {
-          await addBooking(built);
-        } catch {
-          /* the booking still succeeds visually; the account sync retries next load */
-        }
-      }
-      if (!cancelled) {
-        setBooking(built);
-        setStep("success");
-      }
-    };
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [step, dates, method, upiId, cardNumber, breakdown, spell, seats, lead, companions, session, addBooking]);
 
   /* ------------------------------ Validators ------------------------------ */
 
@@ -308,13 +399,13 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     if (Object.values(next).some(Boolean)) return;
     setInqSending(true);
     try {
-      const record = await bookingService.submitInquiry({
+      const ref = await bookingService.submitInquiry({
         spell,
         name: inqName,
         email: inqEmail,
         note: inqNote,
       });
-      setInqRef(record.ref);
+      setInqRef(ref);
       setStep("inquire-sent");
     } catch {
       setErrs({ inqEmail: "The message couldn't be sent just now — please try again." });
@@ -332,23 +423,63 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     return !Object.values(next).some(Boolean);
   }, [lead]);
 
-  const validatePayment = useCallback((): boolean => {
-    const next: FieldErrs = {};
-    if (method === "upi") {
-      if (!/^[\w.\-]{2,}@[a-z]{2,}$/i.test(upiId.trim())) next.upi = "Enter a UPI ID like name@bank.";
-    } else {
-      if (cardNumber.replace(/\s/g, "").length !== 16) next.cardNumber = "Card numbers have 16 digits.";
-      if (cardName.trim().length < 2) next.cardName = "Name as printed on the card.";
-      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExpiry.trim())) next.cardExpiry = "Use MM/YY.";
-      if (!/^\d{3,4}$/.test(cardCvv.trim())) next.cardCvv = "3 or 4 digits.";
+  const submitReserve = useCallback(async () => {
+    setStep("sending");
+    try {
+      const ref = await bookingService.submitReserveRequest({
+        spell,
+        departure,
+        dates,
+        seats,
+        lead,
+        companions,
+        note: requestNote,
+      });
+      setRequestRef(ref);
+      setStep("requested");
+    } catch {
+      setErrs({ reserve: "Your request couldn't be sent just now — please try again." });
+      setStep("review");
     }
-    setErrs(next);
-    return !Object.values(next).some(Boolean);
-  }, [method, upiId, cardNumber, cardName, cardExpiry, cardCvv]);
+  }, [spell, departure, dates, seats, lead, companions, requestNote]);
+
+  const joinQueue = useCallback(async () => {
+    if (!departure || !data) return;
+    setWaitBusy(true);
+    setErrs({});
+    try {
+      await joinWaitlist({
+        departureId: departure.id,
+        seats: waitSeats,
+        name: `${data.profile.firstName} ${data.profile.lastName}`.trim(),
+        email: data.profile.email,
+        phone: data.profile.phone,
+        note: waitNote,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
+    } catch (error) {
+      setErrs({ waitlist: error instanceof Error ? error.message : "The queue couldn't take you just now." });
+    } finally {
+      setWaitBusy(false);
+    }
+  }, [departure, data, waitSeats, waitNote, queryClient]);
+
+  const leaveQueue = useCallback(async () => {
+    if (!myEntry) return;
+    setWaitBusy(true);
+    try {
+      await leaveWaitlist(myEntry.id);
+      await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
+    } catch (error) {
+      setErrs({ waitlist: error instanceof Error ? error.message : "That couldn't be done." });
+    } finally {
+      setWaitBusy(false);
+    }
+  }, [myEntry, queryClient]);
 
   const back = useCallback(() => {
     setErrs({});
-    if (step === "inquire") setStep("choice");
+    if (step === "inquire" || step === "waitlist") setStep("choice");
     else {
       const i = BOOK_STEPS.indexOf(step);
       if (i > 0) setStep(BOOK_STEPS[i - 1]);
@@ -356,9 +487,10 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     }
   }, [step]);
 
-  const seatsLeftLive = Math.max(0, spell.seatsTotal - spell.seatsBooked);
-  const showBack = step === "inquire" || BOOK_STEPS.includes(step);
-  const dismissable = step !== "processing";
+  const soldOut = seatsLeft === 0;
+  const showBack = step === "inquire" || step === "waitlist" || BOOK_STEPS.includes(step);
+  const dismissable = step !== "sending";
+  const companionNames = companions.map((c) => c.trim()).filter((c) => c !== "");
 
   return (
     <AnimatePresence>
@@ -404,7 +536,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                 <div className="min-w-0">
                   <p className="truncate font-serif text-lg italic text-cream">{spell.name}</p>
                   <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">
-                    {spell.location} · {spell.dates}
+                    {spell.location} · {dates.label}
                   </p>
                 </div>
               </div>
@@ -460,37 +592,55 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         </span>
                       </button>
 
-                      <button
-                        type="button"
-                        disabled={seatsLeftLive === 0}
-                        onClick={() => setStep("travellers")}
-                        className="group relative flex w-full items-start gap-4 overflow-hidden rounded-xl border border-gold/40 bg-gold/[0.07] p-5 text-left transition-all duration-300 hover:border-gold/70 hover:bg-gold/[0.1] hover:shadow-[0_0_36px_rgba(184,150,62,0.2)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-gold/40 disabled:hover:bg-gold/[0.07] disabled:hover:shadow-none"
-                      >
-                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gold text-charcoal-deep">
-                          <Ticket size={18} aria-hidden />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-center gap-2 font-serif text-xl italic text-cream">
-                            Book Now
-                            <ArrowRight size={14} className="text-gold-light opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
+                      {soldOut ? (
+                        <button
+                          type="button"
+                          onClick={() => setStep("waitlist")}
+                          className="group relative flex w-full items-start gap-4 overflow-hidden rounded-xl border border-gold/40 bg-gold/[0.07] p-5 text-left transition-all duration-300 hover:border-gold/70 hover:bg-gold/[0.1] hover:shadow-[0_0_36px_rgba(184,150,62,0.2)]"
+                        >
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gold text-charcoal-deep">
+                            <Hourglass size={18} aria-hidden />
                           </span>
-                          <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/60">
-                            Reserve your seat with a {formatINR(breakdown.advance)} booking amount —
-                            the balance is collected closer to the trip.
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-2 font-serif text-xl italic text-cream">
+                              Join the Waitlist
+                              <ArrowRight size={14} className="text-gold-light opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
+                            </span>
+                            <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/60">
+                              This circle is full. Hold a real place in the queue — we reach out the
+                              moment seats open.
+                            </span>
                           </span>
-                        </span>
-                        {seatsLeftLive === 0 ? (
                           <span className="absolute right-4 top-4 rounded-full border border-cream/20 bg-charcoal-deep/60 px-2.5 py-1 font-sans text-[9px] uppercase tracking-[0.16em] text-cream/50">
                             Sold out
                           </span>
-                        ) : (
-                          seatsLeftLive <= 4 && (
-                            <span className="absolute right-4 top-4 rounded-full border border-gold/40 bg-charcoal-deep/60 px-2.5 py-1 font-sans text-[9px] uppercase tracking-[0.16em] text-gold-light">
-                              {seatsLeftLive} left
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setStep("travellers")}
+                          className="group relative flex w-full items-start gap-4 overflow-hidden rounded-xl border border-gold/40 bg-gold/[0.07] p-5 text-left transition-all duration-300 hover:border-gold/70 hover:bg-gold/[0.1] hover:shadow-[0_0_36px_rgba(184,150,62,0.2)]"
+                        >
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gold text-charcoal-deep">
+                            <Ticket size={18} aria-hidden />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-2 font-serif text-xl italic text-cream">
+                              Book Now
+                              <ArrowRight size={14} className="text-gold-light opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
                             </span>
-                          )
-                        )}
-                      </button>
+                            <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/60">
+                              Reserve your seats — our team confirms them personally while online
+                              payment opens soon.
+                            </span>
+                          </span>
+                          {seatsLeft <= 4 && (
+                            <span className="absolute right-4 top-4 rounded-full border border-gold/40 bg-charcoal-deep/60 px-2.5 py-1 font-sans text-[9px] uppercase tracking-[0.16em] text-gold-light">
+                              {seatsLeft} left
+                            </span>
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     <p className="mt-5 text-center font-serif text-[13px] italic text-cream/40">
@@ -571,22 +721,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                     <div className="relative flex flex-col items-center py-8 text-center">
                       <div className="relative">
                         <SuccessBurst />
-                        <svg width="72" height="72" viewBox="0 0 52 52" fill="none" aria-hidden>
-                          <motion.circle
-                            cx="26" cy="26" r="24" stroke="#B8963E" strokeWidth="1.4"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 0.7, ease: [0.3, 0, 0.2, 1] }}
-                            style={{ filter: "drop-shadow(0 0 10px rgba(184,150,62,0.5))" }}
-                          />
-                          <motion.path
-                            d="M15.5 27l7.5 7.5L37 19.5" stroke="#CFA85A" strokeWidth="2.2"
-                            strokeLinecap="round" strokeLinejoin="round"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ delay: 0.45, duration: 0.45, ease: "easeOut" }}
-                          />
-                        </svg>
+                        <ReceivedMark />
                       </div>
                       <h3 className="mt-7 font-serif text-3xl italic text-cream">
                         Inquiry <span className="text-gold-gradient not-italic">received</span>
@@ -599,6 +734,104 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         Done ✦
                       </button>
                     </div>
+                  </StepShell>
+                )}
+
+                {/* ----------------------------- WAITLIST ----------------------------- */}
+                {step === "waitlist" && (
+                  <StepShell stepKey="waitlist">
+                    <p className="eyebrow !text-[10px]">The waitlist</p>
+                    <h3 className="mt-2 font-serif text-3xl font-medium leading-tight text-cream">
+                      Full — but circles <span className="italic text-gold-gradient">shift.</span>
+                    </h3>
+
+                    {!session ? (
+                      <>
+                        <p className="mt-4 font-sans text-[13.5px] leading-relaxed text-cream/55">
+                          The queue is tied to your account, so we always know how to reach you —
+                          and you can leave it any time.
+                        </p>
+                        <Link to="/login" className="btn-gold mt-6 w-full !py-4" onClick={onClose}>
+                          Sign in to join the waitlist <ArrowRight size={15} />
+                        </Link>
+                        <p className="mt-3 text-center font-sans text-[11px] text-cream/35">
+                          New here? The same door creates your space.
+                        </p>
+                      </>
+                    ) : !departure ? (
+                      <p className="mt-4 rounded-xl border border-cream/[0.1] bg-cream/[0.02] px-4 py-3.5 font-sans text-[12.5px] leading-relaxed text-cream/55">
+                        This circle's departure isn't taking a queue right now — send an inquiry
+                        instead and we'll find you a way in.
+                      </p>
+                    ) : myEntry ? (
+                      <div className="mt-5">
+                        <div className="relative flex flex-col items-center rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-7 text-center">
+                          <SuccessBurst />
+                          <span className="grid h-12 w-12 place-items-center rounded-full border border-gold/40 text-gold">
+                            <Hourglass size={20} aria-hidden />
+                          </span>
+                          <p className="mt-4 font-serif text-2xl italic text-cream">
+                            You're in the <span className="not-italic text-gold-gradient">queue.</span>
+                          </p>
+                          <p className="mt-2 max-w-sm font-sans text-[12.5px] leading-relaxed text-cream/55">
+                            {myEntry.status === "offered"
+                              ? "Seats are being HELD for you — the team has reached out with next steps. Nothing is paid online."
+                              : `${myEntry.seats} seat${myEntry.seats > 1 ? "s" : ""} requested · we reach out personally the moment seats open.`}
+                          </p>
+                        </div>
+                        {myEntry.status === "waiting" && (
+                          <button
+                            type="button"
+                            onClick={() => void leaveQueue()}
+                            disabled={waitBusy}
+                            className="btn-ghost-gold mt-4 w-full !py-3 disabled:opacity-60"
+                          >
+                            {waitBusy ? "Leaving…" : "Leave the waitlist"}
+                          </button>
+                        )}
+                        {errs.waitlist && (
+                          <p className="mt-2 text-center font-sans text-xs text-[#d98a7f]">{errs.waitlist}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-5 space-y-4">
+                        <SeatStepper
+                          seats={waitSeats}
+                          maxSeats={Math.min(6, Math.max(1, spell.seatsTotal))}
+                          onChange={setWaitSeats}
+                          hint="Seats you'd take if they open"
+                        />
+                        <div>
+                          <label htmlFor="wait-note" className={LABEL}>
+                            Anything we should know <span className="text-cream/30">(optional)</span>
+                          </label>
+                          <textarea
+                            id="wait-note"
+                            value={waitNote}
+                            onChange={(e) => setWaitNote(e.target.value)}
+                            rows={2}
+                            maxLength={300}
+                            placeholder="Flexible on dates, travelling with a friend…"
+                            className={cn(INPUT, "resize-none leading-relaxed")}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void joinQueue()}
+                          disabled={waitBusy}
+                          className="btn-gold w-full !py-4 disabled:opacity-60"
+                        >
+                          {waitBusy ? "Holding your place…" : "Join the Waitlist"} <ArrowRight size={15} />
+                        </button>
+                        {errs.waitlist && (
+                          <p className="text-center font-sans text-xs text-[#d98a7f]">{errs.waitlist}</p>
+                        )}
+                        <p className="text-center font-sans text-[11px] leading-relaxed text-cream/35">
+                          Joining costs nothing and holds no payment — seats are offered in person,
+                          never auto-charged.
+                        </p>
+                      </div>
+                    )}
                   </StepShell>
                 )}
 
@@ -627,45 +860,13 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       Fixed departure — the whole circle travels together on dates set by your host.
                     </p>
 
-                    <div className="mt-5 flex items-center justify-between rounded-xl border border-cream/[0.1] bg-cream/[0.02] p-5">
-                      <div className="flex items-center gap-3">
-                        <Users size={17} className="text-gold/80" aria-hidden />
-                        <div>
-                          <p className="font-sans text-sm text-cream/85">Seats</p>
-                          <p className="font-sans text-[11px] text-cream/40">
-                            Up to {maxSeats} for this trip
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                          disabled={seats <= 1}
-                          aria-label="One seat fewer"
-                          className="grid h-10 w-10 place-items-center rounded-full border border-cream/20 text-cream/70 transition-all duration-200 hover:border-gold/50 hover:text-gold-light active:scale-90 disabled:opacity-35"
-                        >
-                          <Minus size={15} />
-                        </button>
-                        <motion.span
-                          key={seats}
-                          initial={{ scale: 1.35, color: "#CFA85A" }}
-                          animate={{ scale: 1, color: "#F5F0E8" }}
-                          transition={{ duration: 0.3, ease: EASE }}
-                          className="w-8 text-center font-serif text-3xl"
-                        >
-                          {seats}
-                        </motion.span>
-                        <button
-                          type="button"
-                          onClick={() => setSeats((s) => Math.min(maxSeats, s + 1))}
-                          disabled={seats >= maxSeats}
-                          aria-label="One seat more"
-                          className="grid h-10 w-10 place-items-center rounded-full border border-cream/20 text-cream/70 transition-all duration-200 hover:border-gold/50 hover:text-gold-light active:scale-90 disabled:opacity-35"
-                        >
-                          <Plus size={15} />
-                        </button>
-                      </div>
+                    <div className="mt-5">
+                      <SeatStepper
+                        seats={seats}
+                        maxSeats={maxSeats}
+                        onChange={setSeats}
+                        hint={`Up to ${maxSeats} for this trip`}
+                      />
                     </div>
 
                     {seats > 1 && (
@@ -726,49 +927,17 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       </div>
                       <dl className="mt-4 space-y-2.5 font-sans text-[13.5px]">
                         <div className="flex justify-between text-cream/60">
-                          <dt>{formatINR(breakdown.pricePerSeat)} × {seats}</dt>
-                          <dd>{formatINR(breakdown.subtotal)}</dd>
-                        </div>
-                        <div className="flex justify-between text-cream/60">
-                          <dt>Platform fee</dt>
-                          <dd className="text-gold/80">On us ✦</dd>
-                        </div>
-                        <div className="flex justify-between text-cream/60">
-                          <dt>Taxes (5%)</dt>
-                          <dd>{formatINR(breakdown.taxes)}</dd>
+                          <dt>{formatINR(price.pricePerSeat)} × {seats}</dt>
+                          <dd>{formatINR(price.total)}</dd>
                         </div>
                         <div className="flex items-baseline justify-between border-t border-cream/[0.08] pt-3.5">
-                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-cream/50">Total trip cost</dt>
-                          <dd className="font-serif text-2xl text-cream">{formatINR(breakdown.total)}</dd>
+                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-cream/50">Trip total (published)</dt>
+                          <dd className="font-serif text-2xl text-cream">{formatINR(price.total)}</dd>
                         </div>
                       </dl>
                     </div>
 
-                    {/* What moves today vs. what waits — the honest split. */}
-                    <div className="mt-3.5 overflow-hidden rounded-xl border border-gold/35">
-                      <div className="flex items-center justify-between gap-3 bg-gold/[0.08] px-5 py-4">
-                        <div>
-                          <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">Pay now</p>
-                          <p className="mt-0.5 font-sans text-[11.5px] text-cream/55">
-                            Booking amount · seat confirmation
-                          </p>
-                        </div>
-                        <p className="font-serif text-3xl text-gold-gradient">{formatINR(breakdown.advance)}</p>
-                      </div>
-                      {breakdown.balance > 0 && (
-                        <div className="flex items-center justify-between gap-3 border-t border-gold/[0.15] bg-cream/[0.02] px-5 py-3.5">
-                          <div>
-                            <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-cream/45">
-                              Remaining balance
-                            </p>
-                            <p className="mt-0.5 font-sans text-[11.5px] leading-relaxed text-cream/45">
-                              Pay later before departure — we'll contact you with payment instructions.
-                            </p>
-                          </div>
-                          <p className="shrink-0 font-serif text-xl text-cream/75">{formatINR(breakdown.balance)}</p>
-                        </div>
-                      )}
-                    </div>
+                    <PaymentPolicyNote />
 
                     <p className="mt-3 font-sans text-[11px] leading-relaxed text-cream/35">
                       All-inclusive: stay, meals, sessions and everything the spell lists. Flights not included.
@@ -795,7 +964,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                     {session ? (
                       <p className="mt-3 flex items-center gap-2 rounded-lg border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 font-sans text-[12px] text-cream/70">
                         <Check size={13} className="shrink-0 text-gold" aria-hidden />
-                        Booking as {session.firstName} — this trip will appear in your Logout Space.
+                        Requesting as {session.firstName} — once the team confirms your seats, the
+                        trip appears in your Logout Space.
                       </p>
                     ) : (
                       <p className="mt-3 rounded-lg border border-cream/[0.1] bg-cream/[0.02] px-3.5 py-2.5 font-sans text-[12px] leading-relaxed text-cream/55">
@@ -803,7 +973,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         <Link to="/login" className="text-gold underline-offset-4 hover:underline">
                           Sign in
                         </Link>{" "}
-                        and this trip will live in your Logout Space — countdown, checklist and all.
+                        and confirmed trips will live in your Logout Space — countdown, checklist and all.
                       </p>
                     )}
 
@@ -855,190 +1025,93 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       <button
                         type="button"
                         onClick={() => {
-                          if (validateDetails()) setStep("payment");
+                          if (validateDetails()) setStep("review");
                         }}
                         className="btn-gold w-full !py-4"
                       >
-                        Continue to Payment <ArrowRight size={15} />
+                        Review my request <ArrowRight size={15} />
                       </button>
                     </div>
                   </StepShell>
                 )}
 
-                {/* ----------------------------- PAYMENT ------------------------------ */}
-                {step === "payment" && (
-                  <StepShell stepKey="payment">
-                    <div className="flex items-center justify-between">
-                      <p className="eyebrow !text-[10px]">Step 4 · Payment</p>
-                      <span className="flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1 font-sans text-[9px] uppercase tracking-[0.16em] text-gold-light">
-                        <Lock size={10} aria-hidden /> Test mode
-                      </span>
-                    </div>
+                {/* ------------------------------ REVIEW ------------------------------ */}
+                {step === "review" && (
+                  <StepShell stepKey="review">
+                    <p className="eyebrow !text-[10px]">Step 4 · Booking review</p>
                     <h3 className="mt-2 font-serif text-3xl font-medium leading-tight text-cream">
-                      {formatINR(breakdown.advance)}{" "}
-                      <span className="font-sans text-sm text-cream/40">
-                        to reserve your seat{seats > 1 ? "s" : ""}
-                      </span>
+                      Reserve my seats —{" "}
+                      <span className="italic text-gold-gradient">online payment opens soon.</span>
                     </h3>
 
-                    {/* Exactly what moves today — and what doesn't. */}
-                    <dl className="mt-4 space-y-2 rounded-xl border border-cream/[0.1] bg-cream/[0.02] px-5 py-4 font-sans text-[12.5px]">
-                      <div className="flex justify-between text-cream/55">
-                        <dt>Total trip cost</dt>
-                        <dd>{formatINR(breakdown.total)}</dd>
+                    {/* The request, exactly as it reaches the team. */}
+                    <dl className="mt-5 space-y-2 rounded-xl border border-cream/[0.1] bg-cream/[0.02] px-5 py-4 font-sans text-[12.5px]">
+                      <div className="flex justify-between gap-4 text-cream/55">
+                        <dt>Departure</dt>
+                        <dd className="text-right text-cream/85">{dates.label}</dd>
                       </div>
-                      <div className="flex justify-between text-gold-light">
-                        <dt>Booking amount — due today</dt>
-                        <dd className="font-medium">{formatINR(breakdown.advance)}</dd>
+                      <div className="flex justify-between gap-4 text-cream/55">
+                        <dt>Seats</dt>
+                        <dd className="text-cream/85">{seats}</dd>
                       </div>
-                      {breakdown.balance > 0 && (
-                        <div className="flex justify-between text-cream/45">
-                          <dt>Remaining · collected before departure</dt>
-                          <dd>{formatINR(breakdown.balance)}</dd>
+                      <div className="flex justify-between gap-4 text-cream/55">
+                        <dt>Lead traveller</dt>
+                        <dd className="text-right text-cream/85">{lead.fullName.trim()}</dd>
+                      </div>
+                      {companionNames.length > 0 && (
+                        <div className="flex justify-between gap-4 text-cream/55">
+                          <dt>Companions</dt>
+                          <dd className="text-right text-cream/85">{companionNames.join(", ")}</dd>
                         </div>
                       )}
+                      <div className="flex justify-between gap-4 border-t border-cream/[0.08] pt-2.5 text-cream/55">
+                        <dt>Trip total (published)</dt>
+                        <dd className="font-serif text-lg text-cream">{formatINR(price.total)}</dd>
+                      </div>
                     </dl>
 
                     <p className="mt-3 flex items-start gap-2 rounded-lg border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 font-sans text-[11.5px] leading-relaxed text-cream/65">
                       <ShieldCheck size={13} className="mt-0.5 shrink-0 text-gold" aria-hidden />
                       <span>
-                        This advance reserves your spot — your seat is confirmed the moment it's paid.
-                        {breakdown.balance > 0 &&
-                          " We'll reach out with simple payment instructions for the balance closer to the trip."}
+                        Nothing is paid today. Your request lands with the Logout Spells team, who
+                        confirm your seats and the 30% advance personally — usually within 24 hours.
                       </span>
                     </p>
 
-                    {/* Method toggle */}
-                    <div className="mt-5 grid grid-cols-2 gap-2.5">
-                      {(
-                        [
-                          { id: "upi" as PaymentMethodId, label: "UPI", Icon: Smartphone },
-                          { id: "card" as PaymentMethodId, label: "Card", Icon: CreditCard },
-                        ]
-                      ).map(({ id, label, Icon }) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => {
-                            setMethod(id);
-                            setErrs({});
-                          }}
-                          aria-pressed={method === id}
-                          className={cn(
-                            "flex items-center justify-center gap-2.5 rounded-xl border py-3.5 font-sans text-sm transition-all duration-300",
-                            method === id
-                              ? "border-gold/70 bg-gold/[0.09] text-gold-light"
-                              : "border-cream/[0.1] text-cream/55 hover:border-gold/40",
-                          )}
-                        >
-                          <Icon size={16} aria-hidden /> {label}
-                        </button>
-                      ))}
+                    <div className="mt-4">
+                      <label htmlFor="request-note" className={LABEL}>
+                        Anything we should know <span className="text-cream/30">(optional)</span>
+                      </label>
+                      <textarea
+                        id="request-note"
+                        value={requestNote}
+                        onChange={(e) => setRequestNote(e.target.value)}
+                        rows={2}
+                        maxLength={300}
+                        placeholder="Dietary needs, arrival plans, a question…"
+                        className={cn(INPUT, "resize-none leading-relaxed")}
+                      />
                     </div>
 
-                    <div className="mt-5 space-y-4">
-                      {method === "upi" ? (
-                        <div>
-                          <label htmlFor="upi-id" className={LABEL}>UPI ID</label>
-                          <input
-                            id="upi-id"
-                            type="text"
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            placeholder="yourname@bank"
-                            className={cn(INPUT, errs.upi && "border-[#c65f52]/70")}
-                            aria-invalid={Boolean(errs.upi)}
-                          />
-                          {errs.upi && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.upi}</p>}
-                        </div>
-                      ) : (
-                        <>
-                          <div>
-                            <label htmlFor="card-number" className={LABEL}>Card number</label>
-                            <input
-                              id="card-number"
-                              type="text"
-                              inputMode="numeric"
-                              value={cardNumber}
-                              onChange={(e) => {
-                                const digits = e.target.value.replace(/\D/g, "").slice(0, 16);
-                                setCardNumber(digits.replace(/(\d{4})(?=\d)/g, "$1 "));
-                              }}
-                              placeholder="4242 4242 4242 4242"
-                              className={cn(INPUT, "tracking-[0.08em]", errs.cardNumber && "border-[#c65f52]/70")}
-                              aria-invalid={Boolean(errs.cardNumber)}
-                            />
-                            {errs.cardNumber && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.cardNumber}</p>}
-                          </div>
-                          <div>
-                            <label htmlFor="card-name" className={LABEL}>Name on card</label>
-                            <input
-                              id="card-name"
-                              type="text"
-                              value={cardName}
-                              onChange={(e) => setCardName(e.target.value)}
-                              placeholder="As printed"
-                              className={cn(INPUT, errs.cardName && "border-[#c65f52]/70")}
-                              aria-invalid={Boolean(errs.cardName)}
-                            />
-                            {errs.cardName && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.cardName}</p>}
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label htmlFor="card-expiry" className={LABEL}>Expiry</label>
-                              <input
-                                id="card-expiry"
-                                type="text"
-                                inputMode="numeric"
-                                value={cardExpiry}
-                                onChange={(e) => {
-                                  const digits = e.target.value.replace(/\D/g, "").slice(0, 4);
-                                  setCardExpiry(digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits);
-                                }}
-                                placeholder="MM/YY"
-                                className={cn(INPUT, errs.cardExpiry && "border-[#c65f52]/70")}
-                                aria-invalid={Boolean(errs.cardExpiry)}
-                              />
-                              {errs.cardExpiry && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.cardExpiry}</p>}
-                            </div>
-                            <div>
-                              <label htmlFor="card-cvv" className={LABEL}>CVV</label>
-                              <input
-                                id="card-cvv"
-                                type="password"
-                                inputMode="numeric"
-                                value={cardCvv}
-                                onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                                placeholder="•••"
-                                className={cn(INPUT, errs.cardCvv && "border-[#c65f52]/70")}
-                                aria-invalid={Boolean(errs.cardCvv)}
-                              />
-                              {errs.cardCvv && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.cardCvv}</p>}
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (validatePayment()) setStep("processing");
-                        }}
-                        className="btn-gold w-full !py-4"
-                      >
-                        <Lock size={14} /> Pay {formatINR(breakdown.advance)} Securely
-                      </button>
-                      <p className="text-center font-sans text-[10.5px] text-cream/35">
-                        Test mode — no real money moves yet · booking amount fully refundable up to 21
-                        days before departure
-                      </p>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void submitReserve()}
+                      className="btn-gold mt-5 w-full !py-4"
+                    >
+                      Reserve my seats <ArrowRight size={15} />
+                    </button>
+                    {errs.reserve && (
+                      <p className="mt-2 text-center font-sans text-xs text-[#d98a7f]">{errs.reserve}</p>
+                    )}
+                    <p className="mt-3 text-center font-sans text-[10.5px] text-cream/35">
+                      No payment is collected online yet — no card, no UPI, no charges.
+                    </p>
                   </StepShell>
                 )}
 
-                {/* ---------------------------- PROCESSING ---------------------------- */}
-                {step === "processing" && (
-                  <StepShell stepKey="processing">
+                {/* ----------------------------- SENDING ------------------------------ */}
+                {step === "sending" && (
+                  <StepShell stepKey="sending">
                     <div className="flex flex-col items-center py-14 text-center">
                       <div className="relative">
                         <span
@@ -1053,7 +1126,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           ✦
                         </span>
                       </div>
-                      <ProcessingWhispers />
+                      <SendingWhispers />
                       <p className="mt-3 font-sans text-[11px] text-cream/35">
                         Don't close this window — it only takes a moment.
                       </p>
@@ -1061,9 +1134,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                   </StepShell>
                 )}
 
-                {/* ------------------------------ SUCCESS ------------------------------ */}
-                {step === "success" && booking && (
-                  <StepShell stepKey="success">
+                {/* ----------------------------- REQUESTED ----------------------------- */}
+                {step === "requested" && (
+                  <StepShell stepKey="requested">
                     <div className="relative flex flex-col items-center py-6 text-center">
                       <div className="relative">
                         <SuccessBurst />
@@ -1072,22 +1145,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ duration: 0.6, ease: EASE }}
                         >
-                          <svg width="84" height="84" viewBox="0 0 52 52" fill="none" aria-hidden>
-                            <motion.circle
-                              cx="26" cy="26" r="24" stroke="#B8963E" strokeWidth="1.4"
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 0.7, ease: [0.3, 0, 0.2, 1] }}
-                              style={{ filter: "drop-shadow(0 0 12px rgba(184,150,62,0.55))" }}
-                            />
-                            <motion.path
-                              d="M15.5 27l7.5 7.5L37 19.5" stroke="#CFA85A" strokeWidth="2.2"
-                              strokeLinecap="round" strokeLinejoin="round"
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ delay: 0.5, duration: 0.45, ease: "easeOut" }}
-                            />
-                          </svg>
+                          <ReceivedMark size={84} />
                         </motion.div>
                       </div>
 
@@ -1097,8 +1155,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         transition={{ delay: 0.35, duration: 0.6, ease: EASE }}
                         className="mt-6 font-serif text-4xl font-medium text-cream"
                       >
-                        You're going to{" "}
-                        <span className="italic text-gold-gradient">{booking.spell.location}.</span>
+                        Request <span className="italic text-gold-gradient">received.</span>
                       </motion.h3>
                       <motion.p
                         initial={{ opacity: 0 }}
@@ -1106,9 +1163,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         transition={{ delay: 0.55, duration: 0.6 }}
                         className="mt-3 font-sans text-[13px] text-cream/55"
                       >
-                        Booking <span className="text-gold-light">{booking.ref}</span> ·{" "}
-                        {booking.seats} seat{booking.seats > 1 ? "s" : ""} · confirmation on its way to{" "}
-                        {lead.email}
+                        Reference <span className="text-gold-light">{requestRef}</span> ·{" "}
+                        {seats} seat{seats > 1 ? "s" : ""} · {dates.label}
                       </motion.p>
 
                       <motion.div
@@ -1117,15 +1173,15 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         transition={{ delay: 0.65, duration: 0.6 }}
                         className="mt-5 w-full rounded-xl border border-cream/[0.08] bg-cream/[0.02] px-5 py-4 text-left"
                       >
-                        <div className="flex justify-between font-sans text-[12.5px] text-cream/60">
-                          <span>Booking amount received</span>
-                          <span className="text-gold-light">{formatINR(booking.amountPaid)}</span>
-                        </div>
-                        {booking.amountTotal > booking.amountPaid && (
+                        <p className="font-sans text-[12.5px] leading-relaxed text-cream/60">
+                          A real human confirms your seats within 24 hours at{" "}
+                          <span className="text-gold-light">{lead.email.trim()}</span> — payment
+                          instructions come with that confirmation. Nothing has been charged.
+                        </p>
+                        {session && (
                           <p className="mt-2 border-t border-cream/[0.06] pt-2 font-sans text-[11.5px] leading-relaxed text-cream/45">
-                            Your seat is confirmed. The remaining{" "}
-                            {formatINR(booking.amountTotal - booking.amountPaid)} is collected closer
-                            to the trip — we'll reach out with payment instructions.
+                            Once confirmed, the trip appears in My Trips with its countdown,
+                            checklist and payment record.
                           </p>
                         )}
                       </motion.div>
@@ -1136,23 +1192,12 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         transition={{ delay: 0.75, duration: 0.6, ease: EASE }}
                         className="mt-5 w-full space-y-3"
                       >
-                        {session ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              navigate(`/account/trips/${booking.id}`);
-                            }}
-                            className="btn-gold w-full !py-4"
-                          >
-                            View in My Trips <ArrowRight size={15} />
-                          </button>
-                        ) : (
+                        {!session && (
                           <Link to="/login" className="btn-gold w-full !py-4" onClick={onClose}>
-                            Sign In to Track This Trip <ArrowRight size={15} />
+                            Sign In to Track This Request <ArrowRight size={15} />
                           </Link>
                         )}
-                        <button type="button" onClick={onClose} className="btn-ghost-gold w-full">
+                        <button type="button" onClick={onClose} className={cn("w-full", session ? "btn-gold !py-4" : "btn-ghost-gold")}>
                           Done ✦
                         </button>
                       </motion.div>
@@ -1168,9 +1213,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   );
 }
 
-/** Rotating status lines while the mock gateway "talks to the bank". */
-function ProcessingWhispers() {
-  const LINES = ["Creating your order…", "Talking to the bank…", "Holding your seat…", "Almost there…"];
+/** Rotating status lines while the request travels — honest ones. */
+function SendingWhispers() {
+  const LINES = ["Sending your request…", "Reaching the team…", "Almost there…"];
   const [index, setIndex] = useState<number>(0);
 
   useEffect(() => {

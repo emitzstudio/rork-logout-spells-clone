@@ -6,7 +6,6 @@ import InvoiceDialog from "@/components/account/InvoiceDialog";
 import { CountUp } from "@/components/site/Reveal";
 import { useAccount } from "@/data/account/AccountProvider";
 import {
-  deriveTransactions,
   deriveWalletSummary,
   effectiveStatus,
   fmtDayYear,
@@ -46,7 +45,8 @@ export default function TransactionsPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [invoiceBooking, setInvoiceBooking] = useState<TripBooking | null>(null);
 
-  const txns = useMemo(() => (data ? deriveTransactions(data) : []), [data]);
+  /* The REAL payments ledger (M7C) — every row server-recorded. */
+  const txns = useMemo(() => data?.transactions ?? [], [data]);
   const summary = useMemo(() => deriveWalletSummary(txns), [txns]);
 
   /** Deposit-paid circles that still carry a balance. */
@@ -150,7 +150,9 @@ export default function TransactionsPage() {
                   <div className="shrink-0 text-right">
                     <p className="font-serif text-[19px] tabular-nums text-amber-200">{formatINR(due)}</p>
                     <p className="font-sans text-[9.5px] uppercase tracking-[0.2em] text-cream/30">
-                      Due 21 days out
+                      {booking.balanceDueDate !== undefined
+                        ? `Due ${fmtDayYear(booking.balanceDueDate)}`
+                        : "Before departure"}
                     </p>
                   </div>
                 </div>
@@ -158,7 +160,7 @@ export default function TransactionsPage() {
             })}
           </div>
           <p className="mt-2.5 font-sans text-[11px] text-cream/35">
-            Balance payments open with the payments phase — we'll remind you well in time.
+            Online balance payment opens soon — until then the team collects it personally, well in time.
           </p>
         </div>
       )}

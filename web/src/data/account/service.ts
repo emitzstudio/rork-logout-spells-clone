@@ -1,18 +1,20 @@
 /**
- * Traveller account service — the backend seam, now real (M6).
+ * Traveller account service — the backend seam, now real (M6 + M7C).
  *
  * Every screen talks to this API shape and nothing else. Auth is native
  * Supabase (email + password, confirmation off per decision D1), profile and
  * settings live in the M1 tables, the wishlist in `saved_spells`, the inbox
- * in `notifications` — all under RLS. The demo account is retired (D2): a new
- * traveller starts with honest empty states.
+ * in `notifications` — and, since M7C, bookings, participants and the
+ * payments ledger come straight from the M7 tables. RLS scopes every read to
+ * the signed-in traveller; the SERVER derives all money — this file only
+ * renders what it stored (paise → rupees, nothing computed).
  *
- * Still device-local until their milestones: test bookings from the mock
- * gateway + trip checklists (M7 makes bookings real), memory albums (M8),
- * and the recently-viewed trail (deliberately never a table).
+ * Still device-local until their milestones: memory albums (M8) and the
+ * recently-viewed trail (deliberately never a table).
  */
 import type { User } from "@supabase/supabase-js";
 
+import { CATEGORY_FAMILY } from "@/data/builder";
 import type { SpellCategoryId } from "@/data/spells";
 import { isUuid, supabase } from "@/integrations/supabase/client";
 import {
@@ -21,17 +23,21 @@ import {
   isOwnStorageUrl,
   uploadProfileImage,
 } from "@/integrations/supabase/storage";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 import { AccountError } from "./models";
 import type {
   AccountData,
   AppNotification,
+  ChecklistItem,
+  SpellSnapshot,
   TravellerPrefs,
   TravellerProfile,
   TravellerSession,
   TripBooking,
   TripMemory,
+  TripStatus,
+  WalletTransaction,
 } from "./models";
 
 type Tables = Database["public"]["Tables"];
@@ -40,6 +46,9 @@ type ProfileUpdate = Tables["profiles"]["Update"];
 type SettingsRow = Tables["user_settings"]["Row"];
 type SettingsUpdate = Tables["user_settings"]["Update"];
 type NotificationRow = Tables["notifications"]["Row"];
+type BookingRow = Tables["bookings"]["Row"];
+type ParticipantRow = Tables["booking_participants"]["Row"];
+type PaymentRow = Tables["payments"]["Row"];
 
 /* -------------------------------- Validation ------------------------------- */
 
@@ -159,15 +168,168 @@ const mapNotification = (row: NotificationRow): AppNotification => ({
   link: row.link !== "" ? row.link : undefined,
 });
 
+/* --------------------------- Booking row mapping ---------------------------- */
+
+/** Paise → whole rupees for display. The server owns ALL money math. */
+const inr = (minor: number): number => Math.round(minor / 100);
+
+const DAY = 86_400_000;
+
+const BOOKING_STATUS: Record<BookingRow["status"], TripStatus> = {
+  draft: "draft",
+  pending: "upcoming",
+  confirmed: "upcoming",
+  completed: "completed",
+  cancelled: "cancelled",
+};
+
+/** The packing ritual seeded when a booking arrives without one — the same
+ *  six items the console's booking pipeline writes. */
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { id: "c1", label: "Broken-in walking shoes", done: false },
+  { id: "c2", label: "A journal + a pen you love", done: false },
+  { id: "c3", label: "One warm layer more than the forecast", done: false },
+  { id: "c4", label: "Refillable water bottle", done: false },
+  { id: "c5", label: "Government ID", done: false, essential: true },
+  { id: "c6", label: "Personal medication", done: false, essential: true },
+];
+
+const parseChecklist = (raw: unknown): ChecklistItem[] => {
+  if (!Array.isArray(raw)) return [];
+  const items: ChecklistItem[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const record = entry as { id?: unknown; label?: unknown; done?: unknown; essential?: unknown };
+    if (typeof record.id !== "string" || typeof record.label !== "string") continue;
+    items.push({
+      id: record.id,
+      label: record.label,
+      done: record.done === true,
+      ...(record.essential === true ? { essential: true } : {}),
+    });
+  }
+  return items;
+};
+
+/** Rebuilds the frozen card from `spell_snapshot` ({version: 1, card: …}). */
+const snapshotFromRow = (row: BookingRow): SpellSnapshot => {
+  const doc =
+    typeof row.spell_snapshot === "object" && row.spell_snapshot !== null
+      ? ((row.spell_snapshot as { card?: unknown }).card ?? {})
+      : {};
+  const card = (typeof doc === "object" && doc !== null ? doc : {}) as Record<string, unknown>;
+  const str = (key: string): string => (typeof card[key] === "string" ? (card[key] as string) : "");
+  const host = (typeof card.host === "object" && card.host !== null ? card.host : {}) as Record<
+    string,
+    unknown
+  >;
+  const hostName = typeof host.name === "string" && host.name !== "" ? host.name : "Logout Spells";
+  const rawCategory = str("category");
+  const category = (rawCategory in CATEGORY_FAMILY ? rawCategory : "wandering") as SpellCategoryId;
+  return {
+    spellId: str("spellId") !== "" ? str("spellId") : (row.spell_id ?? ""),
+    slug: str("slug"),
+    name: str("name") !== "" ? str("name") : "A Logout Spell",
+    type: CATEGORY_FAMILY[category],
+    category,
+    location: str("location"),
+    region: str("region"),
+    image: str("image"),
+    symbol: str("symbol") !== "" ? str("symbol") : "✦",
+    gradient: str("gradient"),
+    host: {
+      name: hostName,
+      initial: hostName.charAt(0).toUpperCase(),
+      role: typeof host.role === "string" ? host.role : "",
+    },
+  };
+};
+
+const mapBooking = (row: BookingRow, participants: ParticipantRow[]): TripBooking => {
+  const start = row.start_date ?? row.booked_at.slice(0, 10);
+  const end = row.end_date ?? start;
+  const guests = participants
+    .filter(
+      (p) =>
+        p.booking_id === row.id &&
+        !p.is_lead &&
+        p.status === "active" &&
+        p.full_name.trim() !== "",
+    )
+    .map((p) => p.full_name);
+  return {
+    id: row.id,
+    ref: row.ref ?? "DRAFT",
+    spell: snapshotFromRow(row),
+    status: BOOKING_STATUS[row.status],
+    start,
+    end,
+    durationDays:
+      row.duration_days > 0
+        ? row.duration_days
+        : Math.max(1, Math.round((Date.parse(end) - Date.parse(start)) / DAY) + 1),
+    seats: row.seats,
+    guests,
+    pricePerSeat: inr(row.price_per_seat_minor),
+    amountTotal: inr(row.amount_total_minor),
+    amountPaid: inr(row.amount_paid_minor),
+    payment: row.payment_state,
+    paymentMethod: row.payment_method,
+    balanceDueDate: row.balance_due_date ?? undefined,
+    bookedAt: row.booked_at,
+    timelineStep: row.timeline_step,
+    checklist: parseChecklist(row.checklist),
+    stay: row.stay_note,
+    meetingPoint: row.meeting_point,
+    hostNote: row.host_note,
+    rating: row.rating ?? undefined,
+    cancelledAt: row.cancelled_at ?? undefined,
+    cancellationReason: row.cancellation_reason,
+    refundAmount: row.refund_amount_minor !== null ? inr(row.refund_amount_minor) : undefined,
+    refundedAt: row.refunded_at ?? undefined,
+  };
+};
+
+const PAYMENT_KIND_LABEL: Record<PaymentRow["kind"], string> = {
+  advance: "Advance payment",
+  balance: "Balance payment",
+  refund: "Refund",
+  credit: "Credit",
+  adjustment: "Adjustment",
+};
+
+/** One ledger row → one wallet transaction. Amounts arrive server-derived. */
+const mapPaymentTx = (row: PaymentRow, bookings: TripBooking[]): WalletTransaction => {
+  const booking =
+    row.booking_id !== null ? (bookings.find((b) => b.id === row.booking_id) ?? null) : null;
+  const kind: WalletTransaction["kind"] =
+    row.kind === "refund" ? "refund" : row.kind === "advance" || row.kind === "balance" ? "payment" : "credit";
+  return {
+    id: row.id,
+    kind,
+    title: booking !== null ? booking.spell.name : PAYMENT_KIND_LABEL[row.kind],
+    subtitle:
+      booking !== null
+        ? `${PAYMENT_KIND_LABEL[row.kind]} · ${booking.ref}`
+        : row.note !== ""
+          ? row.note
+          : "Payments ledger",
+    amount: inr(Math.abs(row.amount_minor)),
+    date: row.captured_at ?? row.created_at,
+    method: row.method_label !== "" ? row.method_label : row.method,
+    status: "completed",
+    bookingId: row.booking_id ?? undefined,
+  };
+};
+
 /* ------------------------------- Device store ------------------------------- */
 
 /**
- * Per-user, this-device-only state: test bookings from the mock payment
- * gateway (real bookings arrive in M7), memory albums (M8) and the
- * recently-viewed trail. Nothing here pretends to be server data.
+ * Per-user, this-device-only state: memory albums (M8) and the
+ * recently-viewed trail. Nothing here pretends to be server data —
+ * bookings left this store in M7C and now come from the live tables.
  */
 interface DeviceStore {
-  bookings: TripBooking[];
   memories: TripMemory[];
   recentlyViewed: string[];
 }
@@ -177,7 +339,7 @@ const DEVICE_KEY_PREFIX = "ls-traveller-device-v1:";
 /** The retired demo account's keys — cleared once, per decision D2. */
 const LEGACY_KEYS = ["ls-traveller-session-v1", "ls-traveller-account-v2"];
 
-const emptyDevice = (): DeviceStore => ({ bookings: [], memories: [], recentlyViewed: [] });
+const emptyDevice = (): DeviceStore => ({ memories: [], recentlyViewed: [] });
 
 const readDevice = (userId: string): DeviceStore => {
   try {
@@ -187,7 +349,6 @@ const readDevice = (userId: string): DeviceStore => {
     if (typeof parsed !== "object" || parsed === null) return emptyDevice();
     const record = parsed as Partial<DeviceStore>;
     return {
-      bookings: Array.isArray(record.bookings) ? record.bookings : [],
       memories: Array.isArray(record.memories) ? record.memories : [],
       recentlyViewed: Array.isArray(record.recentlyViewed)
         ? record.recentlyViewed.filter((s): s is string => typeof s === "string")
@@ -238,7 +399,6 @@ class TravellerAccountService {
 
   private commitDevice(userId: string, db: AccountData): void {
     writeDevice(userId, {
-      bookings: db.bookings,
       memories: db.memories,
       recentlyViewed: db.recentlyViewed,
     });
@@ -328,15 +488,29 @@ class TravellerAccountService {
   /* --------------------------------- Data ---------------------------------- */
 
   async loadAccount(userId: string): Promise<AccountData> {
-    const [profileRes, settingsRes, savedRes, notifRes] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("saved_spells")
-        .select("spell_id, created_at")
-        .order("created_at", { ascending: false }),
-      supabase.from("notifications").select("*").order("created_at", { ascending: false }),
-    ]);
+    const [profileRes, settingsRes, savedRes, notifRes, bookingsRes, paymentsRes] =
+      await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase.from("user_settings").select("*").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("saved_spells")
+          .select("spell_id, created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("notifications").select("*").order("created_at", { ascending: false }),
+        // RLS already scopes reads to own rows; the explicit filter keeps a
+        // STAFF account's personal space personal (staff SELECT sees all).
+        supabase
+          .from("bookings")
+          .select("*")
+          .eq("user_id", userId)
+          .order("booked_at", { ascending: false }),
+        supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", userId)
+          .in("status", ["captured", "refunded"])
+          .order("created_at", { ascending: false }),
+      ]);
     if (profileRes.error || !profileRes.data)
       throw new AccountError("Your space couldn't be reached — try again in a moment.", null);
 
@@ -351,12 +525,28 @@ class TravellerAccountService {
       settings = healed ?? null;
     }
 
+    const bookingRows: BookingRow[] = bookingsRes.data ?? [];
+    let participantRows: ParticipantRow[] = [];
+    if (bookingRows.length > 0) {
+      const { data: participants } = await supabase
+        .from("booking_participants")
+        .select("*")
+        .in(
+          "booking_id",
+          bookingRows.map((b) => b.id),
+        );
+      participantRows = participants ?? [];
+    }
+    const bookings = bookingRows.map((row) => mapBooking(row, participantRows));
+    const transactions = (paymentsRes.data ?? []).map((row) => mapPaymentTx(row, bookings));
+
     const device = readDevice(userId);
     this.userId = userId;
     return this.commit({
       profile: mapProfile(profileRes.data),
       prefs: settings ? mapPrefs(settings) : DEFAULT_PREFS,
-      bookings: device.bookings,
+      bookings,
+      transactions,
       memories: device.memories,
       notifications: (notifRes.data ?? []).map(mapNotification),
       referrals: [],
@@ -500,7 +690,74 @@ class TravellerAccountService {
     });
   }
 
-  /* ------------------- Device-local until M7/M8 (honest edges) --------------- */
+  /* ----------------------------- Trips (M7C, live) --------------------------- */
+
+  /**
+   * The ONLY two traveller-writable booking columns are `checklist` and
+   * `rating` — the server guard rejects everything else, so this helper is
+   * deliberately incapable of sending more.
+   */
+  private async writeBookingPatch(
+    bookingId: string,
+    payload: Pick<Tables["bookings"]["Update"], "checklist" | "rating">,
+    message: string,
+  ): Promise<AccountData> {
+    const { db } = this.expectLoaded();
+    const { data, error } = await supabase
+      .from("bookings")
+      .update(payload)
+      .eq("id", bookingId)
+      .select()
+      .single();
+    if (error || !data) throw new AccountError(message, null);
+    const fresh = data as BookingRow;
+    return this.commit({
+      ...db,
+      bookings: db.bookings.map((b) =>
+        b.id === bookingId
+          ? { ...b, checklist: parseChecklist(fresh.checklist), rating: fresh.rating ?? undefined }
+          : b,
+      ),
+    });
+  }
+
+  async toggleChecklistItem(bookingId: string, itemId: string): Promise<AccountData> {
+    const { db } = this.expectLoaded();
+    const booking = db.bookings.find((b) => b.id === bookingId);
+    if (!booking) throw new AccountError("This booking has faded.", null);
+    const next = booking.checklist.map((item) =>
+      item.id === itemId ? { ...item, done: !item.done } : item,
+    );
+    return this.writeBookingPatch(
+      bookingId,
+      { checklist: next as unknown as Json },
+      "That couldn't be ticked — try again.",
+    );
+  }
+
+  /** Seeds the packing ritual for bookings created without one. */
+  async startChecklist(bookingId: string): Promise<AccountData> {
+    const { db } = this.expectLoaded();
+    const booking = db.bookings.find((b) => b.id === bookingId);
+    if (!booking) throw new AccountError("This booking has faded.", null);
+    if (booking.checklist.length > 0) return db;
+    return this.writeBookingPatch(
+      bookingId,
+      { checklist: DEFAULT_CHECKLIST as unknown as Json },
+      "The ritual couldn't begin — try again.",
+    );
+  }
+
+  /** The private post-trip star — the server allows it only once the trip is over. */
+  async setTripRating(bookingId: string, rating: number): Promise<AccountData> {
+    return this.writeBookingPatch(
+      bookingId,
+      { rating },
+      "Your star couldn't be kept — the trip may not be over yet.",
+    );
+  }
+
+  /* ------------------- Device-local until M8 (honest edges) ------------------ */
 
   /** Shared patch path for the device-local corners of the bundle. */
   private patchDevice(fn: (data: AccountData) => AccountData): AccountData {
@@ -509,33 +766,6 @@ class TravellerAccountService {
     this.commit(next);
     this.commitDevice(userId, next);
     return next;
-  }
-
-  async toggleChecklistItem(bookingId: string, itemId: string): Promise<AccountData> {
-    return this.patchDevice((data) => ({
-      ...data,
-      bookings: data.bookings.map((b) =>
-        b.id === bookingId
-          ? {
-              ...b,
-              checklist: b.checklist.map((item) =>
-                item.id === itemId ? { ...item, done: !item.done } : item,
-              ),
-            }
-          : b,
-      ),
-    }));
-  }
-
-  /**
-   * Confirms a mock-gateway booking into this device's trip list. Real
-   * bookings (and their notifications) arrive with M7's payment milestone.
-   */
-  async addBooking(booking: TripBooking): Promise<AccountData> {
-    return this.patchDevice((data) => ({
-      ...data,
-      bookings: [booking, ...data.bookings],
-    }));
   }
 
   async addMemoryPhotos(memoryId: string, sources: string[]): Promise<AccountData> {

@@ -94,45 +94,9 @@ export const nextTrip = (bookings: TripBooking[]): TripBooking | null => {
 
 /* -------------------------------- Wallet ---------------------------------- */
 
-export const deriveTransactions = (data: AccountData): WalletTransaction[] => {
-  const txns: WalletTransaction[] = [];
-
-  for (const b of data.bookings) {
-    if (b.status === "draft" || b.amountPaid <= 0) continue;
-    txns.push({
-      id: `t-pay-${b.id}`,
-      kind: "payment",
-      title: b.spell.name,
-      subtitle:
-        b.payment === "deposit"
-          ? `Deposit · ${b.seats} seat${b.seats > 1 ? "s" : ""} · ${b.spell.location}`
-          : `${b.seats} seat${b.seats > 1 ? "s" : ""} · ${b.spell.location}`,
-      amount: b.amountPaid,
-      date: b.bookedAt,
-      method: b.paymentMethod,
-      status: "completed",
-      bookingId: b.id,
-    });
-    if (b.status === "cancelled" && (b.refundAmount ?? 0) > 0) {
-      txns.push({
-        id: `t-ref-${b.id}`,
-        kind: "refund",
-        title: `${b.spell.name} — refund`,
-        subtitle: "90% refund · cancelled 22 days out",
-        amount: b.refundAmount ?? 0,
-        date: b.refundedAt ?? b.cancelledAt ?? b.bookedAt,
-        method: b.paymentMethod,
-        status: "completed",
-        bookingId: b.id,
-      });
-    }
-  }
-
-  // Referral credits stay out of the ledger while the referral programme is
-  // parked — the data model keeps them, the UI simply doesn't surface them.
-
-  return txns.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-};
+// deriveTransactions is gone (M7C): the ledger is no longer derived from
+// bookings — `AccountData.transactions` carries the REAL payments rows, and
+// with them went the mock refund copy that invented percentages.
 
 export interface WalletSummary {
   credits: number;

@@ -27,7 +27,6 @@ import type {
   TravellerPrefs,
   TravellerProfile,
   TravellerSession,
-  TripBooking,
 } from "./models";
 
 interface SignUpInput {
@@ -58,8 +57,10 @@ interface AccountValue {
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   toggleChecklistItem: (bookingId: string, itemId: string) => Promise<void>;
-  /** Confirms a mock-gateway booking into this device's trip list (real in M7). */
-  addBooking: (booking: TripBooking) => Promise<void>;
+  /** Seeds the packing ritual on a booking that arrived without one. */
+  startChecklist: (bookingId: string) => Promise<void>;
+  /** The private post-trip star — server-enforced to completed trips. */
+  setTripRating: (bookingId: string, rating: number) => Promise<void>;
   addMemoryPhotos: (memoryId: string, sources: string[]) => Promise<void>;
   removeMemoryPhoto: (memoryId: string, photoId: string) => Promise<void>;
   saveMemoryNote: (memoryId: string, note: string) => Promise<void>;
@@ -170,8 +171,12 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       apply(accountService.toggleChecklistItem(bookingId, itemId)),
     [apply],
   );
-  const addBooking = useCallback(
-    (booking: TripBooking) => apply(accountService.addBooking(booking)),
+  const startChecklist = useCallback(
+    (bookingId: string) => apply(accountService.startChecklist(bookingId)),
+    [apply],
+  );
+  const setTripRating = useCallback(
+    (bookingId: string, rating: number) => apply(accountService.setTripRating(bookingId, rating)),
     [apply],
   );
   const addMemoryPhotos = useCallback(
@@ -220,7 +225,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       markNotificationRead,
       markAllNotificationsRead,
       toggleChecklistItem,
-      addBooking,
+      startChecklist,
+      setTripRating,
       addMemoryPhotos,
       removeMemoryPhoto,
       saveMemoryNote,
@@ -242,7 +248,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       markNotificationRead,
       markAllNotificationsRead,
       toggleChecklistItem,
-      addBooking,
+      startChecklist,
+      setTripRating,
       addMemoryPhotos,
       removeMemoryPhoto,
       saveMemoryNote,

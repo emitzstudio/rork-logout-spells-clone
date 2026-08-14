@@ -125,6 +125,8 @@ export interface TripBooking {
   amountPaid: number;
   payment: PaymentState;
   paymentMethod: string;
+  /** Server-set 70% due date — absent when paid in full at booking. */
+  balanceDueDate?: string;
   bookedAt: string;
   timelineStep: TimelineStepId;
   checklist: ChecklistItem[];
@@ -294,6 +296,8 @@ export interface AccountData {
   profile: TravellerProfile;
   prefs: TravellerPrefs;
   bookings: TripBooking[];
+  /** The real payments ledger (M7C) — advances, balances, refunds. */
+  transactions: WalletTransaction[];
   memories: TripMemory[];
   notifications: AppNotification[];
   referrals: Referral[];

@@ -1,23 +1,27 @@
 # Logout Spells — Backend Documentation
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
-> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B (2026-08-14) applied.**
+> M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 (2026-08-14) applied.**
 > Live today: identity, the spell catalogue, the journal/team/archive domain,
 > the forms domain, the M5 integration objects, the M6 **traveller layer**,
 > the M7A **gateway-agnostic booking layer** (bookings + per-seat participants
 > + consent records, provider-neutral payments ledger, hold-aware seat
 > locking, waitlist, staff-approved change requests, append-only audit spine,
 > notification outbox, manual-era admin RPCs, reviews write path,
-> `booking_report`) — and since M7B the **founder console operates all of it**:
-> bookings list/detail, offline sales, manual payments, confirmations,
-> cancellations, waitlist & holds, change requests, review moderation and CSV
-> exports at `/dashboard/bookings` + `/dashboard/testimonials`. Three Edge
-> Functions are deployed **GATED** (`create-booking` · `payment-webhook` ·
-> `cancel-booking`).
+> `booking_report`) — since M7B the **founder console operates all of it**
+> (`/dashboard/bookings` + `/dashboard/testimonials`), and since M7C the
+> **traveller self-serves on the web**: real My Trips/Trip detail, the real
+> payments ledger, checklist + private star, change requests, waitlist
+> join/leave, verified reviews (author sees own state — 0008), and a Door 2
+> that files an honest **reserve request** through the live inquiries
+> pipeline (the fake checkout — invented taxes and ₹5,000 advance — is
+> retired). Three Edge Functions are deployed **GATED** (`create-booking` ·
+> `payment-webhook` · `cancel-booking`).
 > ⛔ **M7 is NOT payment-ready**: the gateway (decision F) is unchosen — no
-> provider code, no credentials — and the app's Door 2 checkout stays on the
-> mock until phase 7B passes its test-mode end-to-end run. Still mock in the
-> app: bookings & payments UI (Door 2), memories, wallet/XP ledgers (M8).
+> provider code, no credentials — online payment stays absent (words-only 30%
+> advance policy) until phase 7B passes its test-mode end-to-end run. Still
+> device-local in the app: memory albums (M8) and the Expo app's data layer
+> (M6b).
 > [migration-history.md](./migration-history.md) is the record of what is actually
 > live — if it is not listed there, it is not live.
 

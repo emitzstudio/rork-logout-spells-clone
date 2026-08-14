@@ -1,5 +1,7 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { Hourglass } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { AccountPage, EASE, EmptyState } from "@/components/account/bits";
@@ -7,6 +9,12 @@ import TripCard from "@/components/account/TripCard";
 import { useAccount } from "@/data/account/AccountProvider";
 import { tripsByStatus } from "@/data/account/derive";
 import type { TripStatus } from "@/data/account/models";
+import {
+  fetchActiveDepartures,
+  fetchMyWaitlist,
+  leaveWaitlist,
+} from "@/data/account/selfService";
+import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
 const TABS: { id: TripStatus; label: string }[] = [
@@ -82,6 +90,9 @@ export default function Trips() {
         </Link>
       }
     >
+      {/* Waitlists — real queue entries, leave any time while waiting */}
+      <WaitlistStrip />
+
       {/* Tabs */}
       <div className="no-scrollbar -mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
         <div className="flex w-max items-center gap-1 border-b border-cream/[0.08]">
@@ -145,5 +156,107 @@ export default function Trips() {
         )}
       </div>
     </AccountPage>
+  );
+}
+
+/**
+ * The circles a traveller queues for while they're full — own rows only
+ * (RLS hides everyone else's place). Waiting entries can be left any time;
+ * offered seats are held by the team and released only through them.
+ */
+function WaitlistStrip() {
+  const { session } = useAccount();
+  const { publicSpells } = useSpellStore();
+  const queryClient = useQueryClient();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const entriesQuery = useQuery({
+    queryKey: ["my-waitlist", session?.userId ?? "anon"],
+    queryFn: () => fetchMyWaitlist(session?.userId ?? ""),
+    enabled: session !== null,
+    staleTime: 30_000,
+  });
+  const active = useMemo(
+    () =>
+      (entriesQuery.data ?? []).filter((e) => e.status === "waiting" || e.status === "offered"),
+    [entriesQuery.data],
+  );
+
+  const departuresQuery = useQuery({
+    queryKey: ["active-departures"],
+    queryFn: fetchActiveDepartures,
+    enabled: active.length > 0,
+    staleTime: 60_000,
+  });
+
+  if (active.length === 0) return null;
+  const departures = departuresQuery.data ?? [];
+
+  const leave = async (id: string): Promise<void> => {
+    setBusyId(id);
+    try {
+      await leaveWaitlist(id);
+      await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
+    } catch {
+      /* offered rows are held by the team — nothing to do client-side */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="mb-7">
+      <p className="flex items-center gap-2 font-sans text-[10.5px] uppercase tracking-[0.24em] text-cream/40">
+        <Hourglass size={13} className="text-gold/70" /> Waitlists you're on
+      </p>
+      <div className="mt-3 space-y-2.5">
+        {active.map((entry) => {
+          const dep = departures.find((d) => d.id === entry.departureId) ?? null;
+          const spell = dep ? (publicSpells.find((s) => s.id === dep.spellId) ?? null) : null;
+          return (
+            <div
+              key={entry.id}
+              className="flex items-center gap-4 rounded-2xl border border-dashed border-gold/25 bg-gold/[0.03] p-4 md:px-5"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold">
+                <Hourglass size={16} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-sans text-[13.5px] text-cream/90">
+                  {spell ? spell.name : "A full circle"}
+                </p>
+                <p className="mt-0.5 truncate font-sans text-[11.5px] text-cream/40">
+                  {dep !== null && dep.label !== "" ? `${dep.label} · ` : ""}
+                  {entry.seats} seat{entry.seats > 1 ? "s" : ""} ·{" "}
+                  {entry.status === "offered" ? (
+                    <span className="text-gold-light">seats held — check your email</span>
+                  ) : (
+                    "in the queue"
+                  )}
+                </p>
+              </div>
+              {spell && (
+                <Link
+                  to={`/live/${spell.slug}`}
+                  className="shrink-0 font-sans text-[11px] uppercase tracking-[0.18em] text-gold transition-colors hover:text-gold-light"
+                >
+                  View
+                </Link>
+              )}
+              {entry.status === "waiting" && (
+                <button
+                  type="button"
+                  onClick={() => void leave(entry.id)}
+                  disabled={busyId === entry.id}
+                  className="shrink-0 font-sans text-[11px] uppercase tracking-[0.18em] text-cream/40 transition-colors hover:text-cream disabled:opacity-50"
+                >
+                  {busyId === entry.id ? "Leaving…" : "Leave"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
