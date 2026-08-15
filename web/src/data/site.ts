@@ -2,104 +2,12 @@
 
 export const CONTACT_EMAIL = "vidushi@logoutspells.com";
 export const APPLY_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Apply to Host")}`;
-export const JOIN_MAILTO = (spell: string) =>
-  `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Join the ${spell}`)}`;
 
 export const SOCIALS = {
   linkedin: "https://www.linkedin.com/in/vidushiverma2409/",
   instagram: "https://www.instagram.com/veedoshe",
   youtube: "https://www.youtube.com/@TalkETM",
 } as const;
-
-export interface Spell {
-  id: string;
-  type: string;
-  name: string;
-  essence: string;
-  description: string;
-  dates: string;
-  group: string;
-  investment: string;
-  includes: string[];
-  creator: { name: string; initial: string; quote: string };
-  gradient: string;
-  symbol: string;
-}
-
-export const SPELLS: Spell[] = [
-  {
-    id: "culinary",
-    type: "The Gathering Spell",
-    name: "Culinary Spell",
-    essence: "Cook a meal with strangers who become friends.",
-    description:
-      "Five days of slow food, shared tables and open fires. You'll knead, stir, taste and gather — and somewhere between the first course and the last ember, strangers become your people.",
-    dates: "March 14–18",
-    group: "8–12 people",
-    investment: "₹42,000 all-inclusive",
-    includes: [
-      "Accommodation & meals",
-      "Creator-led sessions daily",
-      "Community experiences",
-      "All materials & equipment",
-    ],
-    creator: {
-      name: "Maya Sharma",
-      initial: "M",
-      quote: "\u201CThis isn't a trip. It's a circle.\u201D",
-    },
-    gradient: "from-[#3d2c14] via-[#241a0d] to-[#0a0806]",
-    symbol: "✦",
-  },
-  {
-    id: "movement",
-    type: "The Morning Spell",
-    name: "Movement Spell",
-    essence: "Move through yoga at sunrise. Return to your body.",
-    description:
-      "Breath, stillness and slow mornings in the mountains. Daily practice led by a creator who knows their people — no performance, no posing, just presence.",
-    dates: "Circles open seasonally",
-    group: "8–12 people",
-    investment: "₹38,000 all-inclusive",
-    includes: [
-      "Accommodation & meals",
-      "Sunrise practice daily",
-      "Breathwork & stillness sessions",
-      "All props & equipment",
-    ],
-    creator: {
-      name: "Creator-led",
-      initial: "L",
-      quote: "\u201CYou don't just go somewhere. You belong somewhere.\u201D",
-    },
-    gradient: "from-[#2c2a14] via-[#1d1c0d] to-[#0a0806]",
-    symbol: "◐",
-  },
-  {
-    id: "art",
-    type: "The Making Spell",
-    name: "Art Spell",
-    essence: "Make art without worrying if it's good or bad.",
-    description:
-      "A week of ink, clay and colour with no grades and no gallery. Create for the joy of making, alongside a small circle of people doing the same.",
-    dates: "Circles open seasonally",
-    group: "8–12 people",
-    investment: "₹40,000 all-inclusive",
-    includes: [
-      "Accommodation & meals",
-      "Studio sessions daily",
-      "Community experiences",
-      "All materials & equipment",
-    ],
-    creator: {
-      name: "Creator-led",
-      initial: "L",
-      quote: "\u201CNot scrolling. Not watching. Making.\u201D",
-    },
-    gradient: "from-[#33241a] via-[#20160f] to-[#0a0806]",
-    symbol: "✳",
-  },
-];
 
 export interface DiaryEntry {
   day: string;
@@ -230,61 +138,4 @@ export const FOUNDER_FAVOURITES: FounderFavourite[] = [
   { emoji: "🍷", place: "Tuscany", note: "long tables, longer sunsets" },
 ];
 
-export type ExperienceCategory = "Art" | "Cultural" | "Fashion";
-
-export interface PastSpell {
-  id: string;
-  title: string;
-  category: ExperienceCategory;
-  caption: string;
-  gradient: string;
-  tall?: boolean;
-}
-
-export const PAST_SPELLS: PastSpell[] = [
-  {
-    id: "ink-evenings",
-    title: "Ink Evenings",
-    category: "Art",
-    caption: "Twelve strangers, one studio, zero judgement.",
-    gradient: "from-[#3a2c17] to-[#14100a]",
-    tall: true,
-  },
-  {
-    id: "old-city-walk",
-    title: "Old City Rituals",
-    category: "Cultural",
-    caption: "Lanes, legends and chai at dawn.",
-    gradient: "from-[#2e2618] to-[#120e08]",
-  },
-  {
-    id: "handloom-circle",
-    title: "Handloom Circle",
-    category: "Fashion",
-    caption: "Weaves that carry a hundred years.",
-    gradient: "from-[#33291a] to-[#151009]",
-  },
-  {
-    id: "clay-mornings",
-    title: "Clay Mornings",
-    category: "Art",
-    caption: "Hands in earth, phones in pockets.",
-    gradient: "from-[#2b2213] to-[#100d07]",
-  },
-  {
-    id: "temple-kitchens",
-    title: "Temple Kitchens",
-    category: "Cultural",
-    caption: "A meal cooked for a hundred, shared by twelve.",
-    gradient: "from-[#372a15] to-[#130f08]",
-    tall: true,
-  },
-  {
-    id: "indigo-dye",
-    title: "Indigo Stories",
-    category: "Fashion",
-    caption: "Dyed by hand, worn like memory.",
-    gradient: "from-[#26231c] to-[#0f0d09]",
-  },
-];
 

@@ -85,7 +85,8 @@ interface FormStoreValue {
   publishedForms: LogoutForm[];
   /** Newest first — staff inbox (RLS returns none for visitors). */
   responses: FormResponse[];
-  addResponse: (input: AddResponseInput) => void;
+  /** Resolves only when the response is really stored; throws on failure. */
+  addResponse: (input: AddResponseInput) => Promise<void>;
   markResponseViewed: (id: string) => void;
   /** Door 1 enquiries — staff inbox, newest first. */
   inquiries: ConsoleInquiry[];
@@ -194,27 +195,27 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
 
   /**
    * The public write path — anyone may submit into a published form (RLS
-   * enforces the gate server-side). Display projections are computed exactly
-   * as the console always has.
+   * enforces the gate server-side). M9: the insert is awaited, so the UI can
+   * only show success when the row really landed — failures throw and the
+   * renderer offers a retry instead of a false "Sent".
    */
   const addResponse = useCallback(
-    (input: AddResponseInput) => {
+    async (input: AddResponseInput): Promise<void> => {
       const findValue = (predicate: (answer: ResponseAnswer) => boolean): string =>
         input.answers.find((answer) => predicate(answer) && answer.value.trim() !== "")?.value ?? "";
-      void supabase
-        .from("form_responses")
-        .insert({
-          form_id: input.form.id,
-          spell_id: input.spellId !== null && isUuid(input.spellId) ? input.spellId : null,
-          spell_name: input.spellName ?? "",
-          respondent_name: findValue((a) => a.type === "short_text") || "Anonymous",
-          respondent_phone: findValue((a) => a.type === "phone"),
-          answers: { version: 1, answers: input.answers } as unknown as Json,
-        })
-        .then(({ error }) => {
-          if (error) console.error("[formStore] Response submit failed:", error.message);
-          else void queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
-        });
+      const { error } = await supabase.from("form_responses").insert({
+        form_id: input.form.id,
+        spell_id: input.spellId !== null && isUuid(input.spellId) ? input.spellId : null,
+        spell_name: input.spellName ?? "",
+        respondent_name: findValue((a) => a.type === "short_text") || "Anonymous",
+        respondent_phone: findValue((a) => a.type === "phone"),
+        answers: { version: 1, answers: input.answers } as unknown as Json,
+      });
+      if (error) {
+        console.error("[formStore] Response submit failed:", error.message);
+        throw new Error("Your response couldn't be sent — please try again.");
+      }
+      void queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
     },
     [queryClient],
   );

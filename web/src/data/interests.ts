@@ -2,10 +2,11 @@
  * The bucket-list interest catalogue — the dreams a traveller can drop into
  * the cauldron on Discover Your Spell.
  *
- * Deliberately independent of the recommendation engine: the selected ids are
- * a standalone preference signal that later phases can reuse for matching
- * travellers with similar interests, community circles, companions, AI feeds
- * and friend discovery. Matching against spells is just the first consumer.
+ * M9: the rendered catalogue comes from Supabase only (`useInterests`), with
+ * honest loading / error / empty states — no seed fallback. The static
+ * `INTERESTS` list below stays for exactly one job: validating stored
+ * bucket-list ids (`isKnownInterest`) so garbage never enters state. It is
+ * never rendered in place of live data.
  */
 import { useQuery } from "@tanstack/react-query";
 
@@ -31,7 +32,8 @@ export interface SpellMatch {
   matched: Interest[];
 }
 
-/* ------------------------------- Catalogue -------------------------------- */
+/* ------------------------------ Known-id whitelist ------------------------ */
+/* Mirrors the seeded `interests` table. Used ONLY to validate stored ids. */
 
 export const INTERESTS: Interest[] = [
   { id: "trekking", label: "Trekking", keywords: ["trek", "hike", "hiking", "trail", "summit", "ridge"], categories: ["movement", "wandering"] },
@@ -73,8 +75,6 @@ export const INTERESTS: Interest[] = [
 
 const BY_ID = new Map<string, Interest>(INTERESTS.map((i) => [i.id, i]));
 
-export const interestById = (id: string): Interest | undefined => BY_ID.get(id);
-
 export const isKnownInterest = (id: string): boolean => BY_ID.has(id);
 
 /* --------------------------------- Live data ------------------------------- */
@@ -88,19 +88,26 @@ const fetchInterests = async (): Promise<Interest[]> => {
   return data.map(mapInterest);
 };
 
-/**
- * The cauldron catalogue — live from Supabase (active dreams under RLS), with
- * the seeded constants (identical content) as placeholder so the ritual is
- * interactive on first paint.
- */
-export function useInterests(): Interest[] {
-  const { data } = useQuery({
+export interface InterestCatalogueState {
+  interests: Interest[];
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => void;
+}
+
+/** The cauldron catalogue — live from Supabase, with honest states. */
+export function useInterests(): InterestCatalogueState {
+  const query = useQuery({
     queryKey: ["interests"],
     queryFn: fetchInterests,
-    placeholderData: INTERESTS,
     staleTime: 5 * 60_000,
   });
-  return data ?? INTERESTS;
+  return {
+    interests: query.data ?? [],
+    isLoading: query.isPending,
+    isError: query.isError,
+    refetch: () => void query.refetch(),
+  };
 }
 
 /* -------------------------------- Matching -------------------------------- */
@@ -133,17 +140,16 @@ const haystackOf = (spell: ManagedSpell): string => {
 };
 
 /**
- * Mock recommendation engine — scores spells by how many chosen dreams their
+ * Client-side matcher — scores LIVE spells by how many chosen dreams their
  * content answers (keyword hits weigh 3, ritual-family affinity weighs 1).
- * The backend phase swaps this for real matching; callers keep the shape.
+ * Both inputs come from the database; nothing here invents content.
  */
 export function matchSpellsToInterests(
   interestIds: string[],
   spells: ManagedSpell[],
-  catalogue: Interest[] = INTERESTS,
+  catalogue: Interest[],
 ): SpellMatch[] {
-  const byId =
-    catalogue === INTERESTS ? BY_ID : new Map(catalogue.map((i) => [i.id, i]));
+  const byId = new Map(catalogue.map((i) => [i.id, i]));
   const chosen = interestIds
     .map((id) => byId.get(id))
     .filter((i): i is Interest => i !== undefined);

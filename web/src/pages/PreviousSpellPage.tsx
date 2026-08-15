@@ -8,7 +8,8 @@ import {
   PenLine,
   Users,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -16,13 +17,13 @@ import Page from "@/components/site/Layout";
 import { RatingStars, StarPicker } from "@/components/site/RatingStars";
 import { Reveal } from "@/components/site/Reveal";
 import { useAccount } from "@/data/account/AccountProvider";
+import { fetchMyReviewForBooking, submitReview } from "@/data/account/selfService";
 import { usePreviousSpell } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
 import {
-  canReviewSpell,
-  hasReviewed,
+  eligibleBookingFor,
   ratingSummary,
-  reviewService,
+  reviewsKey,
   useSpellReviews,
 } from "@/data/reviews";
 import type { SpellReview } from "@/data/reviews";
@@ -168,12 +169,15 @@ function ReviewCard({ review }: { review: SpellReview }) {
 
 interface ReviewFormProps {
   past: PreviousSpell;
-  onDone: (review: SpellReview) => void;
+  /** The traveller's completed booking of this spell — the server-verified key. */
+  bookingId: string;
+  authorName: string;
+  authorAvatar: string;
+  onDone: () => void;
   onCancel: () => void;
 }
 
-function ReviewForm({ past, onDone, onCancel }: ReviewFormProps) {
-  const { data } = useAccount();
+function ReviewForm({ past, bookingId, authorName, authorAvatar, onDone, onCancel }: ReviewFormProps) {
   const [rating, setRating] = useState<number>(5);
   const [title, setTitle] = useState<string>("");
   const [body, setBody] = useState<string>("");
@@ -182,29 +186,33 @@ function ReviewForm({ past, onDone, onCancel }: ReviewFormProps) {
 
   const submit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    if (!data) return;
+    if (saving) return;
+    if (title.trim().length < 3) {
+      setError("Give your review a short headline first.");
+      return;
+    }
     if (body.trim().length < 20) {
       setError("Tell the next traveller a little more — at least a few sentences.");
       return;
     }
     setSaving(true);
     try {
-      const review = await reviewService.add({
-        spellId: past.id,
-        authorId: data.profile.id,
-        author: `${data.profile.firstName} ${data.profile.lastName}`.trim(),
-        avatar: data.profile.avatar,
+      await submitReview({
+        previousSpellId: past.id,
+        bookingId,
         rating,
         title,
         body,
         travelledOn: past.season,
+        authorName,
+        authorAvatar,
       });
-      toast.success("Your review is live", {
-        description: "Thank you for lighting the way for the next circle ✦",
+      toast.success("Your story is with us ✦", {
+        description: "It appears here once it's approved — thank you for lighting the way.",
       });
-      onDone(review);
-    } catch {
-      setError("Something slipped — please try again.");
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something slipped — please try again.");
     } finally {
       setSaving(false);
     }
@@ -259,12 +267,15 @@ function ReviewForm({ past, onDone, onCancel }: ReviewFormProps) {
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button type="submit" disabled={saving} className="btn-gold disabled:opacity-60">
-            {saving ? "Publishing…" : "Publish Review"}
+            {saving ? "Sending…" : "Send Review"}
           </button>
           <button type="button" onClick={onCancel} className="btn-ghost-gold">
             Not now
           </button>
         </div>
+        <p className="mt-4 font-sans text-[11px] leading-relaxed text-cream/40">
+          A real person reads every review before it appears — usually within a day.
+        </p>
       </div>
     </motion.form>
   );
@@ -272,22 +283,23 @@ function ReviewForm({ past, onDone, onCancel }: ReviewFormProps) {
 
 function ReviewsSection({ past }: { past: PreviousSpell }) {
   const { session, data } = useAccount();
-  const [reviews, setReviews] = useState<SpellReview[]>([]);
+  const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    void reviewService.list(past.id).then((list) => {
-      if (!cancelled) setReviews(list);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [past.id]);
+  const reviews = useSpellReviews(past.id);
+  const booking = eligibleBookingFor(data, past);
+  const myReviewQuery = useQuery({
+    queryKey: ["my-review", booking?.id ?? "none"],
+    queryFn: () => fetchMyReviewForBooking(booking?.id ?? ""),
+    enabled: booking !== null,
+    staleTime: 60_000,
+  });
 
   const summary = useMemo(() => ratingSummary(reviews), [reviews]);
-  const eligible = canReviewSpell(data, past);
-  const already = hasReviewed(reviews, data?.profile.id ?? null);
+  const eligible = booking !== null;
+  const myReview = myReviewQuery.data ?? null;
+  const already = myReview !== null;
+  const gateChecking = eligible && myReviewQuery.isPending;
 
   return (
     <section aria-label="Reviews" className="px-5 py-20 md:px-10 md:py-28">
@@ -335,7 +347,7 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
 
               {/* The gate — only travellers who completed THIS spell may write. */}
               <div className="mt-7 border-t border-cream/[0.07] pt-6">
-                {eligible && !already && (
+                {eligible && !already && !gateChecking && (
                   <button
                     type="button"
                     onClick={() => setFormOpen((v) => !v)}
@@ -344,9 +356,11 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
                     <PenLine size={15} /> Add Your Review
                   </button>
                 )}
-                {eligible && already && (
+                {eligible && myReview !== null && (
                   <p className="font-serif text-base italic text-gold/80">
-                    You've shared your review — thank you ✦
+                    {myReview.status === "pending"
+                      ? "Your story is with us — it appears once it's approved ✦"
+                      : "You've shared your review — thank you ✦"}
                   </p>
                 )}
                 {!eligible && session && (
@@ -373,13 +387,17 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
           {/* Review list + form */}
           <div>
             <AnimatePresence>
-              {formOpen && eligible && !already && (
+              {formOpen && booking !== null && !already && (
                 <ReviewForm
                   past={past}
+                  bookingId={booking.id}
+                  authorName={`${data?.profile.firstName ?? ""} ${data?.profile.lastName ?? ""}`.trim()}
+                  authorAvatar={data?.profile.avatar ?? ""}
                   onCancel={() => setFormOpen(false)}
-                  onDone={(review) => {
-                    setReviews((prev) => [review, ...prev]);
+                  onDone={() => {
                     setFormOpen(false);
+                    void queryClient.invalidateQueries({ queryKey: reviewsKey(past.id) });
+                    void queryClient.invalidateQueries({ queryKey: ["my-review", booking.id] });
                   }}
                 />
               )}
@@ -406,6 +424,35 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
   );
 }
 
+/* ------------------------------ Honest states ------------------------------ */
+
+function MemoryLoading() {
+  return (
+    <section className="grid min-h-[100svh] place-items-center" aria-busy>
+      <div className="flex flex-col items-center gap-4">
+        <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        <p className="font-sans text-[11px] uppercase tracking-[0.32em] text-gold/70">Opening the memory</p>
+      </div>
+    </section>
+  );
+}
+
+function MemoryError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <section className="grid min-h-[100svh] place-items-center px-5 text-center">
+      <div>
+        <span className="font-serif text-5xl text-gold/60" aria-hidden>
+          ☾
+        </span>
+        <p className="mt-5 font-serif text-2xl italic text-cream/60">The archive couldn't be reached.</p>
+        <button type="button" onClick={onRetry} className="btn-ghost-gold mt-7">
+          Try again
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------------------------- Page ----------------------------------- */
 
 /**
@@ -415,8 +462,10 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
  */
 export default function PreviousSpellPage() {
   const { slug } = useParams<{ slug: string }>();
-  const past = usePreviousSpell(slug);
+  const { spell: past, isLoading, isError, refetch } = usePreviousSpell(slug);
 
+  if (isLoading) return <MemoryLoading />;
+  if (isError) return <MemoryError onRetry={refetch} />;
   if (!past) return <MemoryNotFound />;
 
   return (

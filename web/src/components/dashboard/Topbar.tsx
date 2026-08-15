@@ -2,23 +2,33 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   Bell,
+  CalendarCheck2,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   CornerDownLeft,
   Globe,
+  Inbox,
   LogOut,
+  Mail,
   Menu,
+  MessageSquareQuote,
+  RefreshCw,
   Search,
   Settings,
   Sparkles,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { ACTIVITY_ICON, DASH_NOTIFICATIONS, DASH_SECTIONS, FOUNDER } from "@/data/dashboard";
-import type { DashNotification } from "@/data/dashboard";
-import { SPELLS } from "@/data/site";
+import { useOpsBadges } from "@/data/bookingOps";
+import { DASH_SECTIONS, FOUNDER } from "@/data/dashboard";
+import { useFormStore } from "@/data/formStore";
+import { STATUS_META } from "@/data/spells";
+import { useSpellStore } from "@/data/spellStore";
 import { useGoBack } from "@/hooks/use-go-back";
+import { useStaffAuth } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -33,6 +43,15 @@ interface SearchHit {
   group: "Sections" | "Spells";
 }
 
+/** A live "needs attention" row — real counts from the database, never seeded. */
+interface AttentionRow {
+  id: string;
+  icon: LucideIcon;
+  count: number;
+  label: string;
+  to: string;
+}
+
 const PANEL_CLASS =
   "absolute right-0 top-[calc(100%+10px)] z-50 overflow-hidden rounded-xl border border-cream/10 bg-[#161511] shadow-[0_24px_60px_rgba(0,0,0,0.55)]";
 
@@ -43,15 +62,76 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
   const [menu, setMenu] = useState<MenuKind>("none");
   const [query, setQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
-  const [notifications, setNotifications] = useState<DashNotification[]>(DASH_NOTIFICATIONS);
   const inputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const staff = useStaffAuth();
+  const badges = useOpsBadges();
+  const { spells } = useSpellStore();
+  const { responses, inquiries } = useFormStore();
   /* Back arrow lives in this sticky bar, so it never scrolls away. On the
      console root it exits to the website; on sub-pages it falls back to Overview. */
   const goBack = useGoBack(location.pathname === "/dashboard" ? "/" : "/dashboard");
 
-  const unread = notifications.filter((n) => n.unread).length;
+  const newResponses = useMemo<number>(
+    () => responses.filter((r) => r.status === "new").length,
+    [responses],
+  );
+  const newInquiries = useMemo<number>(
+    () => inquiries.filter((i) => i.status === "new").length,
+    [inquiries],
+  );
+
+  /** Everything that genuinely needs the founder right now — live counts only. */
+  const attention = useMemo<AttentionRow[]>(() => {
+    const rows: AttentionRow[] = [];
+    const b = badges.data;
+    if (b !== undefined) {
+      if (b.pendingBookings > 0)
+        rows.push({
+          id: "att-bookings",
+          icon: CalendarCheck2,
+          count: b.pendingBookings,
+          label: `booking${b.pendingBookings === 1 ? "" : "s"} awaiting confirmation`,
+          to: "/dashboard/bookings",
+        });
+      if (b.openRequests > 0)
+        rows.push({
+          id: "att-requests",
+          icon: ClipboardList,
+          count: b.openRequests,
+          label: `open change request${b.openRequests === 1 ? "" : "s"}`,
+          to: "/dashboard/bookings/requests",
+        });
+      if (b.pendingReviews > 0)
+        rows.push({
+          id: "att-reviews",
+          icon: MessageSquareQuote,
+          count: b.pendingReviews,
+          label: `review${b.pendingReviews === 1 ? "" : "s"} awaiting moderation`,
+          to: "/dashboard/testimonials",
+        });
+    }
+    if (newResponses > 0)
+      rows.push({
+        id: "att-responses",
+        icon: Inbox,
+        count: newResponses,
+        label: `new form response${newResponses === 1 ? "" : "s"}`,
+        to: "/dashboard/forms",
+      });
+    if (newInquiries > 0)
+      rows.push({
+        id: "att-inquiries",
+        icon: Mail,
+        count: newInquiries,
+        label: `new enquir${newInquiries === 1 ? "y" : "ies"}`,
+        to: "/dashboard/forms",
+      });
+    return rows;
+  }, [badges.data, newResponses, newInquiries]);
+
+  const attentionTotal = attention.reduce((sum, row) => sum + row.count, 0);
 
   const sectionLabel = useMemo<string>(() => {
     const match = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
@@ -79,6 +159,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  /** ⌘K hits — console sections plus the LIVE spell collection (drafts included). */
   const hits = useMemo<SearchHit[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -93,15 +174,17 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
       to: `/dashboard/${s.slug}`,
       group: "Sections",
     }));
-    const spells: SearchHit[] = SPELLS.filter((s) => `${s.name} ${s.type}`.toLowerCase().includes(q)).map((s) => ({
-      id: `hit-spell-${s.id}`,
-      label: s.name,
-      sub: s.type,
-      to: "/dashboard/spells",
-      group: "Spells",
-    }));
-    return [...overview, ...sections, ...spells].slice(0, 7);
-  }, [query]);
+    const spellHits: SearchHit[] = spells
+      .filter((s) => `${s.name} ${s.type}`.toLowerCase().includes(q))
+      .map((s) => ({
+        id: `hit-spell-${s.id}`,
+        label: s.name !== "" ? s.name : "Untitled spell",
+        sub: `${s.type}${s.type !== "" ? " · " : ""}${STATUS_META[s.status].label}`,
+        to: `/dashboard/spells/${s.id}/edit`,
+        group: "Spells",
+      }));
+    return [...overview, ...sections, ...spellHits].slice(0, 7);
+  }, [query, spells]);
 
   const goTo = (to: string) => {
     setQuery("");
@@ -109,10 +192,6 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
     inputRef.current?.blur();
     navigate(to);
   };
-
-  const markAllRead = () => setNotifications((list) => list.map((n) => ({ ...n, unread: false })));
-  const markRead = (id: string) =>
-    setNotifications((list) => list.map((n) => (n.id === id ? { ...n, unread: false } : n)));
 
   return (
     <header className="sticky top-0 z-40 border-b border-cream/[0.06] bg-charcoal/95">
@@ -158,7 +237,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
             onKeyDown={(e) => {
               if (e.key === "Enter" && hits[0]) goTo(hits[0].to);
             }}
-            placeholder="Search spells, bookings, pages…"
+            placeholder="Search spells, pages…"
             aria-label="Search the dashboard"
             className="h-10 w-full rounded-lg border border-cream/[0.08] bg-cream/[0.03] pl-9 pr-12 font-sans text-[13px] text-cream outline-none transition-all duration-200 placeholder:text-cream/30 focus:border-gold/40 focus:bg-cream/[0.05]"
           />
@@ -219,19 +298,19 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
 
         {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-1.5">
-          {/* Notifications */}
+          {/* Needs attention — live operational counts, no invented notifications */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setMenu((m) => (m === "bell" ? "none" : "bell"))}
-              aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ""}`}
+              aria-label={`Needs attention${attentionTotal > 0 ? ` (${attentionTotal})` : ""}`}
               className={cn(
                 "relative grid h-10 w-10 place-items-center rounded-lg transition-colors duration-150",
                 menu === "bell" ? "bg-cream/[0.06] text-gold-light" : "text-cream/60 hover:bg-cream/[0.05] hover:text-cream",
               )}
             >
               <Bell className="h-[18px] w-[18px]" />
-              {unread > 0 && (
+              {attentionTotal > 0 && (
                 <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-gold ring-2 ring-charcoal" />
               )}
             </button>
@@ -244,45 +323,57 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
                   transition={{ duration: 0.18, ease: EASE }}
                   className={cn(PANEL_CLASS, "w-[min(92vw,360px)]")}
                 >
-                  <div className="flex items-center justify-between border-b border-cream/[0.06] px-4 py-3">
-                    <p className="font-serif text-lg text-cream">Notifications</p>
-                    <button
-                      type="button"
-                      onClick={markAllRead}
-                      className="font-sans text-[11px] text-gold/80 transition-colors hover:text-gold-light"
-                    >
-                      Mark all read
-                    </button>
+                  <div className="border-b border-cream/[0.06] px-4 py-3">
+                    <p className="font-serif text-lg text-cream">Needs attention</p>
                   </div>
-                  <ul className="max-h-[340px] overflow-y-auto">
-                    {notifications.map((n) => {
-                      const Icon = ACTIVITY_ICON[n.kind];
-                      return (
-                        <li key={n.id}>
-                          <button
-                            type="button"
-                            onClick={() => markRead(n.id)}
-                            className={cn(
-                              "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-cream/[0.03]",
-                              n.unread && "bg-gold/[0.04]",
-                            )}
-                          >
-                            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gold/20 bg-gold/[0.07] text-gold">
-                              <Icon className="h-3.5 w-3.5" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block font-sans text-[12.5px] text-cream">{n.title}</span>
-                              <span className="block truncate font-sans text-[11px] text-cream/45">{n.detail}</span>
-                            </span>
-                            <span className="flex shrink-0 flex-col items-end gap-1">
-                              <span className="whitespace-nowrap font-sans text-[10px] text-cream/30">{n.time}</span>
-                              {n.unread && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-gold" />}
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  {badges.isPending ? (
+                    <p className="px-4 py-6 text-center font-sans text-[12px] text-cream/40">
+                      Checking the wards…
+                    </p>
+                  ) : badges.isError ? (
+                    <div className="flex flex-col items-center gap-3 px-4 py-6">
+                      <p className="font-sans text-[12px] text-cream/45">Couldn't check right now.</p>
+                      <button
+                        type="button"
+                        onClick={() => void badges.refetch()}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-cream/12 px-3 py-1.5 font-sans text-[11px] text-cream/70 transition-colors hover:border-gold/40 hover:text-gold-light"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Try again
+                      </button>
+                    </div>
+                  ) : attention.length === 0 ? (
+                    <p className="px-4 py-7 text-center font-serif text-[14px] italic text-cream/40">
+                      All clear — nothing needs you right now <span className="text-gold/60">✦</span>
+                    </p>
+                  ) : (
+                    <ul className="max-h-[340px] overflow-y-auto">
+                      {attention.map((row) => {
+                        const Icon = row.icon;
+                        return (
+                          <li key={row.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMenu("none");
+                                navigate(row.to);
+                              }}
+                              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-cream/[0.03]"
+                            >
+                              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-gold/20 bg-gold/[0.07] text-gold">
+                                <Icon className="h-3.5 w-3.5" />
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block font-sans text-[12.5px] text-cream">
+                                  <span className="font-medium text-gold-light">{row.count}</span> {row.label}
+                                </span>
+                              </span>
+                              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-cream/25" />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -299,7 +390,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
 
           <span aria-hidden className="mx-1 hidden h-5 w-px bg-cream/[0.08] sm:block" />
 
-          {/* Founder profile */}
+          {/* Founder profile — real session identity */}
           <div className="relative">
             <button
               type="button"
@@ -337,7 +428,9 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
                 >
                   <div className="border-b border-cream/[0.06] px-4 py-3">
                     <p className="font-sans text-[13px] text-cream">{FOUNDER.name}</p>
-                    <p className="font-sans text-[11px] text-cream/40">{FOUNDER.email}</p>
+                    <p className="truncate font-sans text-[11px] text-cream/40">
+                      {staff !== null && staff.email !== "" ? staff.email : FOUNDER.email}
+                    </p>
                   </div>
                   <div className="p-1.5">
                     <Link to="/" onClick={() => setMenu("none")} className={MENU_ITEM_CLASS}>
@@ -349,14 +442,13 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
                     <div aria-hidden className="mx-2 my-1.5 h-px bg-cream/[0.06]" />
                     <button
                       type="button"
-                      disabled
-                      title="Sign-in arrives with a later phase"
-                      className={cn(MENU_ITEM_CLASS, "w-full cursor-not-allowed opacity-45")}
+                      onClick={() => {
+                        setMenu("none");
+                        void staff?.signOut();
+                      }}
+                      className={cn(MENU_ITEM_CLASS, "w-full")}
                     >
                       <LogOut className="h-4 w-4" /> Sign out
-                      <span className="ml-auto rounded-full border border-cream/15 px-1.5 py-px font-sans text-[9px] uppercase tracking-[0.14em] text-cream/40">
-                        Soon
-                      </span>
                     </button>
                   </div>
                 </motion.div>

@@ -1081,6 +1081,69 @@ memory_photos=0 · inquiries=0 · notifications=0 · payments=0 · waitlist=0 ·
 
 ---
 
+## M9 — Website Truth Pass (2026-08-15)
+
+**ZERO schema change — web client only.** No migration, no RLS or permission
+change, no payment-seam change (PaymentProvider seam and the gated
+`create-booking` / `payment-webhook` / `cancel-booking` functions untouched).
+Expo untouched.
+
+### What was fixed (web)
+
+- **Founder dashboard is fully live**: overview stats derive from
+  `booking_report` + `spell_departures` + the live spell store (active/draft
+  counts, upcoming departures, confirmed·pending bookings, ₹ collected);
+  Recent Spells and Upcoming Departures read live rows; Recent Activity reads
+  `booking_events`; the bell became live "needs attention" counts (pending
+  bookings, open change requests, reviews awaiting moderation, new form
+  responses, new enquiries); ⌘K searches the live spell collection; the
+  profile menu shows the real staff session e-mail with a working sign-out.
+  The fabricated stats/activity/notifications/recent-spells/departures/
+  quick-action counts were deleted. Loading skeletons, error + retry and
+  honest zeros everywhere.
+- **Archive reviews** (`/live-spells/previous/{slug}`): the last legacy
+  localStorage review path is gone; the form submits through the same
+  server-verified flow as Trip detail (completed-booking key, lands
+  `pending` for staff moderation, duplicates blocked by the 0008 unique
+  index); the public list renders approved rows only; the author sees a
+  "your story is with us — appears once approved" state.
+- **Silent seed fallbacks removed**: `previous_spells`, `interests` and the
+  Discover mood pages read the database only — empty DB → honest empty
+  state, failed read → error + retry; seed content is never shown.
+- **Public form submissions are truthful**: the insert is awaited; failure
+  shows an error with retry and can never display success; double-submits
+  are guarded.
+- **Account-erasure contact unified** to the established `CONTACT_EMAIL`
+  (a stray second address was in the settings flow).
+- **Dead code deleted** (verified zero importers): `MOCK_SPELLS`,
+  `MOCK_FORMS`, `MOCK_RESPONSES`, the `PREVIOUS_SPELLS` seed archive, the
+  static `SPELLS`/`PAST_SPELLS` marketing arrays, `SpellModal`,
+  `StatusBadge`, `WalletPage`, `ReferralsPage`.
+
+### Verification
+
+- Web static checks + production build pass. Stale-reference sweep clean.
+  Term sweep (mock/demo/sample/fake/placeholder/TODO/FIXME/HACK): every
+  remaining hit is legitimate — the spell-import sample-file feature,
+  generated DB enum types (payment seam), historical doc comments, and
+  protected browser storage (anonymous bucket list, recently viewed,
+  view/sidebar preferences).
+- **Net-zero by construction**: M9 performed no database writes and created
+  no probe data. Read-only anon checks confirm the baseline:
+  approved reviews = 13 · Σseats_booked = 62 · bookings invisible to anon
+  (RLS intact).
+
+### Known limitations
+
+- ⛔ **Payment gateway STILL PENDING** (phase 7B — decisions F + C open).
+  Nothing payment-shaped changed in M9.
+- The static interest whitelist (`isKnownInterest`) mirrors the seeded
+  `interests` table; if new interest rows are added in the database, extend
+  the whitelist (or swap it for a live check) so anonymous bucket-list
+  validation accepts them.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

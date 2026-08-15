@@ -18,7 +18,7 @@ type Filter = "all" | SpellCategoryId;
  * Route: /live-spells/previous. Each card opens its own memory page.
  */
 export default function PreviousSpells() {
-  const all = usePreviousSpells();
+  const { spells: all, isLoading, isError, refetch } = usePreviousSpells();
   const [filter, setFilter] = useState<Filter>("all");
 
   /** Only offer filters for families that actually have past journeys. */
@@ -79,32 +79,56 @@ export default function PreviousSpells() {
             </div>
           </Reveal>
 
-          <motion.div layout className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence mode="popLayout">
-              {visible.map((past) => (
-                <motion.div
-                  key={past.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <PastSpellCard past={past} />
-                </motion.div>
+          {isLoading ? (
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy>
+              {Array.from({ length: 6 }, (_, i) => (
+                <div
+                  key={`past-skeleton-${i}`}
+                  className="h-[320px] animate-pulse rounded-[16px] border border-cream/[0.06] bg-charcoal-deep/50"
+                  aria-hidden
+                />
               ))}
-            </AnimatePresence>
-          </motion.div>
+            </div>
+          ) : isError ? (
+            <div className="mt-10 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-20 text-center">
+              <span aria-hidden className="font-serif text-3xl text-gold/60">☾</span>
+              <p className="mt-4 font-serif text-2xl italic text-cream/70">
+                The archive couldn't be reached.
+              </p>
+              <button type="button" onClick={refetch} className="btn-ghost-gold mt-7">
+                Try again
+              </button>
+            </div>
+          ) : (
+            <>
+              <motion.div layout className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence mode="popLayout">
+                  {visible.map((past) => (
+                    <motion.div
+                      key={past.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      <PastSpellCard past={past} />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
 
-          {visible.length === 0 && (
-            <Reveal>
-              <div className="mt-10 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-20 text-center">
-                <span aria-hidden className="font-serif text-3xl text-gold/60">☾</span>
-                <p className="mt-4 font-serif text-2xl italic text-cream/70">
-                  No journeys in this circle yet.
-                </p>
-              </div>
-            </Reveal>
+              {visible.length === 0 && (
+                <Reveal>
+                  <div className="mt-10 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-20 text-center">
+                    <span aria-hidden className="font-serif text-3xl text-gold/60">☾</span>
+                    <p className="mt-4 font-serif text-2xl italic text-cream/70">
+                      No journeys in this circle yet.
+                    </p>
+                  </div>
+                </Reveal>
+              )}
+            </>
           )}
 
           <Reveal className="mt-20 text-center">

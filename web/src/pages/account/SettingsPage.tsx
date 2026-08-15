@@ -9,6 +9,7 @@ import { useAccount } from "@/data/account/AccountProvider";
 import { AccountError } from "@/data/account/models";
 import type { TravellerPrefs } from "@/data/account/models";
 import { accountService } from "@/data/account/service";
+import { CONTACT_EMAIL } from "@/data/site";
 import { cn } from "@/lib/utils";
 
 interface PrefRowDef {
@@ -130,7 +131,7 @@ export default function SettingsPage() {
             </p>
           </div>
           <a
-            href={`mailto:hello@logoutspells.com?subject=${encodeURIComponent("Please erase my account")}&body=${encodeURIComponent(`Please erase the account for ${data.profile.email}.`)}`}
+            href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Please erase my account")}&body=${encodeURIComponent(`Please erase the account for ${data.profile.email}.`)}`}
             className="inline-flex items-center gap-2 rounded-md border border-red-400/30 px-5 py-2.5 font-sans text-[12px] tracking-[0.08em] text-red-300/90 transition-all hover:border-red-400/60 hover:bg-red-400/[0.08] active:scale-[0.98]"
           >
             <Mail size={13} /> Write to us

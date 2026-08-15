@@ -356,9 +356,13 @@ interface FlowProps {
   answers: AnswerMap;
   setValue: (id: string, value: AnswerValue) => void;
   onFinish: () => void;
+  /** True while the response is being written — the submit control waits honestly. */
+  submitting: boolean;
+  /** Failure from the write — shown at the submit control; retrying is allowed. */
+  submitError: string | null;
 }
 
-function ConversationalFlow({ form, answers, setValue, onFinish }: FlowProps) {
+function ConversationalFlow({ form, answers, setValue, onFinish, submitting, submitError }: FlowProps) {
   /** -1 = intro screen, then one stage per question. */
   const [stage, setStage] = useState<number>(-1);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -384,6 +388,7 @@ function ConversationalFlow({ form, answers, setValue, onFinish }: FlowProps) {
   };
 
   const advance = (): void => {
+    if (submitting) return;
     if (!question) {
       go(0, 1);
       return;
@@ -508,14 +513,30 @@ function ConversationalFlow({ form, answers, setValue, onFinish }: FlowProps) {
                   )}
                 </AnimatePresence>
                 <div className="mt-7 flex items-center gap-3">
-                  <button type="button" onClick={advance} className="btn-gold !px-6 !py-3 !text-[12.5px]">
-                    {isLast ? (form.submitLabel.trim() !== "" ? form.submitLabel : "Submit") : "OK"}
+                  <button
+                    type="button"
+                    onClick={advance}
+                    disabled={submitting}
+                    className="btn-gold !px-6 !py-3 !text-[12.5px] disabled:opacity-60"
+                  >
+                    {isLast
+                      ? submitting
+                        ? "Sending…"
+                        : form.submitLabel.trim() !== ""
+                          ? form.submitLabel
+                          : "Submit"
+                      : "OK"}
                     {isLast ? <ArrowRight size={14} /> : <Check size={14} />}
                   </button>
                   <span className="hidden items-center gap-1.5 font-sans text-[10.5px] uppercase tracking-[0.16em] text-cream/30 sm:flex">
                     press Enter <CornerDownLeft className="h-3 w-3" />
                   </span>
                 </div>
+                {submitError !== null && isLast && (
+                  <p role="alert" className="mt-3 font-sans text-[12px] text-red-300">
+                    {submitError}
+                  </p>
+                )}
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -554,10 +575,11 @@ function ConversationalFlow({ form, answers, setValue, onFinish }: FlowProps) {
 
 /* ---------------------------- Traditional flow ----------------------------- */
 
-function TraditionalFlow({ form, answers, setValue, onFinish }: FlowProps) {
+function TraditionalFlow({ form, answers, setValue, onFinish, submitting, submitError }: FlowProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const submit = (): void => {
+    if (submitting) return;
     const next: Record<string, string> = {};
     for (const question of form.questions) {
       const problem = answerError(question, answers[question.id]);
@@ -630,9 +652,20 @@ function TraditionalFlow({ form, answers, setValue, onFinish }: FlowProps) {
           ))}
         </div>
 
-        <button type="button" onClick={submit} className="btn-gold mt-10 w-full !py-4 !text-[13.5px] sm:w-auto sm:!px-10">
-          {form.submitLabel.trim() !== "" ? form.submitLabel : "Submit"} <ArrowRight size={15} />
+        <button
+          type="button"
+          onClick={submit}
+          disabled={submitting}
+          className="btn-gold mt-10 w-full !py-4 !text-[13.5px] disabled:opacity-60 sm:w-auto sm:!px-10"
+        >
+          {submitting ? "Sending…" : form.submitLabel.trim() !== "" ? form.submitLabel : "Submit"}{" "}
+          <ArrowRight size={15} />
         </button>
+        {submitError !== null && (
+          <p role="alert" className="mt-3 font-sans text-[12px] text-red-300">
+            {submitError}
+          </p>
+        )}
         <p className="mt-4 font-serif text-[12.5px] italic text-cream/30">
           Logout Spells <span className="text-gold/50">✦</span>
         </p>
@@ -647,9 +680,11 @@ interface FormRendererProps {
   form: LogoutForm;
   /**
    * Persists the response. Omit for preview mode — the flow still works,
-   * but the success screen notes that nothing was recorded.
+   * but the success screen notes that nothing was recorded. May return a
+   * promise: success shows only after it resolves; a rejection surfaces at
+   * the submit control with a retry.
    */
-  onSubmit?: (answers: ResponseAnswer[]) => void;
+  onSubmit?: (answers: ResponseAnswer[]) => void | Promise<void>;
   className?: string;
 }
 
@@ -662,13 +697,39 @@ interface FormRendererProps {
 export default function FormRenderer({ form, onSubmit, className }: FormRendererProps) {
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [done, setDone] = useState<boolean>(false);
+  const [sending, setSending] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const setValue = (id: string, value: AnswerValue): void =>
     setAnswers((current) => ({ ...current, [id]: value }));
 
+  /**
+   * M9: the success screen shows only after the write really lands. A failed
+   * write keeps the visitor on the form with the error and a retry — the UI
+   * can never claim "Sent" for a response that was lost.
+   */
+  const completeSubmit = async (): Promise<void> => {
+    if (sending || done) return;
+    if (!onSubmit) {
+      setDone(true);
+      return;
+    }
+    setSending(true);
+    setSubmitError(null);
+    try {
+      await onSubmit(buildAnswers(form, answers));
+      setDone(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Your response couldn't be sent — please try again.",
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
   const finish = (): void => {
-    onSubmit?.(buildAnswers(form, answers));
-    setDone(true);
+    void completeSubmit();
   };
 
   return (
@@ -676,9 +737,23 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
       {done ? (
         <SuccessScreen form={form} preview={onSubmit === undefined} />
       ) : form.style === "conversational" ? (
-        <ConversationalFlow form={form} answers={answers} setValue={setValue} onFinish={finish} />
+        <ConversationalFlow
+          form={form}
+          answers={answers}
+          setValue={setValue}
+          onFinish={finish}
+          submitting={sending}
+          submitError={submitError}
+        />
       ) : (
-        <TraditionalFlow form={form} answers={answers} setValue={setValue} onFinish={finish} />
+        <TraditionalFlow
+          form={form}
+          answers={answers}
+          setValue={setValue}
+          onFinish={finish}
+          submitting={sending}
+          submitError={submitError}
+        />
       )}
     </div>
   );

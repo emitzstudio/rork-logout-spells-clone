@@ -5,7 +5,6 @@
  * curates live spells (via CMS category mapping + explicit picks) and past
  * journeys for inspiration. `discoverService` is the backend seam.
  */
-import { PREVIOUS_SPELLS } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
 import type { ManagedSpell, SpellCategoryId } from "@/data/spells";
 
@@ -173,12 +172,12 @@ export const discoverService = {
     const families = new Set(category.spellCategories);
     return publicSpells.filter((s) => picked.has(s.slug) || families.has(s.category));
   },
-  /** Past journeys that carry the category's mood (legacy mood page — reads
-   * the seeded archive constants; content matches the database seeds). */
-  relatedPast(category: DiscoverCategory): PreviousSpell[] {
+  /** Past journeys that carry the category's mood — picked by slug from the
+   * LIVE archive the caller fetched (M9: no seeded fallback). */
+  relatedPast(category: DiscoverCategory, archive: PreviousSpell[]): PreviousSpell[] {
     const out: PreviousSpell[] = [];
     for (const slug of category.pastSlugs) {
-      const past = PREVIOUS_SPELLS.find((s) => s.slug === slug);
+      const past = archive.find((s) => s.slug === slug);
       if (past) out.push(past);
     }
     return out;

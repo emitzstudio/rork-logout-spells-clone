@@ -1,13 +1,11 @@
 /**
- * Reviews domain — traveller reviews on completed (previous) spells.
+ * Reviews domain — server-verified traveller reviews on archive pages.
  *
- * M5: reads come from Supabase (the seeded testimony plus everything staff
- * moderation leaves standing). The ADD flow stays device-local on purpose —
- * the real write path arrives in M7 together with its completed-booking
- * proof; until then no client role can insert a review (no policy exists).
- *
- * Eligibility is a pure rule: only travellers with a COMPLETED booking of
- * that spell may write a review (`canReviewSpell`). Everyone can read.
+ * Reads come from Supabase and render APPROVED testimony only. Writes go
+ * through `submitReview` (@/data/account/selfService): the server verifies
+ * the booking really is the author's completed trip on this spell, the review
+ * lands 'pending' for staff moderation, and the unique index blocks duplicate
+ * submissions. The mock-era device-local (localStorage) path is gone.
  */
 import { useQuery } from "@tanstack/react-query";
 
@@ -45,65 +43,26 @@ export interface RatingSummary {
   distribution: [number, number, number, number, number];
 }
 
-/* ------------------------------ Persistence ------------------------------- */
-/* Device-local reviews from the mock account era — merged into reads until
- * M7 replaces this path with the real, proof-checked INSERT. */
-
-const STORE_KEY = "ls-spell-reviews-v1";
-
-const isReview = (value: unknown): value is SpellReview => {
-  if (typeof value !== "object" || value === null) return false;
-  const r = value as Record<string, unknown>;
-  return (
-    typeof r.id === "string" &&
-    typeof r.spellId === "string" &&
-    typeof r.body === "string" &&
-    typeof r.rating === "number"
-  );
-};
-
-const readStored = (): SpellReview[] => {
-  try {
-    const raw = window.localStorage.getItem(STORE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isReview);
-  } catch {
-    return [];
-  }
-};
-
-const writeStored = (reviews: SpellReview[]): void => {
-  try {
-    window.localStorage.setItem(STORE_KEY, JSON.stringify(reviews));
-  } catch (error) {
-    console.warn("[reviews] Could not persist review:", error);
-  }
-};
-
 /* -------------------------------- Rules ----------------------------------- */
 
+/** A traveller booking as the account bundle carries it. */
+export type EligibleBooking = AccountData["bookings"][number];
+
 /**
- * THE gate: only travellers who completed THAT spell may write a review.
- * Reads the account bundle's bookings and matches on the live-spell slug the
- * circle ran as. Everyone else is read-only.
+ * THE gate: the traveller's COMPLETED booking of this spell — the key the
+ * server-verified review write needs — or null when they may only read.
  */
-export const canReviewSpell = (
+export const eligibleBookingFor = (
   data: AccountData | null,
   spell: PreviousSpell,
-): boolean => {
-  if (!data || spell.spellSlug === null) return false;
-  return data.bookings.some(
-    (b) => b.spell.slug === spell.spellSlug && effectiveStatus(b) === "completed",
+): EligibleBooking | null => {
+  if (!data || spell.spellSlug === null) return null;
+  return (
+    data.bookings.find(
+      (b) => b.spell.slug === spell.spellSlug && effectiveStatus(b) === "completed",
+    ) ?? null
   );
 };
-
-/** One review per traveller per spell. */
-export const hasReviewed = (
-  reviews: SpellReview[],
-  authorId: string | null,
-): boolean => authorId !== null && reviews.some((r) => r.authorId === authorId);
 
 export const ratingSummary = (reviews: SpellReview[]): RatingSummary => {
   const distribution: [number, number, number, number, number] = [0, 0, 0, 0, 0];
@@ -120,66 +79,28 @@ export const ratingSummary = (reviews: SpellReview[]): RatingSummary => {
   };
 };
 
-/* --------------------------------- Service -------------------------------- */
+/* --------------------------------- Reads ----------------------------------- */
+
+export const reviewsKey = (previousSpellId: string) => ["reviews", previousSpellId] as const;
 
 const fetchSpellReviews = async (previousSpellId: string): Promise<SpellReview[]> => {
-  /* Placeholder-era ids ("ps-himalayan") must never hit a uuid column. */
+  /* Non-uuid ids can't exist in the database — nothing to read. */
   if (!isUuid(previousSpellId)) return [];
   const { data, error } = await supabase
     .from("reviews")
     .select("*")
     .eq("previous_spell_id", previousSpellId)
+    .eq("status", "approved")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data.map(mapReview);
 };
 
-export interface AddReviewInput {
-  spellId: string;
-  authorId: string;
-  author: string;
-  avatar: string;
-  rating: number;
-  title: string;
-  body: string;
-  travelledOn: string;
-}
-
-export const reviewService = {
-  /** Database testimony + this device's mock-era additions, newest first. */
-  async list(spellId: string): Promise<SpellReview[]> {
-    const fromDb = await fetchSpellReviews(spellId);
-    const stored = readStored().filter((r) => r.spellId === spellId);
-    return [...stored, ...fromDb].sort(
-      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-    );
-  },
-
-  /** Device-local until M7 opens the proof-checked write path. */
-  async add(input: AddReviewInput): Promise<SpellReview> {
-    const review: SpellReview = {
-      id: `rv-user-${Date.now().toString(36)}`,
-      spellId: input.spellId,
-      authorId: input.authorId,
-      author: input.author,
-      avatar: input.avatar,
-      rating: Math.min(5, Math.max(1, Math.round(input.rating))),
-      title: input.title.trim(),
-      body: input.body.trim(),
-      travelledOn: input.travelledOn,
-      createdAt: new Date().toISOString(),
-      verified: true,
-    };
-    writeStored([review, ...readStored()]);
-    return review;
-  },
-};
-
-/** Reviews for one journey — shared cache, card aggregates and pages alike. */
+/** Approved reviews for one journey — shared cache for cards and pages alike. */
 export function useSpellReviews(previousSpellId: string): SpellReview[] {
   const { data } = useQuery({
-    queryKey: ["reviews", previousSpellId],
-    queryFn: () => reviewService.list(previousSpellId),
+    queryKey: reviewsKey(previousSpellId),
+    queryFn: () => fetchSpellReviews(previousSpellId),
     staleTime: 60_000,
   });
   return data ?? [];

@@ -2,7 +2,7 @@
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
 > M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 · M8 + 0009 ·
-> M6b (2026-08-14) applied.**
+> M6b (2026-08-14) · M9 (2026-08-15) applied.**
 > Live today: identity, the spell catalogue, the journal/team/archive domain,
 > the forms domain, the M5 integration objects, the M6 **traveller layer**,
 > the M7A **gateway-agnostic booking layer** (bookings + per-seat participants
@@ -96,6 +96,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M7 | Bookings & payments | **7A (applied 2026-08-13 — verified):** the full gateway-agnostic layer — bookings/participants/terms, provider-neutral payments ledger, seat locking, waitlist, change requests, audit spine, outbox, manual-era admin RPCs, reviews write path, `booking_report`, gated Edge Functions. **7B (pending):** gateway adapter (decision F), secrets, test-mode E2E, app switch off the mock | **7A applied — NOT payment-ready** |
 | M8 | Memories & trip albums | `memories`, `memory_photos`, guard triggers, private `memories` bucket (signed URLs), realtime notifications, live album UI (web) | **Applied 2026-08-14 — verified** |
 | M6b | Expo app onto the live backend | ZERO schema change — client swap only: native Supabase client (AsyncStorage sessions), live account bundle + catalogue + albums + realtime inbox, honest booking doors (W), forms in-app browser (X), demo world retired (Z), team portraits repointed into `site-media/team/*`; attestation `m6b-verify-expo-live` | **Applied 2026-08-14 — verified** |
+| M9 | Website truth pass | ZERO schema change — web only: founder dashboard fully live (`booking_report` + `spell_departures` + `booking_events` + live attention counts; every fabricated number deleted), archive review form on the server-verified pending-moderation path (localStorage machinery deleted), seed fallbacks removed (previous spells · interests · mood pages → honest load/error/empty states), form submits await the real insert (no false success), erasure contact unified, dead mock modules deleted | **Applied 2026-08-15 — verified · payment gateway STILL PENDING** |
 | — | Future (designed only) | `referrals`, loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
 
 ## Decision log

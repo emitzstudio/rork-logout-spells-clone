@@ -51,12 +51,38 @@ function MatchRailCard({ match }: { match: SpellMatch }) {
 export default function BucketListSection() {
   const { interests, brewed } = useBucketList();
   const { publicSpells } = useSpellStore();
-  const catalogue = useInterests();
+  const {
+    interests: catalogue,
+    isLoading: catalogueLoading,
+    isError: catalogueError,
+    refetch: refetchCatalogue,
+  } = useInterests();
 
   const matches = useMemo<SpellMatch[]>(
     () => (brewed ? matchSpellsToInterests(interests, publicSpells, catalogue).slice(0, 6) : []),
     [brewed, interests, publicSpells, catalogue],
   );
+
+  /* Brewed travellers: stay quiet while the catalogue loads; honest retry on failure. */
+  if (brewed && catalogueLoading) return null;
+  if (brewed && catalogueError) {
+    return (
+      <section aria-labelledby="bucket-heading" className="px-5 py-16 md:px-10">
+        <div className="mx-auto max-w-7xl rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-12 text-center">
+          <p className="font-serif text-xl italic text-cream/55">
+            Your matched spells couldn't be loaded.
+          </p>
+          <button
+            type="button"
+            onClick={refetchCatalogue}
+            className="btn-ghost-gold mt-5 !py-2.5 !text-xs"
+          >
+            Try again
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   if (brewed && matches.length > 0) {
     return (

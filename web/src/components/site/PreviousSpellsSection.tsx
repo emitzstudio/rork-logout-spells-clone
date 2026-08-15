@@ -99,11 +99,27 @@ export default function PreviousSpellsSection({
   eyebrow = "A look back",
   className,
 }: PreviousSpellsSectionProps) {
-  const all = usePreviousSpells();
+  const { spells: all, isLoading, isError, refetch } = usePreviousSpells();
   const featured = useMemo(() => all.slice(0, 6), [all]);
   const itemKey = useCallback((past: PreviousSpell) => past.id, []);
   const renderItem = useCallback((past: PreviousSpell) => <PastSpellCard past={past} />, []);
 
+  /* Quiet while loading; honest retry when the archive read fails. */
+  if (isLoading) return null;
+  if (isError) {
+    return (
+      <section aria-labelledby="previous-spells-heading" className={cn("px-5 py-16 md:px-10", className)}>
+        <div className="mx-auto max-w-7xl rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-12 text-center">
+          <p className="font-serif text-xl italic text-cream/55">
+            Previous spells couldn't be reached.
+          </p>
+          <button type="button" onClick={refetch} className="btn-ghost-gold mt-5 !py-2.5 !text-xs">
+            Try again
+          </button>
+        </div>
+      </section>
+    );
+  }
   if (featured.length === 0) return null;
 
   return (

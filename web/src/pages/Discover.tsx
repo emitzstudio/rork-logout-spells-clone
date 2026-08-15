@@ -431,7 +431,12 @@ export default function Discover() {
   const isDesktop = useIsDesktop();
   const { interests: selectedIds, brewed, add, remove, brew, clear } = useBucketList();
   const { publicSpells } = useSpellStore();
-  const catalogue = useInterests();
+  const {
+    interests: catalogue,
+    isLoading: catalogueLoading,
+    isError: catalogueError,
+    refetch: refetchCatalogue,
+  } = useInterests();
 
   const [phase, setPhase] = useState<RitualPhase>(() => (brewed ? "revealed" : "brewing"));
   const [altar, setAltar] = useState<AltarState>(() => (brewed ? "gone" : "standing"));
@@ -954,6 +959,44 @@ export default function Discover() {
             isDesktop ? "h-[780px] lg:h-[820px]" : "flex flex-col items-center pt-4",
           )}
         >
+          {/* Honest catalogue states — the dreams come from the database only. */}
+          {phase === "brewing" && catalogue.length === 0 && (
+            <div
+              className={cn(
+                "z-40 flex flex-col items-center justify-center gap-4 text-center",
+                isDesktop ? "absolute inset-x-0 top-8" : "px-6 py-10",
+              )}
+            >
+              {catalogueLoading ? (
+                <>
+                  <span
+                    aria-hidden
+                    className="h-8 w-8 animate-spin rounded-full border-2 border-gold/20 border-t-gold"
+                  />
+                  <p className="font-sans text-[11px] uppercase tracking-[0.3em] text-gold/70">
+                    Gathering the dreams…
+                  </p>
+                </>
+              ) : catalogueError ? (
+                <>
+                  <p className="font-serif text-xl italic text-cream/55">
+                    The dream catalogue couldn't be reached.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={refetchCatalogue}
+                    className="btn-ghost-gold !py-2.5 !text-xs"
+                  >
+                    Try again
+                  </button>
+                </>
+              ) : (
+                <p className="font-serif text-xl italic text-cream/55">
+                  No dreams in the catalogue yet.
+                </p>
+              )}
+            </div>
+          )}
           {isDesktop ? (
             <>
               {/* The cauldron — hero of the stage, absolute so nothing shifts. */}

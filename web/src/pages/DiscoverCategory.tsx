@@ -7,6 +7,7 @@ import Page from "@/components/site/Layout";
 import { PastSpellCard } from "@/components/site/PreviousSpellsSection";
 import { Reveal } from "@/components/site/Reveal";
 import { discoverService } from "@/data/discover";
+import { usePreviousSpells } from "@/data/previousSpells";
 import { formatINR } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
@@ -82,14 +83,15 @@ export default function DiscoverCategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? discoverService.bySlug(slug) : undefined;
   const { publicSpells } = useSpellStore();
+  const { spells: archive } = usePreviousSpells();
 
   const curated = useMemo(
     () => (category ? discoverService.curatedSpells(category, publicSpells) : []),
     [category, publicSpells],
   );
   const past = useMemo(
-    () => (category ? discoverService.relatedPast(category) : []),
-    [category],
+    () => (category ? discoverService.relatedPast(category, archive) : []),
+    [category, archive],
   );
   const gallery = useMemo(
     () => (category ? discoverService.galleryUrls(category) : []),
