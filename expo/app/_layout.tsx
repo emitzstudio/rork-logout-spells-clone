@@ -1,4 +1,8 @@
 import {
+  Caveat_500Medium,
+  Caveat_600SemiBold,
+} from "@expo-google-fonts/caveat";
+import {
   CormorantGaramond_500Medium,
   CormorantGaramond_500Medium_Italic,
   CormorantGaramond_600SemiBold,
@@ -46,7 +50,7 @@ const navTheme: Theme = {
 };
 
 function AppShell() {
-  const { portalDone, setPortalDone } = useApp();
+  const { portalDone, portalReady, setPortalDone } = useApp();
 
   return (
     <View style={styles.root}>
@@ -64,13 +68,17 @@ function AppShell() {
       <ApplyHostSheet />
       {/* Decision Y — realtime whispers land as a quiet banner over everything. */}
       <WhisperBanner />
-      {!portalDone ? <PortalGate onDone={() => setPortalDone(true)} /> : null}
+      {/* The portal plays once per device; afterwards the app opens straight in. */}
+      {!portalReady ? <View style={styles.cover} /> : null}
+      {portalReady && !portalDone ? <PortalGate onDone={() => setPortalDone(true)} /> : null}
     </View>
   );
 }
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
+    Caveat_500Medium,
+    Caveat_600SemiBold,
     CormorantGaramond_500Medium,
     CormorantGaramond_500Medium_Italic,
     CormorantGaramond_600SemiBold,
@@ -118,5 +126,10 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  cover: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.charcoal,
+    zIndex: 1000,
   },
 });

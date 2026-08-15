@@ -32,6 +32,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PressableScale } from "@/components/Buttons";
 import MagicDust from "@/components/MagicDust";
+import { LoadingRing } from "@/components/States";
+import SuccessBurst from "@/components/SuccessBurst";
 import { Colors, Fonts } from "@/constants/theme";
 import {
   fetchActiveDeparture,
@@ -135,16 +137,16 @@ const fieldStyles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.sansSemi,
-    fontSize: 9.5,
-    letterSpacing: 2,
-    color: "rgba(245,240,232,0.45)",
+    fontSize: 10,
+    letterSpacing: 1.8,
+    color: Colors.goldLight,
   },
   input: {
     borderWidth: 1,
-    borderColor: "rgba(245,240,232,0.12)",
-    backgroundColor: "rgba(245,240,232,0.03)",
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderColor: "rgba(245,240,232,0.08)",
+    backgroundColor: "rgba(10,8,6,0.5)",
+    borderRadius: 10,
+    paddingHorizontal: 16,
     paddingVertical: 13,
     fontFamily: Fonts.sans,
     fontSize: 14.5,
@@ -155,7 +157,7 @@ const fieldStyles = StyleSheet.create({
     textAlignVertical: "top",
   },
   errorBorder: {
-    borderColor: "rgba(201,111,90,0.6)",
+    borderColor: "rgba(198,95,82,0.45)",
   },
 });
 
@@ -644,9 +646,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
 
   const renderInquireSent = () => (
     <View style={[styles.stepBody, styles.centered]}>
-      <View style={styles.successRing}>
-        <Check size={30} color={Colors.goldLight} />
-      </View>
+      <SuccessBurst haptic={false} />
       <Text style={styles.doneTitle}>Inquiry received ✦</Text>
       <Text style={styles.doneSub}>
         Reference {inqRef} — a real human reads every inquiry and replies within 24 hours at{" "}
@@ -922,7 +922,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
 
   const renderSending = () => (
     <View style={[styles.stepBody, styles.centered, styles.sendingBody]}>
-      <ActivityIndicator size="large" color={Colors.goldLight} />
+      <LoadingRing size={38} />
       <Text style={styles.sendingLine}>Sending your request…</Text>
       <Text style={styles.sendingSub}>Don't close this — it only takes a moment.</Text>
     </View>
@@ -930,9 +930,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
 
   const renderRequested = () => (
     <View style={[styles.stepBody, styles.centered]}>
-      <View style={styles.successRing}>
-        <Check size={30} color={Colors.goldLight} />
-      </View>
+      <SuccessBurst haptic={false} />
       <Text style={styles.doneTitle}>Request received ✦</Text>
       <Text style={styles.doneSub}>
         Reference {requestRef} · {seats} seat{seats > 1 ? "s" : ""} · {dates.label}
@@ -1112,8 +1110,12 @@ const styles = StyleSheet.create({
     width: 14,
   },
   railActive: {
-    backgroundColor: Colors.gold,
+    backgroundColor: Colors.goldLight,
     width: 22,
+    shadowColor: Colors.gold,
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
   },
   scrollBody: {
     paddingHorizontal: 20,
@@ -1233,15 +1235,20 @@ const styles = StyleSheet.create({
   error: {
     fontFamily: Fonts.sansMedium,
     fontSize: 12.5,
-    color: Colors.error,
+    color: Colors.coralText,
   },
   primaryBtn: {
     marginTop: 6,
     backgroundColor: Colors.gold,
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 15,
     alignItems: "center",
     alignSelf: "stretch",
+    shadowColor: Colors.gold,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   primaryBtnText: {
     fontFamily: Fonts.sansSemi,
@@ -1253,8 +1260,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
     borderWidth: 1,
     borderColor: Colors.goldBorder,
-    borderRadius: 12,
-    paddingVertical: 15,
+    borderRadius: 10,
+    paddingVertical: 14,
     alignItems: "center",
     alignSelf: "stretch",
   },
@@ -1271,17 +1278,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: "rgba(245,240,232,0.35)",
   },
-  successRing: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    borderWidth: 1.5,
-    borderColor: "rgba(184,150,62,0.5)",
-    backgroundColor: "rgba(184,150,62,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 6,
-  },
+
   doneTitle: {
     marginTop: 4,
     fontFamily: Fonts.serif,

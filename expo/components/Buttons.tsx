@@ -1,15 +1,17 @@
 import React, { useRef } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Pressable,
   StyleProp,
   StyleSheet,
   Text,
   TextStyle,
+  View,
   ViewStyle,
 } from "react-native";
 
-import { Colors, Fonts } from "@/constants/theme";
+import { Colors, Fonts, GOLD_SHADOW, Radius } from "@/constants/theme";
 import { hapticLight, hapticMedium } from "@/lib/haptics";
 
 interface PressableScaleProps {
@@ -79,86 +81,215 @@ interface ButtonProps {
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   small?: boolean;
+  /** Shows a spinner in place of the label while keeping the button's size. */
+  busy?: boolean;
+  disabled?: boolean;
+  icon?: React.ReactNode;
   testID?: string;
 }
 
-/** Solid gold primary button with dark letterspaced label. */
-export function GoldButton({ label, onPress, style, textStyle, small = false, testID }: ButtonProps) {
+/** Primary button — exact port of the website's .btn-gold. */
+export function GoldButton({
+  label,
+  onPress,
+  style,
+  textStyle,
+  small = false,
+  busy = false,
+  disabled = false,
+  icon,
+  testID,
+}: ButtonProps) {
+  const blocked = disabled || busy;
   return (
     <PressableScale
       onPress={onPress}
       haptic="medium"
-      style={[styles.gold, small ? styles.smallButton : null, style]}
+      disabled={blocked}
+      style={[
+        styles.gold,
+        small ? styles.smallButton : null,
+        disabled ? styles.disabled : null,
+        style,
+      ]}
       testID={testID}
     >
-      <Text style={[styles.goldLabel, small ? styles.smallLabel : null, textStyle]}>
-        {label}
-      </Text>
+      <View style={[styles.inner, busy ? styles.innerHidden : null]}>
+        {icon ?? null}
+        <Text style={[styles.goldLabel, small ? styles.smallLabel : null, textStyle]}>
+          {label}
+        </Text>
+      </View>
+      {busy ? (
+        <View style={styles.spinner}>
+          <ActivityIndicator size="small" color={Colors.charcoalDeep} />
+        </View>
+      ) : null}
     </PressableScale>
   );
 }
 
-/** Transparent button with a gold border and gold label. */
-export function GhostButton({ label, onPress, style, textStyle, small = false, testID }: ButtonProps) {
+/** Secondary button — exact port of the website's .btn-ghost-gold. */
+export function GhostButton({
+  label,
+  onPress,
+  style,
+  textStyle,
+  small = false,
+  busy = false,
+  disabled = false,
+  icon,
+  testID,
+}: ButtonProps) {
+  const blocked = disabled || busy;
   return (
     <PressableScale
       onPress={onPress}
       haptic="light"
-      style={[styles.ghost, small ? styles.smallButton : null, style]}
+      disabled={blocked}
+      style={[
+        styles.ghost,
+        small ? styles.smallButton : null,
+        disabled ? styles.disabled : null,
+        style,
+      ]}
       testID={testID}
     >
-      <Text style={[styles.ghostLabel, small ? styles.smallLabel : null, textStyle]}>
-        {label}
-      </Text>
+      <View style={[styles.inner, busy ? styles.innerHidden : null]}>
+        {icon ?? null}
+        <Text style={[styles.ghostLabel, small ? styles.smallLabel : null, textStyle]}>
+          {label}
+        </Text>
+      </View>
+      {busy ? (
+        <View style={styles.spinner}>
+          <ActivityIndicator size="small" color={Colors.goldLight} />
+        </View>
+      ) : null}
     </PressableScale>
+  );
+}
+
+interface ArrowLinkProps {
+  label: string;
+  onPress?: () => void;
+  color?: string;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+}
+
+/** Uppercase micro link with an arrow that stretches away on press. */
+export function ArrowLink({
+  label,
+  onPress,
+  color = Colors.goldLight,
+  style,
+  testID,
+}: ArrowLinkProps) {
+  const shift = useRef(new Animated.Value(0)).current;
+
+  const slide = (toValue: number) => {
+    Animated.spring(shift, {
+      toValue,
+      speed: 30,
+      bounciness: 6,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Pressable
+      onPressIn={() => slide(5)}
+      onPressOut={() => slide(0)}
+      onPress={() => {
+        hapticLight();
+        onPress?.();
+      }}
+      style={[styles.arrowRow, style]}
+      hitSlop={10}
+      testID={testID}
+    >
+      <Text style={[styles.arrowLabel, { color }]}>{label}</Text>
+      <Animated.Text
+        style={[styles.arrowGlyph, { color, transform: [{ translateX: shift }] }]}
+      >
+        →
+      </Animated.Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   gold: {
     backgroundColor: Colors.gold,
-    borderRadius: 14,
-    paddingVertical: 17,
-    paddingHorizontal: 26,
+    borderRadius: Radius.sm,
+    paddingVertical: 15,
+    paddingHorizontal: 28,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.gold,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
-  goldLabel: {
-    fontFamily: Fonts.sansSemi,
-    fontSize: 13,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    color: Colors.charcoalDeep,
+    ...GOLD_SHADOW,
   },
   ghost: {
     backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: Colors.goldBorder,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 26,
+    borderRadius: Radius.sm,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
     alignItems: "center",
     justifyContent: "center",
   },
+  inner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  innerHidden: {
+    opacity: 0,
+  },
+  spinner: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  goldLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    letterSpacing: 1.1,
+    color: Colors.charcoalDeep,
+  },
   ghostLabel: {
-    fontFamily: Fonts.sansSemi,
-    fontSize: 13,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    color: Colors.goldLight,
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    letterSpacing: 1.1,
+    color: Colors.gold,
   },
   smallButton: {
-    paddingVertical: 12,
+    paddingVertical: 11,
     paddingHorizontal: 18,
-    borderRadius: 12,
   },
   smallLabel: {
-    fontSize: 11,
-    letterSpacing: 1.6,
+    fontSize: 13,
+    letterSpacing: 0.8,
+  },
+  disabled: {
+    opacity: 0.45,
+  },
+  arrowRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    alignSelf: "flex-start",
+  },
+  arrowLabel: {
+    fontFamily: Fonts.sansSemi,
+    fontSize: 12,
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
+  },
+  arrowGlyph: {
+    fontSize: 15,
+    marginTop: -1,
   },
 });

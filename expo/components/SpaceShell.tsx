@@ -1,10 +1,11 @@
 import { useRouter } from "expo-router";
 import React from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GoldButton } from "@/components/Buttons";
 import StackHeader from "@/components/StackHeader";
+import { LoadingRing } from "@/components/States";
 import { Colors, Fonts } from "@/constants/theme";
 import { useAccount } from "@/providers/AccountProvider";
 
@@ -30,7 +31,7 @@ export default function SpaceShell({ title, children, header }: Props) {
       {header ?? null}
       {booting ? (
         <View style={styles.center}>
-          <ActivityIndicator color={Colors.goldLight} size="large" />
+          <LoadingRing size={36} label="Opening your space…" />
         </View>
       ) : !signedIn ? (
         <View style={styles.center}>

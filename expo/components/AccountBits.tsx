@@ -7,17 +7,19 @@ import type { TripStatus } from "@/data/account/models";
 /* ------------------------------- Status chip ------------------------------ */
 
 const STATUS_STYLES: Record<TripStatus, { label: string; color: string; bg: string; border: string }> = {
-  upcoming: { label: "Upcoming", color: Colors.goldLight, bg: "rgba(184,150,62,0.12)", border: "rgba(184,150,62,0.35)" },
-  ongoing: { label: "Happening now", color: "#6EE7B7", bg: "rgba(13,32,22,0.85)", border: "rgba(52,211,153,0.3)" },
+  upcoming: { label: "Upcoming", color: Colors.goldLight, bg: Colors.goldGlow, border: Colors.goldBorder },
+  ongoing: { label: "Happening now", color: Colors.emeraldSoft, bg: Colors.emeraldBg, border: Colors.emeraldBorder },
   completed: { label: "Completed", color: "rgba(245,240,232,0.75)", bg: "rgba(245,240,232,0.06)", border: "rgba(245,240,232,0.16)" },
-  cancelled: { label: "Cancelled", color: "#FCA5A5", bg: "rgba(42,13,10,0.85)", border: "rgba(248,113,113,0.3)" },
+  cancelled: { label: "Cancelled", color: Colors.redSoft, bg: Colors.redBg, border: Colors.redBorder },
   draft: { label: "Draft", color: "rgba(245,240,232,0.55)", bg: "rgba(245,240,232,0.04)", border: "rgba(245,240,232,0.14)" },
 };
 
+/** Status chip with the website's colored dot. */
 export function StatusChip({ status }: { status: TripStatus }) {
   const s = STATUS_STYLES[status];
   return (
     <View style={[styles.chip, { backgroundColor: s.bg, borderColor: s.border }]}>
+      <View style={[styles.chipDot, { backgroundColor: s.color }]} />
       <Text style={[styles.chipText, { color: s.color }]}>{s.label.toUpperCase()}</Text>
     </View>
   );
@@ -82,11 +84,19 @@ export function Stars({ rating, size = 13 }: { rating: number; size?: number }) 
 
 const styles = StyleSheet.create({
   chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     alignSelf: "flex-start",
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 4,
+  },
+  chipDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   chipText: {
     fontFamily: Fonts.sansSemi,

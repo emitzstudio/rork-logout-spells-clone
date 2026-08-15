@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   monogram: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#221b0e",
+    backgroundColor: Colors.goldDeep,
   },
   monogramText: {
     fontFamily: Fonts.serif,

@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Clock } from "lucide-react-native";
+import { Clock, Play } from "lucide-react-native";
 import React, { useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
+  Linking,
   NativeScrollEvent,
   NativeSyntheticEvent,
   StyleSheet,
@@ -16,11 +16,14 @@ import {
 import { GoldButton, PressableScale } from "@/components/Buttons";
 import GradientText from "@/components/GradientText";
 import StackHeader from "@/components/StackHeader";
+import { EmptyState, LoadingRing } from "@/components/States";
 import { Colors, Fonts } from "@/constants/theme";
 import { BLOG_CATEGORIES, fmtBlogDate, relatedTo, useBlogPosts } from "@/data/blog";
 import type { BlogBlock, BlogPost } from "@/data/blog";
+import { toAppPath } from "@/lib/links";
 
-function Block({ block }: { block: BlogBlock }) {
+function Block({ block, lead = false }: { block: BlogBlock; lead?: boolean }) {
+  const router = useRouter();
   switch (block.kind) {
     case "heading":
       return <Text style={styles.blockHeading}>{block.text}</Text>;
@@ -76,10 +79,48 @@ function Block({ block }: { block: BlogBlock }) {
       );
     case "divider":
       return <Text style={styles.blockDivider}>✦</Text>;
+    case "video":
+      return (
+        <PressableScale
+          onPress={() => void Linking.openURL(block.url).catch(() => {})}
+          scaleTo={0.98}
+          style={styles.blockVideo}
+        >
+          <View style={styles.blockVideoDisc}>
+            <Play size={16} color={Colors.goldLight} fill={Colors.goldLight} />
+          </View>
+          <View style={styles.blockVideoText}>
+            <Text style={styles.blockVideoLabel}>WATCH THE MOMENT</Text>
+            {block.caption ? (
+              <Text style={styles.blockVideoCaption}>{block.caption}</Text>
+            ) : null}
+          </View>
+        </PressableScale>
+      );
+    case "cta":
+      return (
+        <View style={styles.blockCta}>
+          <Text style={styles.blockCtaTitle}>{block.title}</Text>
+          <Text style={styles.blockCtaText}>{block.text}</Text>
+          <GoldButton
+            label={block.label}
+            small
+            onPress={() => {
+              if (block.to.startsWith("http")) {
+                void Linking.openURL(block.to).catch(() => {});
+              } else {
+                router.push(toAppPath(block.to) as never);
+              }
+            }}
+            style={styles.blockCtaButton}
+          />
+        </View>
+      );
     case "paragraph":
-      return <Text style={styles.blockParagraph}>{block.text}</Text>;
+      return (
+        <Text style={lead ? styles.blockLead : styles.blockParagraph}>{block.text}</Text>
+      );
     default:
-      /* video / cta blocks are web-first — the story reads on without them. */
       return null;
   }
 }
@@ -131,7 +172,7 @@ export default function BlogPostScreen() {
       <View style={styles.flex}>
         <StackHeader title="The Journal" fallback="/blog" />
         <View style={styles.missing}>
-          <ActivityIndicator color={Colors.goldLight} />
+          <LoadingRing label="Opening the journal…" />
         </View>
       </View>
     );
@@ -142,9 +183,12 @@ export default function BlogPostScreen() {
       <View style={styles.flex}>
         <StackHeader title="The Journal" fallback="/blog" />
         <View style={styles.missing}>
-          <Text style={styles.missingSymbol}>✎</Text>
-          <Text style={styles.missingTitle}>This page has drifted away.</Text>
-          <GoldButton label="Back to the Journal" onPress={() => router.replace("/blog")} />
+          <EmptyState
+            glyph="✎"
+            title="This page has drifted away."
+            actionLabel="Back to the Journal"
+            onAction={() => router.replace("/blog")}
+          />
         </View>
       </View>
     );
@@ -218,7 +262,11 @@ export default function BlogPostScreen() {
 
           <View style={styles.blocks}>
             {post.blocks.map((block, i) => (
-              <Block key={`${block.kind}-${i}`} block={block} />
+              <Block
+                key={`${block.kind}-${i}`}
+                block={block}
+                lead={i === 0 && block.kind === "paragraph"}
+              />
             ))}
           </View>
 
@@ -303,7 +351,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(184,150,62,0.45)",
   },
   avatarFallback: {
-    backgroundColor: "#221b0e",
+    backgroundColor: Colors.goldDeep,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -356,6 +404,70 @@ const styles = StyleSheet.create({
     fontSize: 15.5,
     lineHeight: 26,
     color: "rgba(245,240,232,0.72)",
+  },
+  blockLead: {
+    fontFamily: Fonts.serifItalic,
+    fontSize: 20,
+    lineHeight: 30,
+    color: "rgba(245,240,232,0.85)",
+  },
+  blockVideo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(184,150,62,0.3)",
+    backgroundColor: "rgba(10,8,6,0.55)",
+    padding: 16,
+  },
+  blockVideoDisc: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(184,150,62,0.45)",
+    backgroundColor: "rgba(184,150,62,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  blockVideoText: {
+    flex: 1,
+    gap: 3,
+  },
+  blockVideoLabel: {
+    fontFamily: Fonts.sansSemi,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: Colors.goldLight,
+  },
+  blockVideoCaption: {
+    fontFamily: Fonts.serifItalic,
+    fontSize: 13.5,
+    color: "rgba(245,240,232,0.55)",
+  },
+  blockCta: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(184,150,62,0.35)",
+    backgroundColor: "rgba(184,150,62,0.07)",
+    padding: 20,
+    gap: 8,
+  },
+  blockCtaTitle: {
+    fontFamily: Fonts.serif,
+    fontSize: 22,
+    color: Colors.cream,
+  },
+  blockCtaText: {
+    fontFamily: Fonts.sans,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: "rgba(245,240,232,0.6)",
+  },
+  blockCtaButton: {
+    marginTop: 8,
+    alignSelf: "flex-start",
   },
   blockHeading: {
     marginTop: 8,
@@ -502,19 +614,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 18,
     paddingHorizontal: 32,
     paddingBottom: 80,
-  },
-  missingSymbol: {
-    fontFamily: Fonts.serif,
-    fontSize: 48,
-    color: "rgba(184,150,62,0.6)",
-  },
-  missingTitle: {
-    fontFamily: Fonts.serif,
-    fontSize: 26,
-    color: Colors.cream,
-    textAlign: "center",
   },
 });

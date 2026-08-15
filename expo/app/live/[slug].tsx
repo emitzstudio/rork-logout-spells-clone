@@ -4,7 +4,6 @@ import * as WebBrowser from "expo-web-browser";
 import { ArrowLeft } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,6 +17,7 @@ import { GhostButton, GoldButton, PressableScale } from "@/components/Buttons";
 import FloatingSymbol from "@/components/FloatingSymbol";
 import GradientText from "@/components/GradientText";
 import SpellPageBody from "@/components/SpellPageBody";
+import { LoadingRing } from "@/components/States";
 import Wordmark from "@/components/Wordmark";
 import { Colors, Fonts } from "@/constants/theme";
 import { draftFromSpell } from "@/data/builder";
@@ -96,7 +96,7 @@ export default function SpellPageScreen() {
           <View style={styles.topBarSpacer} />
         </View>
         <View style={styles.notFound}>
-          <ActivityIndicator color={Colors.goldLight} />
+          <LoadingRing label="Reading the spell…" />
         </View>
       </View>
     );
@@ -133,8 +133,6 @@ export default function SpellPageScreen() {
     );
   }
 
-  const cardWidth = width - 32;
-
   return (
     <View style={[styles.flex, { paddingTop: insets.top + 8 }]}>
       <View style={styles.topBar}>
@@ -149,9 +147,8 @@ export default function SpellPageScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 48 }]}
       >
-        <View style={styles.pageCard}>
-          <SpellPageBody draft={draft} width={cardWidth} onBook={() => setBookingOpen(true)} />
-        </View>
+        {/* Full-bleed native page — the website's spell page order, no card frame. */}
+        <SpellPageBody draft={draft} width={width} onBook={() => setBookingOpen(true)} />
         <Text style={styles.caption}>
           Logout Spells · Disappear for a while <Text style={styles.captionStar}>✦</Text>
         </Text>
@@ -198,15 +195,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   scroll: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  pageCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(245,240,232,0.09)",
-    backgroundColor: Colors.charcoal,
-    overflow: "hidden",
+    paddingTop: 2,
   },
   caption: {
     marginTop: 30,

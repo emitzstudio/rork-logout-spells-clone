@@ -5,7 +5,6 @@ import {
   Bell,
   CalendarDays,
   ChevronRight,
-  Gift,
   Heart,
   Images,
   LifeBuoy,
@@ -114,7 +113,6 @@ export default function SpaceScreen() {
     { icon: Heart, label: "Wishlist", sub: `${data.wishlist.length} spell${data.wishlist.length === 1 ? "" : "s"} saved for later`, to: "/space/wishlist" },
     { icon: Images, label: "Memories", sub: "Your kept photographs, trip by trip", to: "/space/memories" },
     { icon: Sparkles, label: "Journey & Badges", sub: `Level ${journey.level} · ${journey.levelTitle}`, to: "/space/journey" },
-    { icon: Gift, label: "Referrals", sub: "Share your code, earn travel credit", to: "/space/referrals" },
     { icon: Bell, label: "Notifications", sub: "Everything that moved recently", to: "/space/notifications", badge: unreadCount },
     { icon: Settings, label: "Settings & Profile", sub: "Who you are and how we reach you", to: "/space/settings" },
     {
@@ -359,7 +357,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(184,150,62,0.55)",
   },
   avatarFallback: {
-    backgroundColor: "#221b0e",
+    backgroundColor: Colors.goldDeep,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -5,6 +5,7 @@
     "": {
       "name": "expo-app",
       "dependencies": {
+        "@expo-google-fonts/caveat": "^0.4.2",
         "@expo-google-fonts/cormorant-garamond": "^0.4.1",
         "@expo-google-fonts/inter": "^0.4.2",
         "@expo/vector-icons": "^15.0.3",
@@ -286,6 +287,8 @@
     "@eslint/object-schema": ["@eslint/object-schema@2.1.6", "", {}, "sha512-RBMg5FRL0I0gs51M/guSAj5/e14VQ4tpZnQNWwuDT66P14I43ItmPfIZRhO9fUVIPOAQXU47atlywZ/czoqFPA=="],
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.3.3", "", { "dependencies": { "@eslint/core": "^0.15.1", "levn": "^0.4.1" } }, "sha512-1+WqvgNMhmlAambTvT3KPtCl/Ibr68VldY2XY40SL1CE0ZXiakFR/cbTspaF5HsnpDMvcYYoJHfl4980NBjGag=="],
+
+    "@expo-google-fonts/caveat": ["@expo-google-fonts/caveat@0.4.2", "", {}, "sha512-kCG35tRUX8Wi+u0Jh5ck3K1u7vZkdLnwRTuKMrEnlVmikvxQFXN1KjF5cL2vqRG7Hwm7648Zl8xe1BWAoIsPCA=="],
 
     "@expo-google-fonts/cormorant-garamond": ["@expo-google-fonts/cormorant-garamond@0.4.1", "", {}, "sha512-e8J4Cn13K1txygamg50n3odLUsYP7Ck28XOGobMi7uDsWvFmp/jgK0qcALqJTlmi9NczSWUNdERxcLauHCBa/Q=="],
 

@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(184,150,62,0.4)",
   },
   authorFallback: {
-    backgroundColor: "#221b0e",
+    backgroundColor: Colors.goldDeep,
     alignItems: "center",
     justifyContent: "center",
   },

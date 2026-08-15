@@ -13,7 +13,7 @@ function TxnRow({ txn }: { txn: WalletTransaction }) {
   const isCredit = txn.kind === "credit";
   const isRefund = txn.kind === "refund";
   const Icon = isCredit ? Gift : isRefund ? ArrowDownLeft : ArrowUpRight;
-  const tint = isCredit || isRefund ? "#6EE7B7" : Colors.goldLight;
+  const tint = isCredit || isRefund ? Colors.emeraldSoft : Colors.goldLight;
   const sign = isCredit || isRefund ? "+" : "−";
 
   return (

@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowDown, ArrowRight, Feather, Users } from "lucide-react-native";
+import { ArrowDown, Feather, Users } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -13,10 +13,11 @@ import {
   useWindowDimensions,
 } from "react-native";
 
-import { GhostButton, GoldButton, PressableScale } from "@/components/Buttons";
+import { ArrowLink, GhostButton, GoldButton, PressableScale } from "@/components/Buttons";
 import Eyebrow from "@/components/Eyebrow";
 import Footer from "@/components/Footer";
 import GradientText from "@/components/GradientText";
+import Handwritten from "@/components/Handwritten";
 import HomeWelcome from "@/components/HomeWelcome";
 import Marquee from "@/components/Marquee";
 import { Reveal, RevealScrollView } from "@/components/RevealScroll";
@@ -204,10 +205,7 @@ function SectionHeader({
         </View>
       </View>
       {onSeeAll ? (
-        <PressableScale onPress={onSeeAll} scaleTo={0.94} style={styles.seeAll}>
-          <Text style={styles.seeAllText}>{seeAllLabel}</Text>
-          <ArrowRight size={12} color={Colors.gold} />
-        </PressableScale>
+        <ArrowLink label={seeAllLabel} onPress={onSeeAll} style={styles.seeAll} />
       ) : null}
     </View>
   );
@@ -421,6 +419,9 @@ export default function HomeScreen() {
                 <Text style={styles.doorSub}>
                   The question that started it, and the seven people keeping it alive.
                 </Text>
+                <Handwritten size={20} style={styles.doorNote}>
+                  “what if strangers became your people?”
+                </Handwritten>
                 <Text style={styles.doorLink}>MEET THE COVEN →</Text>
               </PressableScale>
 
@@ -572,16 +573,7 @@ const styles = StyleSheet.create({
     lineHeight: 35,
   },
   seeAll: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingBottom: 4,
-  },
-  seeAllText: {
-    fontFamily: Fonts.sansSemi,
-    fontSize: 10,
-    letterSpacing: 1.8,
-    color: Colors.gold,
+    paddingBottom: 6,
   },
   rail: {},
   pastRow: {
@@ -718,6 +710,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: "rgba(245,240,232,0.55)",
+  },
+  doorNote: {
+    marginTop: 2,
   },
   doorLink: {
     marginTop: 6,

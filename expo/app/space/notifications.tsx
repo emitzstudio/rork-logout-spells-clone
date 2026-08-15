@@ -13,9 +13,11 @@ import type { LucideIcon } from "lucide-react-native";
 
 import { PressableScale } from "@/components/Buttons";
 import SpaceShell from "@/components/SpaceShell";
+import { EmptyState } from "@/components/States";
 import { Colors, Fonts } from "@/constants/theme";
 import { timeAgo } from "@/data/account/derive";
 import type { AppNotification, NotificationKind } from "@/data/account/models";
+import { toAppPath } from "@/lib/links";
 import { useAccount } from "@/providers/AccountProvider";
 
 const KIND_ICON: Record<NotificationKind, LucideIcon> = {
@@ -66,9 +68,28 @@ export default function NotificationsScreen() {
 
   const notifications = useMemo(() => data?.notifications ?? [], [data]);
 
+  /** The website's grouping: Today · This week · Earlier. */
+  const groups = useMemo(() => {
+    const now = Date.now();
+    const today: AppNotification[] = [];
+    const week: AppNotification[] = [];
+    const earlier: AppNotification[] = [];
+    for (const n of notifications) {
+      const age = now - new Date(n.time).getTime();
+      if (age < 86_400_000) today.push(n);
+      else if (age < 604_800_000) week.push(n);
+      else earlier.push(n);
+    }
+    return [
+      { label: "TODAY", items: today },
+      { label: "THIS WEEK", items: week },
+      { label: "EARLIER", items: earlier },
+    ].filter((g) => g.items.length > 0);
+  }, [notifications]);
+
   const open = (item: AppNotification): void => {
     if (!item.read) void markNotificationRead(item.id);
-    if (item.link) router.push(item.link as never);
+    if (item.link) router.push(toAppPath(item.link) as never);
   };
 
   return (
@@ -95,11 +116,21 @@ export default function NotificationsScreen() {
       </View>
 
       <View style={styles.list}>
-        {notifications.map((n) => (
-          <NotificationRow key={n.id} item={n} onPress={() => open(n)} />
+        {groups.map((group) => (
+          <View key={group.label} style={styles.group}>
+            <Text style={styles.groupLabel}>{group.label}</Text>
+            {group.items.map((n) => (
+              <NotificationRow key={n.id} item={n} onPress={() => open(n)} />
+            ))}
+          </View>
         ))}
         {notifications.length === 0 ? (
-          <Text style={styles.empty}>Nothing yet — book a spell and this room wakes up ✦</Text>
+          <EmptyState
+            glyph="☾"
+            title="Quiet, in the best way."
+            body="Book a spell and this room wakes up."
+            compact
+          />
         ) : null}
       </View>
     </SpaceShell>
@@ -144,7 +175,17 @@ const styles = StyleSheet.create({
   list: {
     marginTop: 18,
     paddingHorizontal: 20,
+    gap: 18,
+  },
+  group: {
     gap: 10,
+  },
+  groupLabel: {
+    fontFamily: Fonts.sansSemi,
+    fontSize: 10,
+    letterSpacing: 2.6,
+    color: Colors.goldLight,
+    marginBottom: 2,
   },
   row: {
     flexDirection: "row",
@@ -202,12 +243,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.goldLight,
     marginTop: 4,
-  },
-  empty: {
-    textAlign: "center",
-    paddingVertical: 30,
-    fontFamily: Fonts.serifItalic,
-    fontSize: 15,
-    color: "rgba(245,240,232,0.4)",
+    shadowColor: Colors.gold,
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
   },
 });

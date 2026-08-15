@@ -10,8 +10,10 @@ import Eyebrow from "@/components/Eyebrow";
 import FilterChip from "@/components/FilterChip";
 import Footer from "@/components/Footer";
 import GradientText from "@/components/GradientText";
+import Pill from "@/components/Pills";
 import PulsingDot from "@/components/PulsingDot";
 import { Reveal, RevealScrollView } from "@/components/RevealScroll";
+import { EmptyState } from "@/components/States";
 import SiteHeader from "@/components/SiteHeader";
 import { Colors, Fonts, TAB_BAR_SPACE } from "@/constants/theme";
 import { CATEGORY_META, gradientColors } from "@/data/spells";
@@ -52,16 +54,7 @@ function LiveCard({ spell, onPress }: { spell: ManagedSpell; onPress: () => void
 
       <View style={styles.cardTop}>
         <Text style={styles.cardSymbol}>{spell.symbol}</Text>
-        {live ? (
-          <View style={styles.liveBadge}>
-            <PulsingDot size={6} />
-            <Text style={styles.liveBadgeText}>LIVE</Text>
-          </View>
-        ) : (
-          <View style={styles.soldBadge}>
-            <Text style={styles.soldBadgeText}>SOLD OUT</Text>
-          </View>
-        )}
+        {live ? <Pill label="Live" tone="live" /> : <Pill label="Sold out" tone="soldout" />}
       </View>
 
       <View style={styles.cardBody}>
@@ -139,13 +132,15 @@ export default function LiveScreen() {
           {visible.length === 0 ? (
             <Reveal>
               <View style={styles.empty}>
-                <Text style={styles.emptySymbol}>☾</Text>
-                <Text style={styles.emptyTitle}>
-                  {publicSpells.length === 0
-                    ? "No spells are live right now."
-                    : "No live spells in this circle yet."}
-                </Text>
-                <Text style={styles.emptySub}>The moment one is published, it appears here.</Text>
+                <EmptyState
+                  glyph="☾"
+                  title={
+                    publicSpells.length === 0
+                      ? "No spells are live right now."
+                      : "No live spells in this circle yet."
+                  }
+                  body="The moment one is published, it appears here."
+                />
               </View>
             </Reveal>
           ) : null}
@@ -245,36 +240,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: "rgba(184,150,62,0.7)",
   },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "rgba(184,150,62,0.4)",
-    backgroundColor: "rgba(184,150,62,0.1)",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  liveBadgeText: {
-    fontFamily: Fonts.sansSemi,
-    fontSize: 10,
-    letterSpacing: 2,
-    color: Colors.goldLight,
-  },
-  soldBadge: {
-    borderWidth: 1,
-    borderColor: "rgba(245,240,232,0.15)",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  soldBadgeText: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 10,
-    letterSpacing: 2,
-    color: "rgba(245,240,232,0.5)",
-  },
+
   cardBody: {
     marginTop: 40,
     gap: 9,
@@ -314,29 +280,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(245,240,232,0.07)",
     backgroundColor: "rgba(10,8,6,0.4)",
-    paddingHorizontal: 32,
-    paddingVertical: 70,
-    alignItems: "center",
-  },
-  emptySymbol: {
-    fontFamily: Fonts.serif,
-    fontSize: 30,
-    color: "rgba(184,150,62,0.6)",
-  },
-  emptyTitle: {
-    marginTop: 16,
-    textAlign: "center",
-    fontFamily: Fonts.serifItalic,
-    fontSize: 22,
-    lineHeight: 28,
-    color: "rgba(245,240,232,0.7)",
-  },
-  emptySub: {
-    marginTop: 8,
-    textAlign: "center",
-    fontFamily: Fonts.sans,
-    fontSize: 13.5,
-    color: "rgba(245,240,232,0.45)",
   },
   previousDoor: {
     marginTop: 36,

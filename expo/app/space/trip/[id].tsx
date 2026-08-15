@@ -7,6 +7,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { GoldProgress, StatusChip } from "@/components/AccountBits";
 import { PressableScale } from "@/components/Buttons";
+import Countdown from "@/components/Countdown";
 import SpaceShell from "@/components/SpaceShell";
 import { Colors, Fonts } from "@/constants/theme";
 import {
@@ -84,18 +85,16 @@ export default function TripDetailScreen() {
             </View>
           </View>
 
-          {/* Countdown */}
+          {/* Countdown — the website's unit boxes: days · hours · mins */}
           {days !== null ? (
             <View style={styles.countCard}>
-              <Text style={styles.countNum}>{days}</Text>
-              <View style={styles.countText}>
-                <Text style={styles.countLabel}>{days === 1 ? "DAY TO GO" : "DAYS TO GO"}</Text>
-                <Text style={styles.countSub}>
-                  Departs {fmtDayYear(booking.start)} · {booking.seats} seat
-                  {booking.seats > 1 ? "s" : ""}
-                  {booking.guests.length > 0 ? ` · with ${booking.guests.join(", ")}` : ""}
-                </Text>
-              </View>
+              <Text style={styles.countLabel}>UNTIL THE SPELL BEGINS</Text>
+              <Countdown target={booking.start} />
+              <Text style={styles.countSub}>
+                Departs {fmtDayYear(booking.start)} · {booking.seats} seat
+                {booking.seats > 1 ? "s" : ""}
+                {booking.guests.length > 0 ? ` · with ${booking.guests.join(", ")}` : ""}
+              </Text>
             </View>
           ) : null}
 
@@ -323,24 +322,12 @@ const styles = StyleSheet.create({
   countCard: {
     marginHorizontal: 20,
     marginTop: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 18,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(184,150,62,0.35)",
     backgroundColor: "rgba(184,150,62,0.07)",
     padding: 18,
-  },
-  countNum: {
-    fontFamily: Fonts.serif,
-    fontSize: 52,
-    lineHeight: 56,
-    color: Colors.goldHi,
-  },
-  countText: {
-    flex: 1,
-    gap: 4,
+    gap: 12,
   },
   countLabel: {
     fontFamily: Fonts.sansSemi,

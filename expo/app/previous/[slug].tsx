@@ -5,21 +5,21 @@ import { BadgeCheck, PenLine } from "lucide-react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GoldProgress, Stars } from "@/components/AccountBits";
 import { GoldButton, PressableScale } from "@/components/Buttons";
+import Field from "@/components/Field";
 import StackHeader from "@/components/StackHeader";
+import { EmptyState, LoadingRing } from "@/components/States";
 import { Colors, Fonts } from "@/constants/theme";
 import { effectiveStatus } from "@/data/account/derive";
 import { submitReview as submitLiveReview } from "@/data/account/selfService";
@@ -134,7 +134,7 @@ export default function PreviousSpellScreen() {
       <View style={styles.flex}>
         <StackHeader title="Previous Spells" fallback="/previous" />
         <View style={styles.missing}>
-          <ActivityIndicator color={Colors.goldLight} />
+          <LoadingRing label="Opening the archive…" />
         </View>
       </View>
     );
@@ -145,9 +145,12 @@ export default function PreviousSpellScreen() {
       <View style={styles.flex}>
         <StackHeader title="Previous Spells" fallback="/previous" />
         <View style={styles.missing}>
-          <Text style={styles.missingSymbol}>☾</Text>
-          <Text style={styles.missingTitle}>This memory has faded.</Text>
-          <GoldButton label="All Previous Spells" onPress={() => router.replace("/previous")} />
+          <EmptyState
+            glyph="☾"
+            title="This memory has faded."
+            actionLabel="All Previous Spells"
+            onAction={() => router.replace("/previous")}
+          />
         </View>
       </View>
     );
@@ -346,40 +349,28 @@ export default function PreviousSpellScreen() {
                       </PressableScale>
                     ))}
                   </View>
-                  <TextInput
+                  <Field
+                    label="Your headline"
                     value={reviewTitle}
                     onChangeText={setReviewTitle}
                     placeholder="A line that sums it up"
-                    placeholderTextColor="rgba(245,240,232,0.25)"
-                    style={styles.input}
                     testID="review-title"
                   />
-                  <TextInput
+                  <Field
+                    label="Your story"
                     value={reviewBody}
                     onChangeText={setReviewBody}
                     placeholder="What should the next traveller know?"
-                    placeholderTextColor="rgba(245,240,232,0.25)"
                     multiline
-                    style={[styles.input, styles.inputMultiline]}
                     testID="review-body"
                   />
-                  <PressableScale
+                  <GoldButton
+                    label="Publish Review"
                     onPress={() => void submitReview()}
-                    haptic="medium"
-                    style={[
-                      styles.submitBtn,
-                      reviewTitle.trim().length < 3 || reviewBody.trim().length < 10
-                        ? styles.submitDisabled
-                        : null,
-                    ]}
+                    busy={submitting}
+                    disabled={reviewTitle.trim().length < 3 || reviewBody.trim().length < 10}
                     testID="review-submit"
-                  >
-                    {submitting ? (
-                      <ActivityIndicator color={Colors.charcoalDeep} />
-                    ) : (
-                      <Text style={styles.submitText}>PUBLISH REVIEW</Text>
-                    )}
-                  </PressableScale>
+                  />
                 </View>
               ) : (
                 <PressableScale
@@ -410,7 +401,7 @@ export default function PreviousSpellScreen() {
             ) : null}
 
             {loadingReviews ? (
-              <ActivityIndicator color={Colors.goldLight} style={styles.reviewsLoading} />
+              <LoadingRing style={styles.reviewsLoading} />
             ) : (
               <View style={styles.reviews}>
                 {reviews.map((review) => (
@@ -440,20 +431,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 18,
     paddingHorizontal: 32,
     paddingBottom: 80,
-  },
-  missingSymbol: {
-    fontFamily: Fonts.serif,
-    fontSize: 48,
-    color: "rgba(184,150,62,0.6)",
-  },
-  missingTitle: {
-    fontFamily: Fonts.serif,
-    fontSize: 26,
-    color: Colors.cream,
-    textAlign: "center",
   },
   hero: {
     minHeight: 330,
@@ -748,36 +727,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 34,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "rgba(245,240,232,0.12)",
-    backgroundColor: "rgba(10,8,6,0.4)",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    color: Colors.cream,
-  },
-  inputMultiline: {
-    minHeight: 96,
-    textAlignVertical: "top",
-  },
-  submitBtn: {
-    backgroundColor: Colors.gold,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  submitDisabled: {
-    opacity: 0.5,
-  },
-  submitText: {
-    fontFamily: Fonts.sansSemi,
-    fontSize: 12,
-    letterSpacing: 1.8,
-    color: Colors.charcoalDeep,
-  },
+
   reviewedNote: {
     fontFamily: Fonts.serifItalic,
     fontSize: 14,
@@ -817,7 +767,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(184,150,62,0.35)",
   },
   reviewAvatarFallback: {
-    backgroundColor: "#221b0e",
+    backgroundColor: Colors.goldDeep,
     alignItems: "center",
     justifyContent: "center",
   },

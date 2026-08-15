@@ -9,6 +9,7 @@ import Eyebrow from "@/components/Eyebrow";
 import FloatingSymbol from "@/components/FloatingSymbol";
 import Footer from "@/components/Footer";
 import GradientText from "@/components/GradientText";
+import Handwritten from "@/components/Handwritten";
 import { Reveal, RevealScrollView } from "@/components/RevealScroll";
 import StackHeader from "@/components/StackHeader";
 import TeamSection from "@/components/TeamSection";
@@ -60,6 +61,9 @@ export default function OurStoryScreen() {
                 You don't just go somewhere.{" "}
                 <Text style={styles.quoteGold}>You belong somewhere.</Text>
               </Text>
+              <Handwritten size={19} tilt={-2.5} style={styles.quoteNote}>
+                — scribbled on the first trip, 2am
+              </Handwritten>
             </View>
           </Reveal>
 
@@ -130,7 +134,9 @@ export default function OurStoryScreen() {
                   something new.
                 </Text>
               </View>
-              <Text style={styles.signature}>Vidushi</Text>
+              <Handwritten size={40} tilt={-3} color={Colors.gold} style={styles.signature}>
+                Vidushi
+              </Handwritten>
               <View style={styles.socialChips}>
                 {[
                   { label: "LINKEDIN", href: SOCIALS.linkedin },
@@ -378,12 +384,13 @@ const styles = StyleSheet.create({
   },
   signature: {
     marginTop: 24,
-    fontFamily: Fonts.serifItalic,
-    fontSize: 34,
-    color: Colors.gold,
     textShadowColor: "rgba(184,150,62,0.45)",
     textShadowRadius: 24,
     textShadowOffset: { width: 0, height: 0 },
+  },
+  quoteNote: {
+    marginTop: 18,
+    opacity: 0.85,
   },
   socialChips: {
     marginTop: 22,

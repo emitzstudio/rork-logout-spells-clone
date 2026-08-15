@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router";
-import { KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react-native";
+import { KeyRound, Mail, UserRound } from "lucide-react-native";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,9 +12,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PressableScale } from "@/components/Buttons";
+import { GoldButton, PressableScale } from "@/components/Buttons";
 import GradientText from "@/components/GradientText";
 import StackHeader from "@/components/StackHeader";
+import { ErrorBanner } from "@/components/States";
+import SuccessBurst from "@/components/SuccessBurst";
 import { Colors, Fonts } from "@/constants/theme";
 import { accountService } from "@/data/account/service";
 import { AccountError } from "@/data/account/models";
@@ -221,15 +222,15 @@ export default function AuthScreen() {
                 ) : null}
               </View>
 
-              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {error ? <ErrorBanner message={error} style={styles.error} /> : null}
 
-              <PressableScale onPress={submitForm} haptic="medium" style={styles.primary} testID="auth-submit">
-                {busy ? (
-                  <ActivityIndicator color={Colors.charcoalDeep} />
-                ) : (
-                  <Text style={styles.primaryText}>{copy.cta}</Text>
-                )}
-              </PressableScale>
+              <GoldButton
+                label={copy.cta}
+                onPress={submitForm}
+                busy={busy}
+                style={styles.primary}
+                testID="auth-submit"
+              />
 
               {mode === "signin" ? (
                 <PressableScale onPress={() => switchMode("forgot")} scaleTo={0.97} testID="auth-forgot">
@@ -257,9 +258,7 @@ export default function AuthScreen() {
 
           {phase === "sent" ? (
             <>
-              <View style={styles.otpBadge}>
-                <ShieldCheck size={22} color={Colors.goldLight} />
-              </View>
+              <SuccessBurst size={72} />
               <View style={styles.titleRow}>
                 <Text style={styles.title}>Check your </Text>
                 <GradientText style={styles.titleItalic}>email.</GradientText>
@@ -268,14 +267,12 @@ export default function AuthScreen() {
                 We sent a reset link to {email.trim() || "your inbox"}. It opens our website,
                 where you choose a fresh password — then come back here and sign in with it.
               </Text>
-              <PressableScale
+              <GoldButton
+                label="I've reset it — Sign In"
                 onPress={() => switchMode("signin")}
-                haptic="medium"
                 style={styles.primary}
                 testID="auth-back-to-signin"
-              >
-                <Text style={styles.primaryText}>I'VE RESET IT — SIGN IN</Text>
-              </PressableScale>
+              />
               <PressableScale onPress={() => setPhase("form")} scaleTo={0.97}>
                 <Text style={styles.link}>Use a different email</Text>
               </PressableScale>
@@ -340,9 +337,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(245,240,232,0.12)",
-    backgroundColor: "rgba(245,240,232,0.03)",
-    borderRadius: 14,
+    borderColor: "rgba(245,240,232,0.08)",
+    backgroundColor: "rgba(10,8,6,0.5)",
+    borderRadius: 10,
   },
   fieldIcon: {
     paddingLeft: 16,
@@ -358,29 +355,11 @@ const styles = StyleSheet.create({
   },
   error: {
     marginTop: 14,
-    fontFamily: Fonts.sansMedium,
-    fontSize: 12.5,
-    color: Colors.error,
-    textAlign: "center",
+    alignSelf: "stretch",
   },
   primary: {
     alignSelf: "stretch",
     marginTop: 20,
-    backgroundColor: Colors.gold,
-    borderRadius: 14,
-    paddingVertical: 17,
-    alignItems: "center",
-    shadowColor: Colors.gold,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
-  primaryText: {
-    fontFamily: Fonts.sansSemi,
-    fontSize: 12.5,
-    letterSpacing: 2,
-    color: Colors.charcoalDeep,
   },
   link: {
     marginTop: 18,
@@ -406,17 +385,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     color: Colors.goldLight,
   },
-  otpBadge: {
-    marginTop: 8,
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    borderWidth: 1,
-    borderColor: "rgba(184,150,62,0.4)",
-    backgroundColor: "rgba(184,150,62,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   footNote: {
     marginTop: 34,
     textAlign: "center",
