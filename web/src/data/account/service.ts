@@ -626,6 +626,7 @@ class TravellerAccountService {
       notifications: (notifRes.data ?? []).map(mapNotification),
       referrals: [],
       wishlist: (savedRes.data ?? []).map((row) => row.spell_id),
+      wishlistLatestAt: savedRes.data?.[0]?.created_at ?? null,
       recentlyViewed: device.recentlyViewed,
       friendsMade: 0,
     });
@@ -723,13 +724,22 @@ class TravellerAccountService {
     if (kept) {
       const { error } = await supabase.from("saved_spells").delete().eq("spell_id", spellId);
       if (error) throw new AccountError("That couldn't be removed — try again.", null);
-      return this.commit({ ...db, wishlist: db.wishlist.filter((id) => id !== spellId) });
+      const wishlist = db.wishlist.filter((id) => id !== spellId);
+      return this.commit({
+        ...db,
+        wishlist,
+        wishlistLatestAt: wishlist.length === 0 ? null : db.wishlistLatestAt,
+      });
     }
     if (!isUuid(spellId))
       throw new AccountError("This spell can't be kept just yet.", null);
     const { error } = await supabase.from("saved_spells").insert({ spell_id: spellId });
     if (error) throw new AccountError("Only live spells can be kept — try again.", null);
-    return this.commit({ ...db, wishlist: [spellId, ...db.wishlist] });
+    return this.commit({
+      ...db,
+      wishlist: [spellId, ...db.wishlist],
+      wishlistLatestAt: new Date().toISOString(),
+    });
   }
 
   /* ------------------------------ Notifications ----------------------------- */

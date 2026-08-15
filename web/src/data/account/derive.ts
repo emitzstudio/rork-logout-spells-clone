@@ -63,7 +63,7 @@ export const timeAgo = (isoDate: string): string => {
 /**
  * Bookings auto-transition with real time: an "upcoming" trip whose dates
  * have arrived reads as ongoing, and as completed once the dates pass —
- * so the demo stays truthful no matter when it's opened.
+ * so the account stays truthful no matter when it's opened.
  */
 export const effectiveStatus = (booking: TripBooking): TripStatus => {
   if (booking.status !== "upcoming") return booking.status;
@@ -213,7 +213,8 @@ export const deriveJourney = (data: AccountData): JourneyState => {
       label: `${data.wishlist.length} spell${data.wishlist.length > 1 ? "s" : ""} on your wishlist`,
       detail: "Dreams counted, gently",
       xp: data.wishlist.length * 8,
-      date: new Date(Date.now() - 4 * DAY).toISOString(),
+      // The REAL moment of the newest save — never an invented timestamp.
+      date: data.wishlistLatestAt ?? data.profile.joinedAt,
       kind: "wishlist",
     });
   }
@@ -318,7 +319,7 @@ export const deriveBadges = (data: AccountData, journey: JourneyState): TravelBa
       line: "Sunrise practice, mountain air.",
       symbol: "◐",
       unlocked: completedCategory("movement"),
-      hint: "Your Manali sunrise will unlock this.",
+      hint: "Complete a Movement spell.",
     },
     {
       id: "the-maker",
@@ -326,7 +327,7 @@ export const deriveBadges = (data: AccountData, journey: JourneyState): TravelBa
       line: "Hands in clay, phone in pocket.",
       symbol: "✳",
       unlocked: completedCategory("making"),
-      hint: "Finish your Art Spell application.",
+      hint: "Complete a Making spell.",
     },
     {
       id: "far-wanderer",
@@ -334,7 +335,7 @@ export const deriveBadges = (data: AccountData, journey: JourneyState): TravelBa
       line: "Past the border of the familiar.",
       symbol: "☾",
       unlocked: abroad,
-      hint: "Bali is still waiting for you.",
+      hint: "Complete a spell beyond India.",
     },
     {
       id: "luminary",

@@ -1,10 +1,10 @@
 /**
  * Traveller account domain model.
  *
- * Everything the logged-in experience renders is typed here. The mock service
- * (service.ts) implements these shapes today from local seed data; the future
- * Supabase phase implements the same contracts against real tables — no page
- * or component changes required.
+ * Everything the logged-in experience renders is typed here. The live service
+ * (service.ts) fills these shapes from Supabase — auth, profiles, bookings,
+ * the payments ledger, memories, notifications. Nothing here is seeded or
+ * invented: a brand-new traveller renders a genuinely empty account.
  */
 import type { SpellCategoryId } from "@/data/spells";
 
@@ -308,6 +308,8 @@ export interface AccountData {
   referrals: Referral[];
   /** Spell ids saved to the wishlist. */
   wishlist: string[];
+  /** When the newest wishlist save happened — real timestamp, null when empty. */
+  wishlistLatestAt: string | null;
   /** Spell slugs recently opened on the public site — newest first. */
   recentlyViewed: string[];
   friendsMade: number;

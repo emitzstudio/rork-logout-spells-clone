@@ -21,7 +21,8 @@ export interface SpellReview {
   id: string;
   /** Joins PreviousSpell.id. */
   spellId: string;
-  /** Traveller identity — profile id for user reviews, "seed" for samples. */
+  /** The author's profile id. Legacy null-author rows map to "seed" — the
+   *  seeded samples were removed in M9.5, so live rows always carry a real id. */
   authorId: string;
   author: string;
   /** Empty string renders the initial fallback. */

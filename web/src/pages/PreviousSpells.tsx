@@ -58,26 +58,29 @@ export default function PreviousSpells() {
             </p>
           </Reveal>
 
-          <Reveal delay={0.1}>
-            <div className="mt-12 flex flex-wrap gap-2.5">
-              {filters.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFilter(f.id)}
-                  className={cn(
-                    "rounded-full border px-5 py-2.5 font-sans text-xs uppercase tracking-[0.14em] transition-all duration-300",
-                    filter === f.id
-                      ? "border-gold bg-gold text-charcoal-deep"
-                      : "border-cream/15 text-cream/55 hover:border-gold/50 hover:text-gold-light",
-                  )}
-                >
-                  <span aria-hidden className="mr-1.5">{f.symbol}</span>
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </Reveal>
+          {/* Filters only exist once there are journeys to filter (M9.5). */}
+          {all.length > 0 && (
+            <Reveal delay={0.1}>
+              <div className="mt-12 flex flex-wrap gap-2.5">
+                {filters.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFilter(f.id)}
+                    className={cn(
+                      "rounded-full border px-5 py-2.5 font-sans text-xs uppercase tracking-[0.14em] transition-all duration-300",
+                      filter === f.id
+                        ? "border-gold bg-gold text-charcoal-deep"
+                        : "border-cream/15 text-cream/55 hover:border-gold/50 hover:text-gold-light",
+                    )}
+                  >
+                    <span aria-hidden className="mr-1.5">{f.symbol}</span>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </Reveal>
+          )}
 
           {isLoading ? (
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy>
@@ -99,6 +102,25 @@ export default function PreviousSpells() {
                 Try again
               </button>
             </div>
+          ) : all.length === 0 ? (
+            /* Zero completed journeys is a VALID state — kept intentional, never faked. */
+            <Reveal>
+              <div className="mt-14 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-24 text-center">
+                <span
+                  aria-hidden
+                  className="inline-block animate-float-slow font-serif text-5xl text-gold/60"
+                >
+                  ☾
+                </span>
+                <h2 className="heading-serif mt-6 text-3xl text-cream md:text-4xl">
+                  No previous spells <span className="italic text-gold-gradient">yet.</span>
+                </h2>
+                <p className="mx-auto mt-4 max-w-md font-serif text-xl italic leading-snug text-cream/55">
+                  When a circle completes, its story is kept here — the photographs, the
+                  chapters, the people who were there.
+                </p>
+              </div>
+            </Reveal>
           ) : (
             <>
               <motion.div layout className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

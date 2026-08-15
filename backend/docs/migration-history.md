@@ -1144,6 +1144,103 @@ Expo untouched.
 
 ---
 
+## M9.5 — Reality / Trip-History Pass (2026-08-15)
+
+**Migration `0010_m95_reality_pass` + attestation `m95-verify-new-account`.**
+ZERO schema change, ZERO RLS/grant change, ZERO payment-seam change, Expo
+untouched. This pass removed every remaining fabricated trip/account artefact
+so the product reflects the REAL current state of the business.
+
+### Business truth (founder-declared)
+
+- **Completed real historical trips = 0.** The six archive journeys the site
+  had shown since M3 were demo seeds, never real trips.
+- The founder's **3 REAL completed trips will be imported in a separate,
+  founder-supplied content milestone** — nothing was invented or
+  reconstructed here to fill the gap.
+- **Upcoming trips stay admin/database-driven**: founder creates → publishes
+  in the dashboard → the public site renders them. No hardcoded upcoming
+  trips exist on the web (the static SPELLS array died in M9).
+
+### Database cleanup (identified exactly, guarded)
+
+- Deleted the **6 seed archive rows** in `previous_spells` — fixed synthetic
+  ids `f0000000-0000-4000-a000-000000000001…006`, created by
+  `0003_journal_team_archive.sql` (decision D5, verbatim from the mock site):
+  fictional journeys with invented seasons, traveller counts and hosts.
+- Deleted the **13 seed reviews** — ids `90000000-…`, `author_id IS NULL`
+  (the seed marker), fictional names and stock avatars.
+- Guards aborted the migration if ANY archive row was not one of the six
+  known seed ids, if ANY traveller-authored review existed, or if archive
+  media objects existed under `site-media/previous/*` (count was 0) — a real
+  record could not have been deleted. Post-conditions asserted both tables
+  empty.
+- The reviews **write path, moderation pipeline and archive tables are
+  unchanged** — the real trips will flow through them when imported.
+
+### Web client truth fixes
+
+- **Account layer** (live since M6/M7C — now with zero demo residue): the
+  wishlist XP event no longer invents a “4 days ago” timestamp (it uses the
+  real newest-save moment carried in the bundle); badge hints no longer imply
+  trips the traveller never took (“Your Manali sunrise…”, “Finish your Art
+  Spell application”, “Bali is still waiting” → neutral “Complete a … spell”
+  copy); stale mock-era comments corrected. Referrals stay an empty array and
+  friends-made stays 0 — nothing fabricated anywhere in the bundle.
+- **Our Story “story in numbers”**: the invented “300 Community Members”
+  claim is gone, as is the `max(count, 1)` floor — the band now shows only
+  real live-catalogue numbers (active spells, distinct places, the six
+  ritual families).
+- **Previous Spells page**: a dedicated, intentional zero-archive state
+  (“No previous spells yet.”) — filters render only when journeys exist; the
+  home/live rails and Discover “proof it works” sections already hide
+  gracefully at zero.
+
+### Verification
+
+- **Anonymous visitor**: `previous_spells` → `[]`, `reviews` → `[]`, live
+  catalogue intact (8 published/soldout spells), `bookings` denied by RLS
+  (42501). Web static checks + production build pass.
+- **New-account probe** (disposable traveller through the REAL signup flow):
+  bookings, payments, memories, memory_photos, saved_spells, waitlist,
+  change requests and reviews all `[]`; notifications contained ONLY the
+  genuine trigger-generated welcome whisper; profile + settings rows created
+  by the trigger. A brand-new account is provably empty.
+- **Net-zero**: the probe was erased and the attestation's DO block asserts
+  the exact baseline — au=1 · profiles=1 · user_settings=1 · bookings=0 ·
+  participants=0 · booking_events=0 · payments=0 · memories=0 ·
+  memory_photos=0 · saved_spells=0 · waitlist=0 · change_requests=0 ·
+  **reviews=0** · **previous_spells=0** · notifications=0 · inquiries=0 ·
+  Σseats_booked=62 · memories-bucket objects=0.
+
+### Baseline change (deliberate)
+
+The canonical baseline moves from “reviews=13 approved · archive=6” to
+**reviews=0 · previous_spells=0** — that IS the truthful state. Everything
+else is unchanged.
+
+### Flagged for the founder (NOT changed)
+
+- `spell_departures.seats_booked` Σ62 predates the booking system (seeded in
+  M2 from the mock-era site copy; `bookings` is empty). It surfaces as
+  “seats left”/urgency on live spell pages. If these do NOT reflect real
+  offline/WhatsApp-era bookings, say the word and they can be zeroed — staff
+  clients cannot edit `seats_booked` (service-role only), so it would be one
+  small guarded migration.
+- Discover mood pages keep `pastSlugs` whitelists pointing at the removed
+  seed slugs — dead config that renders nothing; it will be repointed when
+  the 3 real trips are imported.
+
+### Deliberately NOT in M9.5
+
+- ⛔ Anything payment-shaped — **the payment gateway is STILL PENDING**
+  (decisions F + C open; 7B remains LAST).
+- No invented replacement content — zero trips renders as zero trips.
+- No Expo changes (the app reads the same live backend and shows its own
+  honest empty archive states).
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

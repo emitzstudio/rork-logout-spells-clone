@@ -2,7 +2,7 @@
 
 > **Status: BUILD PHASE — M1 (2026-07-31) · M2 (2026-08-02) · M3 (2026-08-07) ·
 > M4 · M5 · M6 (2026-08-09) · M7A (2026-08-13) · M7B · M7C + 0008 · M8 + 0009 ·
-> M6b (2026-08-14) · M9 (2026-08-15) applied.**
+> M6b (2026-08-14) · M9 · M9.5 (2026-08-15) applied.**
 > Live today: identity, the spell catalogue, the journal/team/archive domain,
 > the forms domain, the M5 integration objects, the M6 **traveller layer**,
 > the M7A **gateway-agnostic booking layer** (bookings + per-seat participants
@@ -97,6 +97,7 @@ Supabase project: `ultwonqxcgoadthneqqn` (company-owned, native Supabase Auth).
 | M8 | Memories & trip albums | `memories`, `memory_photos`, guard triggers, private `memories` bucket (signed URLs), realtime notifications, live album UI (web) | **Applied 2026-08-14 — verified** |
 | M6b | Expo app onto the live backend | ZERO schema change — client swap only: native Supabase client (AsyncStorage sessions), live account bundle + catalogue + albums + realtime inbox, honest booking doors (W), forms in-app browser (X), demo world retired (Z), team portraits repointed into `site-media/team/*`; attestation `m6b-verify-expo-live` | **Applied 2026-08-14 — verified** |
 | M9 | Website truth pass | ZERO schema change — web only: founder dashboard fully live (`booking_report` + `spell_departures` + `booking_events` + live attention counts; every fabricated number deleted), archive review form on the server-verified pending-moderation path (localStorage machinery deleted), seed fallbacks removed (previous spells · interests · mood pages → honest load/error/empty states), form submits await the real insert (no false success), erasure contact unified, dead mock modules deleted | **Applied 2026-08-15 — verified · payment gateway STILL PENDING** |
+| M9.5 | Reality / trip-history pass | `0010_m95_reality_pass`: the 6 seed archive journeys + 13 seed reviews (author_id NULL) deleted under guards — **completed real historical trips = 0** is now the recorded truth; web shows an intentional “No previous spells yet” state; account layer sheds the last demo residue (invented wishlist timestamp, trip-implying badge hints, “300 Community Members” claim); a new-account probe attests a genuinely empty account (only the real welcome whisper); the founder's 3 REAL trips arrive later as founder-supplied content; upcoming trips stay dashboard-driven | **Applied 2026-08-15 — verified · baseline now reviews=0 · archive=0 · payment gateway STILL PENDING** |
 | — | Future (designed only) | `referrals`, loyalty ledger, spellcasters accounts, community, traveller matching | Documented |
 
 ## Decision log

@@ -7,6 +7,7 @@ import Page from "@/components/site/Layout";
 import { CountUp, Reveal } from "@/components/site/Reveal";
 import TeamCards from "@/components/site/TeamCards";
 import { DIARY, PHILOSOPHY, type DiaryEntry } from "@/data/site";
+import { CATEGORY_META } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
@@ -550,12 +551,14 @@ function ChapterPhilosophy() {
 
 /* ------------------------- The story in numbers ------------------------- */
 
+/** Real numbers only (M9.5) — live catalogue counts, never invented claims. */
 function StorySoFar() {
   const { publicSpells } = useSpellStore();
+  const places = new Set(publicSpells.map((s) => s.location)).size;
   const stats: { num: number; label: string }[] = [
-    { num: Math.max(publicSpells.length, 1), label: "Active Spells" },
-    { num: 300, label: "Community Members" },
-    { num: 6, label: "Spell Types" },
+    { num: publicSpells.length, label: "Active Spells" },
+    { num: places, label: "Places to Log Out" },
+    { num: Object.keys(CATEGORY_META).length, label: "Spell Types" },
   ];
 
   return (
