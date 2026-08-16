@@ -209,6 +209,10 @@ interface BlogStoreValue {
   posts: ManagedBlogPost[];
   /** True once the first fetch has settled — pages gate their 404s on this. */
   ready: boolean;
+  /** True when the journal read FAILED — consumers show retry, never "empty" (M10). */
+  failed: boolean;
+  /** Refetches the journal after a failure. */
+  retry: () => void;
   /** Insert-or-update by id; uploads local imagery and returns the saved record. */
   savePost: (record: ManagedBlogPost) => Promise<ManagedBlogPost>;
   /**
@@ -309,6 +313,10 @@ export function BlogStoreProvider({ children }: { children: ReactNode }) {
     void invalidate();
   }, [invalidate]);
 
+  const retry = useCallback(() => {
+    void query.refetch();
+  }, [query.refetch]);
+
   const uniqueSlug = useCallback(
     (base: string, excludeId?: string): string => {
       const root = slugify(base) !== "" ? slugify(base) : "story";
@@ -336,6 +344,8 @@ export function BlogStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       posts,
       ready: query.isFetched,
+      failed: query.isError,
+      retry,
       savePost,
       removePost,
       getById,
@@ -344,7 +354,7 @@ export function BlogStoreProvider({ children }: { children: ReactNode }) {
       refresh,
       publicPosts,
     }),
-    [posts, query.isFetched, savePost, removePost, getById, getBySlug, uniqueSlug, refresh, publicPosts],
+    [posts, query.isFetched, query.isError, retry, savePost, removePost, getById, getBySlug, uniqueSlug, refresh, publicPosts],
   );
 
   return <BlogStoreContext.Provider value={value}>{children}</BlogStoreContext.Provider>;

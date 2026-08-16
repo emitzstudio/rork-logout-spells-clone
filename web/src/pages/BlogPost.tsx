@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BlogArticleBody } from "@/components/site/BlogArticle";
 import BlogCard from "@/components/site/BlogCard";
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import { Reveal } from "@/components/site/Reveal";
 import { BLOG_CATEGORIES, fmtBlogDate, relatedTo } from "@/data/blog";
 import { useBlogStore } from "@/data/blogStore";
@@ -174,15 +175,28 @@ function Article({ post }: { post: ManagedBlogPost }) {
 /** The premium article page — /blog/{slug}. */
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getBySlug, ready } = useBlogStore();
+  const { getBySlug, ready, failed, retry } = useBlogStore();
   const managed = slug !== undefined ? getBySlug(slug) : undefined;
   /* Drafts stay invisible until the founder publishes them. */
   const post = managed !== undefined && managed.status === "published" ? managed : undefined;
 
-  if (!ready && !post) {
+  if (!ready && !failed && !post) {
     return (
       <Page title="The Journal">
-        <section className="min-h-[100svh]" aria-hidden />
+        <section className="grid min-h-[100svh] place-items-center" aria-busy>
+          <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        </section>
+      </Page>
+    );
+  }
+
+  /* A failed read is NOT a missing story — shared links deserve a retry (M10). */
+  if (!post && failed) {
+    return (
+      <Page title="The Journal">
+        <section className="flex min-h-[100svh] items-center justify-center px-5">
+          <LoadError message="This story couldn't be reached." onRetry={retry} className="w-full max-w-xl" />
+        </section>
       </Page>
     );
   }

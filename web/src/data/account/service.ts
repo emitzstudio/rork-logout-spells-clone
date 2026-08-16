@@ -174,7 +174,8 @@ export const mapNotification = (row: NotificationRow): AppNotification => ({
   body: row.body,
   time: row.created_at,
   read: row.read_at !== null,
-  link: row.link !== "" ? row.link : undefined,
+  /* Only internal paths are navigable — anything else would strand the traveller (M10). */
+  link: row.link !== "" && row.link.startsWith("/") ? row.link : undefined,
 });
 
 /* --------------------------- Booking row mapping ---------------------------- */
@@ -937,7 +938,10 @@ class TravellerAccountService {
    * path law), the just-uploaded object is removed — an orphan is a cost
    * nuisance, a dangling row would be a broken image.
    */
-  async addMemoryPhotos(memoryId: string, sources: string[]): Promise<AccountData> {
+  async addMemoryPhotos(
+    memoryId: string,
+    sources: string[],
+  ): Promise<{ data: AccountData; added: number; failed: number }> {
     const { db, userId } = this.expectLoaded();
     const memory = db.memories.find((m) => m.id === memoryId);
     if (!memory) throw new AccountError("This memory has faded.", null);
@@ -947,9 +951,10 @@ class TravellerAccountService {
         `This album keeps ${memory.photoLimit} keepsakes — remove one to add another.`,
         null,
       );
+    const attempted = sources.slice(0, room);
     const added: MemoryPhoto[] = [];
     let failure: AccountError | null = null;
-    for (const src of sources.slice(0, room)) {
+    for (const src of attempted) {
       let path: string;
       try {
         path = await uploadMemoryPhoto(userId, memoryId, src);
@@ -979,7 +984,12 @@ class TravellerAccountService {
     if (added.length === 0 && failure !== null) throw failure;
     const fresh: TripMemory = { ...memory, photos: [...memory.photos, ...added] };
     fresh.cover = coverFor(fresh, db.bookings);
-    return this.swapMemory(db, fresh);
+    /* Partial batches report honestly — the UI must never over-count (M10). */
+    return {
+      data: this.swapMemory(db, fresh),
+      added: added.length,
+      failed: attempted.length - added.length,
+    };
   }
 
   /** Row first, object second — the order never reverses. */

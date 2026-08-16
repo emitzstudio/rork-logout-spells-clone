@@ -319,6 +319,22 @@ export default function WaitlistPanel({ onConvert }: WaitlistPanelProps) {
         <div className="grid place-items-center rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 py-16">
           <span aria-hidden className="h-7 w-7 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
         </div>
+      ) : boardQuery.isError ? (
+        /* A failed read is NOT an empty queue (M10). */
+        <div role="alert" className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-14 text-center">
+          <CalendarClock className="mx-auto h-7 w-7 text-cream/25" />
+          <p className="mt-3 font-serif text-[19px] text-cream/85">The queue couldn't be reached</p>
+          <p className="mx-auto mt-1.5 max-w-[420px] font-sans text-[12.5px] leading-relaxed text-cream/45">
+            The connection failed — no entries were lost.
+          </p>
+          <button
+            type="button"
+            onClick={() => void boardQuery.refetch()}
+            className="mx-auto mt-5 flex h-9 items-center gap-1.5 rounded-lg border border-gold/40 bg-gold/15 px-3.5 font-sans text-[11.5px] font-medium text-gold-light transition-all hover:bg-gold/25 active:scale-[0.98]"
+          >
+            Try again
+          </button>
+        </div>
       ) : groups.length === 0 ? (
         <div className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-14 text-center">
           <CalendarClock className="mx-auto h-7 w-7 text-cream/25" />

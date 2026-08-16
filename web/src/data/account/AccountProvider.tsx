@@ -50,6 +50,10 @@ interface AccountValue {
   booting: boolean;
   /** Session present AND data loaded — the fully signed-in state. */
   signedIn: boolean;
+  /** True when the account bundle FAILED to load — the shell offers retry (M10). */
+  loadFailed: boolean;
+  /** Refetches the bundle after a failure. */
+  retryLoad: () => void;
   unreadCount: number;
 
   signIn: (email: string, password: string) => Promise<void>;
@@ -68,7 +72,11 @@ interface AccountValue {
   setTripRating: (bookingId: string, rating: number) => Promise<void>;
   /** Creates the album on a finished trip and returns its id (M8). */
   beginAlbum: (bookingId: string) => Promise<string>;
-  addMemoryPhotos: (memoryId: string, sources: string[]) => Promise<void>;
+  /** Resolves with honest counts — partial batches must never over-claim (M10). */
+  addMemoryPhotos: (
+    memoryId: string,
+    sources: string[],
+  ) => Promise<{ added: number; failed: number }>;
   removeMemoryPhoto: (memoryId: string, photoId: string) => Promise<void>;
   saveMemoryNote: (memoryId: string, note: string) => Promise<void>;
   saveMemoryHighlights: (memoryId: string, highlights: string[]) => Promise<void>;
@@ -240,9 +248,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     [queryClient, userId],
   );
   const addMemoryPhotos = useCallback(
-    (memoryId: string, sources: string[]) =>
-      apply(accountService.addMemoryPhotos(memoryId, sources)),
-    [apply],
+    async (memoryId: string, sources: string[]) => {
+      const { data: next, added, failed } = await accountService.addMemoryPhotos(
+        memoryId,
+        sources,
+      );
+      queryClient.setQueryData(["account", userId ?? "anon"], next);
+      return { added, failed };
+    },
+    [queryClient, userId],
   );
   const removeMemoryPhoto = useCallback(
     (memoryId: string, photoId: string) =>
@@ -268,6 +282,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     [apply],
   );
 
+  const retryLoad = useCallback(() => {
+    void accountQuery.refetch();
+  }, [accountQuery.refetch]);
+
   /** Fire-and-forget — public pages call this without awaiting. */
   const recordSpellView = useCallback(
     (slug: string) => {
@@ -289,6 +307,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       ready,
       booting: userId !== null && accountQuery.isPending,
       signedIn: session !== null && data !== null,
+      loadFailed: userId !== null && accountQuery.isError,
+      retryLoad,
       unreadCount,
       signIn,
       signUp,
@@ -316,6 +336,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       ready,
       userId,
       accountQuery.isPending,
+      accountQuery.isError,
+      retryLoad,
       unreadCount,
       signIn,
       signUp,

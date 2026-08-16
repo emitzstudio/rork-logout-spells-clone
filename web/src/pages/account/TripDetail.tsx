@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import {
   CountdownUnits,
@@ -102,6 +103,8 @@ export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
   const { data, toggleChecklistItem, startChecklist, setTripRating, beginAlbum } = useAccount();
   const [invoiceOpen, setInvoiceOpen] = useState<boolean>(false);
+  /** Guards the packing-ritual seed against double-clicks (M10). */
+  const [checklistBusy, setChecklistBusy] = useState<boolean>(false);
 
   const booking = useMemo(
     () => data?.bookings.find((b) => b.id === id) ?? null,
@@ -326,10 +329,17 @@ export default function TripDetail() {
               </div>
               <button
                 type="button"
-                onClick={() => void startChecklist(booking.id).catch(() => undefined)}
-                className="btn-ghost-gold mt-5 !px-6 !py-3 !text-[12.5px]"
+                onClick={() => {
+                  if (checklistBusy) return;
+                  setChecklistBusy(true);
+                  startChecklist(booking.id)
+                    .catch(() => toast.error("The list couldn't begin — try again"))
+                    .finally(() => setChecklistBusy(false));
+                }}
+                disabled={checklistBusy}
+                className="btn-ghost-gold mt-5 !px-6 !py-3 !text-[12.5px] disabled:opacity-50"
               >
-                Start the list
+                {checklistBusy ? "Beginning…" : "Start the list"}
               </button>
             </div>
           )}
@@ -352,7 +362,11 @@ export default function TripDetail() {
                   <li key={item.id}>
                     <button
                       type="button"
-                      onClick={() => void toggleChecklistItem(booking.id, item.id)}
+                      onClick={() =>
+                        void toggleChecklistItem(booking.id, item.id).catch(() =>
+                          toast.error("That tick didn't save — try again"),
+                        )
+                      }
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-300 active:scale-[0.99]",
                         item.done

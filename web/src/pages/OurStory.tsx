@@ -553,12 +553,15 @@ function ChapterPhilosophy() {
 
 /** Real numbers only (M9.5) — live catalogue counts, never invented claims. */
 function StorySoFar() {
-  const { publicSpells } = useSpellStore();
+  const { publicSpells, ready, failed } = useSpellStore();
+  /* While loading (or after a failed read with nothing cached) the live
+     numbers stay honest dashes instead of counting up to a false zero (M10). */
+  const counted = publicSpells.length > 0 || (ready && !failed);
   const places = new Set(publicSpells.map((s) => s.location)).size;
-  const stats: { num: number; label: string }[] = [
-    { num: publicSpells.length, label: "Active Spells" },
-    { num: places, label: "Places to Log Out" },
-    { num: Object.keys(CATEGORY_META).length, label: "Spell Types" },
+  const stats: { num: number; label: string; live: boolean }[] = [
+    { num: publicSpells.length, label: "Active Spells", live: true },
+    { num: places, label: "Places to Log Out", live: true },
+    { num: Object.keys(CATEGORY_META).length, label: "Spell Types", live: false },
   ];
 
   return (
@@ -572,7 +575,7 @@ function StorySoFar() {
             {stats.map((s) => (
               <div key={s.label}>
                 <span className="heading-serif block text-4xl text-gold md:text-6xl">
-                  <CountUp to={s.num} />
+                  {s.live && !counted ? <span aria-label="Not loaded yet">—</span> : <CountUp to={s.num} />}
                 </span>
                 <span className="mt-3 block font-sans text-[11px] uppercase tracking-[0.18em] text-cream/45">
                   {s.label}

@@ -87,6 +87,10 @@ interface SpellStoreValue {
   spells: ManagedSpell[];
   /** True once the first fetch has settled — pages gate their 404s on this. */
   ready: boolean;
+  /** True when the collection read FAILED — consumers show retry, never "empty" (M10). */
+  failed: boolean;
+  /** Refetches the collection after a failure. */
+  retry: () => void;
   /** Insert-or-update by id; uploads local imagery and returns the saved record. */
   saveSpell: (record: ManagedSpell) => Promise<ManagedSpell>;
   duplicateSpell: (id: string) => Promise<ManagedSpell | null>;
@@ -278,6 +282,10 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     void invalidate();
   }, [invalidate]);
 
+  const retry = useCallback(() => {
+    void query.refetch();
+  }, [query.refetch]);
+
   const getById = useCallback((id: string) => spells.find((s) => s.id === id), [spells]);
 
   const getBySlug = useCallback((slug: string) => spells.find((s) => s.slug === slug), [spells]);
@@ -309,6 +317,8 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       spells,
       ready: query.isFetched,
+      failed: query.isError,
+      retry,
       saveSpell,
       duplicateSpell,
       archiveSpell,
@@ -323,6 +333,8 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     [
       spells,
       query.isFetched,
+      query.isError,
+      retry,
       saveSpell,
       duplicateSpell,
       archiveSpell,

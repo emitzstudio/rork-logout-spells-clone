@@ -447,8 +447,12 @@ export function useOpsBadges(): UseQueryResult<OpsBadges> {
   });
 }
 
-/** True when the signed-in staff member holds the admin role (RPC-gated actions). */
-export function useIsAdmin(): boolean {
+/**
+ * Whether the signed-in staff member holds the admin role (RPC-gated actions).
+ * `ready` is false while the check is in flight — callers must not flash the
+ * "you need the admin role" warning at real admins during that beat (M10).
+ */
+export function useIsAdmin(): { isAdmin: boolean; ready: boolean } {
   const query = useQuery({
     queryKey: [OPS, "is-admin"],
     queryFn: async (): Promise<boolean> => {
@@ -461,7 +465,7 @@ export function useIsAdmin(): boolean {
     },
     staleTime: 5 * 60_000,
   });
-  return query.data === true;
+  return { isAdmin: query.data === true, ready: !query.isPending };
 }
 
 /* -------------------------------- Mutations -------------------------------- */

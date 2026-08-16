@@ -115,6 +115,8 @@ export default function FormBuilder() {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const { getFormById, saveForm, uniqueFormSlug } = useFormStore();
+  /** One save in flight at a time — double-clicks must not insert twice (M10). */
+  const [saving, setSaving] = useState<boolean>(false);
 
   const routeState = location.state as { form?: LogoutForm } | null;
   const storeForm = id ? getFormById(id) : undefined;
@@ -188,6 +190,7 @@ export default function FormBuilder() {
       : uniqueFormSlug(slugBase(record), record.id);
 
   const saveDraft = (): void => {
+    if (saving) return;
     const wasLive = form.status === "published";
     const record: LogoutForm = {
       ...form,
@@ -195,12 +198,14 @@ export default function FormBuilder() {
       slug: uniqueFormSlug(slugBase(form), form.id),
       updatedAt: new Date().toISOString(),
     };
+    setSaving(true);
     void saveForm(record)
       .then((saved) => {
         setForm(saved);
         showToast(wasLive ? "Moved to draft — the public link is paused" : "Draft saved ✦");
       })
-      .catch(() => showToast("Could not save — please try again"));
+      .catch(() => showToast("Could not save — please try again"))
+      .finally(() => setSaving(false));
   };
 
   const publish = (): void => {
@@ -210,6 +215,7 @@ export default function FormBuilder() {
       showToast(issues[0]);
       return;
     }
+    if (saving) return;
     const slug = resolveSlug(form);
     const title = form.title.trim();
     const record: LogoutForm = {
@@ -219,6 +225,7 @@ export default function FormBuilder() {
       slug,
       updatedAt: new Date().toISOString(),
     };
+    setSaving(true);
     void saveForm(record)
       .then((saved) =>
         navigate("/dashboard/forms", {
@@ -231,7 +238,8 @@ export default function FormBuilder() {
           },
         }),
       )
-      .catch(() => showToast("Could not publish — please try again"));
+      .catch(() => showToast("Could not publish — please try again"))
+      .finally(() => setSaving(false));
   };
 
   const copyLink = (): void => {
@@ -288,11 +296,11 @@ export default function FormBuilder() {
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          <button type="button" onClick={saveDraft} className="btn-ghost-gold !px-4 !py-2.5 !text-[12px]">
+          <button type="button" onClick={saveDraft} disabled={saving} className="btn-ghost-gold !px-4 !py-2.5 !text-[12px] disabled:opacity-50">
             <Save className="h-3.5 w-3.5" />
             {form.status === "published" ? "Unpublish" : "Save draft"}
           </button>
-          <button type="button" onClick={publish} className="btn-gold !px-5 !py-2.5 !text-[12px]">
+          <button type="button" onClick={publish} disabled={saving} className="btn-gold !px-5 !py-2.5 !text-[12px] disabled:opacity-50">
             <Sparkles className="h-3.5 w-3.5" />
             {form.status === "published" ? "Save changes" : "Publish form"}
           </button>

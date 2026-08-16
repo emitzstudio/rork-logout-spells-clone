@@ -96,7 +96,7 @@ function PanelEmpty({ label }: { label: string }) {
 
 export default function Overview() {
   const greeting = timeGreeting();
-  const { spells, ready: spellsReady } = useSpellStore();
+  const { spells, ready: spellsReady, failed: spellsFailed, retry: retrySpells } = useSpellStore();
   const report = useBookingReport();
   const departures = useDepartureOptions();
   const activity = useRecentActivity();
@@ -131,8 +131,9 @@ export default function Overview() {
     [spells],
   );
 
-  const statsLoading = !spellsReady || report.isPending || departures.isPending;
-  const statsError = report.isError || departures.isError;
+  const statsLoading = (!spellsReady && !spellsFailed) || report.isPending || departures.isPending;
+  /* A failed spell-store read must not pose as "0 active spells" (M10). */
+  const statsError = report.isError || departures.isError || (spellsFailed && spells.length === 0);
 
   const stats = useMemo<DashStat[]>(() => {
     const rows = report.data ?? [];
@@ -196,6 +197,7 @@ export default function Overview() {
   const retryStats = (): void => {
     if (report.isError) void report.refetch();
     if (departures.isError) void departures.refetch();
+    if (spellsFailed) retrySpells();
   };
 
   return (

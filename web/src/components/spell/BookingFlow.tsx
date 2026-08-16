@@ -408,7 +408,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
       setInqRef(ref);
       setStep("inquire-sent");
     } catch {
-      setErrs({ inqEmail: "The message couldn't be sent just now — please try again." });
+      /* A network failure is not an email problem — it gets its own line (M10). */
+      setErrs({ inqGeneral: "The message couldn't be sent just now — please try again." });
     } finally {
       setInqSending(false);
     }
@@ -643,6 +644,25 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       )}
                     </div>
 
+                    {/* A failed availability check says so — stale numbers never pose as live (M10). */}
+                    {liveSpell && departureQuery.isError && (
+                      <div
+                        role="alert"
+                        className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3"
+                      >
+                        <span className="font-sans text-[12px] leading-relaxed text-amber-200/80">
+                          Live seat availability couldn't be checked — numbers shown may be stale.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void departureQuery.refetch()}
+                          className="font-sans text-[11px] uppercase tracking-[0.16em] text-gold transition-colors hover:text-gold-light"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
+
                     <p className="mt-5 text-center font-serif text-[13px] italic text-cream/40">
                       {dates.label} · {formatINR(spell.price)} per seat · circles of {spell.seatsTotal} ✦
                     </p>
@@ -708,6 +728,11 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       >
                         {inqSending ? "Sending…" : "Send Inquiry"} <ArrowRight size={15} />
                       </button>
+                      {errs.inqGeneral && (
+                        <p role="alert" className="text-center font-sans text-xs text-[#d98a7f]">
+                          {errs.inqGeneral}
+                        </p>
+                      )}
                       <p className="text-center font-sans text-[11px] text-cream/35">
                         We never share your details. No spam, ever.
                       </p>
@@ -763,6 +788,23 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         This circle's departure isn't taking a queue right now — send an inquiry
                         instead and we'll find you a way in.
                       </p>
+                    ) : waitlistQuery.isError ? (
+                      /* An unknown queue position must not re-offer the Join form (M10). */
+                      <div
+                        role="alert"
+                        className="mt-4 rounded-xl border border-cream/[0.1] bg-cream/[0.02] px-4 py-4 text-center"
+                      >
+                        <p className="font-sans text-[12.5px] leading-relaxed text-cream/55">
+                          Your place in the queue couldn't be checked.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void waitlistQuery.refetch()}
+                          className="btn-ghost-gold mt-3 !py-2 !text-[11px]"
+                        >
+                          Try again
+                        </button>
+                      </div>
                     ) : myEntry ? (
                       <div className="mt-5">
                         <div className="relative flex flex-col items-center rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-7 text-center">

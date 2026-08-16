@@ -53,6 +53,9 @@ export default function Spells() {
   const location = useLocation();
   const {
     spells,
+    ready,
+    failed,
+    retry,
     duplicateSpell: duplicateSpellInStore,
     archiveSpell: archiveSpellInStore,
     restoreSpell: restoreSpellInStore,
@@ -403,7 +406,26 @@ export default function Spells() {
         </motion.div>
       </div>
 
-      {spells.length === 0 ? (
+      {/* Loading, failure and a truly empty collection are three states (M10). */}
+      {!ready && !failed ? (
+        <div className="mt-8 grid place-items-center rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 py-24" aria-busy>
+          <span aria-hidden className="h-8 w-8 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        </div>
+      ) : failed && spells.length === 0 ? (
+        <div role="alert" className="mt-8 rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-20 text-center">
+          <p className="font-serif text-[22px] text-cream/85">The collection couldn't be reached</p>
+          <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
+            The connection failed — your spells are safe and unchanged.
+          </p>
+          <button
+            type="button"
+            onClick={retry}
+            className="mx-auto mt-5 flex h-10 items-center gap-2 rounded-lg border border-gold/40 bg-gold/15 px-4 font-sans text-[12px] font-medium text-gold-light transition-all hover:bg-gold/25 active:scale-[0.98]"
+          >
+            Try again
+          </button>
+        </div>
+      ) : spells.length === 0 ? (
         <SpellsEmptyState onNew={goNew} onRestore={refresh} />
       ) : (
         <>

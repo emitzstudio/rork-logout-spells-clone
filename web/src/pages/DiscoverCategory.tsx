@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import { PastSpellCard } from "@/components/site/PreviousSpellsSection";
 import { Reveal } from "@/components/site/Reveal";
 import { discoverService } from "@/data/discover";
@@ -82,8 +83,8 @@ function CuratedSpellCard({ spell }: { spell: ManagedSpell }) {
 export default function DiscoverCategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? discoverService.bySlug(slug) : undefined;
-  const { publicSpells } = useSpellStore();
-  const { spells: archive } = usePreviousSpells();
+  const { publicSpells, ready, failed, retry } = useSpellStore();
+  const { spells: archive, isError: pastFailed, refetch: retryPast } = usePreviousSpells();
 
   const curated = useMemo(
     () => (category ? discoverService.curatedSpells(category, publicSpells) : []),
@@ -187,6 +188,26 @@ export default function DiscoverCategoryPage() {
             </h2>
           </Reveal>
 
+          {/* Loading, failure and true emptiness are separate states (M10). */}
+          {!ready && !failed ? (
+            <div className="mt-10 grid gap-5 lg:grid-cols-2" aria-busy>
+              {Array.from({ length: 2 }, (_, i) => (
+                <div
+                  key={`curated-skeleton-${i}`}
+                  className="h-[190px] animate-pulse rounded-[16px] border border-cream/[0.06] bg-charcoal-deep/50"
+                  aria-hidden
+                />
+              ))}
+            </div>
+          ) : failed && publicSpells.length === 0 ? (
+            <LoadError
+              message="The live circles couldn't be reached."
+              onRetry={retry}
+              variant="compact"
+              className="mt-10"
+            />
+          ) : (
+          <>
           <div className="mt-10 grid gap-5 lg:grid-cols-2">
             {curated.map((spell, i) => (
               <Reveal key={spell.id} delay={0.05 + i * 0.07}>
@@ -211,11 +232,13 @@ export default function DiscoverCategoryPage() {
               </div>
             </Reveal>
           )}
+          </>
+          )}
         </div>
       </section>
 
-      {/* Past journeys in this mood */}
-      {past.length > 0 && (
+      {/* Past journeys in this mood — a failed archive read says so instead of vanishing (M10). */}
+      {(past.length > 0 || pastFailed) && (
         <section aria-label="Past journeys" className="px-5 py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-5xl">
             <Reveal>
@@ -227,6 +250,14 @@ export default function DiscoverCategoryPage() {
                 {category.name} journeys that <span className="italic text-gold-gradient">already happened</span>
               </h2>
             </Reveal>
+            {pastFailed && past.length === 0 ? (
+              <LoadError
+                message="The archive couldn't be reached."
+                onRetry={retryPast}
+                variant="compact"
+                className="mt-10"
+              />
+            ) : (
             <div className="mt-10 grid gap-5 sm:grid-cols-2">
               {past.map((p, i) => (
                 <Reveal key={p.id} delay={0.05 + i * 0.08}>
@@ -234,6 +265,7 @@ export default function DiscoverCategoryPage() {
                 </Reveal>
               ))}
             </div>
+            )}
           </div>
         </section>
       )}

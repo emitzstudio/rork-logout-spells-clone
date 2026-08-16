@@ -20,6 +20,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { toast } from "sonner";
+
 import { useAccount } from "@/data/account/AccountProvider";
 import { isKnownInterest } from "@/data/interests";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,7 +256,11 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
           { onConflict: "user_id,interest_id", ignoreDuplicates: true },
         )
         .then(({ error }) => {
-          if (error) refetchCloud();
+          if (error) {
+            /* The optimistic dot reverts — the traveller must hear why (M10). */
+            toast.error("That dream couldn't be saved to your list — try again.", { id: "bucket-add" });
+            refetchCloud();
+          }
         });
     },
     [userId, queryClient, setCloud, refetchCloud],
@@ -270,7 +276,10 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
         .delete()
         .eq("interest_id", id)
         .then(({ error }) => {
-          if (error) refetchCloud();
+          if (error) {
+            toast.error("That dream couldn't be removed — try again.", { id: "bucket-remove" });
+            refetchCloud();
+          }
         });
     },
     [userId, setCloud, refetchCloud],
@@ -285,7 +294,10 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       .update({ brewed_at: new Date().toISOString() })
       .eq("user_id", userId)
       .then(({ error }) => {
-        if (error) refetchCloud();
+        if (error) {
+          toast.error("The brew couldn't be saved — try again.", { id: "bucket-brew" });
+          refetchCloud();
+        }
       });
   }, [userId, setCloud, refetchCloud]);
 
@@ -299,14 +311,20 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       .delete()
       .eq("user_id", userId)
       .then(({ error }) => {
-        if (error) refetchCloud();
+        if (error) {
+          toast.error("The cauldron couldn't be emptied — try again.", { id: "bucket-clear" });
+          refetchCloud();
+        }
       });
     void supabase
       .from("user_settings")
       .update({ brewed_at: null })
       .eq("user_id", userId)
       .then(({ error }) => {
-        if (error) refetchCloud();
+        if (error) {
+          toast.error("The cauldron couldn't be emptied — try again.", { id: "bucket-clear" });
+          refetchCloud();
+        }
       });
   }, [userId, setCloud, refetchCloud]);
 

@@ -210,6 +210,22 @@ export default function Testimonials() {
           <div className="grid place-items-center rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 py-20">
             <span aria-hidden className="h-7 w-7 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
           </div>
+        ) : queueQuery.isError ? (
+          /* A failed read is NOT an empty review queue (M10). */
+          <div role="alert" className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-16 text-center">
+            <MessageSquareQuote className="mx-auto h-7 w-7 text-cream/25" />
+            <p className="mt-3 font-serif text-[20px] text-cream/85">The reviews couldn't be reached</p>
+            <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
+              The connection failed — nothing was lost.
+            </p>
+            <button
+              type="button"
+              onClick={() => void queueQuery.refetch()}
+              className="mx-auto mt-5 flex h-10 items-center gap-2 rounded-lg border border-gold/40 bg-gold/15 px-4 font-sans text-[12px] font-medium text-gold-light transition-all hover:bg-gold/25 active:scale-[0.98]"
+            >
+              Try again
+            </button>
+          </div>
         ) : current.length === 0 ? (
           <div className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-16 text-center">
             <MessageSquareQuote className="mx-auto h-7 w-7 text-cream/25" />

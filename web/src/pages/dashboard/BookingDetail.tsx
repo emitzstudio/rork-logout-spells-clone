@@ -105,7 +105,7 @@ function ParticipantCard({ participant }: { participant: ParticipantRow }) {
 export default function BookingDetail() {
   const { id } = useParams<{ id: string }>();
   const bundleQuery = useBookingBundle(id);
-  const isAdmin = useIsAdmin();
+  const { isAdmin, ready: adminReady } = useIsAdmin();
   const [dialog, setDialog] = useState<DialogKind>(null);
 
   if (bundleQuery.isPending) {
@@ -116,7 +116,35 @@ export default function BookingDetail() {
     );
   }
 
-  if (bundleQuery.isError || bundleQuery.data === undefined) {
+  /* A read failure and a missing booking are different truths (M10). */
+  if (bundleQuery.isError) {
+    return (
+      <div role="alert" className="mx-auto max-w-[420px] py-24 text-center">
+        <ShieldAlert className="mx-auto h-8 w-8 text-cream/30" />
+        <h1 className="mt-4 font-serif text-[24px] text-cream">The ledger didn't answer</h1>
+        <p className="mt-2 font-sans text-[12.5px] leading-relaxed text-cream/45">
+          This booking couldn't be loaded — the connection failed, not the booking.
+        </p>
+        <div className="mt-5 flex items-center justify-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => void bundleQuery.refetch()}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-gold/40 bg-gold/15 px-4 font-sans text-[12px] font-medium text-gold-light transition-colors hover:bg-gold/25"
+          >
+            Try again
+          </button>
+          <Link
+            to="/dashboard/bookings"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-cream/15 px-4 font-sans text-[12px] text-cream/70 transition-colors hover:border-gold/40 hover:text-gold-light"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to bookings
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (bundleQuery.data === undefined) {
     return (
       <div className="mx-auto max-w-[420px] py-24 text-center">
         <ShieldAlert className="mx-auto h-8 w-8 text-cream/30" />
@@ -198,7 +226,8 @@ export default function BookingDetail() {
         </div>
       </div>
 
-      {!isAdmin && (
+      {/* Only warn once the role check has actually settled (M10). */}
+      {adminReady && !isAdmin && (
         <p className="mt-4 flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3.5 py-2.5 font-sans text-[11.5px] text-amber-200/80">
           <ShieldAlert className="h-4 w-4 shrink-0" />
           These actions need the admin role — the server refuses anyone else.

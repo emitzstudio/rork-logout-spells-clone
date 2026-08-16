@@ -6,6 +6,7 @@ import HomeWelcome from "@/components/account/HomeWelcome";
 import { useApply } from "@/components/site/ApplyModal";
 import BucketListSection from "@/components/site/BucketListSection";
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import PreviousSpellsSection from "@/components/site/PreviousSpellsSection";
 import { Reveal } from "@/components/site/Reveal";
 import SpellCarousel from "@/components/site/SpellCarousel";
@@ -130,7 +131,7 @@ function Marquee() {
  * published spell rotates through; the cards themselves are unchanged.
  */
 function SpellsSection() {
-  const { publicSpells } = useSpellStore();
+  const { publicSpells, ready, failed, retry } = useSpellStore();
 
   return (
     <section id="spells" aria-labelledby="spells-heading" className="scroll-mt-24 px-5 py-24 md:px-10 md:py-36">
@@ -144,9 +145,21 @@ function SpellsSection() {
           </h2>
         </Reveal>
 
+        {/* Loading, failure and emptiness each tell their own truth (M10). */}
+        {!ready && !failed ? (
+          <div className="mt-8 h-[380px] animate-pulse rounded-[16px] border border-cream/[0.06] bg-charcoal-deep/50" aria-busy aria-label="Loading spells" />
+        ) : failed && publicSpells.length === 0 ? (
+          <LoadError
+            message="The spells couldn't be reached."
+            onRetry={retry}
+            variant="compact"
+            className="mt-8"
+          />
+        ) : (
         <Reveal delay={0.14} className="mt-6 md:mt-8">
           <SpellCarousel spells={publicSpells} />
         </Reveal>
+        )}
 
         {publicSpells.length > 0 && (
           <Reveal delay={0.1} className="mt-8 flex flex-col items-center gap-6 text-center md:mt-10">

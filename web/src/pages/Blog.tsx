@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import BlogCard, { AuthorChip } from "@/components/site/BlogCard";
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import { Reveal } from "@/components/site/Reveal";
 import { BLOG_CATEGORIES, featuredOf, fmtBlogDate, tagsOf } from "@/data/blog";
 import type { BlogCategoryId, BlogPost } from "@/data/blog";
@@ -81,7 +82,7 @@ function FeaturedArticle({ post }: { post: BlogPost }) {
  * Replaces the old Experience page.
  */
 export default function Blog() {
-  const { publicPosts } = useBlogStore();
+  const { publicPosts, ready, failed, retry } = useBlogStore();
   const posts = publicPosts;
   const featured = useMemo(() => featuredOf(posts), [posts]);
   const tags = useMemo(() => tagsOf(posts), [posts]);
@@ -127,6 +128,21 @@ export default function Blog() {
             </p>
           </Reveal>
 
+          {/* The whole Journal body waits for a truthful answer first (M10). */}
+          {!ready && !failed ? (
+            <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy>
+              {Array.from({ length: 3 }, (_, i) => (
+                <div
+                  key={`journal-skeleton-${i}`}
+                  className="h-[300px] animate-pulse rounded-[14px] border border-cream/[0.06] bg-charcoal-deep/50"
+                  aria-hidden
+                />
+              ))}
+            </div>
+          ) : failed && posts.length === 0 ? (
+            <LoadError message="The Journal couldn't be reached." onRetry={retry} className="mt-14" />
+          ) : (
+          <>
           {featured !== undefined && (
             <div className="mt-14">
               <FeaturedArticle post={featured} />
@@ -248,21 +264,29 @@ export default function Blog() {
               <div className="mt-8 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-20 text-center">
                 <span aria-hidden className="font-serif text-3xl text-gold/60">☾</span>
                 <p className="mt-4 font-serif text-2xl italic text-cream/70">
-                  Nothing matches that search — yet.
+                  {filtering ? "Nothing matches that search — yet." : "The Journal is still being written."}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setCategory("all");
-                    setActiveTag(null);
-                  }}
-                  className="btn-ghost-gold mt-7 !px-6 !py-3 !text-xs"
-                >
-                  Clear filters
-                </button>
+                {filtering ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setCategory("all");
+                      setActiveTag(null);
+                    }}
+                    className="btn-ghost-gold mt-7 !px-6 !py-3 !text-xs"
+                  >
+                    Clear filters
+                  </button>
+                ) : (
+                  <p className="mt-2 font-sans text-sm text-cream/45">
+                    The first story lands here the moment it's published.
+                  </p>
+                )}
               </div>
             </Reveal>
+          )}
+          </>
           )}
         </div>
       </section>

@@ -226,6 +226,38 @@ export function StaffGate({ children }: { children: ReactNode }) {
   if (!sessionReady) return <ConsoleWait label="Opening console" />;
   if (session === null) return <StaffSignIn />;
   if (staffQuery.isPending) return <ConsoleWait label="Checking the wards" />;
+  /* A FAILED ward check is not "not staff" — real staff get a retry, never a wall (M10). */
+  if (staffQuery.isError) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-charcoal px-5">
+        <div role="alert" className="max-w-[400px] text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-gold/25 text-gold/70">
+            <KeyRound className="h-5 w-5" />
+          </span>
+          <h1 className="mt-4 font-serif text-[26px] font-medium text-cream">The wards didn't answer</h1>
+          <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
+            Your access couldn't be verified — the connection failed, not your key.
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => void staffQuery.refetch()}
+              className="h-10 rounded-lg bg-gold px-5 font-sans text-[12px] font-semibold text-charcoal-deep transition-all hover:bg-gold-light active:scale-[0.98]"
+            >
+              Try again
+            </button>
+            <button
+              type="button"
+              onClick={() => void value.signOut()}
+              className="h-10 rounded-lg border border-cream/15 px-5 font-sans text-[12px] text-cream/70 transition-colors hover:border-gold/40 hover:text-gold-light"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (staffQuery.data !== true) {
     return <NotStaff email={value.email} onSignOut={() => void value.signOut()} />;
   }

@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 
 import FormDialog from "@/components/dashboard/forms/FormDialog";
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import BookingFlow from "@/components/spell/BookingFlow";
 import SpellHero from "@/components/spell/SpellHero";
 import {
@@ -37,7 +38,7 @@ const viewedSpellIds = new Set<string>();
 
 export default function SpellPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getBySlug, ready } = useSpellStore();
+  const { getBySlug, ready, failed, retry } = useSpellStore();
   const { getFormById } = useFormStore();
   const { recordSpellView } = useAccount();
 
@@ -69,10 +70,22 @@ export default function SpellPage() {
     return spell.draft ?? draftFromSpell(spell);
   }, [spell, visible]);
 
-  if (!ready && !spell) {
+  if (!ready && !failed && !spell) {
     return (
       <Page title="Live Spell">
-        <section className="min-h-[100svh]" aria-hidden />
+        <section className="grid min-h-[100svh] place-items-center" aria-busy>
+          <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        </section>
+      </Page>
+    );
+  }
+  /* A failed read is NOT a faded spell — shared links deserve a retry (M10). */
+  if (!spell && failed) {
+    return (
+      <Page title="Live Spell">
+        <section className="flex min-h-[100svh] items-center justify-center px-5">
+          <LoadError message="This spell couldn't be reached." onRetry={retry} className="w-full max-w-xl" />
+        </section>
       </Page>
     );
   }

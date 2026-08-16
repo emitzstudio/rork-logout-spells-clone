@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import PreviousSpellsSection from "@/components/site/PreviousSpellsSection";
 import { Reveal } from "@/components/site/Reveal";
 import { CATEGORY_META } from "@/data/spells";
@@ -30,7 +31,7 @@ const FILTERS: { id: Filter; label: string; symbol: string }[] = [
  */
 export default function Live() {
   const [filter, setFilter] = useState<Filter>("all");
-  const { publicSpells } = useSpellStore();
+  const { publicSpells, ready, failed, retry } = useSpellStore();
 
   const visible = useMemo(
     () => (filter === "all" ? publicSpells : publicSpells.filter((s) => s.category === filter)),
@@ -61,6 +62,8 @@ export default function Live() {
             </p>
           </Reveal>
 
+          {/* Filters only exist once there are spells to filter (M10). */}
+          {publicSpells.length > 0 && (
           <Reveal delay={0.1}>
             <div className="mt-12 flex flex-wrap gap-2.5">
               {FILTERS.map((f) => (
@@ -81,7 +84,27 @@ export default function Live() {
               ))}
             </div>
           </Reveal>
+          )}
 
+          {/* Loading, failure and genuine emptiness are three different truths (M10). */}
+          {!ready && !failed ? (
+            <div className="mt-12 grid gap-5 sm:grid-cols-2" aria-busy>
+              {Array.from({ length: 4 }, (_, i) => (
+                <div
+                  key={`live-skeleton-${i}`}
+                  className="h-[300px] animate-pulse rounded-[14px] border border-cream/[0.06] bg-charcoal-deep/50"
+                  aria-hidden
+                />
+              ))}
+            </div>
+          ) : failed && publicSpells.length === 0 ? (
+            <LoadError
+              message="The live spells couldn't be reached."
+              onRetry={retry}
+              className="mt-12"
+            />
+          ) : (
+          <>
           <motion.div layout className="mt-10 grid gap-5 sm:grid-cols-2">
             <AnimatePresence mode="popLayout">
               {visible.map((spell) => (
@@ -172,6 +195,8 @@ export default function Live() {
                 </p>
               </div>
             </Reveal>
+          )}
+          </>
           )}
         </div>
       </section>

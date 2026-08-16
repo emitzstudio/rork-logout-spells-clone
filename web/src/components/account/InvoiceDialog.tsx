@@ -2,6 +2,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Printer, X } from "lucide-react";
 import { useEffect } from "react";
 
+import { toast } from "sonner";
+
 import { EASE } from "@/components/account/bits";
 import { fmtDayYear, fmtRange } from "@/data/account/derive";
 import type { TripBooking, TravellerProfile } from "@/data/account/models";
@@ -194,7 +196,11 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 <script>window.onload=function(){window.print()}</script></body></html>`;
 
   const win = window.open("", "_blank", "width=760,height=920");
-  if (!win) return;
+  if (!win) {
+    /* Pop-up blockers must not make the button feel dead (M10). */
+    toast.error("Your browser blocked the print window — allow pop-ups and try again.");
+    return;
+  }
   win.document.write(html);
   win.document.close();
 };

@@ -57,7 +57,9 @@ export const fetchActiveDeparture = async (spellId: string): Promise<DepartureIn
     .select("*")
     .eq("spell_id", spellId)
     .maybeSingle();
-  if (error || !data) return null;
+  /* Errors THROW (M10) — a failed check must never masquerade as "no departure". */
+  if (error) throw new Error("Live availability couldn't be checked — try again.");
+  if (!data) return null;
   return mapDeparture(data);
 };
 

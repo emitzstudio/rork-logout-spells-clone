@@ -1,5 +1,5 @@
 import { ArrowRight, Heart, Share2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 export default function WishlistPage() {
   const { data, toggleWishlist } = useAccount();
   const { spells } = useSpellStore();
+  /** The spell currently being removed — guards double-clicks (M10). */
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const items = useMemo<ManagedSpell[]>(() => {
     if (!data) return [];
@@ -30,6 +32,16 @@ export default function WishlistPage() {
       .writeText(url)
       .then(() => toast("Spell link copied — send it to someone real ✦"))
       .catch(() => toast(url));
+  };
+
+  /** Success is only claimed after the server confirms; failures speak up (M10). */
+  const removeFromWishlist = (spell: ManagedSpell): void => {
+    if (removingId !== null) return;
+    setRemovingId(spell.id);
+    toggleWishlist(spell.id)
+      .then(() => toast("Removed from your wishlist"))
+      .catch(() => toast.error("Couldn't update your wishlist — try again"))
+      .finally(() => setRemovingId(null));
   };
 
   return (
@@ -118,11 +130,10 @@ export default function WishlistPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        void toggleWishlist(spell.id).then(() => toast("Removed from your wishlist"))
-                      }
+                      onClick={() => removeFromWishlist(spell)}
+                      disabled={removingId === spell.id}
                       aria-label={`Remove ${spell.name} from wishlist`}
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-gold/35 bg-gold/[0.08] text-gold-light transition-all hover:border-red-400/40 hover:bg-red-400/[0.06] hover:text-red-300 active:scale-95"
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-gold/35 bg-gold/[0.08] text-gold-light transition-all hover:border-red-400/40 hover:bg-red-400/[0.06] hover:text-red-300 active:scale-95 disabled:cursor-wait disabled:opacity-50"
                     >
                       <Heart size={14} fill="currentColor" />
                     </button>

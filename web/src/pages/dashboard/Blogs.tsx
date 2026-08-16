@@ -95,7 +95,9 @@ function IconAction({ label, onClick, danger, children }: IconActionProps) {
 export default function Blogs() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { posts, savePost, removePost, uniqueSlug, refresh } = useBlogStore();
+  const { posts, ready, failed, retry, savePost, removePost, uniqueSlug, refresh } = useBlogStore();
+  /** One publish flip at a time — and success is only claimed after it lands (M10). */
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const [query, setQuery] = useState<string>("");
   const [category, setCategory] = useState<string>("all");
@@ -149,15 +151,21 @@ export default function Blogs() {
 
   const togglePublish = useCallback(
     (post: ManagedBlogPost) => {
+      if (togglingId !== null) return;
       const next: BlogStatus = post.status === "published" ? "draft" : "published";
-      savePost({ ...post, status: next, updatedAt: new Date().toISOString() });
-      toast.success(
-        next === "published"
-          ? `“${post.title}” is live in the Journal ✦`
-          : `“${post.title}” unpublished — back in your drafts`,
-      );
+      setTogglingId(post.id);
+      savePost({ ...post, status: next, updatedAt: new Date().toISOString() })
+        .then(() => {
+          toast.success(
+            next === "published"
+              ? `“${post.title}” is live in the Journal ✦`
+              : `“${post.title}” unpublished — back in your drafts`,
+          );
+        })
+        .catch(() => toast.error("Could not update — please try again"))
+        .finally(() => setTogglingId(null));
     },
-    [savePost],
+    [savePost, togglingId],
   );
 
   const duplicatePost = useCallback(
@@ -273,7 +281,22 @@ export default function Blogs() {
         </motion.div>
       </div>
 
-      {posts.length === 0 ? (
+      {/* Loading, failure and an empty newsroom are three states (M10). */}
+      {!ready && !failed ? (
+        <div className="mt-8 grid place-items-center rounded-xl border border-cream/[0.07] bg-charcoal-soft/40 py-24" aria-busy>
+          <span aria-hidden className="h-8 w-8 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        </div>
+      ) : failed && posts.length === 0 ? (
+        <div role="alert" className="mt-8 rounded-xl border border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
+          <p className="font-serif text-2xl text-cream">The Journal couldn't be reached</p>
+          <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
+            The connection failed — your stories are safe.
+          </p>
+          <button type="button" onClick={retry} className="btn-gold mt-7 !px-5 !py-2.5 !text-[12px]">
+            Try again
+          </button>
+        </div>
+      ) : posts.length === 0 ? (
         /* Empty newsroom */
         <motion.div
           {...fadeUp(0.15)}

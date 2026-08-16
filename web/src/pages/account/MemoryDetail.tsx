@@ -31,6 +31,8 @@ export default function MemoryDetail() {
   const [uploading, setUploading] = useState<boolean>(false);
   const [note, setNote] = useState<string>("");
   const [momentDraft, setMomentDraft] = useState<string>("");
+  /** One moment saves at a time — a double-Enter can't file duplicates (M10). */
+  const [addingMoment, setAddingMoment] = useState<boolean>(false);
   const [letGoArmed, setLetGoArmed] = useState<boolean>(false);
   const [lettingGo, setLettingGo] = useState<boolean>(false);
 
@@ -79,17 +81,19 @@ export default function MemoryDetail() {
     try {
       const picked = Array.from(files).slice(0, remaining);
       const sources = await Promise.all(picked.map((f) => fileToKeepsake(f)));
-      await addMemoryPhotos(memory.id, sources);
-      toast(
-        picked.length === 1
-          ? "Keepsake added ✦"
-          : `${picked.length} keepsakes added ✦`,
-      );
+      /* The service reports honest counts — the toast never over-claims (M10). */
+      const { added, failed } = await addMemoryPhotos(memory.id, sources);
+      if (added > 0) {
+        toast(added === 1 ? "Keepsake added ✦" : `${added} keepsakes added ✦`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} photo${failed > 1 ? "s" : ""} couldn't be added — try again.`);
+      }
       if (files.length > remaining) {
         toast(`Album full — ${files.length - remaining} photo${files.length - remaining > 1 ? "s" : ""} didn't fit.`);
       }
     } catch (e) {
-      toast(friendly(e, "Those photos couldn't be added."));
+      toast.error(friendly(e, "Those photos couldn't be added."));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -105,14 +109,20 @@ export default function MemoryDetail() {
 
   const addMoment = (): void => {
     const next = momentDraft.trim();
-    if (next === "") return;
+    if (next === "" || addingMoment) return;
+    if (memory.highlights.includes(next)) {
+      toast("That moment is already kept.");
+      return;
+    }
     if (memory.highlights.length >= 6) {
       toast("Six little moments is the limit — let one go first.");
       return;
     }
+    setAddingMoment(true);
     saveMemoryHighlights(memory.id, [...memory.highlights, next])
       .then(() => setMomentDraft(""))
-      .catch((e: unknown) => toast(friendly(e, "That moment couldn't be kept.")));
+      .catch((e: unknown) => toast.error(friendly(e, "That moment couldn't be kept.")))
+      .finally(() => setAddingMoment(false));
   };
 
   const removeMoment = (moment: string): void => {

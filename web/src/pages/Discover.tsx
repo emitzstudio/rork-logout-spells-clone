@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 
 import Cauldron, { CAULDRON_MOUTH_Y } from "@/components/discover/Cauldron";
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import { MagicDust } from "@/components/site/MagicDust";
 import { Reveal } from "@/components/site/Reveal";
 import { MIN_BREW, TARGET_BREW, useBucketList } from "@/data/bucketList";
@@ -430,7 +431,7 @@ export default function Discover() {
   const reduced = useReducedMotion() ?? false;
   const isDesktop = useIsDesktop();
   const { interests: selectedIds, brewed, add, remove, brew, clear } = useBucketList();
-  const { publicSpells } = useSpellStore();
+  const { publicSpells, failed: spellsFailed, retry: retrySpells } = useSpellStore();
   const {
     interests: catalogue,
     isLoading: catalogueLoading,
@@ -877,6 +878,15 @@ export default function Discover() {
               </motion.div>
             );
           })}
+        </div>
+      ) : spellsFailed && publicSpells.length === 0 ? (
+        /* A failed catalogue read is NOT "no matches" — say so, with a retry (M10). */
+        <div className="mx-auto mt-8 max-w-xl">
+          <LoadError
+            message="Your matches couldn't be drawn from the smoke."
+            onRetry={retrySpells}
+            variant="compact"
+          />
         </div>
       ) : (
         <motion.div

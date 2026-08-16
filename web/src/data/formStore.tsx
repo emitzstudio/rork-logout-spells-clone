@@ -17,6 +17,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { toast } from "sonner";
+
 import { isUuid, supabase } from "@/integrations/supabase/client";
 import { formWritePayload, mapForm, mapFormResponse, mapInquiry } from "@/integrations/supabase/mappers";
 import type { ConsoleInquiry, FormResponseRow } from "@/integrations/supabase/mappers";
@@ -70,6 +72,10 @@ interface FormStoreValue {
   forms: LogoutForm[];
   /** True once the first fetch has settled — pages gate their 404s on this. */
   ready: boolean;
+  /** True when the forms read FAILED — consumers show retry, never "empty" (M10). */
+  failed: boolean;
+  /** Refetches the forms after a failure. */
+  retry: () => void;
   /** Insert-or-update by id; returns the saved record (real id for new forms). */
   saveForm: (record: LogoutForm) => Promise<LogoutForm>;
   /**
@@ -229,7 +235,12 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
         .update({ status: "viewed" })
         .eq("id", id)
         .then(({ error }) => {
-          if (!error) void queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
+          if (error) {
+            console.error("[formStore] Mark viewed failed:", error.message);
+            toast.error("Couldn't mark that response as viewed — try again");
+            return;
+          }
+          void queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
         });
     },
     [responses, queryClient],
@@ -242,16 +253,27 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
         .update({ status })
         .eq("id", id)
         .then(({ error }) => {
-          if (!error) void queryClient.invalidateQueries({ queryKey: INQUIRIES_KEY });
+          if (error) {
+            console.error("[formStore] Enquiry status update failed:", error.message);
+            toast.error("Couldn't update the enquiry — try again");
+            return;
+          }
+          void queryClient.invalidateQueries({ queryKey: INQUIRIES_KEY });
         });
     },
     [queryClient],
   );
 
+  const retry = useCallback(() => {
+    void formsQuery.refetch();
+  }, [formsQuery.refetch]);
+
   const value = useMemo<FormStoreValue>(
     () => ({
       forms,
       ready: formsQuery.isFetched,
+      failed: formsQuery.isError,
+      retry,
       saveForm,
       deleteForm,
       getFormById,
@@ -267,6 +289,8 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
     [
       forms,
       formsQuery.isFetched,
+      formsQuery.isError,
+      retry,
       saveForm,
       deleteForm,
       getFormById,

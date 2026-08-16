@@ -1,5 +1,5 @@
 import { CheckCheck } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -20,6 +20,17 @@ interface Group {
 export default function NotificationsPage() {
   const { data, unreadCount, markNotificationRead, markAllNotificationsRead } = useAccount();
   const navigate = useNavigate();
+  const [markingAll, setMarkingAll] = useState<boolean>(false);
+
+  /** Busy-guarded; success only after the server confirms, failure speaks (M10). */
+  const markAll = (): void => {
+    if (markingAll) return;
+    setMarkingAll(true);
+    markAllNotificationsRead()
+      .then(() => toast("All caught up ✦"))
+      .catch(() => toast.error("Couldn't mark them read — try again"))
+      .finally(() => setMarkingAll(false));
+  };
 
   const groups = useMemo<Group[]>(() => {
     if (!data) return [];
@@ -57,12 +68,11 @@ export default function NotificationsPage() {
         unreadCount > 0 ? (
           <button
             type="button"
-            onClick={() =>
-              void markAllNotificationsRead().then(() => toast("All caught up ✦"))
-            }
-            className="btn-ghost-gold !px-5 !py-2.5 !text-[12px]"
+            onClick={markAll}
+            disabled={markingAll}
+            className="btn-ghost-gold !px-5 !py-2.5 !text-[12px] disabled:cursor-wait disabled:opacity-60"
           >
-            <CheckCheck size={14} /> Mark all read
+            <CheckCheck size={14} /> {markingAll ? "Marking…" : "Mark all read"}
           </button>
         ) : undefined
       }
@@ -87,7 +97,9 @@ export default function NotificationsPage() {
                       key={n.id}
                       type="button"
                       onClick={() => {
-                        void markNotificationRead(n.id);
+                        void markNotificationRead(n.id).catch(() =>
+                          toast.error("Couldn't mark that as read — it stays unread"),
+                        );
                         if (n.link !== undefined) navigate(n.link);
                       }}
                       className={cn(

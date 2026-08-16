@@ -229,6 +229,26 @@ export default function RequestsPanel() {
     );
   }
 
+  /* A failed read is NOT an empty request queue (M10). */
+  if (queueQuery.isError) {
+    return (
+      <div role="alert" className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-14 text-center">
+        <GitPullRequest className="mx-auto h-7 w-7 text-cream/25" />
+        <p className="mt-3 font-serif text-[19px] text-cream/85">The requests couldn't be reached</p>
+        <p className="mx-auto mt-1.5 max-w-[420px] font-sans text-[12.5px] leading-relaxed text-cream/45">
+          The connection failed — nothing was lost.
+        </p>
+        <button
+          type="button"
+          onClick={() => void queueQuery.refetch()}
+          className="mx-auto mt-5 flex h-9 items-center gap-1.5 rounded-lg border border-gold/40 bg-gold/15 px-3.5 font-sans text-[11.5px] font-medium text-gold-light transition-all hover:bg-gold/25 active:scale-[0.98]"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (open.length === 0 && approved.length === 0 && history.length === 0) {
     return (
       <div className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-14 text-center">

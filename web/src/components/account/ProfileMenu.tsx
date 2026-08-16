@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { EASE, NOTIF_META } from "@/components/account/bits";
 import { useAccount } from "@/data/account/AccountProvider";
@@ -110,7 +111,11 @@ export function NavBell() {
           {unreadCount > 0 && (
             <button
               type="button"
-              onClick={() => void markAllNotificationsRead()}
+              onClick={() =>
+                void markAllNotificationsRead().catch(() =>
+                  toast.error("Couldn't mark them read — try again"),
+                )
+              }
               className="font-sans text-[10px] uppercase tracking-[0.18em] text-gold transition-colors hover:text-gold-light"
             >
               Mark all read
@@ -132,7 +137,9 @@ export function NavBell() {
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      void markNotificationRead(n.id);
+                      void markNotificationRead(n.id).catch(() =>
+                        toast.error("Couldn't mark that as read — it stays unread"),
+                      );
                       if (n.link) navigate(n.link);
                     }}
                     className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-cream/[0.04]"

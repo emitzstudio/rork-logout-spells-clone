@@ -397,11 +397,12 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
                     </svg>
                   </div>
 
+                  {/* Truthful copy (M10): only a mail draft was opened — nothing is received until they press send. */}
                   <h2 id="apply-title" className="mt-8 font-serif text-4xl italic text-cream">
-                    Application <span className="text-gold-gradient">received</span>
+                    One step <span className="text-gold-gradient">left</span>
                   </h2>
                   <p className="mt-4 max-w-sm font-sans text-[15px] leading-relaxed text-cream/55">
-                    Your email app just opened with your details — hit send and we'll be in touch within 48 hours.
+                    Your email app just opened with your details — press send there and we'll be in touch within 48 hours.
                   </p>
                   <p className="mt-3 font-sans text-xs text-cream/40">
                     Nothing opened? Write to{" "}

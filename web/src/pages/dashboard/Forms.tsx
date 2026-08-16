@@ -37,7 +37,7 @@ interface ToastState {
 export default function Forms() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { forms, saveForm, deleteForm, uniqueFormSlug, responses, inquiries } = useFormStore();
+  const { forms, ready, failed, retry, saveForm, deleteForm, uniqueFormSlug, responses, inquiries } = useFormStore();
   const { spells, detachFormFromSpells } = useSpellStore();
 
   const [tab, setTab] = useState<TabId>("forms");
@@ -274,7 +274,22 @@ export default function Forms() {
       {/* Content */}
       <div className="mt-6">
         {tab === "forms" ? (
-          sortedForms.length === 0 ? (
+          !ready && !failed ? (
+            <div className="grid place-items-center rounded-xl border border-cream/[0.07] bg-charcoal-soft/40 py-24" aria-busy>
+              <span aria-hidden className="h-8 w-8 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+            </div>
+          ) : failed && forms.length === 0 ? (
+            /* A failed read is NOT an empty console (M10). */
+            <div role="alert" className="rounded-xl border border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
+              <p className="font-serif text-2xl text-cream">The forms couldn't be reached</p>
+              <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
+                The connection failed — your forms are safe.
+              </p>
+              <button type="button" onClick={retry} className="btn-gold mt-7 !px-5 !py-2.5 !text-[12px]">
+                Try again
+              </button>
+            </div>
+          ) : sortedForms.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}

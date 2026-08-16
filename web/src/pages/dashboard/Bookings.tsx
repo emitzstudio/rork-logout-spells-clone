@@ -156,7 +156,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
   const navigate = useNavigate();
   const reportQuery = useBookingReport();
   const badges = useOpsBadges();
-  const isAdmin = useIsAdmin();
+  const { isAdmin, ready: adminReady } = useIsAdmin();
 
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -223,7 +223,8 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
         </div>
       </div>
 
-      {!isAdmin && (
+      {/* Only warn once the role check has actually settled (M10). */}
+      {adminReady && !isAdmin && (
         <p className="mt-4 flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3.5 py-2.5 font-sans text-[11.5px] text-amber-200/80">
           <ShieldAlert className="h-4 w-4 shrink-0" />
           Money and booking actions need the admin role — the server enforces this on every call.
@@ -306,6 +307,22 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
               {reportQuery.isPending ? (
                 <div className="grid place-items-center rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 py-20">
                   <span aria-hidden className="h-7 w-7 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+                </div>
+              ) : reportQuery.isError ? (
+                /* A failed read is NOT an empty ledger (M10). */
+                <div role="alert" className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-16 text-center">
+                  <ShieldAlert className="mx-auto h-7 w-7 text-cream/25" />
+                  <p className="mt-3 font-serif text-[20px] text-cream/85">The ledger couldn't be reached</p>
+                  <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
+                    The connection failed — your bookings are safe and unchanged.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void reportQuery.refetch()}
+                    className="mx-auto mt-5 flex h-10 items-center gap-2 rounded-lg border border-gold/40 bg-gold/15 px-4 font-sans text-[12px] font-medium text-gold-light transition-all hover:bg-gold/25 active:scale-[0.98]"
+                  >
+                    Try again
+                  </button>
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-16 text-center">

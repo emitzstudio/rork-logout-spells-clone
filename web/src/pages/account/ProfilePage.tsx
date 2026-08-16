@@ -18,17 +18,22 @@ const ALL_INTERESTS = Object.keys(CATEGORY_META) as SpellCategoryId[];
 export default function ProfilePage() {
   const { data, updateProfile } = useAccount();
   const [editing, setEditing] = useState<boolean>(false);
+  /** One leaning saves at a time — rapid taps can't race stale state (M10). */
+  const [savingLeanings, setSavingLeanings] = useState<boolean>(false);
 
   if (!data) return null;
   const p = data.profile;
 
   const toggleInterest = (cat: SpellCategoryId): void => {
+    if (savingLeanings) return;
     const next = p.interests.includes(cat)
       ? p.interests.filter((c) => c !== cat)
       : [...p.interests, cat];
-    void updateProfile({ interests: next })
+    setSavingLeanings(true);
+    updateProfile({ interests: next })
       .then(() => toast("Leanings updated — recommendations will follow ✦"))
-      .catch(() => toast("That didn't save — try again."));
+      .catch(() => toast.error("That didn't save — try again."))
+      .finally(() => setSavingLeanings(false));
   };
 
   return (
@@ -147,9 +152,10 @@ export default function ProfilePage() {
                     key={cat}
                     type="button"
                     onClick={() => toggleInterest(cat)}
+                    disabled={savingLeanings}
                     aria-pressed={active}
                     className={cn(
-                      "rounded-full border px-3 py-1.5 font-sans text-[11.5px] transition-all duration-300 active:scale-95",
+                      "rounded-full border px-3 py-1.5 font-sans text-[11.5px] transition-all duration-300 active:scale-95 disabled:cursor-wait disabled:opacity-60",
                       active
                         ? "border-gold/50 bg-gold/10 text-gold-light"
                         : "border-cream/12 text-cream/45 hover:border-cream/30 hover:text-cream",
@@ -199,10 +205,30 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
   const [saving, setSaving] = useState<boolean>(false);
   const [form, setForm] = useState<TravellerProfile>(profile);
 
+  /** Closing is refused mid-save — a save in flight must finish honestly (M10). */
+  const requestClose = (): void => {
+    if (!saving) onClose();
+  };
+
   // Re-sync the form each time the dialog opens (abandoned edits shouldn't linger).
   useEffect(() => {
     if (open) setForm(profile);
   }, [open, profile]);
+
+  // Escape closes (unless saving) and the page behind stays put — same manners as InvoiceDialog.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape" && !saving) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, saving, onClose]);
 
   const set = <K extends keyof TravellerProfile>(key: K, value: TravellerProfile[K]): void =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -238,7 +264,7 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
         toast("Profile updated ✦");
         onClose();
       })
-      .catch(() => toast("Your profile couldn't be saved — try again."))
+      .catch(() => toast.error("Your profile couldn't be saved — try again."))
       .finally(() => setSaving(false));
   };
 
@@ -254,7 +280,7 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22 }}
-          onClick={onClose}
+          onClick={requestClose}
           role="presentation"
           className="fixed inset-0 z-[97] grid place-items-center overflow-y-auto bg-charcoal-deep/85 px-4 py-8 backdrop-blur-md"
         >
@@ -274,9 +300,10 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
               <h3 className="font-serif text-2xl text-cream">Edit profile</h3>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
+                disabled={saving}
                 aria-label="Close"
-                className="grid h-9 w-9 place-items-center rounded-lg border border-cream/15 text-cream/60 transition-all hover:border-cream/40 hover:text-cream active:scale-95"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-cream/15 text-cream/60 transition-all hover:border-cream/40 hover:text-cream active:scale-95 disabled:opacity-40"
               >
                 <X size={15} />
               </button>
@@ -394,7 +421,12 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
             </div>
 
             <div className="flex justify-end gap-2.5 border-t border-cream/[0.07] p-5 md:px-6">
-              <button type="button" onClick={onClose} className="btn-ghost-gold !px-5 !py-2.5 !text-[12px]">
+              <button
+                type="button"
+                onClick={requestClose}
+                disabled={saving}
+                className="btn-ghost-gold !px-5 !py-2.5 !text-[12px] disabled:opacity-40"
+              >
                 Cancel
               </button>
               <button type="submit" disabled={saving} className="btn-gold !px-6 !py-2.5 !text-[12px] disabled:opacity-50">

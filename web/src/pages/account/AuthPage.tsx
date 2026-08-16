@@ -487,6 +487,7 @@ function SubmitButton({ children, loading, onClick, disabled, className }: Submi
  */
 function ResendLine({ email }: { email: string }) {
   const [cooldown, setCooldown] = useState<number>(0);
+  const [sending, setSending] = useState<boolean>(false);
   const [note, setNote] = useState<string>("");
 
   useEffect(() => {
@@ -503,18 +504,23 @@ function ResendLine({ email }: { email: string }) {
       ) : (
         <button
           type="button"
+          disabled={sending}
           onClick={() => {
-            setCooldown(60);
+            if (sending) return;
+            setSending(true);
             setNote("");
             void accountService
               .requestPasswordReset(email)
+              /* The cooldown starts only when a thread actually went out (M10). */
+              .then(() => setCooldown(60))
               .catch((e: unknown) => {
                 setNote(e instanceof AccountError ? e.message : "The courier is resting — try again soon.");
-              });
+              })
+              .finally(() => setSending(false));
           }}
-          className="text-gold transition-colors hover:text-gold-light"
+          className="text-gold transition-colors hover:text-gold-light disabled:opacity-50"
         >
-          Resend the thread
+          {sending ? "Sending…" : "Resend the thread"}
         </button>
       )}
       {note !== "" && <span className="mt-2 block text-red-300/80">{note}</span>}

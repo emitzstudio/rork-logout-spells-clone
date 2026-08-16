@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Hourglass } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { AccountPage, EASE, EmptyState } from "@/components/account/bits";
 import TripCard from "@/components/account/TripCard";
@@ -189,6 +190,24 @@ function WaitlistStrip() {
     staleTime: 60_000,
   });
 
+  /* A failed check says so instead of silently hiding the strip (M10). */
+  if (entriesQuery.isError) {
+    return (
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-cream/15 bg-charcoal-deep/40 p-4 md:px-5" role="alert">
+        <p className="font-sans text-[12.5px] text-cream/55">
+          Your waitlists couldn't be checked.
+        </p>
+        <button
+          type="button"
+          onClick={() => void entriesQuery.refetch()}
+          className="font-sans text-[11px] uppercase tracking-[0.18em] text-gold transition-colors hover:text-gold-light"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
   if (active.length === 0) return null;
   const departures = departuresQuery.data ?? [];
 
@@ -198,7 +217,8 @@ function WaitlistStrip() {
       await leaveWaitlist(id);
       await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
     } catch {
-      /* offered rows are held by the team — nothing to do client-side */
+      /* Waiting rows may leave any time — a failure here is a real error (M10). */
+      toast.error("Couldn't leave the waitlist — try again");
     } finally {
       setBusyId(null);
     }

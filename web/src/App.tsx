@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 
 import { ApplyProvider } from "@/components/site/ApplyModal";
 import BackFab from "@/components/site/BackFab";
+import ConnectionBanner from "@/components/site/ConnectionBanner";
 import PortalEntry from "@/components/site/PortalEntry";
 import StarBackdrop from "@/components/site/StarBackdrop";
 import { AccountProvider } from "@/data/account/AccountProvider";
@@ -203,6 +204,8 @@ const App = () => (
               <AppShell />
             </MotionConfig>
           </BrowserRouter>
+          {/* M10: honest offline indicator — appears only when the network drops. */}
+          <ConnectionBanner />
           <Toaster
             position="bottom-right"
             gap={10}

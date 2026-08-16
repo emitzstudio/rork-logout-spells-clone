@@ -13,6 +13,7 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 
 import { PageSkeleton } from "@/components/account/bits";
 import Page from "@/components/site/Layout";
+import LoadError from "@/components/site/LoadError";
 import { useAccount } from "@/data/account/AccountProvider";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -41,7 +42,7 @@ const SHELL_ITEMS: ShellItem[] = [
  * so the account always feels like another chapter of Logout Spells.
  */
 export default function AccountShell({ children }: { children: ReactNode }) {
-  const { session, data, booting, ready } = useAccount();
+  const { session, data, booting, ready, loadFailed, retryLoad } = useAccount();
   const location = useLocation();
 
   // Wait for the stored session to restore before deciding to redirect —
@@ -117,9 +118,15 @@ export default function AccountShell({ children }: { children: ReactNode }) {
             </div>
           </nav>
 
-          {/* Content */}
+          {/* Content — a failed bundle load gets an honest retry, never an endless skeleton (M10). */}
           <div className="mt-7 md:mt-9">
-            {booting || !data ? <PageSkeleton /> : children}
+            {loadFailed && !data ? (
+              <LoadError message="Your space couldn't be reached." onRetry={retryLoad} />
+            ) : booting || !data ? (
+              <PageSkeleton />
+            ) : (
+              children
+            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
+import LoadError from "@/components/site/LoadError";
 import { useFormStore } from "@/data/formStore";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -17,7 +18,7 @@ export default function FormPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
-  const { getFormBySlug, addResponse, ready } = useFormStore();
+  const { getFormBySlug, addResponse, ready, failed, retry } = useFormStore();
 
   const form = slug ? getFormBySlug(slug) : undefined;
   const visible = form !== undefined && (form.status === "published" || isPreview);
@@ -28,7 +29,21 @@ export default function FormPage() {
       : "Form — Logout Spells";
   }, [form]);
 
-  if (!ready && !form) return <section className="min-h-[100svh]" aria-hidden />;
+  if (!ready && !failed && !form) {
+    return (
+      <section className="grid min-h-[100svh] place-items-center" aria-busy>
+        <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+      </section>
+    );
+  }
+  /* A failed read is NOT a faded form — shared links deserve a retry (M10). */
+  if (!form && failed) {
+    return (
+      <section className="flex min-h-[100svh] items-center justify-center px-5">
+        <LoadError message="This form couldn't be reached." onRetry={retry} className="w-full max-w-xl" />
+      </section>
+    );
+  }
   if (!form || !visible) return <FormNotFound />;
 
   const previewingDraft = isPreview && form.status !== "published";
