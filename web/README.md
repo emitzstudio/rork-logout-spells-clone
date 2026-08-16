@@ -6,6 +6,57 @@ are one app; RLS decides what each caller sees.
 
 ---
 
+## M11 — Zero-Data Launch State (2026-08-16)
+
+**Launch data rule: REAL DATA ONLY.** The site launches before the real
+catalogue exists, so every remaining demo/seed business record was removed —
+from the database itself, not hidden with frontend conditions. If there is no
+real record, the site shows its designed premium empty state. Full DB record:
+`backend/docs/migration-history.md` (M11, migrations `0011` + `0012`).
+
+### Database (guarded migrations)
+
+- Removed ALL remaining seeds: 10 spells (Himalayan Reset, Old City Rituals,
+  Culinary/Movement/Art Spell, Valley Escape, Volcanic Trail, Backwater Slow
+  Days + 2 drafts), 10 departures (Σseats 62→0 — they were pure mock), 27
+  fabricated console-activity rows, 7 fictional journal posts, 2 seed forms,
+  4 fabricated form responses.
+- Kept: the real team roster (7), the interest taxonomy (35 — config, not
+  business data), the founder's account.
+- **Preserved, not deleted:** one genuine inquiry (IQ-0826-003 — a team test
+  booking request against a seed trip). It stays readable in the dashboard;
+  founder should close it there.
+- Fresh-traveller probe verified a brand-new account is genuinely empty
+  (only the trigger-generated welcome whisper), then erased net-zero.
+
+### Frontend (data truth only — zero redesign)
+
+- `data/blog.ts`: dead mock-era module deleted — 3 fabricated staff personas
+  and 7 fabricated articles with invented traveller quotes/statistics (was
+  unrendered dead code; types + live helpers kept).
+- `data/site.ts`: four dead unrendered exports removed, including an old
+  creator-tier share table that contradicted the live 10% copy.
+- `data/discover.ts`: mood tiles' curated/past slug whitelists emptied (they
+  pointed at removed seeds); tiles remain as brand curation and fill again
+  when real spells exist.
+
+### What renders now (verified empty-by-design)
+
+- Live / Home carousel / Discover / mood pages / Journal / Previous Spells →
+  their intentional poetic empty states (built in M9–M10).
+- Our Story stats → truthful live counts; Creators + Our Story brand content
+  unchanged.
+- Dashboard → honest zeros (₹0, 0 bookings) from live queries; one genuine
+  inquiry visible in Requests.
+- Kept as intentional non-business content: mood-tile imagery (brand
+  curation), `public/udaipur-spell.json` + the sample import file (founder
+  import tooling, rendered nowhere).
+
+Payment gateway: STILL PENDING (unchanged) — the approved “reserve request /
+coming soon” flow remains.
+
+---
+
 ## M10 — Website Resilience & UX Hardening (2026-08-16)
 
 A full-site audit and hardening pass. **Web only** — `expo/` and `backend/` were

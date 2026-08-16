@@ -49,7 +49,9 @@ export interface DiscoverCategory {
 const img = (id: string, w = 1100): string =>
   `https://images.unsplash.com/photo-${id}?q=80&w=${w}&auto=format&fit=crop`;
 
-/* --------------------------------- Seeds ---------------------------------- */
+/* ----------------------------- Category tiles ------------------------------ */
+/* Mood curation (brand config). curatedSlugs/pastSlugs are picked from the
+   LIVE catalogue/archive by slug — empty until real spells exist (M11). */
 
 const CATEGORIES: DiscoverCategory[] = [
   {
@@ -66,7 +68,7 @@ const CATEGORIES: DiscoverCategory[] = [
     moods: ["open studios", "slow hands", "ink evenings", "zero judgement"],
     spellCategories: ["making"],
     curatedSlugs: [],
-    pastSlugs: ["ink-evenings", "indigo-stories"],
+    pastSlugs: [],
     gallery: ["1565193566173-7a0ee3dbe261", "1513364776144-60967b0f800f", "1445205170230-053b83016050"],
   },
   {
@@ -82,7 +84,7 @@ const CATEGORIES: DiscoverCategory[] = [
     moods: ["long tables", "open fires", "dawn markets", "shared recipes"],
     spellCategories: ["gathering"],
     curatedSlugs: [],
-    pastSlugs: ["culinary-spell", "temple-kitchens"],
+    pastSlugs: [],
     gallery: ["1556910103-1c02745aae4d", "1414235077428-338989a2e8c0", "1547592180-85f173990554", "1543353071-873f17a7a088"],
   },
   {
@@ -99,7 +101,7 @@ const CATEGORIES: DiscoverCategory[] = [
     moods: ["sunrise practice", "breathwork", "cedar forests", "phones asleep"],
     spellCategories: ["movement", "stillness"],
     curatedSlugs: [],
-    pastSlugs: ["himalayan-reset"],
+    pastSlugs: [],
     gallery: ["1506126613408-eca07ce68773", "1506905925346-21bda4d32df4", "1470071459604-3b5ec3a7fe05"],
   },
   {
@@ -114,8 +116,8 @@ const CATEGORIES: DiscoverCategory[] = [
     gradient: "from-[#372a15] via-[#1f180c] to-[#0a0806]",
     moods: ["dawn boats", "living rituals", "storytellers", "temple kitchens"],
     spellCategories: ["celebration"],
-    curatedSlugs: ["old-city-rituals"],
-    pastSlugs: ["old-city-rituals", "temple-kitchens"],
+    curatedSlugs: [],
+    pastSlugs: [],
     gallery: ["1561361058-c24cecae35ca", "1567157577867-05ccb1388e66", "1524492412937-b28074a5d7da"],
   },
   {
@@ -147,8 +149,8 @@ const CATEGORIES: DiscoverCategory[] = [
     gradient: "from-[#1f2e26] via-[#121a15] to-[#0a0806]",
     moods: ["women-led", "soft mornings", "safe circles", "backwater slow days"],
     spellCategories: [],
-    curatedSlugs: ["movement-spell", "art-spell", "backwater-slow-days"],
-    pastSlugs: ["indigo-stories"],
+    curatedSlugs: [],
+    pastSlugs: [],
     gallery: ["1439066615861-d1af74d74000", "1506126613408-eca07ce68773", "1445205170230-053b83016050"],
   },
 ];

@@ -1241,6 +1241,114 @@ else is unchanged.
 
 ---
 
+## M11 — Zero-data launch state · applied 2026-08-16
+
+| | |
+| --- | --- |
+| Migrations | `m11-zero-data-launch` · `m11-probe-erase` |
+| Source of record | [`backend/migrations/0011_m11_zero_data_launch.sql`](../migrations/0011_m11_zero_data_launch.sql) · [`backend/migrations/0012_m11_probe_erase.sql`](../migrations/0012_m11_probe_erase.sql) |
+| Reviewed | Read-only provenance audit first: every live catalogue row matched the fixed seed uuid sets from 0002/0003/0004 exactly (anon REST probe, recorded in the migration header) |
+| Approved by | Founder directive M11: “ZERO FABRICATED BUSINESS DATA. REAL DATA ONLY.” — the logged confirmation for the guarded deletions below |
+| Destructive statements | **Yes — deliberate and founder-instructed.** Scoped `DELETE`s referencing only the fixed seed ids; three guard layers abort everything if any genuine row could be touched. ZERO schema / RLS / grant / function change. |
+| Applied as | One transaction per migration. Two earlier attempts aborted **by their own guards** (see below) and rolled back atomically — nothing partial ever landed. |
+
+### Why
+
+The site launches BEFORE the real business catalogue exists. The correct launch
+state is real data only: if there is no real record, the site shows its designed
+empty state. This retires decision D5 (“seed everything the site shows today”) —
+the D5 seeds served the build phase and are now removed.
+
+### What was removed (all D5 seeds, fixed uuids, `created_by` null)
+
+- **10 spells** `a…0001–0010` — Culinary, Movement, Art, Desert (draft),
+  Himalayan Reset (soldout), Valley Escape, Volcanic Trail, Indigo (draft),
+  Backwater Slow Days (soldout), Old City Rituals — fabricated hosts, prices
+  and view counts.
+- **10 departures** `b…0001–0010` — fabricated dates and seat counts.
+  **Σseats_booked 62 → 0**, resolving M9.5's flagged provenance question: the
+  62 were pure mock numbers (the founder's M11 directive supersedes the M9
+  deferral).
+- **27 activity rows** `c…0001–0027` — fabricated console history, including
+  fake bookings (“Priya Nair · 2 seats · ₹84,000”).
+- **7 journal posts** `d…0001–0007` — fictional articles with invented
+  traveller quotes and community statistics (includes the seed founder letter;
+  the founder can re-publish a real one through the console).
+- **2 forms** `40…0001/0002` — the seeded interest form and the “Bali
+  waitlist” draft advertising a fabricated trip.
+- **4 form responses** `41…0001–0004` — fabricated respondents with phone
+  numbers.
+
+### Guard behaviour (working as designed)
+
+- Attempt 1 aborted itself: `M11 abort: 1 inquirie(s) exist` — a row the
+  baseline said shouldn't exist. A read-only inspection (intentionally raising
+  DO block, nothing committed) identified it — see “Preserved” below.
+- Attempt 2 aborted on the **D2 invariant trigger** `guard_last_departure()`:
+  a spell's last departure can never be deleted directly. Fixed by removing
+  the explicit departure delete — departures now go via the `spells` FK
+  CASCADE, which the trigger deliberately passes through.
+- Final run: all guards green — 15 operational-ledger zero checks, the
+  foreign-response-on-seed-form check, and the storage check
+  (`spell-media`/`blog-media` = 0 objects, seeds referenced Unsplash only).
+
+### Preserved (genuine data — never deleted)
+
+- **`inquiries` IQ-0826-003** (2026-08-16 18:05 UTC): a manual booking request
+  for 2 seats on the seed trip “Old City Rituals · Dec 4–8”, submitted by
+  “Bhuvan Verma” — the team's own builder, almost certainly a live end-to-end
+  test. Per the M11 rule (*if uncertain, report — never delete*) it stays: the
+  row's snapshot columns keep it readable in the console (its `spell_id` is
+  now NULL by design). **Founder decision pending: close it from the dashboard
+  (it targets a removed demo trip).**
+- `team_members` (7) — the real team (Our Story). `interests` (35) — the
+  bucket-list taxonomy (config, not business records). The founder's identity
+  rows.
+
+### Web changes in the same milestone (data truth, zero redesign)
+
+- `data/blog.ts`: the dead mock-era seed module (3 fabricated staff personas +
+  7 fabricated articles + `blogService`) deleted — types and live helpers kept.
+- `data/site.ts`: four dead unrendered exports deleted (`CREATOR_TIERS` — an
+  old 30–50% share table contradicting the live 10% copy — `BRAND_CATEGORIES`,
+  `CREATOR_AUDIENCE`, `FOUNDER_FAVOURITES`).
+- `data/discover.ts`: mood tiles' `curatedSlugs`/`pastSlugs` whitelists emptied
+  (they pointed at removed seed slugs); tiles stay as brand curation and fill
+  again when real spells exist.
+
+### Verification
+
+- **Anonymous visitor**: spells 0 · departures 0 · activity 0 · blog 0 ·
+  forms 0 · responses 0 · archive 0 · reviews 0; team 7 · interests 35 kept;
+  `bookings` still denied by RLS (42501). Web static checks + production
+  build pass.
+- **Fresh traveller probe** (real signup flow): profile + settings + ONLY the
+  genuine welcome whisper; bookings, wishlist, memories, photos, waitlist,
+  change requests, interests, reviews, inquiries all 0. Erased net-zero by
+  `0012` with post-conditions asserting **auth.users = 1 · profiles = 1 ·
+  user_settings = 1** (the founder alone).
+- **Founder surfaces**: verified by construction (M10) — every dashboard
+  metric computes from live queries; with the catalogue empty they read 0/₹0
+  honestly. (No founder credentials are held; not exercised as a login.)
+
+### New canonical baseline
+
+au=1 · profiles=1 · user_settings=1 · **spells=0 · departures=0 ·
+spell_changes=0 · blog_posts=0 · forms=0 · form_responses=0** ·
+previous_spells=0 · reviews=0 · bookings/payments/memories/waitlist/wishlist 0
+· **inquiries=1 (genuine, IQ-0826-003, founder decision pending)** ·
+team_members=7 · interests=35 · storage: 0 objects in every content bucket.
+
+### Deliberately NOT in M11
+
+- ⛔ Anything payment-shaped — **the payment gateway is STILL PENDING**
+  (decisions F + C open; 7B remains LAST).
+- No invented replacement content anywhere — zero renders as zero.
+- No Expo changes. No schema/RLS/storage-policy changes. The 3 real previous
+  trips and real upcoming departures arrive later through founder workflows.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
