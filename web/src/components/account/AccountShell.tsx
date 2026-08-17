@@ -49,7 +49,7 @@ export default function AccountShell({ children }: { children: ReactNode }) {
   // otherwise a hard refresh inside the space would bounce to /login.
   if (!ready) {
     return (
-      <Page title="My Space">
+      <Page title="My Space" back={false}>
         <div className="relative min-h-[100svh] px-5 pb-24 pt-24 md:px-10 md:pt-28">
           <div className="relative mx-auto w-full max-w-6xl">
             <PageSkeleton />
@@ -71,7 +71,8 @@ export default function AccountShell({ children }: { children: ReactNode }) {
   const current = SHELL_ITEMS.find((i) => active(i));
 
   return (
-    <Page title={current ? `${current.label} · My Space` : "My Space"}>
+    /* The space navigates by its ribbon; detail pages carry their own back links (M11.5). */
+    <Page title={current ? `${current.label} · My Space` : "My Space"} back={false}>
       <div className="relative min-h-[100svh] px-5 pb-24 pt-24 md:px-10 md:pt-28">
         {/* Quiet golden ambience for the whole space */}
         <div

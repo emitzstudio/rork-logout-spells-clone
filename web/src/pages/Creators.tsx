@@ -635,7 +635,7 @@ function CreatorFinalCta() {
  */
 export default function Creators() {
   return (
-    <Page title="Become a Spellcaster">
+    <Page title="Become a Spellcaster" back={{ container: "max-w-6xl" }}>
       <CreatorHero />
       <WhySection />
       <WhoSection />

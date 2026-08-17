@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, X } from "lucide-react";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { useAccount } from "@/data/account/AccountProvider";
@@ -11,7 +11,10 @@ import { cn } from "@/lib/utils";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 type AuthMode = "login" | "join" | "forgot";
-type AuthStep = "form" | "sent" | "success";
+type AuthStep = "form" | "verify" | "sent" | "success";
+
+/** The six empty cells of the verification code (M11.5). */
+const EMPTY_CODE: string[] = ["", "", "", "", "", ""];
 
 interface FieldError {
   field: string | null;
@@ -53,7 +56,7 @@ const QUOTES: Record<AuthMode, { big: ReactNode; hand: string }> = {
 
 /** Auth screens — real Supabase flows behind the same three doors (M6). */
 export default function AuthPage({ mode }: { mode: AuthMode }) {
-  const { session, signIn, signUp } = useAccount();
+  const { session, signIn, signUp, signOut } = useAccount();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/account";
@@ -67,9 +70,31 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<FieldError | null>(null);
 
+  /* M11.5 — the prove-your-inbox step of the join flow. */
+  const [code, setCode] = useState<string[]>(EMPTY_CODE);
+  const [verifying, setVerifying] = useState<boolean>(false);
+  const [resending, setResending] = useState<boolean>(false);
+  const [cooldown, setCooldown] = useState<number>(0);
+  const [otpNote, setOtpNote] = useState<string | null>(null);
+  const lastTriedRef = useRef<string>("");
+
   useEffect(() => {
     document.title = `${TITLES[mode]} — Logout Spells`;
   }, [mode]);
+
+  /* Resend cooldown — one tick per second. */
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const id = window.setTimeout(() => setCooldown((c) => c - 1), 1_000);
+    return () => window.clearTimeout(id);
+  }, [cooldown]);
+
+  /* The emailed sign-in link completes verification in one tap — often in
+     another tab. Sessions sync across tabs; the moment one lands while we
+     hold the verify step, the ceremony continues on its own. */
+  useEffect(() => {
+    if (step === "verify" && session) setStep("success");
+  }, [step, session]);
 
   const quote = QUOTES[mode];
 
@@ -87,6 +112,50 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     }
   };
 
+  const codeValue = code.join("");
+
+  /** Verifies the emailed 6-digit code — single-flight, honest errors. */
+  const submitCode = useCallback((): void => {
+    if (verifying || codeValue.length !== 6) return;
+    lastTriedRef.current = codeValue;
+    setVerifying(true);
+    setError(null);
+    void accountService
+      .verifyEmailOtp(email, codeValue)
+      .then(() => setStep("success"))
+      .catch((e: unknown) => {
+        setError(
+          e instanceof AccountError
+            ? { field: e.field, message: e.message }
+            : { field: null, message: "Something drifted — try again." },
+        );
+      })
+      .finally(() => setVerifying(false));
+  }, [verifying, codeValue, email]);
+
+  /* A complete code verifies itself — no second tap needed. */
+  useEffect(() => {
+    if (step !== "verify" || verifying) return;
+    if (codeValue.length === 6 && lastTriedRef.current !== codeValue) submitCode();
+  }, [step, verifying, codeValue, submitCode]);
+
+  const resendCode = useCallback((): void => {
+    if (cooldown > 0 || resending) return;
+    setResending(true);
+    setOtpNote(null);
+    setError(null);
+    void accountService
+      .sendEmailOtp(email)
+      /* The cooldown starts only when a thread actually went out (M10 rule). */
+      .then(() => setCooldown(60))
+      .catch((e: unknown) => {
+        setOtpNote(
+          e instanceof AccountError ? e.message : "The courier is resting — try again soon.",
+        );
+      })
+      .finally(() => setResending(false));
+  }, [cooldown, resending, email]);
+
   const onSubmitForm = (e: FormEvent): void => {
     e.preventDefault();
     if (mode === "login") {
@@ -97,7 +166,24 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     } else if (mode === "join") {
       void run(async () => {
         await signUp({ firstName, lastName, email, password });
-        setStep("success");
+        /* M11.5 — the account is forged; the door in is proving the inbox.
+           Supabase Auth emails the one-time verification; we step out of the
+           fresh session and hold here until it's confirmed. */
+        let note: string | null = null;
+        try {
+          await accountService.sendEmailOtp(email);
+        } catch (e) {
+          note =
+            e instanceof AccountError
+              ? e.message
+              : "The verification email couldn't fly — resend it below.";
+        }
+        signOut();
+        setCode(EMPTY_CODE);
+        lastTriedRef.current = "";
+        setOtpNote(note);
+        setCooldown(note === null ? 60 : 0);
+        setStep("verify");
       });
     } else {
       void run(async () => {
@@ -107,8 +193,10 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     }
   };
 
-  // Already signed in? The space is that way.
-  if (session && step !== "success") return <Navigate to={from} replace />;
+  // Already signed in? The space is that way. (Never mid-flow: joining holds
+  // a brief session before the verify step, and verification itself signs
+  // the traveller in — those steps render their own way forward.)
+  if (session && step === "form" && !loading) return <Navigate to={from} replace />;
 
   return (
     <div className="relative flex min-h-[100svh]">
@@ -288,6 +376,89 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                 </StepShell>
               )}
 
+              {/* ------------------------- Prove your inbox ------------------------- */}
+              {step === "verify" && (
+                <StepShell key="verify">
+                  <BackLink
+                    onClick={() => {
+                      setError(null);
+                      setOtpNote(null);
+                      setCode(EMPTY_CODE);
+                      setStep("form");
+                    }}
+                  />
+                  <p className="eyebrow">One last seal</p>
+                  <h1 className="heading-serif mt-3 text-4xl text-cream md:text-[42px]">
+                    Prove your inbox
+                  </h1>
+                  <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
+                    Your account is forged — we sent a golden thread to{" "}
+                    <span className="text-cream/80">{email || "your inbox"}</span>. Tap the
+                    sign-in link inside and this page completes on its own — or, if your
+                    email shows a 6-digit code, enter it below.
+                  </p>
+
+                  <div className="mt-8">
+                    <CodeBoxes
+                      value={code}
+                      onChange={(next) => {
+                        setCode(next);
+                        if (error !== null) setError(null);
+                      }}
+                      disabled={verifying}
+                      invalid={error?.field === "code"}
+                    />
+                    {error !== null && <ErrorBanner message={error.message} className="mt-4" />}
+                    {otpNote !== null && (
+                      <p
+                        role="status"
+                        className="mt-4 rounded-lg border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 font-sans text-[12.5px] text-gold-light/90"
+                      >
+                        {otpNote}
+                      </p>
+                    )}
+                    <SubmitButton
+                      loading={verifying}
+                      onClick={submitCode}
+                      disabled={codeValue.length !== 6}
+                      className="mt-6"
+                    >
+                      Verify &amp; enter <ArrowRight size={15} />
+                    </SubmitButton>
+                  </div>
+
+                  <p className="mt-6 text-center font-sans text-[12px] text-cream/40">
+                    Nothing arrived?{" "}
+                    {cooldown > 0 ? (
+                      <span className="text-cream/30">Resend in {cooldown}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={resending}
+                        onClick={resendCode}
+                        className="text-gold transition-colors hover:text-gold-light disabled:opacity-50"
+                      >
+                        {resending ? "Sending…" : "Resend the thread"}
+                      </button>
+                    )}
+                  </p>
+
+                  <div className="mt-7 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
+                    <p className="font-serif text-[15px] italic leading-relaxed text-cream/70">
+                      Give it a minute and peek at spam — golden threads sometimes land
+                      sideways. Stuck without it? Your password already works —{" "}
+                      <Link
+                        to="/login"
+                        className="text-gold underline-offset-2 hover:text-gold-light hover:underline"
+                      >
+                        log in
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                </StepShell>
+              )}
+
               {/* ---------------------------- Thread sent --------------------------- */}
               {step === "sent" && (
                 <StepShell key="sent">
@@ -327,8 +498,8 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                       Your circle <span className="italic text-gold-gradient">awaits.</span>
                     </h1>
                     <p className="mx-auto mt-4 max-w-xs font-sans text-[13px] leading-relaxed text-cream/50">
-                      Account created. Your trips, wishlist and journey are ready for you —
-                      there's even a first whisper waiting.
+                      Account created, inbox proven. Your trips, wishlist and journey are
+                      ready — there's even a first whisper waiting.
                     </p>
                     <button
                       type="button"
@@ -478,6 +649,78 @@ function SubmitButton({ children, loading, onClick, disabled, className }: Submi
         children
       )}
     </button>
+  );
+}
+
+interface CodeBoxesProps {
+  value: string[];
+  onChange: (next: string[]) => void;
+  disabled: boolean;
+  invalid: boolean;
+}
+
+/** Six golden cells — auto-advance, backspace steps back, paste fills all (M11.5). */
+function CodeBoxes({ value, onChange, disabled, invalid }: CodeBoxesProps) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  /** Writes a run of digits starting at `start`, then focuses the next cell. */
+  const applyDigits = (start: number, text: string): void => {
+    const digits = text.replace(/\D/g, "");
+    if (digits === "") return;
+    const next = [...value];
+    let cursor = start;
+    for (const ch of digits) {
+      if (cursor > 5) break;
+      next[cursor] = ch;
+      cursor += 1;
+    }
+    onChange(next);
+    refs.current[Math.min(cursor, 5)]?.focus();
+  };
+
+  return (
+    <div className="flex justify-between gap-2" role="group" aria-label="6-digit verification code">
+      {value.map((digit, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          type="text"
+          inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          maxLength={6}
+          value={digit}
+          disabled={disabled}
+          aria-label={`Digit ${i + 1}`}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "") {
+              const next = [...value];
+              next[i] = "";
+              onChange(next);
+              return;
+            }
+            applyDigits(i, raw);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Backspace" && value[i] === "" && i > 0) refs.current[i - 1]?.focus();
+          }}
+          onPaste={(e) => {
+            e.preventDefault();
+            applyDigits(0, e.clipboardData.getData("text"));
+          }}
+          onFocus={(e) => e.target.select()}
+          className={cn(
+            "h-[54px] w-full max-w-[52px] rounded-lg border bg-charcoal-soft/60 text-center font-serif text-[22px] text-cream focus:outline-none",
+            invalid
+              ? "border-red-400/50"
+              : "border-cream/15 focus:border-gold/60 focus:shadow-[0_0_18px_rgba(184,150,62,0.2)]",
+            disabled && "opacity-50",
+          )}
+        />
+      ))}
+    </div>
   );
 }
 

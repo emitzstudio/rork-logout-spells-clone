@@ -469,7 +469,7 @@ export default function PreviousSpellPage() {
   if (!past) return <MemoryNotFound />;
 
   return (
-    <Page title={`${past.title} — Previous Spell`}>
+    <Page title={`${past.title} — Previous Spell`} back={{ container: "max-w-[1100px]" }}>
       <MemoryHero past={past} />
 
       {/* The story */}

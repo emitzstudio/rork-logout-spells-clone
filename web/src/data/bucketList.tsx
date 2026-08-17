@@ -52,6 +52,8 @@ interface BucketListValue {
   remove: (id: string) => void;
   /** Perform the reveal — marks the brew complete and persists it. */
   brew: () => void;
+  /** Forgets ONLY the reveal — the dreams stay put (M11.5 stale-reveal recovery). */
+  unbrew: () => void;
   /** Empty the cauldron entirely (also forgets the reveal). */
   clear: () => void;
 }
@@ -301,6 +303,25 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       });
   }, [userId, setCloud, refetchCloud]);
 
+  /**
+   * M11.5: clears the reveal flag without touching a single chosen dream.
+   * Used when a past visit's reveal has nothing left to show (e.g. the
+   * catalogue emptied) — the ritual returns instead of a dead result page.
+   */
+  const unbrew = useCallback(() => {
+    setLocalBrewed(false);
+    if (userId === null) return;
+    setCloud((prev) => ({ ...prev, brewed: false }));
+    void supabase
+      .from("user_settings")
+      .update({ brewed_at: null })
+      .eq("user_id", userId)
+      .then(({ error }) => {
+        /* Quiet self-healing — on failure the cache refetches to stay truthful. */
+        if (error) refetchCloud();
+      });
+  }, [userId, setCloud, refetchCloud]);
+
   const clear = useCallback(() => {
     setLocalInterests([]);
     setLocalBrewed(false);
@@ -335,8 +356,8 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
   const brewed = userId !== null && cloudQuery.data ? cloudQuery.data.brewed : localBrewed;
 
   const value = useMemo<BucketListValue>(
-    () => ({ interests, brewed, add, remove, brew, clear }),
-    [interests, brewed, add, remove, brew, clear],
+    () => ({ interests, brewed, add, remove, brew, unbrew, clear }),
+    [interests, brewed, add, remove, brew, unbrew, clear],
   );
 
   return <BucketListContext.Provider value={value}>{children}</BucketListContext.Provider>;

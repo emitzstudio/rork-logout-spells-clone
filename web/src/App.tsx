@@ -5,7 +5,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "
 import { Toaster } from "sonner";
 
 import { ApplyProvider } from "@/components/site/ApplyModal";
-import BackFab from "@/components/site/BackFab";
 import ConnectionBanner from "@/components/site/ConnectionBanner";
 import PortalEntry from "@/components/site/PortalEntry";
 import StarBackdrop from "@/components/site/StarBackdrop";
@@ -177,8 +176,7 @@ const AppShell = () => {
     <ApplyProvider>
       {!isDashboard && <StarBackdrop />}
       {(entered || isDashboard || skipPortal) && <AnimatedRoutes />}
-      {/* Fixed back arrow on every public page except home — the console has its own in the topbar. */}
-      {!isDashboard && (entered || skipPortal) && <BackFab />}
+      {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) — no global fixed button. */}
       {!isDashboard && !skipPortal && !portalDone && (
         <PortalEntry onIgnite={() => setEntered(true)} onDone={() => setPortalDone(true)} />
       )}

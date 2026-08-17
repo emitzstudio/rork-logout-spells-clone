@@ -89,6 +89,18 @@ const friendlyAuthError = (message: string, fallbackField: string | null = null)
   return new AccountError("Something drifted — try again.", fallbackField);
 };
 
+/** OTP send/verify errors → the same warm, specific voice (M11.5). */
+const friendlyOtpError = (message: string): AccountError => {
+  if (/expired|invalid/i.test(message))
+    return new AccountError(
+      "That code isn't right or has expired — check the newest email, or send a fresh one.",
+      "code",
+    );
+  if (/security purposes|rate limit|too many|after \d+ seconds/i.test(message))
+    return new AccountError("The courier just flew — give it a minute before asking again.", null);
+  return new AccountError("The verification email couldn't fly — try again shortly.", null);
+};
+
 /* ------------------------------ Avatar fallback ----------------------------- */
 
 /** A quiet gold-initial portrait for travellers who haven't added a photo. */
@@ -500,6 +512,35 @@ class TravellerAccountService {
     // below only fires if that project setting is ever flipped back on.
     if (!data.session || !data.user)
       throw new AccountError("Check your inbox to confirm your email, then log in.", null);
+    return data.user;
+  }
+
+  /**
+   * Emails the one-time verification for a just-created account (M11.5).
+   * Supabase Auth owns the send — the mail carries its sign-in link and,
+   * whenever the project's email template renders the token, the 6-digit
+   * code as well. `shouldCreateUser: false` so this can NEVER mint accounts.
+   */
+  async sendEmailOtp(email: string): Promise<void> {
+    assertEmail(email);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: false },
+    });
+    if (error) throw friendlyOtpError(error.message);
+  }
+
+  /** Verifies the emailed 6-digit code and opens the session (M11.5). */
+  async verifyEmailOtp(email: string, code: string): Promise<User> {
+    const token = code.replace(/\D/g, "");
+    if (token.length !== 6)
+      throw new AccountError("Enter the 6-digit code from the email.", "code");
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token,
+      type: "email",
+    });
+    if (error || !data.user) throw friendlyOtpError(error?.message ?? "");
     return data.user;
   }
 

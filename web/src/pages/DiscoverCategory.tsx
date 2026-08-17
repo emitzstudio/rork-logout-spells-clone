@@ -116,7 +116,8 @@ export default function DiscoverCategoryPage() {
   }
 
   return (
-    <Page title={`${category.name} — Discover`}>
+    /* The hero carries its own "All moods" back link — no second orb (M11.5). */
+    <Page title={`${category.name} — Discover`} back={false}>
       {/* Hero */}
       <section className="relative flex min-h-[74svh] items-end overflow-hidden">
         <div aria-hidden className="absolute inset-0 overflow-hidden">

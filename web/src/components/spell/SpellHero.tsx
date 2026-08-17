@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 
+import { PageBackOrb } from "@/components/site/PageBack";
 import { CATEGORY_FAMILY, FINAL_CTA, dayHasContent, hostHasContent } from "@/data/builder";
 import type { SpellDraft } from "@/data/builder";
 import { CATEGORY_META, URGENCY_META, formatINR } from "@/data/spells";
@@ -124,11 +125,11 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
         />
       </div>
 
-      {/* Floating badges — below the fixed nav */}
-      {shownBadges.length > 0 && (
-        <div className="absolute inset-x-0 top-0 z-[2]">
-          <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 px-5 pt-24 sm:px-8 md:pt-28">
-            {shownBadges.map((badge, i) => {
+      {/* Back orb + floating badges — one hero row, below the fixed nav (M11.5) */}
+      <div className="absolute inset-x-0 top-0 z-[2]">
+        <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 px-5 pt-24 sm:px-8 md:pt-28">
+          <PageBackOrb className="mr-1" />
+          {shownBadges.map((badge, i) => {
               const BadgeIcon = badge.icon;
               return (
                 <span
@@ -146,13 +147,12 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
                   ) : (
                     <span aria-hidden className="h-1 w-1 rounded-full bg-gold/80" />
                   )}
-                  {badge.label}
-                </span>
-              );
-            })}
-          </div>
+                {badge.label}
+              </span>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* Editorial content — category → title → tagline → meta → CTAs */}
       <div className="relative z-[2] mx-auto w-full max-w-[1200px] px-5 pb-16 pr-14 sm:px-8 sm:pr-16 md:pb-24 md:pr-8">

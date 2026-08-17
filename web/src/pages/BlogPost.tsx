@@ -35,7 +35,10 @@ function Article({ post }: { post: ManagedBlogPost }) {
   };
 
   return (
-    <Page title={post.seoTitle !== "" ? post.seoTitle : post.title}>
+    <Page
+      title={post.seoTitle !== "" ? post.seoTitle : post.title}
+      back={{ container: "max-w-[840px]", gutters: "px-5 md:px-8" }}
+    >
       {/* Reading progress — a gold thread across the top. */}
       <motion.div
         aria-hidden

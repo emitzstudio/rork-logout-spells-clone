@@ -101,7 +101,8 @@ export default function SpellPage() {
   const openBooking = (): void => setFlowOpen(true);
 
   return (
-    <Page title={spell.name}>
+    /* SpellHero carries the back orb inside its badge row — no second orb (M11.5). */
+    <Page title={spell.name} back={false}>
       <SpellHero draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <BookingStrip draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <SpellAbout draft={draft} />

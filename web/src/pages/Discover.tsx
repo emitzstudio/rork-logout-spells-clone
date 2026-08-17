@@ -430,8 +430,13 @@ const summonTilt = (i: number): number => (i % 2 === 0 ? -1 : 1) * (2.5 + (i % 3
 export default function Discover() {
   const reduced = useReducedMotion() ?? false;
   const isDesktop = useIsDesktop();
-  const { interests: selectedIds, brewed, add, remove, brew, clear } = useBucketList();
-  const { publicSpells, failed: spellsFailed, retry: retrySpells } = useSpellStore();
+  const { interests: selectedIds, brewed, add, remove, brew, unbrew, clear } = useBucketList();
+  const {
+    publicSpells,
+    ready: spellsReady,
+    failed: spellsFailed,
+    retry: retrySpells,
+  } = useSpellStore();
   const {
     interests: catalogue,
     isLoading: catalogueLoading,
@@ -459,6 +464,11 @@ export default function Discover() {
 
   const phaseRef = useRef<RitualPhase>(phase);
   const countRef = useRef<number>(selectedIds.length);
+  /** True once the traveller performed the reveal in THIS visit — a fresh
+   *  ceremony's honest empty result must stay visible, never bounce back. */
+  const revealedThisSessionRef = useRef<boolean>(false);
+  /** The stale-reveal recovery below runs at most once per visit. */
+  const staleRecoveredRef = useRef<boolean>(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const cauldronBoxRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -508,6 +518,7 @@ export default function Discover() {
   /** The reveal ritual: the magic builds, bursts, and the spells are summoned. */
   const startConjure = useCallback(() => {
     if (phaseRef.current !== "brewing" || countRef.current < MIN_BREW) return;
+    revealedThisSessionRef.current = true;
     if (reduced) {
       setCeremony(false);
       brew();
@@ -526,10 +537,43 @@ export default function Discover() {
     );
   }, [brew, reduced, setPhaseSafe]);
 
-  /* Ten dreams and the cauldron needs no button — it reveals on its own. */
+  /* Ten dreams and the cauldron needs no button — it reveals on its own.
+     Only once a dream has landed THIS visit (stir > 0): a returning traveller
+     with ten saved dreams gets the stage back, not an instant ceremony (M11.5). */
   useEffect(() => {
-    if (phase === "brewing" && count >= TARGET_BREW) startConjure();
-  }, [phase, count, startConjure]);
+    if (phase === "brewing" && count >= TARGET_BREW && stir > 0) startConjure();
+  }, [phase, count, stir, startConjure]);
+
+  /* M11.5 — restore the ritual. A PAST visit's reveal with nothing left to
+     show (e.g. the catalogue emptied since) would hide the cauldron and every
+     dream bubble forever. Once the live reads have settled — and ONLY on
+     genuine emptiness, never on a failed read (M10) — return the traveller to
+     the brewing stage. Their chosen dreams stay; only the stale reveal flag
+     clears (locally for visitors, `brewed_at` for signed-in travellers). */
+  useEffect(() => {
+    if (staleRecoveredRef.current || revealedThisSessionRef.current) return;
+    if (phase !== "revealed") return;
+    if (!spellsReady || spellsFailed) return;
+    if (catalogueLoading || catalogueError) return;
+    if (matches.length > 0) return;
+    staleRecoveredRef.current = true;
+    unbrew();
+    setCeremony(false);
+    setOffsets(null);
+    setStir(0);
+    setFinale(0);
+    setAltar("standing");
+    setPhaseSafe("brewing");
+  }, [
+    phase,
+    spellsReady,
+    spellsFailed,
+    catalogueLoading,
+    catalogueError,
+    matches,
+    unbrew,
+    setPhaseSafe,
+  ]);
 
   /* Measure where each card will land so it can be summoned from the mouth. */
   useLayoutEffect(() => {
@@ -934,7 +978,7 @@ export default function Discover() {
   /* --------------------------------- Render -------------------------------- */
 
   return (
-    <Page title="Discover Your Spell">
+    <Page title="Discover Your Spell" back={{ container: "max-w-6xl", gutters: "px-5" }}>
       <section className="relative overflow-hidden px-0 pb-24 pt-32 md:pt-40">
         <div
           aria-hidden
