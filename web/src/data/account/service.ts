@@ -483,7 +483,16 @@ class TravellerAccountService {
       email: email.trim(),
       password,
     });
-    if (error || !data.user) throw friendlyAuthError(error?.message ?? "", "password");
+    if (error || !data.user) {
+      /* M11.5 — an unverified email isn't a wrong password; the AuthPage
+         intercepts this field and re-opens the verification ceremony. */
+      if (/email not confirmed/i.test(error?.message ?? ""))
+        throw new AccountError(
+          "This email hasn't been verified yet — check your inbox for the verification email.",
+          "email_unverified",
+        );
+      throw friendlyAuthError(error?.message ?? "", "password");
+    }
     return data.user;
   }
 
@@ -508,26 +517,31 @@ class TravellerAccountService {
       },
     });
     if (error) throw friendlyAuthError(error.message, "email");
-    // With confirmation off (D1) a session arrives immediately. The guard
-    // below only fires if that project setting is ever flipped back on.
-    if (!data.session || !data.user)
-      throw new AccountError("Check your inbox to confirm your email, then log in.", null);
+    if (!data.user) throw new AccountError("Something drifted — try again.", null);
+    // M11.5 (supersedes D1): email confirmations are ON. Supabase obfuscates
+    // an already-registered email as a ghost user with no identities —
+    // surface it honestly instead of dead-ending at a verify step.
+    if ((data.user.identities?.length ?? 0) === 0)
+      throw new AccountError("This email already belongs to a traveller — log in instead.", "email");
+    // No session yet by design — the traveller proves their inbox first.
     return data.user;
   }
 
   /**
-   * Emails the one-time verification for a just-created account (M11.5).
-   * Supabase Auth owns the send — the mail carries its sign-in link and,
-   * whenever the project's email template renders the token, the 6-digit
-   * code as well. `shouldCreateUser: false` so this can NEVER mint accounts.
+   * Re-sends the signup verification email (M11.5). Supabase Auth owns the
+   * send — the mail carries a confirmation link and, once the project's
+   * email template renders the token, the visible 6-digit code too.
+   * `type: "signup"` only works for unconfirmed accounts, so this can
+   * never mint users or spam verified travellers.
    */
-  async sendEmailOtp(email: string): Promise<void> {
+  async resendVerificationCode(email: string): Promise<void> {
     assertEmail(email);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: false },
-    });
-    if (error) throw friendlyOtpError(error.message);
+    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+    if (error) {
+      if (/already confirmed/i.test(error.message))
+        throw new AccountError("This email is already verified — log in instead.", null);
+      throw friendlyOtpError(error.message);
+    }
   }
 
   /** Verifies the emailed 6-digit code and opens the session (M11.5). */

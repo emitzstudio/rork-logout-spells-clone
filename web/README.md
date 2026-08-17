@@ -6,6 +6,42 @@ are one app; RLS decides what each caller sees.
 
 ---
 
+## M11.5 — Pre-Launch UX + Auth Pass (2026-08-17)
+
+Three surgical changes before launch readiness; the M11 zero-data rule stays
+absolute — no business records were created.
+
+- **Discover ritual**: bubbles + cauldron confirmed intact and working for
+  anonymous visitors — selections live in localStorage only, never the DB;
+  signed-in travellers keep persisting via `user_interests`. New self-heal:
+  a stale pre-M11 reveal (nothing left to show) clears its flag once live
+  reads settle on a genuinely empty catalogue and returns the brewing stage
+  with dreams intact; a fresh ceremony still ends in the honest "no live
+  spells" state. Auto-reveal at 10 dreams now waits for a real interaction
+  this visit instead of firing on arrival.
+- **Page-aware back button**: the viewport-fixed `BackFab` is gone. The
+  `Page` shell now renders `PageBack` — the same cream/gold circular orb —
+  inside a band aligned to each page's own container (configurable width and
+  gutters; default `max-w-7xl` matches Blog/Live/Previous Spells/Our
+  Story/404 and every loading/404 fallback). Custom widths: BlogPost 840px,
+  Discover 6xl, Creators 6xl, PreviousSpellPage 1100px. Pages with their own
+  affordance opt out via `back={false}`: SpellPage (orb sits in the hero
+  badge row), DiscoverCategory (hero "All moods" link), AccountShell (ribbon
+  nav). Hidden on `/`. History behavior unchanged (`useGoBack`).
+- **Email verification on signup**: `mailer_autoconfirm` is OFF — signup
+  mails a verification and the join flow holds at "Prove your inbox":
+  6-digit code boxes (auto-advance, paste, auto-submit, single-flight
+  guard), resend with 60s cooldown, invalid/expired error mapping, busy
+  states, cross-tab completion when the emailed link is tapped. Unverified
+  password logins re-open the step and auto-resend. Already-registered
+  emails surface honestly. Login, password recovery and all account flows
+  unchanged. ⚠️ Free tier + default mailer: templates are locked, so the
+  email shows a confirmation LINK today — the visible 6-digit code, branded
+  template and real send volume (built-in cap: 2 emails/hour) unlock once
+  custom SMTP is configured. That SMTP step is a launch requirement.
+
+---
+
 ## M11 — Zero-Data Launch State (2026-08-16)
 
 **Launch data rule: REAL DATA ONLY.** The site launches before the real

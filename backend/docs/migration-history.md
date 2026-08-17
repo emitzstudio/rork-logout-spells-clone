@@ -1349,6 +1349,54 @@ team_members=7 · interests=35 · storage: 0 objects in every content bucket.
 
 ---
 
+## M11.5 — Pre-Launch UX + Auth Pass (2026-08-17)
+
+**Scope: web app + auth config only — zero business-data changes. The M11
+zero-data baseline is preserved and re-asserted below.**
+
+### What changed
+
+- **Email verification is now real (auth config)**: `mailer_autoconfirm`
+  flipped **true → false** via the Management API (supersedes D1). Signup no
+  longer grants a session — Supabase mails a verification and the web app
+  holds a "Prove your inbox" step until `verifyOtp` succeeds. Unverified
+  password logins (`email_not_confirmed`) re-open that step and auto-resend.
+  Already-registered emails are detected via the obfuscated ghost response
+  (identities = 0). Login, password recovery and existing accounts untouched.
+- ⚠️ **Free-tier limit**: email TEMPLATES cannot be modified with the default
+  mailer (Management API returns 400), so the verification email currently
+  carries the confirmation LINK only — the visible 6-digit code lights up the
+  moment custom SMTP is configured (branded token template ready to apply).
+  Built-in mailer is capped at **2 emails/hour** — custom SMTP is a launch
+  requirement (decision I).
+- **Discover ritual hardened (web)**: the bubbles/cauldron interaction (UI,
+  not data — M11 never removed it) now self-heals from a stale pre-M11
+  reveal: once live reads settle on a genuinely empty catalogue (never on a
+  failed read — M10 rule), the reveal flag clears (`user_settings.brewed_at`
+  for travellers, localStorage for visitors) and the brewing stage returns
+  with chosen dreams intact. Fresh ceremonies still end in the honest
+  zero-spell state. Anonymous selections never touch the database.
+- **0013_m115_probe_erase.sql**: erased the two disposable auth probes
+  created while verifying (audit probe `3c1aae72…`, E2E probe `d35a056c…`),
+  guarded to `@emalupe.com` addresses and aborting unless exactly the founder
+  remains afterwards.
+
+### E2E evidence (production, 2026-08-17)
+
+signup → user + `confirmation_sent_at`, **no session** · unconfirmed password
+login → `email_not_confirmed` · wrong code → `otp_expired` · emailed token →
+session + `email_confirmed_at` · re-signup of an existing email → obfuscated
+ghost (identities = 0) · confirmed password login → session · post-confirm
+resend → obfuscated no-op.
+
+### Baseline after M11.5
+
+Identical to M11: au=1 · profiles=1 · user_settings=1 · all business tables 0
+· inquiries=1 (IQ-0826-003, founder decision pending) · team_members=7 ·
+interests=35 · storage 0 objects.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

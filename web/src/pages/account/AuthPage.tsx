@@ -56,7 +56,7 @@ const QUOTES: Record<AuthMode, { big: ReactNode; hand: string }> = {
 
 /** Auth screens — real Supabase flows behind the same three doors (M6). */
 export default function AuthPage({ mode }: { mode: AuthMode }) {
-  const { session, signIn, signUp, signOut } = useAccount();
+  const { session, signIn, signUp } = useAccount();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/account";
@@ -145,7 +145,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     setOtpNote(null);
     setError(null);
     void accountService
-      .sendEmailOtp(email)
+      .resendVerificationCode(email)
       /* The cooldown starts only when a thread actually went out (M10 rule). */
       .then(() => setCooldown(60))
       .catch((e: unknown) => {
@@ -160,29 +160,38 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     e.preventDefault();
     if (mode === "login") {
       void run(async () => {
-        await signIn(email, password);
+        try {
+          await signIn(email, password);
+        } catch (err) {
+          /* M11.5 — an unverified email isn't a wrong password. Re-arm the
+             ceremony, send a fresh verification and carry them straight there. */
+          if (err instanceof AccountError && err.field === "email_unverified") {
+            setCode(EMPTY_CODE);
+            lastTriedRef.current = "";
+            let note: string | null = "A fresh verification is flying to your inbox now.";
+            try {
+              await accountService.resendVerificationCode(email);
+              setCooldown(60);
+            } catch (re) {
+              note = re instanceof AccountError ? re.message : null;
+            }
+            setOtpNote(note);
+            setStep("verify");
+            return;
+          }
+          throw err;
+        }
         navigate(from, { replace: true });
       });
     } else if (mode === "join") {
       void run(async () => {
         await signUp({ firstName, lastName, email, password });
-        /* M11.5 — the account is forged; the door in is proving the inbox.
-           Supabase Auth emails the one-time verification; we step out of the
-           fresh session and hold here until it's confirmed. */
-        let note: string | null = null;
-        try {
-          await accountService.sendEmailOtp(email);
-        } catch (e) {
-          note =
-            e instanceof AccountError
-              ? e.message
-              : "The verification email couldn't fly — resend it below.";
-        }
-        signOut();
+        /* M11.5 — the account is forged and Supabase has already mailed the
+           verification. No session exists until the inbox is proven. */
         setCode(EMPTY_CODE);
         lastTriedRef.current = "";
-        setOtpNote(note);
-        setCooldown(note === null ? 60 : 0);
+        setOtpNote(null);
+        setCooldown(60);
         setStep("verify");
       });
     } else {
@@ -394,8 +403,8 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                   <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
                     Your account is forged — we sent a golden thread to{" "}
                     <span className="text-cream/80">{email || "your inbox"}</span>. Tap the
-                    sign-in link inside and this page completes on its own — or, if your
-                    email shows a 6-digit code, enter it below.
+                    confirmation link inside and this page completes on its own — or enter
+                    the 6-digit code below if your email shows one.
                   </p>
 
                   <div className="mt-8">
@@ -446,14 +455,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                   <div className="mt-7 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
                     <p className="font-serif text-[15px] italic leading-relaxed text-cream/70">
                       Give it a minute and peek at spam — golden threads sometimes land
-                      sideways. Stuck without it? Your password already works —{" "}
-                      <Link
-                        to="/login"
-                        className="text-gold underline-offset-2 hover:text-gold-light hover:underline"
-                      >
-                        log in
-                      </Link>
-                      .
+                      sideways. Still nothing? The resend above conjures a fresh one.
                     </p>
                   </div>
                 </StepShell>

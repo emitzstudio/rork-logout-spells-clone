@@ -188,8 +188,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
-    const user = await accountService.signUp(input);
-    setAuthUser(user);
+    // M11.5: email confirmations are on — signUp returns a user but NO
+    // session. The auth listener adopts the real session the moment the
+    // inbox is proven; marking the unverified user signed-in here would
+    // fake a session that can't read anything under RLS.
+    await accountService.signUp(input);
   }, []);
 
   const signOut = useCallback(() => {
