@@ -1397,6 +1397,30 @@ interests=35 · storage 0 objects.
 
 ---
 
+## ⚠️ TEMPORARY — mock previous spell for preview (0014, 2026-08-18)
+
+**Deliberate, founder-requested exception to the launch data rule** so the
+archive card + memory page can be previewed with every section populated:
+
+- `0014_mock_previous_spell_preview.sql` inserted ONE fabricated journey —
+  `previous_spells` id `ee000000-0000-4000-a000-000000000001`, slug
+  **`sample-meghalaya-wander`** ("Meghalaya Monsoon Wander", wandering,
+  March 2026, 7 days · 12 travellers, `spell_id` null) — plus THREE approved
+  mock reviews (`…a1/…a2/…a3`, 5★/5★/4★) so the rating summary,
+  distribution bars and both card variants render. Images are Unsplash URLs;
+  storage stays at 0 objects.
+- Visible at `/live-spells/previous` and
+  `/live-spells/previous/sample-meghalaya-wander`; the home archive rail and
+  dashboard counts will reflect 1 previous spell + 3 reviews while it lives.
+- **MUST be erased before launch** — one statement (reviews cascade):
+  `delete from public.previous_spells where id =
+  'ee000000-0000-4000-a000-000000000001';`
+
+Baseline while it lives: previous_spells=1 (mock) · reviews=3 (mock) —
+everything else unchanged from M11.5.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
