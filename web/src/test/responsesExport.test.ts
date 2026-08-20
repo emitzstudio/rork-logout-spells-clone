@@ -107,6 +107,60 @@ describe("buildResponsesTable", () => {
     const { columns } = buildResponsesTable(form, []);
     expect(columns.map((c) => c.header)).toEqual(["Submission ID", "Submitted At", "Question 1"]);
   });
+
+  it("excludes switched-off questions from the active columns", () => {
+    const form: LogoutForm = {
+      ...makeForm(),
+      questions: [
+        question("q-name", "short_text", "What should we call you?"),
+        { ...question("q-city", "short_text", "Which city are you joining us from?"), enabled: false },
+        question("q-why", "long_text", "Why do you want to log out?"),
+      ],
+    };
+    const { columns } = buildResponsesTable(form, []);
+    expect(columns.map((c) => c.header)).toEqual([
+      "Submission ID",
+      "Submitted At",
+      "What should we call you?",
+      "Why do you want to log out?",
+    ]);
+  });
+
+  it("keeps historical answers to switched-off questions as trailing columns", () => {
+    const form: LogoutForm = {
+      ...makeForm(),
+      questions: [
+        question("q-name", "short_text", "What should we call you?"),
+        { ...question("q-city", "short_text", "Which city are you joining us from?"), enabled: false },
+      ],
+    };
+    /* Submitted while the city question was still ON… */
+    const historical = makeResponse({
+      id: "r-old",
+      answers: [
+        { questionId: "q-name", questionTitle: "What should we call you?", type: "short_text", value: "Asha" },
+        { questionId: "q-city", questionTitle: "Which city are you joining us from?", type: "short_text", value: "Mumbai" },
+      ],
+    });
+    /* …and one submitted after it was switched OFF. */
+    const fresh = makeResponse({
+      id: "r-new",
+      answers: [
+        { questionId: "q-name", questionTitle: "What should we call you?", type: "short_text", value: "Ravi" },
+      ],
+    });
+    const { columns, rows } = buildResponsesTable(form, [fresh, historical]);
+    /* The switched-off question is not an active field — it trails after the
+       asked columns, exactly like a deleted question, so nothing is lost. */
+    expect(columns.map((c) => c.header)).toEqual([
+      "Submission ID",
+      "Submitted At",
+      "What should we call you?",
+      "Which city are you joining us from?",
+    ]);
+    expect(rows[0][3]).toEqual({ kind: "text", value: "", wrap: false });
+    expect(rows[1][3]).toEqual({ kind: "text", value: "Mumbai", wrap: false });
+  });
 });
 
 describe("responsesExcelFileName", () => {

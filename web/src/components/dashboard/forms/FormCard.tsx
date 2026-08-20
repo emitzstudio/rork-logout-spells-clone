@@ -3,7 +3,7 @@ import { Copy, Eye, PenLine, Share2, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { SpellStatusBadge } from "@/components/dashboard/spells/SpellBadges";
-import { FORM_STYLE_META } from "@/data/forms";
+import { FORM_STYLE_META, visibleQuestions } from "@/data/forms";
 import type { LogoutForm } from "@/data/forms";
 import { timeAgo } from "@/data/spells";
 import { cn } from "@/lib/utils";
@@ -83,7 +83,7 @@ export default function FormCard({
   ];
 
   const stats: { id: string; label: string; value: string; live?: boolean }[] = [
-    { id: "questions", label: "Questions", value: String(form.questions.length) },
+    { id: "questions", label: "Questions", value: String(visibleQuestions(form.questions).length) },
     { id: "spells", label: "Spells", value: String(attachedCount) },
     {
       id: "responses",

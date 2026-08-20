@@ -19,6 +19,7 @@ import {
   slugify,
 } from "@/data/builder";
 import type { BuilderStatus, SpellDraft } from "@/data/builder";
+import { visibleQuestions } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
 import { CATEGORY_META, URGENCY_META } from "@/data/spells";
 import type { SpellCategoryId, UrgencyId } from "@/data/spells";
@@ -123,7 +124,7 @@ function BookingFormPicker({
                           {form.title.trim() !== "" ? form.title : "Untitled Form"}
                         </span>
                         <span className="block font-sans text-[10px] text-cream/35">
-                          {form.questions.length} questions · /forms/{form.slug}
+                          {visibleQuestions(form.questions).length} questions · /forms/{form.slug}
                         </span>
                       </span>
                       {active && <Check className="h-3.5 w-3.5 shrink-0 text-gold" />}

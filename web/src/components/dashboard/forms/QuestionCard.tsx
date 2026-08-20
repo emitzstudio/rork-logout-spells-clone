@@ -209,8 +209,10 @@ function OptionRow({
 
 /**
  * One editable question — drag handle, collapse/expand, full editor.
- * Core questions ship with every form: they reorder but never delete,
- * and stay required so every response has a name and a number.
+ * Core questions ship with every form: they reorder but never delete, and
+ * stay required while asked. The CORE switch controls whether THIS form
+ * asks the question — off means hidden from the public form (not deleted),
+ * and it can be switched back on any time.
  */
 export default function QuestionCard({
   question,
@@ -262,7 +264,10 @@ export default function QuestionCard({
           type="button"
           onClick={onToggle}
           aria-expanded={expanded}
-          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 text-left"
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 text-left transition-opacity duration-200",
+            !question.enabled && "opacity-40",
+          )}
         >
           <span className="font-sans text-[10px] tabular-nums text-gold/60">
             {String(index + 1).padStart(2, "0")}
@@ -286,14 +291,53 @@ export default function QuestionCard({
             <span className="block font-sans text-[10px] uppercase tracking-[0.14em] text-cream/30">
               {meta.label}
               {question.type === "rating" && ` · ${RATING_STYLE_META[question.ratingStyle].label}`}
+              {!question.enabled && <span className="text-cream/45"> · off — not asked in this form</span>}
             </span>
           </span>
         </button>
 
         {question.core && (
-          <span className="mr-1 hidden shrink-0 items-center gap-1 rounded-full border border-gold/25 bg-gold/[0.06] px-2 py-0.5 font-sans text-[9px] uppercase tracking-[0.16em] text-gold/80 sm:flex">
+          <span
+            className={cn(
+              "mr-1 hidden shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 font-sans text-[9px] uppercase tracking-[0.16em] sm:flex",
+              question.enabled
+                ? "border-gold/25 bg-gold/[0.06] text-gold/80"
+                : "border-cream/15 bg-cream/[0.03] text-cream/40",
+            )}
+          >
             <Lock className="h-2.5 w-2.5" /> Core
           </span>
+        )}
+
+        {question.core && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={question.enabled}
+            onClick={() => onPatch({ enabled: !question.enabled })}
+            aria-label={`Ask “${question.title.trim() !== "" ? question.title.trim() : "Untitled question"}” in this form`}
+            title={
+              question.enabled
+                ? "Asked in this form — switch off to hide it (never deleted)"
+                : "Hidden from this form — switch on to ask it again"
+            }
+            className="mr-0.5 shrink-0 rounded-full p-1 transition-transform duration-150 active:scale-90"
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "relative block h-[18px] w-8 rounded-full transition-colors duration-200",
+                question.enabled ? "bg-gold" : "bg-cream/15",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute left-0.5 top-0.5 h-[14px] w-[14px] rounded-full transition-transform duration-200 ease-out-expo",
+                  question.enabled ? "translate-x-[14px] bg-charcoal-deep" : "translate-x-0 bg-cream/80",
+                )}
+              />
+            </span>
+          </button>
         )}
 
         <button

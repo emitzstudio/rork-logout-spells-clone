@@ -1,10 +1,11 @@
 /**
  * M11.6 — Excel export for form responses.
  *
- * Columns are derived from the form's CURRENT questions (in form order), then
- * extended with any answered question the form no longer contains (deleted or
- * replaced) so no stored answer is ever dropped. A trailing "Submitted via"
- * column appears only when at least one response arrived through a spell.
+ * Columns are derived from the form's CURRENT switched-on questions (in form
+ * order), then extended with any answered question the form no longer asks
+ * (deleted, replaced or switched off) so no stored answer is ever dropped.
+ * A trailing "Submitted via" column appears only when at least one response
+ * arrived through a spell.
  *
  * `buildResponsesTable` is pure and dependency-free (unit-tested); the
  * download step lazy-loads the xlsx writer so the console chunk stays lean.
@@ -14,6 +15,7 @@
 import type { Cell, Row } from "write-excel-file/browser";
 
 import { slugify } from "./builder";
+import { visibleQuestions } from "./forms";
 import type { FormResponse, LogoutForm } from "./forms";
 
 export interface ExportColumn {
@@ -51,17 +53,20 @@ export const buildResponsesTable = (
   form: Pick<LogoutForm, "questions">,
   responses: FormResponse[],
 ): ResponsesTable => {
-  /* Dynamic field columns: the form's questions, in form order… */
-  const fieldIds: string[] = form.questions.map((question) => question.id);
+  /* Dynamic field columns: the questions this form currently asks, in form
+     order — switched-off questions are not active fields… */
+  const activeQuestions = visibleQuestions(form.questions);
+  const fieldIds: string[] = activeQuestions.map((question) => question.id);
   const fieldMeta = new Map<string, FieldMeta>();
-  form.questions.forEach((question, index) => {
+  activeQuestions.forEach((question, index) => {
     fieldMeta.set(question.id, {
       header: question.title.trim() !== "" ? question.title.trim() : `Question ${index + 1}`,
       wide: question.type === "long_text",
     });
   });
 
-  /* …then any answered question the form no longer contains. */
+  /* …then any answered question the form no longer asks — deleted or
+     switched off — so historical answers always stay in the export. */
   for (const response of responses) {
     for (const answer of response.answers) {
       if (fieldMeta.has(answer.questionId)) continue;

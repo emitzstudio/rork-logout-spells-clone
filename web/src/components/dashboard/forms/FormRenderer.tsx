@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, ChevronUp, CornerDownLeft, Star } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { EMOJI_SCALE, RATING_STYLE_META, ratingDisplay } from "@/data/forms";
+import { EMOJI_SCALE, RATING_STYLE_META, ratingDisplay, visibleQuestions } from "@/data/forms";
 import type { FormQuestion, LogoutForm, ResponseAnswer } from "@/data/forms";
 import { cn } from "@/lib/utils";
 
@@ -462,7 +462,12 @@ function ConversationalFlow({ form, answers, setValue, onFinish, submitting, sub
                   </p>
                 )}
                 <div className="mt-8 flex flex-wrap items-center gap-4">
-                  <button type="button" onClick={() => go(0, 1)} className="btn-gold !px-7 !py-3.5 !text-[13px]">
+                  <button
+                    type="button"
+                    onClick={() => go(0, 1)}
+                    disabled={total === 0}
+                    className="btn-gold !px-7 !py-3.5 !text-[13px] disabled:opacity-40"
+                  >
                     Begin <ArrowRight size={15} />
                   </button>
                   <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-cream/35">
@@ -700,6 +705,15 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
   const [sending, setSending] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  /**
+   * Only the questions this form has switched ON exist here — switched-off
+   * questions never render, never validate and never enter the submission.
+   */
+  const liveForm = useMemo<LogoutForm>(
+    () => ({ ...form, questions: visibleQuestions(form.questions) }),
+    [form],
+  );
+
   const setValue = (id: string, value: AnswerValue): void =>
     setAnswers((current) => ({ ...current, [id]: value }));
 
@@ -717,7 +731,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
     setSending(true);
     setSubmitError(null);
     try {
-      await onSubmit(buildAnswers(form, answers));
+      await onSubmit(buildAnswers(liveForm, answers));
       setDone(true);
     } catch (error) {
       setSubmitError(
@@ -735,10 +749,10 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
   return (
     <div className={cn("h-full", className)}>
       {done ? (
-        <SuccessScreen form={form} preview={onSubmit === undefined} />
-      ) : form.style === "conversational" ? (
+        <SuccessScreen form={liveForm} preview={onSubmit === undefined} />
+      ) : liveForm.style === "conversational" ? (
         <ConversationalFlow
-          form={form}
+          form={liveForm}
           answers={answers}
           setValue={setValue}
           onFinish={finish}
@@ -747,7 +761,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
         />
       ) : (
         <TraditionalFlow
-          form={form}
+          form={liveForm}
           answers={answers}
           setValue={setValue}
           onFinish={finish}

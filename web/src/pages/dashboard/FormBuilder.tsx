@@ -28,6 +28,7 @@ import {
   FORM_STYLE_META,
   QUESTION_TYPE_META,
   questionIssue,
+  visibleQuestions,
 } from "@/data/forms";
 import type { FormQuestion, FormStyle, LogoutForm, QuestionType } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
@@ -258,8 +259,12 @@ export default function FormBuilder() {
   }
 
   const detailsComplete = form.title.trim() !== "";
-  const questionsReady = form.questions.filter((q, i) => questionIssue(q, i + 1) === null).length;
-  const questionsComplete = questionsReady === form.questions.length && form.questions.length > 0;
+  // A switched-off question can't block publish — it counts as ready.
+  const questionsReady = form.questions.filter(
+    (q, i) => q.enabled === false || questionIssue(q, i + 1) === null,
+  ).length;
+  const askedCount = visibleQuestions(form.questions).length;
+  const questionsComplete = questionsReady === form.questions.length && askedCount > 0;
   const StyleIcon = FORM_STYLE_META[form.style].icon;
 
   const toggle = (panel: PanelId): void =>
@@ -397,11 +402,11 @@ export default function FormBuilder() {
           <Panel
             index={2}
             title="Questions"
-            description="Six core questions ship with every form — add yours after them."
+            description="Six core questions ship with every form — switch off any this form shouldn't ask."
             open={open.questions}
             onToggle={() => toggle("questions")}
             complete={questionsComplete}
-            summary={`${questionsReady} of ${form.questions.length} ready`}
+            summary={`${questionsReady} of ${form.questions.length} ready · ${askedCount} asked`}
           >
             <Reorder.Group
               axis="y"
@@ -433,7 +438,7 @@ export default function FormBuilder() {
               <Plus className="h-4 w-4" /> Add Question
             </button>
             <p className="mt-3 text-center font-sans text-[10.5px] uppercase tracking-[0.18em] text-cream/25">
-              Drag to reorder · core questions can move, never leave
+              Drag to reorder · core questions switch off, never delete
             </p>
           </Panel>
 

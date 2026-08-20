@@ -1455,6 +1455,43 @@ erasure before launch) · everything else per the M11.5 baseline.
 
 ---
 
+## M11.7 — Per-Form Core Question Visibility (2026-08-20)
+
+**No schema changes, no RLS changes.** Each question in the existing
+`forms.questions` jsonb now carries an `enabled` flag (same document the
+builder always wrote — the granted column whitelist is untouched).
+Questions stored before the flag existed are read as ON, so every
+pre-existing form keeps asking exactly what it always asked.
+
+Three disposable probe migrations verified the pipeline against production,
+then erased themselves:
+
+- `0017_cqv_probe_form.sql` — planted a published probe
+  (`probe-cqv-visibility`, 7 questions: 6 cores + 1 custom; identity + city
+  switched OFF) in the exact builder write shape.
+- REST as anon: probe visible · submission #1 with ONLY the 5 asked
+  questions → HTTP 201 ✓.
+- `0018_cqv_verify_and_toggle.sql` — founder-role simulation: submission #1
+  stored exactly the asked set (`name, phone, era, why, vibe` in form
+  order), zero leakage of the off questions, multi-line long_text intact;
+  then — still under founder claims, through the RLS-checked update path —
+  retoggled the live form: city back ON, phone OFF.
+- REST as anon: submission #2 under the new config → HTTP 201 ✓ (city
+  answered, no phone, `respondent_phone` empty).
+- `0019_cqv_final_verify_and_erase.sql` — verified submission #2 shape;
+  verified submission #1 STILL holds its phone answer (switching a core
+  question off never touches stored responses); non-staff authenticated and
+  anon read 0 responses; erased the probe form (responses cascaded) and
+  asserted zero probe rows remain.
+
+### Baseline after M11.7
+
+Unchanged: probe rows in/out net zero (asserted in 0019). Standing state:
+previous_spells=1 + reviews=3 (the 0014 mock, still pending erasure before
+launch) · everything else per the M11.5 baseline.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

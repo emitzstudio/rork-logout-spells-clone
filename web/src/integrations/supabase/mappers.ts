@@ -378,6 +378,7 @@ export const mapReview = (row: ReviewRow): SpellReview => ({
 
 export const mapForm = (row: FormRow): LogoutForm => {
   const doc = row.questions as { version?: number; questions?: FormQuestion[] } | null;
+  const questions = Array.isArray(doc?.questions) ? doc.questions : [];
   return {
     id: row.id,
     title: row.title,
@@ -385,7 +386,9 @@ export const mapForm = (row: FormRow): LogoutForm => {
     description: row.description,
     style: row.style,
     status: row.status,
-    questions: Array.isArray(doc?.questions) ? doc.questions : [],
+    // Forms saved before the visibility toggle lack `enabled` — default to ON
+    // so existing forms keep asking exactly what they always asked.
+    questions: questions.map((question) => ({ ...question, enabled: question.enabled !== false })),
     successMessage: row.success_message,
     redirectUrl: row.redirect_url,
     submitLabel: row.submit_label,

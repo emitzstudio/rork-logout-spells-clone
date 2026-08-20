@@ -57,6 +57,13 @@ export interface FormQuestion {
   required: boolean;
   /** Core questions ship with every form — reorder yes, delete no. */
   core: boolean;
+  /**
+   * Per-form inclusion. Switched-off questions stay defined (cores are never
+   * deletable) but don't render, validate or submit for THIS form. Records
+   * saved before the toggle existed lack the field — the mapper reads that
+   * as ON, so existing forms keep asking everything they always asked.
+   */
+  enabled: boolean;
   /** Only used by choice types. */
   options: QuestionOption[];
   /** Only used by the rating type. */
@@ -233,6 +240,7 @@ export const createQuestion = (type: QuestionType): FormQuestion => ({
   placeholder: "",
   required: false,
   core: false,
+  enabled: true,
   options: QUESTION_TYPE_META[type].hasOptions ? [createOption(), createOption()] : [],
   ratingStyle: "star5",
 });
@@ -243,6 +251,7 @@ const coreQuestion = (partial: Partial<FormQuestion> & Pick<FormQuestion, "type"
   placeholder: "",
   required: true,
   core: true,
+  enabled: true,
   options: [],
   ratingStyle: "star5",
   ...partial,
@@ -308,13 +317,21 @@ export const createEmptyForm = (): LogoutForm => {
   };
 };
 
-/** Deep-copies a question with fresh ids — duplicated cores become deletable. */
+/** Deep-copies a question with fresh ids — duplicated cores become deletable, and copies always start switched on. */
 export const duplicateQuestion = (question: FormQuestion): FormQuestion => ({
   ...question,
   id: makeId("q"),
   core: false,
+  enabled: true,
   options: question.options.map((option) => ({ ...option, id: makeId("opt") })),
 });
+
+/**
+ * The questions THIS form actually asks — switched-off ones never render,
+ * validate or submit. `!== false` keeps unmapped pre-toggle data ON.
+ */
+export const visibleQuestions = (questions: FormQuestion[]): FormQuestion[] =>
+  questions.filter((question) => question.enabled !== false);
 
 /* ------------------------------- Validation ------------------------------- */
 
@@ -333,7 +350,12 @@ export const questionIssue = (question: FormQuestion, position: number): string 
 export const formIssues = (form: LogoutForm): string[] => {
   const issues: string[] = [];
   if (form.title.trim() === "") issues.push("Give the form a title");
+  if (visibleQuestions(form.questions).length === 0) {
+    issues.push("Switch on at least one question");
+  }
   form.questions.forEach((question, index) => {
+    // Switched-off questions can't block publish — they aren't asked.
+    if (question.enabled === false) return;
     const issue = questionIssue(question, index + 1);
     if (issue) issues.push(issue);
   });

@@ -6,6 +6,39 @@ are one app; RLS decides what each caller sees.
 
 ---
 
+## M11.7 — Per-Form Core Question Visibility (2026-08-20)
+
+The six core questions stay system-defined and undeletable — but each form
+now chooses which of them it actually asks.
+
+- **Builder**: every core question card keeps its CORE badge and gains an
+  ON/OFF switch in the header. OFF dims the card and notes "off — not asked
+  in this form"; the question stays in the list (reorder still works, delete
+  still impossible) and can be switched back on any time. Duplicates of a
+  switched-off core start ON and become normal deletable questions.
+- **Stored per form**: the flag lives on each question inside the form's own
+  `questions` document — no new tables, no global setting. Forms saved
+  before the toggle existed are read as all-ON (backward compatible); the
+  builder's save path persists the flag automatically.
+- **Public form**: the renderer filters to switched-on questions before
+  anything else — an OFF question is never rendered (not hidden with CSS),
+  never validated, never counted ("N questions · under 2 min") and never
+  enters the submission. Publishing requires at least one switched-on
+  question; switched-off questions can never block publish.
+- **Responses + export**: new submissions simply don't contain OFF
+  questions, so the response view doesn't show them; the Excel export
+  derives its active columns from switched-on questions only, while
+  historical answers to now-off questions trail after them (same treatment
+  as deleted questions) — nothing stored is ever dropped. Question counts
+  on form cards and the spell-builder form picker show asked questions.
+- **Verified vs production** (probes 0017–0019, erased afterwards): anon
+  submitted under a mixed config (201, only asked questions stored); the
+  founder retoggled a published form under RLS (city ON, phone OFF); a
+  second submission reflected the new shape; the historical response kept
+  its phone answer untouched; non-staff/anon read 0 responses throughout.
+
+---
+
 ## M11.6 — Form Responses Dashboard + Excel Export (2026-08-20)
 
 Response management for the existing Form Builder — no second form system,
