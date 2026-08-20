@@ -1492,6 +1492,35 @@ launch) · everything else per the M11.5 baseline.
 
 ---
 
+## 0020–0021 — "Udaipur Vibe Check" form planted (2026-08-20)
+
+**REAL CONTENT, permanent — not a probe.** The founder asked for this form
+to be created on their behalf (no time for the dashboard), transcribed 1:1
+from screenshots of their old vibe-check form.
+
+- `0020_udaipur_vibe_check_form.sql` — published form `udaipur-vibe-check`
+  (id `ab5d0000-2026-4000-a000-000000000020`), conversational style, exact
+  builder write shape. 20 questions: the 14 asked questions in the
+  screenshots' exact sequence (Q1 = required name short_text so
+  `respondent_name` populates; includes the faint 7th option "Mystery Soul"
+  on the known-for-ONE-thing question) + the 6 core questions appended
+  SWITCHED OFF per the M11.7 invariant (founder can flip any core on
+  later). Asserts: 20 total · 14 on · only cores off · published · Q1 is
+  the required name question.
+- Anon REST: form visible by slug ✓ · probe submission (14-answer payload,
+  rating "5/5", choice "Mystery Soul") → HTTP 201 ✓.
+- `0021_uvc_verify_and_clean.sql` — founder-RLS verified the probe response
+  (1 row · 14 answers · respondent_name mapped from Q1 · rating + choice
+  values intact), then erased ONLY that probe response and asserted the
+  form remains published with 0 responses.
+
+### Baseline after 0020–0021
+
+forms +1 (`udaipur-vibe-check`, intentional, permanent) · form_responses
+net zero · everything else unchanged from the M11.7 baseline.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
