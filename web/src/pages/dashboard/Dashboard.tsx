@@ -13,8 +13,10 @@ import BookingDetail from "./BookingDetail";
 import Bookings from "./Bookings";
 import Blogs from "./Blogs";
 import FormBuilder from "./FormBuilder";
+import FormResponses from "./FormResponses";
 import Forms from "./Forms";
 import Overview from "./Overview";
+import Responses from "./Responses";
 import Section from "./Section";
 import SpellBuilder from "./SpellBuilder";
 import SpellImport from "./SpellImport";
@@ -67,6 +69,10 @@ export default function Dashboard() {
     }
     if (location.pathname === "/dashboard/forms") {
       document.title = "Forms · Dashboard — Logout Spells";
+      return;
+    }
+    if (location.pathname.startsWith("/dashboard/responses/")) {
+      document.title = "Form Responses · Dashboard — Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/blog/")) {
@@ -125,6 +131,9 @@ export default function Dashboard() {
                 <Route path="forms" element={<Forms />} />
                 <Route path="forms/new" element={<FormBuilder />} />
                 <Route path="forms/:id/edit" element={<FormBuilder />} />
+                {/* M11.6 — response management: forms overview → per-form list → detail. */}
+                <Route path="responses" element={<Responses />} />
+                <Route path="responses/:formId" element={<FormResponses />} />
                 <Route path="blog" element={<Blogs />} />
                 <Route path="blog/new" element={<BlogBuilder />} />
                 <Route path="blog/:id/edit" element={<BlogBuilder />} />
@@ -134,7 +143,7 @@ export default function Dashboard() {
                 <Route path="bookings/requests" element={<Bookings tab="requests" />} />
                 <Route path="bookings/:id" element={<BookingDetail />} />
                 <Route path="testimonials" element={<Testimonials />} />
-                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials"].includes(section.slug)).map((section) => (
+                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses"].includes(section.slug)).map((section) => (
                   <Route key={section.slug} path={section.slug} element={<Section section={section} />} />
                 ))}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

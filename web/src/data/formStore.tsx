@@ -91,6 +91,12 @@ interface FormStoreValue {
   publishedForms: LogoutForm[];
   /** Newest first — staff inbox (RLS returns none for visitors). */
   responses: FormResponse[];
+  /** True once the responses read has settled — the console gates counts on this. */
+  responsesReady: boolean;
+  /** True when the responses read FAILED — consumers show retry, never "0 responses" (M10). */
+  responsesFailed: boolean;
+  /** Refetches the responses after a failure. */
+  retryResponses: () => void;
   /** Resolves only when the response is really stored; throws on failure. */
   addResponse: (input: AddResponseInput) => Promise<void>;
   markResponseViewed: (id: string) => void;
@@ -268,6 +274,10 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
     void formsQuery.refetch();
   }, [formsQuery.refetch]);
 
+  const retryResponses = useCallback(() => {
+    void responsesQuery.refetch();
+  }, [responsesQuery.refetch]);
+
   const value = useMemo<FormStoreValue>(
     () => ({
       forms,
@@ -281,6 +291,9 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
       uniqueFormSlug,
       publishedForms,
       responses,
+      responsesReady: responsesQuery.isFetched,
+      responsesFailed: responsesQuery.isError,
+      retryResponses,
       addResponse,
       markResponseViewed,
       inquiries,
@@ -298,6 +311,9 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
       uniqueFormSlug,
       publishedForms,
       responses,
+      responsesQuery.isFetched,
+      responsesQuery.isError,
+      retryResponses,
       addResponse,
       markResponseViewed,
       inquiries,

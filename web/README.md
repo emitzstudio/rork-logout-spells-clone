@@ -6,6 +6,39 @@ are one app; RLS decides what each caller sees.
 
 ---
 
+## M11.6 — Form Responses Dashboard + Excel Export (2026-08-20)
+
+Response management for the existing Form Builder — no second form system,
+no schema changes, all reads through the existing staff-only RLS.
+
+- **New console section** `/dashboard/responses` (sidebar: Manage →
+  Responses): every form with its real response count and last-submission
+  time ("No responses yet" at 0). Opening a form lists only its own
+  responses, newest first — number, timestamp, and a preview of the first
+  answered fields, all derived from the stored submission (never
+  hardcoded). The individual view shows Submission ID, timestamp and every
+  answer in order; long text is never truncated; internal fields (user
+  ids, status flags) stay hidden. Loading / failure / empty are distinct
+  (M10): a failed read shows "Couldn't load responses." + Try again —
+  never a fake "0 responses".
+- **Excel export**: per-form "Export Excel" downloads a real `.xlsx`
+  (`write-excel-file`, lazy-loaded on click) named
+  `logout-spells-{form}-responses.xlsx` — one row per submission, columns
+  generated from the form definition: Submission ID, Submitted At, every
+  question in form order (new questions appear automatically), answers to
+  since-deleted questions appended so nothing is dropped, and a "Submitted
+  via" column only when some response came through a spell. The pure table
+  builder is unit-tested (`src/test/responsesExport.test.ts`).
+- **Store**: `formStore` now exposes `responsesReady` / `responsesFailed` /
+  `retryResponses` so the section can gate honestly. The public submit
+  path, Form Builder and the Forms-page inbox are untouched.
+- **Verified vs production** (probes 0015/0016, erased afterwards): anon
+  submissions into a published probe landed (201); drafts rejected (42501);
+  forged `status` column denied; anon + non-staff read 0 rows; staff
+  simulation saw both responses with exact content round-trip.
+
+---
+
 ## M11.5 — Pre-Launch UX + Auth Pass (2026-08-17)
 
 Three surgical changes before launch readiness; the M11 zero-data rule stays

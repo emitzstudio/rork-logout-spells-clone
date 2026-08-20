@@ -1421,6 +1421,40 @@ everything else unchanged from M11.5.
 
 ---
 
+## M11.6 — Form Responses Dashboard + Excel Export (2026-08-20)
+
+**No schema changes.** The new `/dashboard/responses` console section reads
+the existing `forms` + `form_responses` tables through the existing RLS
+(`form_responses_select_staff` → `is_staff()`); the Excel export is built
+entirely in the browser from data the staff session can already read. Two
+disposable probe migrations verified the full pipeline against production,
+then erased themselves:
+
+- `0015_m116_probe_forms.sql` — planted 2 probe forms in the exact Form
+  Builder write shape (9-column payload, `questions = {version, questions}`):
+  `probe-m116-responses` (published; short_text/email/single_choice/
+  long_text/rating) and `probe-m116-draft` (draft).
+- REST as anon (publishable key, the site's own write path):
+  published probe visible, draft hidden ✓ · 2 submissions into the published
+  probe → HTTP 201 ✓ · submission into the draft → 42501 RLS rejection ✓ ·
+  insert forging the `status` column → 42501 column-grant denial ✓ ·
+  `GET form_responses` → `[]` ✓.
+- `0016_m116_rls_verify_and_erase.sql` — role-simulated RLS asserts, all
+  passed: founder claims → `is_staff()` true, sees both responses, the
+  console's `form_responses ⋈ forms(title)` join returns them, and the
+  stored answers round-trip exactly what anon posted (incl. a multi-line
+  long_text) · random authenticated sub → `is_staff()` false, 0 rows ·
+  anon → 0 rows. Then both probe forms were deleted (responses cascaded via
+  FK) and the migration asserted 0 probe rows remain.
+
+### Baseline after M11.6
+
+Unchanged by this milestone: probe rows in/out net zero (asserted in 0016).
+Standing state: previous_spells=1 + reviews=3 (the 0014 mock, still pending
+erasure before launch) · everything else per the M11.5 baseline.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

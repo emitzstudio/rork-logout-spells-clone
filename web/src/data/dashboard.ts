@@ -8,6 +8,7 @@ import {
   CalendarCheck2,
   ClipboardList,
   FolderOpen,
+  Inbox,
   LayoutDashboard,
   MessageSquareQuote,
   NotebookPen,
@@ -52,6 +53,7 @@ export const DASH_NAV: DashNavGroup[] = [
     items: [
       { label: "Spells", to: "/dashboard/spells", icon: Sparkles },
       { label: "Forms", to: "/dashboard/forms", icon: ClipboardList },
+      { label: "Responses", to: "/dashboard/responses", icon: Inbox },
       { label: "Categories", to: "/dashboard/categories", icon: FolderOpen },
       { label: "Bookings", to: "/dashboard/bookings", icon: CalendarCheck2 },
       { label: "Testimonials", to: "/dashboard/testimonials", icon: MessageSquareQuote },
@@ -84,6 +86,15 @@ export const DASH_SECTIONS: DashSection[] = [
       "Create, edit and publish every Spell — dates, pricing, inclusions, hosts and imagery. The full Spell Builder plugs in right here.",
     hint: "Spell Builder — Phase 2",
     icon: Sparkles,
+  },
+  {
+    slug: "responses",
+    label: "Responses",
+    tagline: "Form submissions",
+    description:
+      "Every form submission in one place — open a form, read each response, and download the sheet as Excel.",
+    hint: "Live since M11.6",
+    icon: Inbox,
   },
   {
     slug: "categories",
