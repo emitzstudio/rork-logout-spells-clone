@@ -6,6 +6,62 @@ are one app; RLS decides what each caller sees.
 
 ---
 
+## M13 — Traveller Review Collections (2026-08-21)
+
+After a spell completes, the team collects stories through one-time links —
+and nothing reaches the site without explicit consent AND staff approval.
+
+- **Console → Reviews** (`/dashboard/reviews`, inside the existing shell +
+  StaffGate): "+ New Review Collection" picks a REAL spell from the
+  database, mints an exact number of unique links (1–200) and an optional
+  expiry. Collection cards show real counts only (N links · X submitted ·
+  Y pending · expiry); the detail page lists Traveller 1…N with live state
+  (Pending / Submitted / Expired), Copy Link with success/error toasts,
+  and View Review — the full story is never truncated there.
+- **Public form** at `/review/{token}` — 64-char cryptographically strong
+  tokens, no internal ids in URLs. Exactly five questions, verbatim:
+  credit · 1–5 stars · one-line summary (120) · full experience (5000) ·
+  explicit consent (Yes/No must be chosen). Same brand shell as /forms;
+  used/expired/invalid links get honest full-screen states; success
+  ("Your story has been received.") appears only after the database
+  confirms; entered values survive a failed send.
+- **One-time, server-enforced**: token → invitation → collection → spell
+  is resolved in the database (definer RPCs). The client cannot pick the
+  spell, reuse a token, submit past expiry, self-publish, or edit consent
+  afterwards. Reviews land PENDING in the EXISTING reviews table —
+  Testimonials moderation, the pending-bell badge and archive-page reads
+  keep working; Testimonials now shows a Consent chip on invitation
+  reviews and locks Approve without consent (the database blocks it too).
+- **Publishing**: the drawer's "Publish on website" toggle flips the
+  existing moderation status; approved + consenting stories render on the
+  spell's archive page — adopted automatically when that archive page is
+  created later. The site stays quiet until real stories are approved
+  (zero-data launch state intact).
+- **Verified vs production** (probes 0025/0026 + anon REST, all erased):
+  exact link counts, unique tokens, single-use burn, expiry, invalid
+  tokens, field validation, staff-only tables (traveller/anon walled),
+  consent gate + immutability, and anon seeing ONLY the approved
+  consenting review. Pure rules unit-tested in
+  `src/test/reviewInvites.test.ts`.
+
+---
+
+## M12 — Settings Control Room (2026-08-21)
+
+`/dashboard/settings` went live: six cards — Site Info, Contact, Social
+Links, Founder Profile (edits the real featured team member), Notification
+preferences (per-staff bell muting), Website & Launch — over a new
+`site_settings` store (5 fixed rows; staff-only writes; routing recipients
+staff-only read; saves verified against the written row). Consumers read
+settings instead of hardcoded values: footer contact/socials, Topbar,
+Apply modal recipient, Support page, the maintenance gate (public site
+only — console/sign-in always reachable, fail-open defaults keep the site
+live), the join switch and the public-forms switch. RLS verified in
+production (0023): staff write · others read only public sections · anon
+writes denied.
+
+---
+
 ## M11.7 — Per-Form Core Question Visibility (2026-08-20)
 
 The six core questions stay system-defined and undeletable — but each form

@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import OurStory from "./pages/OurStory";
 import PreviousSpellPage from "./pages/PreviousSpellPage";
 import PreviousSpells from "./pages/PreviousSpells";
+import ReviewInvitePage from "./pages/ReviewInvitePage";
 import SpellPage from "./pages/SpellPage";
 
 /** Founder console — lazy chunk so the public site bundle is unaffected. */
@@ -101,6 +102,8 @@ const AnimatedRoutes = () => {
         <Route path="/spell/:slug" element={<LegacySpellRedirect />} />
         {/* Public form pages — share links open straight into the questions. */}
         <Route path="/forms/:slug" element={<FormPage />} />
+        {/* One-time review invitations — each token opens its own story form (M13). */}
+        <Route path="/review/:token" element={<ReviewInvitePage />} />
         {/* Traveller auth — native Supabase sessions (M6). */}
         <Route
           path="/login"
@@ -170,9 +173,11 @@ const AppShell = () => {
   const isDashboard = location.pathname.startsWith("/dashboard");
   /* Shared form links skip the ritual portal — respondents land straight on the questions. */
   const isFormPage = location.pathname.startsWith("/forms/");
+  /* Review invitation links too — invited travellers land straight on the form (M13). */
+  const isReviewInvite = location.pathname.startsWith("/review/");
   /* The traveller space + auth also skip the portal — returning travellers land straight in. */
   const isAccount = isAccountArea(location.pathname);
-  const skipPortal = isFormPage || isAccount;
+  const skipPortal = isFormPage || isAccount || isReviewInvite;
   /* M12 — maintenance mode rests the PUBLIC site only. The console, sign-in
      and the traveller space stay reachable (the founder must always be able
      to flip the switch back). Fail-open: defaults keep the site live. */

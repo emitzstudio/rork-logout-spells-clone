@@ -1431,6 +1431,89 @@ export type Database = {
         }
         Relationships: []
       }
+      review_collections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          link_count: number
+          spell_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          link_count: number
+          spell_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          link_count?: number
+          spell_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_collections_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_collections_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_invitations: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          position: number
+          status: Database["public"]["Enums"]["review_invite_status"]
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          position: number
+          status?: Database["public"]["Enums"]["review_invite_status"]
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          status?: Database["public"]["Enums"]["review_invite_status"]
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_invitations_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "review_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           author_avatar: string
@@ -1438,10 +1521,13 @@ export type Database = {
           author_name: string
           body: string
           booking_id: string | null
+          consent_to_publish: boolean
           created_at: string
           id: string
-          previous_spell_id: string
+          invitation_id: string | null
+          previous_spell_id: string | null
           rating: number
+          spell_id: string | null
           status: Database["public"]["Enums"]["review_status"]
           title: string
           travelled_on: string
@@ -1454,10 +1540,13 @@ export type Database = {
           author_name?: string
           body?: string
           booking_id?: string | null
+          consent_to_publish?: boolean
           created_at?: string
           id?: string
-          previous_spell_id: string
+          invitation_id?: string | null
+          previous_spell_id?: string | null
           rating: number
+          spell_id?: string | null
           status?: Database["public"]["Enums"]["review_status"]
           title?: string
           travelled_on?: string
@@ -1470,10 +1559,13 @@ export type Database = {
           author_name?: string
           body?: string
           booking_id?: string | null
+          consent_to_publish?: boolean
           created_at?: string
           id?: string
-          previous_spell_id?: string
+          invitation_id?: string | null
+          previous_spell_id?: string | null
           rating?: number
+          spell_id?: string | null
           status?: Database["public"]["Enums"]["review_status"]
           title?: string
           travelled_on?: string
@@ -1503,10 +1595,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reviews_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: true
+            referencedRelation: "review_invitations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reviews_previous_spell_id_fkey"
             columns: ["previous_spell_id"]
             isOneToOne: false
             referencedRelation: "previous_spells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
             referencedColumns: ["id"]
           },
         ]
@@ -2111,6 +2217,14 @@ export type Database = {
         }
         Returns: Json
       }
+      create_review_collection: {
+        Args: {
+          p_expires_at?: string
+          p_link_count: number
+          p_spell_id: string
+        }
+        Returns: string
+      }
       departure_seats_on_hold: {
         Args: { _departure_id: string }
         Returns: number
@@ -2150,6 +2264,18 @@ export type Database = {
           _waitlist_entry?: string
         }
         Returns: boolean
+      }
+      review_invite_lookup: { Args: { p_token: string }; Returns: Json }
+      review_invite_submit: {
+        Args: {
+          p_consent: boolean
+          p_experience: string
+          p_name: string
+          p_rating: number
+          p_summary: string
+          p_token: string
+        }
+        Returns: Json
       }
       spell_wishlist_counts: {
         Args: never
@@ -2228,6 +2354,7 @@ export type Database = {
         | "failed"
         | "refunded"
       response_status: "new" | "viewed"
+      review_invite_status: "pending" | "used"
       review_status: "pending" | "approved" | "rejected"
       spell_category:
         | "gathering"
@@ -2447,6 +2574,7 @@ export const Constants = {
         "refunded",
       ],
       response_status: ["new", "viewed"],
+      review_invite_status: ["pending", "used"],
       review_status: ["pending", "approved", "rejected"],
       spell_category: [
         "gathering",

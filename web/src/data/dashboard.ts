@@ -15,6 +15,7 @@ import {
   PenLine,
   Settings,
   Sparkles,
+  Star,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -57,6 +58,7 @@ export const DASH_NAV: DashNavGroup[] = [
       { label: "Categories", to: "/dashboard/categories", icon: FolderOpen },
       { label: "Bookings", to: "/dashboard/bookings", icon: CalendarCheck2 },
       { label: "Testimonials", to: "/dashboard/testimonials", icon: MessageSquareQuote },
+      { label: "Reviews", to: "/dashboard/reviews", icon: Star },
       { label: "Blog", to: "/dashboard/blog", icon: PenLine },
     ],
   },

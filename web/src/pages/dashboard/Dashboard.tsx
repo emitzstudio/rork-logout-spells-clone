@@ -17,6 +17,8 @@ import FormResponses from "./FormResponses";
 import Forms from "./Forms";
 import Overview from "./Overview";
 import Responses from "./Responses";
+import ReviewCollection from "./ReviewCollection";
+import Reviews from "./Reviews";
 import Section from "./Section";
 import Settings from "./Settings";
 import SpellBuilder from "./SpellBuilder";
@@ -92,6 +94,10 @@ export default function Dashboard() {
       document.title = "Testimonials · Dashboard — Logout Spells";
       return;
     }
+    if (location.pathname.startsWith("/dashboard/reviews")) {
+      document.title = "Reviews · Dashboard — Logout Spells";
+      return;
+    }
     const section = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
     document.title = `${section ? `${section.label} · ` : ""}Dashboard — Logout Spells`;
   }, [location.pathname]);
@@ -144,6 +150,9 @@ export default function Dashboard() {
                 <Route path="bookings/requests" element={<Bookings tab="requests" />} />
                 <Route path="bookings/:id" element={<BookingDetail />} />
                 <Route path="testimonials" element={<Testimonials />} />
+                {/* M13 — review collections: one-time links, one per traveller. */}
+                <Route path="reviews" element={<Reviews />} />
+                <Route path="reviews/:id" element={<ReviewCollection />} />
                 {/* M12 — the control room. */}
                 <Route path="settings" element={<Settings />} />
                 {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings"].includes(section.slug)).map((section) => (

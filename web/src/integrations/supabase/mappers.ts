@@ -362,7 +362,10 @@ export const mapPreviousSpell = (row: PreviousSpellRow): PreviousSpell => ({
 
 export const mapReview = (row: ReviewRow): SpellReview => ({
   id: row.id,
-  spellId: row.previous_spell_id,
+  /* Invitation reviews (M13) may precede their archive page — they only reach
+     public readers once adopted by a published archive, so the empty id is a
+     staff-console-only sight. */
+  spellId: row.previous_spell_id ?? "",
   authorId: row.author_id ?? "seed",
   author: row.author_name,
   avatar: row.author_avatar,

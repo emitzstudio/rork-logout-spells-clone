@@ -1521,6 +1521,96 @@ net zero · everything else unchanged from the M11.7 baseline.
 
 ---
 
+## M12 — Admin Settings / Control Room (2026-08-21)
+
+The console's Settings placeholder became the real control room. Two new
+tables; no changes to any existing table, policy or function.
+
+- `0022_m12_settings_control_room.sql` — `site_settings`: ONE row per
+  section (site · contact · socials · launch · routing), jsonb payloads,
+  fixed row set (clients may only UPDATE `data`; no INSERT/DELETE path).
+  Public sections readable by anon + authenticated; `routing` (internal
+  email recipients, dormant until email delivery) staff-only via the
+  select policy. Plus `staff_notification_prefs`: own-row staff-only bell
+  toggles (missing row = all on). Seeded with the pre-M12 hardcoded
+  truth; unknowns `''`. Never stores secrets.
+- `0023_m12_rls_verify.sql` — role-sim probes, all asserted then erased:
+  staff saw 5 sections, rewrote one through RLS, created + retuned own
+  prefs; traveller saw 4 sections (no routing), update touched 0 rows,
+  prefs insert denied; anon saw 4 sections, update + prefs access
+  hard-denied. Payload restored byte-for-byte, probe prefs row erased.
+- Anon REST sanity: 4 keys visible (no routing) · PATCH → 401 · prefs
+  SELECT → 401 · launch payload = live/coming_soon/true/true/true ✓.
+
+### Baseline after M12
+
+site_settings +5 rows (intentional, permanent configuration) ·
+staff_notification_prefs 0 rows · everything else unchanged.
+
+---
+
+## M13 — Traveller Review Collections (2026-08-21)
+
+One-time review links per completed spell. EXTENDS the existing review
+system (`reviews` + Testimonials moderation + archive-page public read) —
+no fork, no duplicate store, traveller booking-review flow untouched.
+
+- `0024_m13_review_collections.sql` — enum `review_invite_status`;
+  `review_collections` (spell_id → spells RESTRICT, link_count 1–200,
+  optional expires_at, staff-only SELECT, zero client write grants);
+  `review_invitations` (position 1..N, UNIQUE 64-hex CSPRNG token — two
+  `gen_random_uuid()` stripped, ~244 bits — staff-only SELECT; anon holds
+  ZERO table privileges, so tokens are unreachable). `reviews` extended:
+  `previous_spell_id` now nullable, + `spell_id`, + `invitation_id`
+  UNIQUE (one token can never produce two reviews), +
+  `consent_to_publish` (default true preserves legacy semantics — the
+  old traveller flow submits TO the site; invitation reviews store the
+  explicit answer). `reviews_invite_guard` trigger: approving an
+  invitation review with consent=false raises `review_consent_missing`;
+  consent and the invitation tie are immutable after submission.
+  `previous_spells` adoption trigger: a new/relinked archive page adopts
+  orphan invitation reviews, so the EXISTING public read renders them
+  with zero client changes. RPCs: `create_review_collection` (staff-only,
+  mints EXACTLY N invitations atomically), `review_invite_lookup` (anon;
+  state + spell name only), `review_invite_submit` (anon; server-side
+  field validation, FOR UPDATE one-time burn, resolves token →
+  invitation → collection → spell — the client can never choose the
+  spell; writes status 'pending', verified true).
+- `0025_m13_e2e_probe_setup.sql` — DISPOSABLE probe (draft spell +
+  unpublished archive — never publicly visible): staff role-sim minted
+  8+2-link collections via the real RPC (exact counts · 10 distinct
+  64-hex tokens · positions 1..N); 0 links / 201 links / unknown spell
+  refused; traveller role-sim saw 0 rows, couldn't insert, RPC said
+  review_staff_only; anon denied at table AND function level. Three
+  tokens pinned for the REST phase.
+- Anon REST phase (curl, publishable key): lookup → ok + correct spell
+  context ✓ · submit (consent true) → {state:ok} ✓ · RE-submit →
+  review_link_used 400 ✓ · lookup → used ✓ · consent-false submit ok ✓ ·
+  expired collection → review_link_expired + lookup expired ✓ · unknown
+  64-hex token → invalid on both paths ✓ · empty name →
+  review_fields_invalid ✓ · GET review_collections / review_invitations
+  → 401 ✓ · pending reviews invisible to anon ([]) ✓.
+- `0026_m13_e2e_verify_and_erase.sql` — staff role-sim saw both
+  submissions with exact content/consent/verified/pending and the
+  server-resolved spell chain; the expired invitation was NOT burned by
+  its rejected attempt; approving the non-consent review BLOCKED
+  (review_consent_missing) and its state held; the consenting review
+  published (exactly 1 row); consent immutable afterwards
+  (review_consent_locked); the probe archive was published
+  TRANSACTION-LOCALLY → anon role-sim saw EXACTLY the one approved
+  consenting review and never the private one → unpublished again; then
+  erased reviews → collections (invitations cascade) → archive → spell
+  and asserted the resting baseline.
+
+### Baseline after M13
+
+review_collections 0 · review_invitations 0 · reviews = the 3 mock rows
+only (0014 — erase before launch) · previous_spells = 1 mock · spells net
+zero · schema +2 tables, reviews +3 columns (archive tie now nullable),
++2 triggers, +3 RPCs.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

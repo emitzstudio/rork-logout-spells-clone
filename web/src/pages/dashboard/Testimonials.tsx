@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { ReviewStatusBadge } from "@/components/dashboard/bookings/BookingBadges";
 import OpsDialog, { OpsNote, OpsSubmit } from "@/components/dashboard/bookings/OpsDialog";
+import { ConsentChip } from "@/components/dashboard/reviews/ReviewBits";
 import {
   timeAgo,
   useDeleteReview,
@@ -80,6 +81,9 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
   const moderate = useModerateReview();
   const [removing, setRemoving] = useState<boolean>(false);
   const { review } = item;
+  /* M13: invitation reviews carry the traveller's explicit consent — without
+     it, publishing is locked here AND in the database. */
+  const consentLocked = review.invitation_id !== null && !review.consent_to_publish;
 
   const act = (status: ReviewStatus, message: string): void => {
     moderate.mutate({ id: review.id, status }, {
@@ -107,6 +111,7 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
                 <BadgeCheck className="h-2.5 w-2.5" /> Verified
               </span>
             )}
+            {review.invitation_id !== null && <ConsentChip consent={review.consent_to_publish} />}
           </div>
           {review.title !== "" && <p className="mt-2 font-serif text-[17px] leading-snug text-cream">{review.title}</p>}
           <p className="mt-1 whitespace-pre-wrap font-sans text-[12.5px] leading-relaxed text-cream/65">{review.body}</p>
@@ -120,7 +125,8 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
           {review.status !== "approved" && (
             <button
               type="button"
-              disabled={moderate.isPending}
+              disabled={moderate.isPending || consentLocked}
+              title={consentLocked ? "This traveller did not consent to sharing their story publicly" : undefined}
               onClick={() => act("approved", "Published — it now shows on the journey page")}
               className={cn(buttonClass, "border-gold/40 bg-gold/10 text-gold-light hover:bg-gold/20")}
             >

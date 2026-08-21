@@ -401,16 +401,24 @@ export function useReviewQueue(): UseQueryResult<ReviewWithJourney[]> {
   return useQuery({
     queryKey: opsKeys.reviews,
     queryFn: async (): Promise<ReviewWithJourney[]> => {
-      const [reviews, journeys] = await Promise.all([
+      const [reviews, journeys, spells] = await Promise.all([
         supabase.from("reviews").select("*").order("created_at", { ascending: false }),
         supabase.from("previous_spells").select("id, title"),
+        supabase.from("spells").select("id, name"),
       ]);
       if (reviews.error) throw reviews.error;
       if (journeys.error) throw journeys.error;
+      if (spells.error) throw spells.error;
       const titleById = new Map((journeys.data ?? []).map((j) => [j.id, j.title]));
+      const spellNameById = new Map((spells.data ?? []).map((s) => [s.id, s.name]));
       return (reviews.data ?? []).map((review): ReviewWithJourney => ({
         review,
-        journeyTitle: titleById.get(review.previous_spell_id) ?? "A previous journey",
+        /* Invitation reviews (M13) may precede their archive page — fall back
+           to the catalogue spell they were collected for. */
+        journeyTitle:
+          (review.previous_spell_id !== null ? titleById.get(review.previous_spell_id) : undefined) ??
+          (review.spell_id !== null ? spellNameById.get(review.spell_id) : undefined) ??
+          "A previous journey",
       }));
     },
     staleTime: 20_000,
