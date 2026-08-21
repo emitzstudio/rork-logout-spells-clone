@@ -1544,6 +1544,24 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          data: Json
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          data?: Json
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       spell_changes: {
         Row: {
           actor_id: string | null
@@ -1749,6 +1767,50 @@ export type Database = {
             columns: ["form_id"]
             isOneToOne: false
             referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_notification_prefs: {
+        Row: {
+          created_at: string
+          notify_bookings: boolean
+          notify_enquiries: boolean
+          notify_requests: boolean
+          notify_responses: boolean
+          notify_reviews: boolean
+          notify_waitlist: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          notify_bookings?: boolean
+          notify_enquiries?: boolean
+          notify_requests?: boolean
+          notify_responses?: boolean
+          notify_reviews?: boolean
+          notify_waitlist?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          notify_bookings?: boolean
+          notify_enquiries?: boolean
+          notify_requests?: boolean
+          notify_responses?: boolean
+          notify_reviews?: boolean
+          notify_waitlist?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_notification_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

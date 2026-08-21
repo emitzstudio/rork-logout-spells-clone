@@ -12,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { CONTACT_EMAIL } from "@/data/site";
+import { useSiteSettings } from "@/data/siteSettingsStore";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
@@ -62,7 +62,8 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 const EMPTY_FORM: FormState = { name: "", instagram: "", email: "", whatsapp: "" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function buildMailto(f: FormState): string {
+/** M12: the recipient comes from the central contact settings. */
+function buildMailto(f: FormState, recipient: string): string {
   const subject = `Apply to Host — ${f.name.trim()}`;
   const body = [
     `Full name: ${f.name.trim()}`,
@@ -73,7 +74,7 @@ function buildMailto(f: FormState): string {
     "A little about me:",
     "",
   ].join("\n");
-  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 const INPUT_CLASS =
@@ -190,6 +191,9 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [phase, setPhase] = useState<Phase>("form");
   const nameRef = useRef<HTMLInputElement | null>(null);
+  /* M12 — applications land at the centrally configured contact email. */
+  const { contact } = useSiteSettings();
+  const applyEmail = contact.contactEmail;
 
   useEffect(() => {
     if (!open) return;
@@ -224,7 +228,8 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
     else if (!EMAIL_RE.test(form.email.trim())) errs.email = "That email doesn't look quite right.";
     setErrors(errs);
     if (Object.values(errs).some(Boolean)) return;
-    window.location.href = buildMailto(form);
+    if (applyEmail === "") return;
+    window.location.href = buildMailto(form, applyEmail);
     setPhase("sent");
   };
 
@@ -352,12 +357,18 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
                       onChange={setField}
                     />
 
-                    <button type="submit" className="btn-gold w-full !py-4 uppercase !tracking-[0.22em]">
+                    <button
+                      type="submit"
+                      disabled={applyEmail === ""}
+                      className="btn-gold w-full !py-4 uppercase !tracking-[0.22em] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
                       Send Application
                     </button>
 
                     <p className="text-center font-sans text-xs text-cream/35">
-                      We never share your details. No spam, ever.
+                      {applyEmail === ""
+                        ? "Applications are briefly paused — our contact inbox is being reconnected."
+                        : "We never share your details. No spam, ever."}
                     </p>
                   </form>
                 </motion.div>
@@ -404,12 +415,17 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
                   <p className="mt-4 max-w-sm font-sans text-[15px] leading-relaxed text-cream/55">
                     Your email app just opened with your details — press send there and we'll be in touch within 48 hours.
                   </p>
-                  <p className="mt-3 font-sans text-xs text-cream/40">
-                    Nothing opened? Write to{" "}
-                    <a href={buildMailto(form)} className="text-gold underline-offset-4 transition-colors hover:text-gold-light hover:underline">
-                      {CONTACT_EMAIL}
-                    </a>
-                  </p>
+                  {applyEmail !== "" && (
+                    <p className="mt-3 font-sans text-xs text-cream/40">
+                      Nothing opened? Write to{" "}
+                      <a
+                        href={buildMailto(form, applyEmail)}
+                        className="text-gold underline-offset-4 transition-colors hover:text-gold-light hover:underline"
+                      >
+                        {applyEmail}
+                      </a>
+                    </p>
+                  )}
                   <button type="button" onClick={onClose} className="btn-ghost-gold mt-9 !px-10">
                     Done ✦
                   </button>

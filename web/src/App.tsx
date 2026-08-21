@@ -6,8 +6,10 @@ import { Toaster } from "sonner";
 
 import { ApplyProvider } from "@/components/site/ApplyModal";
 import ConnectionBanner from "@/components/site/ConnectionBanner";
+import MaintenanceScreen from "@/components/site/MaintenanceScreen";
 import PortalEntry from "@/components/site/PortalEntry";
 import StarBackdrop from "@/components/site/StarBackdrop";
+import { useSiteSettings } from "@/data/siteSettingsStore";
 import { AccountProvider } from "@/data/account/AccountProvider";
 import { BlogStoreProvider } from "@/data/blogStore";
 import { BucketListProvider } from "@/data/bucketList";
@@ -171,14 +173,25 @@ const AppShell = () => {
   /* The traveller space + auth also skip the portal — returning travellers land straight in. */
   const isAccount = isAccountArea(location.pathname);
   const skipPortal = isFormPage || isAccount;
+  /* M12 — maintenance mode rests the PUBLIC site only. The console, sign-in
+     and the traveller space stay reachable (the founder must always be able
+     to flip the switch back). Fail-open: defaults keep the site live. */
+  const { launch } = useSiteSettings();
+  const underMaintenance = launch.websiteStatus === "maintenance" && !isDashboard && !isAccount;
 
   return (
     <ApplyProvider>
       {!isDashboard && <StarBackdrop />}
-      {(entered || isDashboard || skipPortal) && <AnimatedRoutes />}
-      {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) — no global fixed button. */}
-      {!isDashboard && !skipPortal && !portalDone && (
-        <PortalEntry onIgnite={() => setEntered(true)} onDone={() => setPortalDone(true)} />
+      {underMaintenance ? (
+        <MaintenanceScreen />
+      ) : (
+        <>
+          {(entered || isDashboard || skipPortal) && <AnimatedRoutes />}
+          {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) — no global fixed button. */}
+          {!isDashboard && !skipPortal && !portalDone && (
+            <PortalEntry onIgnite={() => setEntered(true)} onDone={() => setPortalDone(true)} />
+          )}
+        </>
       )}
     </ApplyProvider>
   );

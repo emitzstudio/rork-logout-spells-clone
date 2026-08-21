@@ -6,7 +6,13 @@
  * the database seeds — so the About page paints instantly and settles onto
  * live content.
  */
-import { useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { mapTeamMember } from "@/integrations/supabase/mappers";
@@ -181,4 +187,91 @@ export function useTeamMembers(): TeamMember[] {
     staleTime: 60_000,
   });
   return data ?? TEAM;
+}
+
+/**
+ * The roster WITHOUT the placeholder — editors (M12 Founder Profile) must
+ * only ever see real database rows, because saves target real row ids.
+ */
+export function useTeamQuery(): UseQueryResult<TeamMember[]> {
+  return useQuery({
+    queryKey: ["team"],
+    queryFn: fetchTeam,
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * The featured founder row — the single editable source for founder
+ * identity (M12). Display-only consumers (console chrome, Our Story
+ * spotlight) read this; edits happen in Dashboard → Settings.
+ */
+export function useFounderProfile(): TeamMember {
+  const members = useTeamMembers();
+  return members.find((m) => m.featured === true) ?? TEAM[0];
+}
+
+export interface FounderProfilePatch {
+  name: string;
+  designation: string;
+  photo: string;
+  intro: string;
+  linkedin: string;
+  instagram: string;
+}
+
+/**
+ * Saves the founder's profile onto their existing `team_members` row through
+ * the staff column-whitelisted grant. Verifies the row was actually written —
+ * a save that touched nothing surfaces as an error, never a fake "Saved".
+ */
+export function useSaveFounderProfile(): UseMutationResult<
+  void,
+  Error,
+  { id: string; patch: FounderProfilePatch }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }): Promise<void> => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .update({
+          name: patch.name,
+          designation: patch.designation,
+          photo_url: patch.photo,
+          intro: patch.intro,
+          linkedin: patch.linkedin,
+          instagram: patch.instagram,
+        })
+        .eq("id", id)
+        .select("id");
+      if (error) throw new Error(error.message);
+      if (!data || data.length !== 1) {
+        throw new Error("The save didn't reach the database — check your access and try again.");
+      }
+    },
+    onSuccess: (_result, { id, patch }) => {
+      /* Patch the cache in place (no stale flash), then refetch for truth. */
+      queryClient.setQueryData<TeamMember[]>(["team"], (old) =>
+        old?.map((member) =>
+          member.id === id
+            ? {
+                ...member,
+                name: patch.name,
+                designation: patch.designation,
+                photo: patch.photo,
+                initial: (patch.name || "?").charAt(0).toUpperCase(),
+                intro: patch.intro,
+                socials: {
+                  ...member.socials,
+                  linkedin: patch.linkedin,
+                  instagram: patch.instagram,
+                },
+              }
+            : member,
+        ),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["team"] });
+    },
+  });
 }

@@ -1,7 +1,13 @@
-/** Central content model for the Logout Spells site. */
+/**
+ * Central content model for the Logout Spells site.
+ *
+ * M12: CONTACT_EMAIL and SOCIALS are FALLBACK values only — the live source
+ * of truth is the `site_settings` table, edited in Dashboard → Settings and
+ * read through `useSiteSettings()`. These constants seed those defaults so
+ * the site paints instantly and stays itself if a fetch ever fails.
+ */
 
 export const CONTACT_EMAIL = "vidushi@logoutspells.com";
-export const APPLY_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Apply to Host")}`;
 
 export const SOCIALS = {
   linkedin: "https://www.linkedin.com/in/vidushiverma2409/",

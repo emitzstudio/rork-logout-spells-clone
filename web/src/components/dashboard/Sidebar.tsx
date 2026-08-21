@@ -3,7 +3,8 @@ import { ChevronLeft, Globe, LogOut, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 
 import { useOpsBadges } from "@/data/bookingOps";
-import { DASH_NAV, FOUNDER } from "@/data/dashboard";
+import { DASH_NAV } from "@/data/dashboard";
+import { useFounderProfile } from "@/data/team";
 import type { DashNavItem } from "@/data/dashboard";
 import { useStaffAuth } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,8 @@ function NavEntry({
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const staff = useStaffAuth();
   const badges = useOpsBadges();
+  /* M12 — the chip reads the central founder profile (Settings → Founder Profile). */
+  const founder = useFounderProfile();
 
   /** Live operational counts replace any static badge for these entries. */
   const withLiveBadge = (item: DashNavItem): DashNavItem => {
@@ -169,12 +172,12 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
           )}
         >
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-light to-gold font-serif text-sm text-charcoal-deep ring-1 ring-gold/40">
-            {FOUNDER.initial}
+            {founder.initial}
           </span>
           {!collapsed && (
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-sans text-[12.5px] text-cream">{FOUNDER.name}</span>
-              <span className="block font-sans text-[10.5px] text-cream/40">{FOUNDER.role}</span>
+              <span className="block truncate font-sans text-[12.5px] text-cream">{founder.name}</span>
+              <span className="block truncate font-sans text-[10.5px] text-cream/40">{founder.designation}</span>
             </span>
           )}
         </div>

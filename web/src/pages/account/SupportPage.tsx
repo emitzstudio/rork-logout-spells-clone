@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAccount } from "@/data/account/AccountProvider";
 import { nextTrip } from "@/data/account/derive";
-import { CONTACT_EMAIL } from "@/data/site";
+import { useSiteSettings } from "@/data/siteSettingsStore";
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -42,9 +42,13 @@ const FAQS: { q: string; a: string }[] = [
 /** Support — help that sounds like a person, not a portal. */
 export default function SupportPage() {
   const { data } = useAccount();
+  /* M12 — support channels come from the central contact settings. */
+  const { contact } = useSiteSettings();
   if (!data) return null;
 
   const trip = nextTrip(data.bookings);
+  const supportEmail = contact.supportEmail !== "" ? contact.supportEmail : contact.contactEmail;
+  const whatsappDigits = contact.whatsapp.replace(/\D/g, "");
 
   return (
     <AccountPage
@@ -59,27 +63,56 @@ export default function SupportPage() {
     >
       {/* Contact channels */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <a
-          href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("A question from my Logout Space")}`}
-          className="card-glass group rounded-2xl p-6 transition-colors hover:border-gold/30"
-        >
-          <span className="grid h-11 w-11 place-items-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/80">
-            <Mail size={16} />
-          </span>
-          <p className="mt-3.5 font-serif text-xl text-cream group-hover:text-gold-light">Email us</p>
-          <p className="mt-1 font-sans text-[12px] leading-relaxed text-cream/45">
-            {CONTACT_EMAIL} · replies within ~4 hours, 9am–9pm IST
-          </p>
-        </a>
-        <div className="card-glass rounded-2xl p-6">
-          <span className="grid h-11 w-11 place-items-center rounded-full border border-emerald-400/25 bg-emerald-400/[0.06] text-emerald-300/80">
-            <MessageCircle size={16} />
-          </span>
-          <p className="mt-3.5 font-serif text-xl text-cream">WhatsApp</p>
-          <p className="mt-1 font-sans text-[12px] leading-relaxed text-cream/45">
-            Arrives with the backend phase — email is the fast lane for now.
-          </p>
-        </div>
+        {supportEmail !== "" ? (
+          <a
+            href={`mailto:${supportEmail}?subject=${encodeURIComponent("A question from my Logout Space")}`}
+            className="card-glass group rounded-2xl p-6 transition-colors hover:border-gold/30"
+          >
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/80">
+              <Mail size={16} />
+            </span>
+            <p className="mt-3.5 font-serif text-xl text-cream group-hover:text-gold-light">Email us</p>
+            <p className="mt-1 font-sans text-[12px] leading-relaxed text-cream/45">
+              {supportEmail} · replies within ~4 hours, 9am–9pm IST
+            </p>
+          </a>
+        ) : (
+          <div className="card-glass rounded-2xl p-6">
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/80">
+              <Mail size={16} />
+            </span>
+            <p className="mt-3.5 font-serif text-xl text-cream">Email us</p>
+            <p className="mt-1 font-sans text-[12px] leading-relaxed text-cream/45">
+              Our inbox is being reconnected — check back soon.
+            </p>
+          </div>
+        )}
+        {whatsappDigits !== "" ? (
+          <a
+            href={`https://wa.me/${whatsappDigits}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="card-glass group rounded-2xl p-6 transition-colors hover:border-gold/30"
+          >
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-emerald-400/25 bg-emerald-400/[0.06] text-emerald-300/80">
+              <MessageCircle size={16} />
+            </span>
+            <p className="mt-3.5 font-serif text-xl text-cream group-hover:text-gold-light">WhatsApp</p>
+            <p className="mt-1 font-sans text-[12px] leading-relaxed text-cream/45">
+              {contact.whatsapp} · a human replies
+            </p>
+          </a>
+        ) : (
+          <div className="card-glass rounded-2xl p-6">
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-emerald-400/25 bg-emerald-400/[0.06] text-emerald-300/80">
+              <MessageCircle size={16} />
+            </span>
+            <p className="mt-3.5 font-serif text-xl text-cream">WhatsApp</p>
+            <p className="mt-1 font-sans text-[12px] leading-relaxed text-cream/45">
+              Arrives with the backend phase — email is the fast lane for now.
+            </p>
+          </div>
+        )}
         <div className="card-glass rounded-2xl p-6">
           <span className="grid h-11 w-11 place-items-center rounded-full border border-red-400/25 bg-red-400/[0.06] text-red-300/80">
             <PhoneCall size={16} />

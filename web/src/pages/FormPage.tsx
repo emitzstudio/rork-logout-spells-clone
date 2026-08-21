@@ -6,6 +6,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
 import LoadError from "@/components/site/LoadError";
 import { useFormStore } from "@/data/formStore";
+import { useSiteSettings } from "@/data/siteSettingsStore";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -19,6 +20,9 @@ export default function FormPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
   const { getFormBySlug, addResponse, ready, failed, retry } = useFormStore();
+  /* M12 — the public-forms switch. Fail-open: forms stay on unless the
+     founder explicitly turned them off. */
+  const { launch } = useSiteSettings();
 
   const form = slug ? getFormBySlug(slug) : undefined;
   const visible = form !== undefined && (form.status === "published" || isPreview);
@@ -45,6 +49,8 @@ export default function FormPage() {
     );
   }
   if (!form || !visible) return <FormNotFound />;
+  /* Founder previews keep working while public forms rest. */
+  if (!isPreview && !launch.publicFormsEnabled) return <FormsResting />;
 
   const previewingDraft = isPreview && form.status !== "published";
 
@@ -106,6 +112,46 @@ export default function FormPage() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+/* ------------------------------ Forms resting ------------------------------ */
+
+/** Shown while the founder has public forms switched off (M12). */
+function FormsResting() {
+  useEffect(() => {
+    document.title = "Forms Are Resting — Logout Spells";
+  }, []);
+
+  return (
+    <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse 50% 45% at 50% 50%, rgba(184,150,62,0.12), transparent 70%)",
+        }}
+      />
+      <div className="relative">
+        <span className="animate-float-slow inline-block font-serif text-6xl text-gold/60" aria-hidden>
+          ✦
+        </span>
+        <h1 className="heading-serif mt-6 text-5xl text-cream md:text-7xl">
+          The forms are <span className="italic text-gold-gradient">resting.</span>
+        </h1>
+        <p className="mt-5 font-serif text-2xl italic text-cream/60">
+          Responses are paused for a little while — come back soon.
+        </p>
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link to="/live" className="btn-gold">
+            See Live Spells <ArrowRight size={16} />
+          </Link>
+          <Link to="/" className="btn-ghost-gold">
+            Return Somewhere Real
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 

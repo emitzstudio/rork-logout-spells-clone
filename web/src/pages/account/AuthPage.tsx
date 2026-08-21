@@ -6,6 +6,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAccount } from "@/data/account/AccountProvider";
 import { AccountError } from "@/data/account/models";
 import { accountService } from "@/data/account/service";
+import { useSiteSettings } from "@/data/siteSettingsStore";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -60,6 +61,10 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/account";
+  /* M12 — the registration switch pauses ONLY the join form. Logins, resets
+     and in-flight verifications continue untouched. Fail-open: enabled. */
+  const { launch } = useSiteSettings();
+  const registrationPaused = mode === "join" && !launch.registrationEnabled;
 
   const [step, setStep] = useState<AuthStep>("form");
   const [firstName, setFirstName] = useState<string>("");
@@ -294,8 +299,33 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         <div className="relative flex flex-1 items-center justify-center px-6 pb-16 md:px-10">
           <div className="w-full max-w-[400px]">
             <AnimatePresence mode="wait">
+              {/* ---------------------- Registration paused (M12) ---------------------- */}
+              {step === "form" && registrationPaused && (
+                <StepShell key="paused">
+                  <p className="eyebrow">The circle is resting</p>
+                  <h1 className="heading-serif mt-3 text-4xl text-cream md:text-[42px]">
+                    Registration is paused
+                  </h1>
+                  <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
+                    New accounts are closed for a little while. Already belong? Your space is
+                    open as always.
+                  </p>
+                  <Link
+                    to="/login"
+                    className="btn-gold mt-8 flex w-full items-center justify-center gap-2 !py-4"
+                  >
+                    Log in <ArrowRight size={15} />
+                  </Link>
+                  <p className="mt-7 text-center font-sans text-[12.5px] text-cream/45">
+                    <Link to="/" className="text-gold transition-colors hover:text-gold-light">
+                      Return to the site
+                    </Link>
+                  </p>
+                </StepShell>
+              )}
+
               {/* ------------------------------ Form ------------------------------ */}
-              {step === "form" && (
+              {step === "form" && !registrationPaused && (
                 <StepShell key="form">
                   <p className="eyebrow">{mode === "login" ? "Welcome back" : mode === "join" ? "Join the circle" : "It happens"}</p>
                   <h1 className="heading-serif mt-3 text-4xl text-cream md:text-[42px]">

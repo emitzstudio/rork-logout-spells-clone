@@ -18,6 +18,7 @@ import Forms from "./Forms";
 import Overview from "./Overview";
 import Responses from "./Responses";
 import Section from "./Section";
+import Settings from "./Settings";
 import SpellBuilder from "./SpellBuilder";
 import SpellImport from "./SpellImport";
 import Spells from "./Spells";
@@ -143,7 +144,9 @@ export default function Dashboard() {
                 <Route path="bookings/requests" element={<Bookings tab="requests" />} />
                 <Route path="bookings/:id" element={<BookingDetail />} />
                 <Route path="testimonials" element={<Testimonials />} />
-                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses"].includes(section.slug)).map((section) => (
+                {/* M12 — the control room. */}
+                <Route path="settings" element={<Settings />} />
+                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings"].includes(section.slug)).map((section) => (
                   <Route key={section.slug} path={section.slug} element={<Section section={section} />} />
                 ))}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -128,8 +128,8 @@ export const DASH_SECTIONS: DashSection[] = [
     label: "Settings",
     tagline: "The control room",
     description:
-      "Site configuration, founder profile, notification preferences and integrations — your control room.",
-    hint: "Arrives in a later phase",
+      "Site identity, contact channels, founder profile, notifications and launch switches — your control room.",
+    hint: "Live since M12",
     icon: Settings,
   },
 ];

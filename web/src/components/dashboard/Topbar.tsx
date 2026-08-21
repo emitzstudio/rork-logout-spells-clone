@@ -23,10 +23,13 @@ import type { LucideIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useOpsBadges } from "@/data/bookingOps";
-import { DASH_SECTIONS, FOUNDER } from "@/data/dashboard";
+import { DASH_SECTIONS } from "@/data/dashboard";
 import { useFormStore } from "@/data/formStore";
+import { useSiteSettings } from "@/data/siteSettingsStore";
+import { useStaffNotificationPrefs } from "@/data/staffPrefs";
 import { STATUS_META } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
+import { useFounderProfile } from "@/data/team";
 import { useGoBack } from "@/hooks/use-go-back";
 import { useStaffAuth } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
@@ -69,6 +72,11 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
   const badges = useOpsBadges();
   const { spells } = useSpellStore();
   const { responses, inquiries } = useFormStore();
+  /* M12 — founder identity + contact fallback come from the central sources. */
+  const founder = useFounderProfile();
+  const { contact } = useSiteSettings();
+  /* M12 — per-staff bell preferences filter what the bell surfaces. */
+  const prefs = useStaffNotificationPrefs();
   /* Back arrow lives in this sticky bar, so it never scrolls away. On the
      console root it exits to the website; on sub-pages it falls back to Overview. */
   const goBack = useGoBack(location.pathname === "/dashboard" ? "/" : "/dashboard");
@@ -82,12 +90,13 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
     [inquiries],
   );
 
-  /** Everything that genuinely needs the founder right now — live counts only. */
+  /** Everything that genuinely needs the founder right now — live counts only,
+      filtered by the M12 per-staff notification preferences. */
   const attention = useMemo<AttentionRow[]>(() => {
     const rows: AttentionRow[] = [];
     const b = badges.data;
     if (b !== undefined) {
-      if (b.pendingBookings > 0)
+      if (prefs.notifyBookings && b.pendingBookings > 0)
         rows.push({
           id: "att-bookings",
           icon: CalendarCheck2,
@@ -95,7 +104,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
           label: `booking${b.pendingBookings === 1 ? "" : "s"} awaiting confirmation`,
           to: "/dashboard/bookings",
         });
-      if (b.openRequests > 0)
+      if (prefs.notifyRequests && b.openRequests > 0)
         rows.push({
           id: "att-requests",
           icon: ClipboardList,
@@ -103,7 +112,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
           label: `open change request${b.openRequests === 1 ? "" : "s"}`,
           to: "/dashboard/bookings/requests",
         });
-      if (b.pendingReviews > 0)
+      if (prefs.notifyReviews && b.pendingReviews > 0)
         rows.push({
           id: "att-reviews",
           icon: MessageSquareQuote,
@@ -112,7 +121,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
           to: "/dashboard/testimonials",
         });
     }
-    if (newResponses > 0)
+    if (prefs.notifyResponses && newResponses > 0)
       rows.push({
         id: "att-responses",
         icon: Inbox,
@@ -120,7 +129,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
         label: `new form response${newResponses === 1 ? "" : "s"}`,
         to: "/dashboard/forms",
       });
-    if (newInquiries > 0)
+    if (prefs.notifyEnquiries && newInquiries > 0)
       rows.push({
         id: "att-inquiries",
         icon: Mail,
@@ -129,9 +138,17 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
         to: "/dashboard/forms",
       });
     return rows;
-  }, [badges.data, newResponses, newInquiries]);
+  }, [badges.data, newResponses, newInquiries, prefs]);
 
   const attentionTotal = attention.reduce((sum, row) => sum + row.count, 0);
+  /** How many bell alert types the staff member muted (waitlist is dormant — not counted). */
+  const mutedCount = [
+    prefs.notifyBookings,
+    prefs.notifyResponses,
+    prefs.notifyEnquiries,
+    prefs.notifyReviews,
+    prefs.notifyRequests,
+  ].filter((on) => !on).length;
 
   const sectionLabel = useMemo<string>(() => {
     const match = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
@@ -374,6 +391,19 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
                       })}
                     </ul>
                   )}
+                  {mutedCount > 0 && !badges.isPending && !badges.isError && (
+                    <p className="border-t border-cream/[0.06] px-4 py-2.5 font-sans text-[10.5px] text-cream/35">
+                      {mutedCount} alert type{mutedCount === 1 ? " is" : "s are"} muted in{" "}
+                      <Link
+                        to="/dashboard/settings"
+                        onClick={() => setMenu("none")}
+                        className="text-gold/70 transition-colors hover:text-gold-light"
+                      >
+                        Settings
+                      </Link>
+                      .
+                    </p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -402,12 +432,12 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
               )}
             >
               <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-gold-light to-gold font-serif text-[15px] text-charcoal-deep ring-1 ring-gold/40">
-                {FOUNDER.initial}
+                {founder.initial}
               </span>
-              <span className="hidden text-left leading-tight xl:block">
-                <span className="block font-sans text-[12px] text-cream">{FOUNDER.name}</span>
-                <span className="block font-sans text-[10px] uppercase tracking-[0.18em] text-gold/70">
-                  {FOUNDER.role}
+              <span className="hidden max-w-[170px] text-left leading-tight xl:block">
+                <span className="block truncate font-sans text-[12px] text-cream">{founder.name}</span>
+                <span className="block truncate font-sans text-[10px] uppercase tracking-[0.18em] text-gold/70">
+                  {founder.designation}
                 </span>
               </span>
               <ChevronDown
@@ -427,9 +457,9 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
                   className={cn(PANEL_CLASS, "w-60")}
                 >
                   <div className="border-b border-cream/[0.06] px-4 py-3">
-                    <p className="font-sans text-[13px] text-cream">{FOUNDER.name}</p>
+                    <p className="truncate font-sans text-[13px] text-cream">{founder.name}</p>
                     <p className="truncate font-sans text-[11px] text-cream/40">
-                      {staff !== null && staff.email !== "" ? staff.email : FOUNDER.email}
+                      {staff !== null && staff.email !== "" ? staff.email : contact.contactEmail}
                     </p>
                   </div>
                   <div className="p-1.5">

@@ -19,7 +19,8 @@ import Panel from "@/components/dashboard/Panel";
 import StatCard from "@/components/dashboard/StatCard";
 import { formatINR, timeAgo, useBookingReport, useDepartureOptions } from "@/data/bookingOps";
 import type { DepartureOption } from "@/data/bookingOps";
-import { FOUNDER, QUICK_ACTIONS } from "@/data/dashboard";
+import { QUICK_ACTIONS } from "@/data/dashboard";
+import { useFounderProfile } from "@/data/team";
 import { activityIcon, useRecentActivity } from "@/data/dashboardLive";
 import type { DashStat } from "@/data/dashboardLive";
 import { CATEGORY_META, STATUS_META } from "@/data/spells";
@@ -96,6 +97,8 @@ function PanelEmpty({ label }: { label: string }) {
 
 export default function Overview() {
   const greeting = timeGreeting();
+  /* M12 — greeting reads the central founder profile. */
+  const founder = useFounderProfile();
   const { spells, ready: spellsReady, failed: spellsFailed, retry: retrySpells } = useSpellStore();
   const report = useBookingReport();
   const departures = useDepartureOptions();
@@ -217,7 +220,7 @@ export default function Overview() {
             {...fadeUp(0.05)}
             className="mt-2 font-serif text-[32px] font-medium leading-[1.04] text-cream md:text-[40px]"
           >
-            {greeting}, <span className="italic text-gold-gradient">{FOUNDER.name.split(" ")[0]}</span>
+            {greeting}, <span className="italic text-gold-gradient">{founder.name.split(" ")[0]}</span>
           </motion.h1>
           <motion.p {...fadeUp(0.1)} className="mt-2 font-sans text-[13px] text-cream/45">
             {today} · here’s what’s moving across your circles.

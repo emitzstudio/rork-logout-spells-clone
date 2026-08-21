@@ -1,9 +1,34 @@
-import { Instagram, Linkedin, Mail, Youtube } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Mail, MessageCircle, Youtube } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { CONTACT_EMAIL, SOCIALS } from "@/data/site";
+import {
+  SOCIAL_LABELS,
+  visibleSocials,
+  type SocialLinkSettings,
+} from "@/data/siteSettings";
+import { useSiteSettings } from "@/data/siteSettingsStore";
 
+const SOCIAL_ICONS: Record<keyof SocialLinkSettings, LucideIcon> = {
+  instagram: Instagram,
+  linkedin: Linkedin,
+  facebook: Facebook,
+  youtube: Youtube,
+  whatsapp: MessageCircle,
+};
+
+const CIRCLE_CLASS =
+  "flex h-11 w-11 items-center justify-center rounded-full border border-gold/25 text-gold/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/70 hover:text-gold-light";
+
+/**
+ * M12: contact email, social links, tagline and site name read from the
+ * central settings source — only configured links render (no dead buttons).
+ */
 export default function Footer() {
+  const { site, contact, socials } = useSiteSettings();
+  const links = visibleSocials(socials);
+  const email = contact.contactEmail;
+
   return (
     <footer aria-label="Footer" className="border-t border-cream/[0.06] bg-charcoal-deep/60">
       <div className="mx-auto max-w-7xl px-5 py-16 md:px-10 md:py-20">
@@ -11,45 +36,33 @@ export default function Footer() {
           <div>
             <div className="font-sans text-lg font-semibold tracking-[0.42em] text-cream">LOGOUT</div>
             <div className="font-serif text-3xl italic text-gold">Spells</div>
-            <p className="mt-4 font-serif text-lg italic text-cream/50">
-              Belonging &gt; Bookings
-            </p>
-            <div className="mt-6 flex gap-3">
-              <a
-                href={SOCIALS.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/25 text-gold/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/70 hover:text-gold-light"
-              >
-                <Instagram size={17} />
-              </a>
-              <a
-                href={SOCIALS.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/25 text-gold/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/70 hover:text-gold-light"
-              >
-                <Linkedin size={17} />
-              </a>
-              <a
-                href={SOCIALS.youtube}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/25 text-gold/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/70 hover:text-gold-light"
-              >
-                <Youtube size={17} />
-              </a>
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                aria-label="Email"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/25 text-gold/70 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/70 hover:text-gold-light"
-              >
-                <Mail size={17} />
-              </a>
-            </div>
+            {site.tagline !== "" && (
+              <p className="mt-4 font-serif text-lg italic text-cream/50">{site.tagline}</p>
+            )}
+            {(links.length > 0 || email !== "") && (
+              <div className="mt-6 flex flex-wrap gap-3">
+                {links.map(({ id, url }) => {
+                  const Icon = SOCIAL_ICONS[id];
+                  return (
+                    <a
+                      key={id}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={SOCIAL_LABELS[id]}
+                      className={CIRCLE_CLASS}
+                    >
+                      <Icon size={17} />
+                    </a>
+                  );
+                })}
+                {email !== "" && (
+                  <a href={`mailto:${email}`} aria-label="Email" className={CIRCLE_CLASS}>
+                    <Mail size={17} />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-12 sm:gap-20">
@@ -96,11 +109,13 @@ export default function Footer() {
                     Live Spells
                   </Link>
                 </li>
-                <li>
-                  <a href={`mailto:${CONTACT_EMAIL}`} className="transition-colors hover:text-gold-light">
-                    Contact
-                  </a>
-                </li>
+                {email !== "" && (
+                  <li>
+                    <a href={`mailto:${email}`} className="transition-colors hover:text-gold-light">
+                      Contact
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           </div>
@@ -108,7 +123,7 @@ export default function Footer() {
 
         <div className="mt-16 flex flex-col items-start justify-between gap-3 border-t border-cream/[0.06] pt-8 sm:flex-row sm:items-center">
           <p className="font-sans text-xs text-cream/35">
-            © {new Date().getFullYear()} Logout Spells. All rights reserved.
+            © {new Date().getFullYear()} {site.siteName}. All rights reserved.
           </p>
           <p className="font-serif text-sm italic text-gold/60">
             A private invitation. A quiet movement.
