@@ -101,7 +101,9 @@ function MemoryHero({ past }: { past: PreviousSpell }) {
           </span>
           <span className="flex items-center gap-2">
             <Users size={14} className="text-gold/80" aria-hidden />
-            {past.travellers} travellers · hosted by {past.host.name}
+            {past.travellers > 0
+              ? `${past.travellers} travellers · hosted by ${past.host.name}`
+              : `Hosted by ${past.host.name}`}
           </span>
           {summary.count > 0 && (
             <span className="flex items-center gap-2">
@@ -560,7 +562,8 @@ export default function PreviousSpellPage() {
         </div>
       </section>
 
-      {/* Gallery */}
+      {/* Gallery — only rendered once real photographs exist. */}
+      {past.gallery.length > 0 && (
       <section aria-label="Gallery" className="overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
@@ -596,9 +599,12 @@ export default function PreviousSpellPage() {
           </Reveal>
         </div>
       </section>
+      )}
 
-      {/* Trip memories */}
+      {/* Trip memories — only when kept moments were written. */}
+      {past.memories.length > 0 && (
       <section aria-label="Trip memories" className="px-5 py-20 md:px-10 md:py-28">
+
         <div className="mx-auto max-w-5xl">
           <SectionHeading
             eyebrow="Kept, not posted"
@@ -623,8 +629,10 @@ export default function PreviousSpellPage() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Community moments */}
+      {/* Community moments — only when the circle's voices are on file. */}
+      {past.community.length > 0 && (
       <section aria-label="Community moments" className="bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-5xl">
           <SectionHeading
@@ -651,6 +659,7 @@ export default function PreviousSpellPage() {
           </div>
         </div>
       </section>
+      )}
 
       <ReviewsSection past={past} />
 

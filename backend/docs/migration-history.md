@@ -1611,6 +1611,37 @@ zero · schema +2 tables, reviews +3 columns (archive tie now nullable),
 
 ---
 
+## Real archive content — 0027 (2026-08-23)
+
+- `0027_real_previous_spells.sql` — erased the TEMPORARY mock journey
+  "Meghalaya Monsoon Wander" (0014; its 3 mock reviews cascaded — the
+  0014 "erase before launch" obligation is now COMPLETE) and published
+  the first three REAL completed journeys, content in the founder's own
+  words:
+  1. `shubhangis-bir-spell` — Shubhangi's Bir Spell · movement ·
+     26–28 June 2026 · Bir · 20 travellers · hosted by Shubhangi.
+  2. `meghas-storytelling-spell` — Megha's Storytelling Spell · making ·
+     31 July – 2 August 2026 · Darjeeling · hosted by Megha.
+  3. `all-girls-spell-to-bir` — All Girls Spell to Bir · gathering ·
+     13–15 August 2026 · Bir & Barot Valley · hosted by Muskan.
+- Honesty rules: story / highlights / itinerary are the founder's own
+  words (light polish only). Galleries, trip memories, community quotes
+  and reviews are EMPTY — no invented photos, people or testimonials;
+  the memory page now hides empty sections. Traveller count stored only
+  where stated (20 for Bir #1; 0 = "not stated", UI shows the host
+  alone). Hero images are evocative placeholders until real trip
+  photographs arrive.
+- Anon REST verified: exactly 3 published rows in curated order · no
+  `sample-%` rows · reviews `[]`.
+
+### Baseline after 0027
+
+previous_spells = 3 REAL journeys (permanent content) · reviews 0 · the
+last mock data from 0014 is gone — every table now holds real content
+only.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
