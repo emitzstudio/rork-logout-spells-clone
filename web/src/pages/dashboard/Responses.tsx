@@ -19,11 +19,11 @@ const fadeUp = (delay: number) => ({
 interface ResponseFormRow {
   form: LogoutForm;
   count: number;
-  /** Newest submission timestamp — null when the form has no responses. */
+  /** Newest submission timestamp - null when the form has no responses. */
   lastAt: string | null;
 }
 
-/** Small published/draft pill — drafts with responses are retired forms. */
+/** Small published/draft pill - drafts with responses are retired forms. */
 function FormStatusPill({ status }: { status: LogoutForm["status"] }) {
   return status === "published" ? (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-gold-light">
@@ -37,9 +37,9 @@ function FormStatusPill({ status }: { status: LogoutForm["status"] }) {
 }
 
 /**
- * M11.6 — the Responses section: every form created in the Form Builder with
+ * M11.6 - the Responses section: every form created in the Form Builder with
  * its real response count and most recent submission. Counts render only when
- * both live reads have genuinely settled — a failed read shows a retry, never
+ * both live reads have genuinely settled - a failed read shows a retry, never
  * a fake "0 responses" (M10).
  */
 export default function Responses() {
@@ -59,7 +59,7 @@ export default function Responses() {
 
   const rows = useMemo<ResponseFormRow[]>(() => {
     const byForm = new Map<string, { count: number; lastAt: string }>();
-    /* Responses arrive newest-first — the first hit per form is the latest. */
+    /* Responses arrive newest-first - the first hit per form is the latest. */
     for (const response of responses) {
       const entry = byForm.get(response.formId);
       if (entry) {
@@ -107,7 +107,7 @@ export default function Responses() {
           Responses
         </motion.h1>
         <motion.p {...fadeUp(0.1)} className="mt-2 font-sans text-[13px] text-cream/45">
-          Every submission, organised by form — open one to read the answers or download the sheet.
+          Every submission, organised by form - open one to read the answers or download the sheet.
         </motion.p>
       </div>
 
@@ -127,7 +127,7 @@ export default function Responses() {
           <div role="alert" className="rounded-xl border border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
             <p className="font-serif text-2xl text-cream">Couldn't load responses.</p>
             <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-              The connection failed — every submission is safe in the database.
+              The connection failed - every submission is safe in the database.
             </p>
             <button type="button" onClick={retryAll} className="btn-gold mt-7 !px-5 !py-2.5 !text-[12px]">
               Try again
@@ -145,7 +145,7 @@ export default function Responses() {
             </span>
             <p className="mt-5 font-serif text-3xl text-cream">No forms yet</p>
             <p className="mx-auto mt-2 max-w-sm font-sans text-[13px] leading-relaxed text-cream/45">
-              Responses gather here once a form exists — create one in the Form Builder and share it.
+              Responses gather here once a form exists - create one in the Form Builder and share it.
             </p>
             <Link to="/dashboard/forms" className="btn-gold mt-7 inline-flex !px-6 !py-3 !text-[12.5px]">
               Open Forms

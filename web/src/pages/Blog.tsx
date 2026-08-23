@@ -77,7 +77,7 @@ function FeaturedArticle({ post }: { post: BlogPost }) {
 }
 
 /**
- * The Journal — the team's articles: travel guides, community stories,
+ * The Journal - the team's articles: travel guides, community stories,
  * behind the scenes, host interviews, recaps, tips and founder letters.
  * Replaces the old Experience page.
  */
@@ -104,7 +104,7 @@ export default function Blog() {
     });
   }, [posts, query, category, activeTag]);
 
-  /** When not filtering, the featured article is shown big — skip its card. */
+  /** When not filtering, the featured article is shown big - skip its card. */
   const gridPosts = filtering ? visible : visible.filter((p) => p.id !== featured?.id);
 
   return (
@@ -149,7 +149,7 @@ export default function Blog() {
             </div>
           )}
 
-          {/* Controls — search, categories, tags */}
+          {/* Controls - search, categories, tags */}
           <Reveal delay={0.08} className="mt-14">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="relative w-full max-w-md">
@@ -264,7 +264,7 @@ export default function Blog() {
               <div className="mt-8 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-20 text-center">
                 <span aria-hidden className="font-serif text-3xl text-gold/60">☾</span>
                 <p className="mt-4 font-serif text-2xl italic text-cream/70">
-                  {filtering ? "Nothing matches that search — yet." : "The Journal is still being written."}
+                  {filtering ? "Nothing matches that search yet." : "The Journal is still being written."}
                 </p>
                 {filtering ? (
                   <button

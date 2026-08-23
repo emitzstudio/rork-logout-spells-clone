@@ -1,6 +1,6 @@
 /**
  * The append-only audit trail (booking_events) rendered as a timeline.
- * History is never rewritten — every consequential act on this booking,
+ * History is never rewritten - every consequential act on this booking,
  * its seats and its money is here, with the old/new-state proof expandable.
  */
 import type { LucideIcon } from "lucide-react";

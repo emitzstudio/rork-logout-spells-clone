@@ -1,16 +1,16 @@
 /**
- * Review invitations domain — PURE rules for the M13 review collection system.
+ * Review invitations domain - PURE rules for the M13 review collection system.
  *
  * After a spell completes, staff generate N one-time links; each link submits
  * exactly one review. This module holds the client-side mirror of the server
  * rules (the database RPCs remain the authority): token shape, invitation
  * states, draft validation, consent-gated publishing, and error mapping.
- * No Supabase imports here — everything is unit-testable.
+ * No Supabase imports here - everything is unit-testable.
  */
 
 /* --------------------------------- Questions -------------------------------- */
 
-/** The five questions, verbatim — the public form and tests share one source. */
+/** The five questions, verbatim - the public form and tests share one source. */
 export const REVIEW_QUESTIONS = {
   credit: "Who should we credit this story to?",
   rating: "How would you rate your spell?",
@@ -32,7 +32,7 @@ export const REVIEW_LIMITS = {
 
 export interface ReviewDraft {
   name: string;
-  /** 0 = not chosen yet; valid answers are 1–5. */
+  /** 0 = not chosen yet; valid answers are 1-5. */
   rating: number;
   summary: string;
   experience: string;
@@ -58,7 +58,7 @@ export interface DraftValidation {
   clean: { name: string; rating: number; summary: string; experience: string; consent: boolean };
 }
 
-/** Client-side mirror of the server validation — a courtesy, never the law. */
+/** Client-side mirror of the server validation - a courtesy, never the law. */
 export const validateReviewDraft = (draft: ReviewDraft): DraftValidation => {
   const name = draft.name.trim();
   const summary = draft.summary.trim();
@@ -79,7 +79,7 @@ export const validateReviewDraft = (draft: ReviewDraft): DraftValidation => {
   else if (experience.length > REVIEW_LIMITS.experience)
     errors.experience = `Please keep this under ${REVIEW_LIMITS.experience} characters.`;
 
-  if (draft.consent === null) errors.consent = "Please choose an answer — yes or no.";
+  if (draft.consent === null) errors.consent = "Please choose an answer - yes or no.";
 
   return {
     ok: Object.keys(errors).length === 0,
@@ -92,7 +92,7 @@ export const validateReviewDraft = (draft: ReviewDraft): DraftValidation => {
 
 const TOKEN_RE = /^[0-9a-f]{64}$/;
 
-/** Quick shape check for /review/:token — the server remains the authority. */
+/** Quick shape check for /review/:token - the server remains the authority. */
 export const looksLikeInviteToken = (token: string): boolean => TOKEN_RE.test(token);
 
 export const reviewLinkPath = (token: string): string => `/review/${token}`;
@@ -112,7 +112,7 @@ export const isExpired = (expiresAt: string | null, now: Date): boolean => {
 
 /**
  * The state a single invitation shows in the console.
- * A USED link stays used forever — submitted stories outlive expiry.
+ * A USED link stays used forever - submitted stories outlive expiry.
  */
 export const inviteRowState = (
   status: "pending" | "used",
@@ -130,7 +130,7 @@ export interface CollectionStats {
   pending: number;
 }
 
-/** Counts derive from the REAL invitation rows — never from assumptions. */
+/** Counts derive from the REAL invitation rows - never from assumptions. */
 export const collectionStats = (invites: { status: "pending" | "used" }[]): CollectionStats => {
   const submitted = invites.filter((i) => i.status === "used").length;
   return { total: invites.length, submitted, pending: invites.length - submitted };
@@ -182,7 +182,7 @@ export interface InviteLookup {
 }
 
 /**
- * Narrow the lookup RPC's jsonb. A malformed payload THROWS — a broken
+ * Narrow the lookup RPC's jsonb. A malformed payload THROWS - a broken
  * response must surface as an error with retry, never as a fake "invalid link".
  */
 export const parseInviteLookup = (json: unknown): InviteLookup => {
@@ -244,11 +244,11 @@ export const inviteErrorCopy = (code: InviteErrorCode): string => {
     case "review_staff_only":
       return "Only staff can create review collections.";
     case "review_spell_missing":
-      return "The selected spell no longer exists — refresh and try again.";
+      return "The selected spell no longer exists - refresh and try again.";
     case "review_link_count_invalid":
       return `The number of review links must be between ${REVIEW_LIMITS.minLinks} and ${REVIEW_LIMITS.maxLinks}.`;
     case "unknown":
-      return "Something went wrong — nothing was saved. Please try again.";
+      return "Something went wrong - nothing was saved. Please try again.";
   }
 };
 
@@ -282,7 +282,7 @@ export interface LinkCountValidation {
   error: string;
 }
 
-/** "Number of Review Links" — required positive integer within server bounds. */
+/** "Number of Review Links" - required positive integer within server bounds. */
 export const validateLinkCount = (value: string): LinkCountValidation => {
   const trimmed = value.trim();
   if (trimmed === "") return { ok: false, count: 0, error: "How many travellers were on this spell?" };

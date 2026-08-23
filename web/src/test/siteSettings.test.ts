@@ -1,5 +1,5 @@
 /**
- * M12 — settings model contract tests: normalizers fail open (a broken or
+ * M12 - settings model contract tests: normalizers fail open (a broken or
  * missing payload can never take the site down, close registration or hide
  * forms by accident), empty links never render, payment stays locked to
  * "coming soon", and validation treats empty as a valid state.
@@ -73,7 +73,7 @@ describe("normalizeSiteSection", () => {
 });
 
 describe("contact + routing sections", () => {
-  it("missing payloads normalize to honest empties — nothing invented", () => {
+  it("missing payloads normalize to honest empties - nothing invented", () => {
     expect(normalizeContactSection(undefined)).toEqual({
       contactEmail: "",
       supportEmail: "",
@@ -100,7 +100,7 @@ describe("visibleSocials", () => {
     ]);
   });
 
-  it("renders nothing when nothing is configured — no dead buttons", () => {
+  it("renders nothing when nothing is configured - no dead buttons", () => {
     expect(visibleSocials(normalizeSocialsSection({}))).toEqual([]);
     expect(visibleSocials(normalizeSocialsSection({ instagram: "   " }))).toEqual([]);
   });

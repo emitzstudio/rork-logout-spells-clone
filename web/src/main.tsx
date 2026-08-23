@@ -6,7 +6,7 @@ import "./index.css";
 
 /**
  * Fail fast, visibly (M10): a missing backend configuration renders an
- * explicit screen naming the absent variables (names only — never values)
+ * explicit screen naming the absent variables (names only - never values)
  * instead of booting the app into mysterious runtime failures.
  */
 const ConfigurationError = () => (

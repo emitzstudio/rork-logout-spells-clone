@@ -14,7 +14,7 @@ interface HeroImagesSectionProps {
   onHeroAsCover: (on: boolean) => void;
 }
 
-/** Cover slot while “hero as cover” is on — a live mirror of the hero, not an upload. */
+/** Cover slot while “hero as cover” is on - a live mirror of the hero, not an upload. */
 function MirroredCoverSlot({ hero }: { hero: DraftImage | null }) {
   return (
     <div>
@@ -31,7 +31,7 @@ function MirroredCoverSlot({ hero }: { hero: DraftImage | null }) {
           <>
             <img
               src={hero.url}
-              alt="Cover — mirrored from the hero image"
+              alt="Cover - mirrored from the hero image"
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div aria-hidden className="absolute inset-0 rounded-xl ring-1 ring-inset ring-gold/25" />
@@ -46,7 +46,7 @@ function MirroredCoverSlot({ hero }: { hero: DraftImage | null }) {
             </span>
             <span className="font-sans text-[12px] text-cream/60">Waiting for the hero</span>
             <span className="max-w-[85%] font-sans text-[10px] leading-snug text-cream/30">
-              Upload the hero above — it becomes the card image automatically.
+              Upload the hero above - it becomes the card image automatically.
             </span>
           </div>
         )}
@@ -55,7 +55,7 @@ function MirroredCoverSlot({ hero }: { hero: DraftImage | null }) {
   );
 }
 
-/** Section 02 — hero, mobile hero, cover and gallery imagery. */
+/** Section 02 - hero, mobile hero, cover and gallery imagery. */
 export default function HeroImagesSection({
   draft,
   onPick,
@@ -71,7 +71,7 @@ export default function HeroImagesSection({
     <div className="space-y-6">
       <ImageDrop
         label="Hero image"
-        hint="The full-bleed opening shot — landscape, around 2000px wide"
+        hint="The full-bleed opening shot - landscape, around 2000px wide"
         aspectClass="aspect-[16/9]"
         image={draft.hero}
         onPick={(file) => onPick("hero", file)}
@@ -82,7 +82,7 @@ export default function HeroImagesSection({
       <ToggleField
         icon={Link2}
         label="Use hero as cover image"
-        description="One upload does both — the hero also becomes the card photo on Home, Live and Discover grids."
+        description="One upload does both - the hero also becomes the card photo on Home, Live and Discover grids."
         checked={heroAsCover}
         onChange={onHeroAsCover}
       />
@@ -118,7 +118,7 @@ export default function HeroImagesSection({
       />
 
       <p className="rounded-lg border border-cream/[0.06] bg-cream/[0.015] px-3.5 py-2.5 font-sans text-[11px] leading-relaxed text-cream/40">
-        Images preview locally in this phase — they live on this device until the media library
+        Images preview locally in this phase - they live on this device until the media library
         arrives with the backend phases.
       </p>
     </div>

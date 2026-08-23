@@ -14,7 +14,7 @@ import { timeGreeting } from "@/lib/greeting";
 import { cn } from "@/lib/utils";
 
 /**
- * The homepage, personalised — rendered only for signed-in travellers.
+ * The homepage, personalised - rendered only for signed-in travellers.
  * A quiet welcome-back band: the next trip with its live countdown,
  * unfinished plans, and spells chosen for their leanings.
  */
@@ -27,7 +27,7 @@ export default function HomeWelcome() {
   const tripStatus = trip ? effectiveStatus(trip) : null;
   const draft = tripsByStatus(data.bookings).draft[0] ?? null;
 
-  /* Name flows from the account session — when Supabase auth connects, the
+  /* Name flows from the account session - when Supabase auth connects, the
      provider swaps underneath and this greeting needs no UI changes. */
   const firstName = data.profile.firstName.trim();
   const greeting = timeGreeting();
@@ -103,7 +103,7 @@ export default function HomeWelcome() {
                   Nothing booked. <span className="italic text-gold-gradient">Everything possible.</span>
                 </h3>
                 <p className="mt-2 font-sans text-[13px] text-cream/50">
-                  Your space is ready — it just needs a spell on the horizon.
+                  Your space is ready. It just needs a spell on the horizon.
                 </p>
               </div>
               <Link to="/live" className="btn-gold">
@@ -122,7 +122,7 @@ export default function HomeWelcome() {
             >
               <p className="font-serif text-lg italic text-cream/60">
                 You left an application half-written for the{" "}
-                <span className="text-gold-light">{draft.spell.name}</span> —{" "}
+                <span className="text-gold-light">{draft.spell.name}</span>,{" "}
                 {draft.draftNote}
               </p>
               <span className="inline-flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.2em] text-gold transition-all group-hover:gap-3 group-hover:text-gold-light">

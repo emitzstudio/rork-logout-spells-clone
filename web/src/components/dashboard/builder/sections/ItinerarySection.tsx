@@ -132,7 +132,7 @@ interface ItinerarySectionProps {
 }
 
 /**
- * Section 05 — the Dynamic Itinerary Builder. Day cards with drag & drop,
+ * Section 05 - the Dynamic Itinerary Builder. Day cards with drag & drop,
  * duplicate, move, per-day images and highlights; the day count follows
  * Basic Information and always asks before removing anything.
  */
@@ -147,7 +147,7 @@ export default function ItinerarySection({ draft, api, openDays, onToggleDay }: 
       <div className="max-w-[240px]">
         <FieldShell
           label="Number of days"
-          helper="Started from Basic Information — going smaller always asks first."
+          helper="Started from Basic Information - going smaller always asks first."
         >
           <DaysStepper value={days.length} onCommit={api.requestDayCount} />
         </FieldShell>
@@ -170,8 +170,7 @@ export default function ItinerarySection({ draft, api, openDays, onToggleDay }: 
                 Basic Information sets this trip at{" "}
                 <strong className="font-medium text-amber-200">
                   {draft.days} {draft.days === 1 ? "day" : "days"}
-                </strong>{" "}
-                — {missing} more to plan.
+                </strong>, with {missing} more to plan.
               </p>
               <button
                 type="button"
@@ -215,7 +214,7 @@ export default function ItinerarySection({ draft, api, openDays, onToggleDay }: 
             </AnimatePresence>
           </Reorder.Group>
 
-          {/* Custom day — optional experiences beyond the duration */}
+          {/* Custom day - optional experiences beyond the duration */}
           <button
             type="button"
             onClick={api.addCustomDay}
@@ -224,7 +223,7 @@ export default function ItinerarySection({ draft, api, openDays, onToggleDay }: 
             <Plus className="h-4 w-4" />
             Add Custom Day
             <span className="hidden font-sans text-[10px] text-cream/30 sm:inline">
-              — an optional experience beyond the duration
+              an optional experience beyond the duration
             </span>
           </button>
         </>

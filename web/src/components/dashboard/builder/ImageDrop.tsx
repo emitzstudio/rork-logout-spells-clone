@@ -165,7 +165,7 @@ export function GalleryDrop({
   onRemove,
   onMove,
   label = "Gallery images",
-  helper = "Moments from past circles — drop several at once, hover a thumbnail to reorder.",
+  helper = "Moments from past circles - drop several at once, hover a thumbnail to reorder.",
 }: GalleryDropProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState<boolean>(false);

@@ -1,7 +1,7 @@
 /**
  * One booking, everything attached (M7B): traveller & participants, the
  * money ledger, consent records, change requests, internal notes, staff
- * operational fields and the append-only audit trail — with the audited
+ * operational fields and the append-only audit trail - with the audited
  * actions (manual payment / confirm / cancel) in the header.
  */
 import { AnimatePresence, motion } from "framer-motion";
@@ -123,7 +123,7 @@ export default function BookingDetail() {
         <ShieldAlert className="mx-auto h-8 w-8 text-cream/30" />
         <h1 className="mt-4 font-serif text-[24px] text-cream">The ledger didn't answer</h1>
         <p className="mt-2 font-sans text-[12.5px] leading-relaxed text-cream/45">
-          This booking couldn't be loaded — the connection failed, not the booking.
+          This booking couldn't be loaded - the connection failed, not the booking.
         </p>
         <div className="mt-5 flex items-center justify-center gap-2.5">
           <button
@@ -150,7 +150,7 @@ export default function BookingDetail() {
         <ShieldAlert className="mx-auto h-8 w-8 text-cream/30" />
         <h1 className="mt-4 font-serif text-[24px] text-cream">Booking not found</h1>
         <p className="mt-2 font-sans text-[12.5px] leading-relaxed text-cream/45">
-          It may have been opened with a stale link. The ledger never loses bookings — check the list.
+          It may have been opened with a stale link. The ledger never loses bookings - check the list.
         </p>
         <Link
           to="/dashboard/bookings"
@@ -230,7 +230,7 @@ export default function BookingDetail() {
       {adminReady && !isAdmin && (
         <p className="mt-4 flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3.5 py-2.5 font-sans text-[11.5px] text-amber-200/80">
           <ShieldAlert className="h-4 w-4 shrink-0" />
-          These actions need the admin role — the server refuses anyone else.
+          These actions need the admin role - the server refuses anyone else.
         </p>
       )}
 
@@ -261,9 +261,9 @@ export default function BookingDetail() {
               </div>
               <div>
                 <p className="font-sans text-[10px] uppercase tracking-[0.24em] text-cream/35">The circle</p>
-                <p className="mt-1 font-sans text-[14px] text-cream">{card.name !== "" ? card.name : "—"}</p>
+                <p className="mt-1 font-sans text-[14px] text-cream">{card.name !== "" ? card.name : "·"}</p>
                 <p className="font-sans text-[12px] text-cream/50">
-                  {card.dateLabel !== "" ? card.dateLabel : `${formatDate(booking.start_date)} – ${formatDate(booking.end_date)}`}
+                  {card.dateLabel !== "" ? card.dateLabel : `${formatDate(booking.start_date)} - ${formatDate(booking.end_date)}`}
                 </p>
                 <p className="font-sans text-[12px] text-cream/50">
                   {booking.seats} seat{booking.seats > 1 ? "s" : ""} · {booking.duration_days} day{booking.duration_days > 1 ? "s" : ""}

@@ -1,5 +1,5 @@
 /**
- * Import a Logout Spell from a .json file — read entirely in the browser.
+ * Import a Logout Spell from a .json file - read entirely in the browser.
  * Tolerantly maps every text field onto a SpellDraft: missing data never
  * throws, images are never imported (every slot stays an upload placeholder),
  * and the result reports what was found, what's missing and which images the
@@ -50,7 +50,7 @@ export interface SpellImportResult {
   images: string[];
   importedCount: number;
   dayCount: number;
-  /** The file contained image links — they were deliberately ignored. */
+  /** The file contained image links - they were deliberately ignored. */
   ignoredImageLinks: boolean;
 }
 
@@ -86,7 +86,7 @@ const asBool = (value: unknown): boolean =>
 
 const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
-/** First present alias wins — LLMs name keys loosely. */
+/** First present alias wins - LLMs name keys loosely. */
 const pick = (obj: Json, keys: string[]): unknown => {
   for (const key of keys) {
     const found = obj[key];
@@ -96,7 +96,7 @@ const pick = (obj: Json, keys: string[]): unknown => {
 };
 
 /**
- * Rich text passthrough — the builder's markup is markdown-like already.
+ * Rich text passthrough - the builder's markup is markdown-like already.
  * Accepts arrays of paragraphs and downgrades `# h1` (unsupported) to `##`.
  */
 const asRichText = (value: unknown): string => {
@@ -209,7 +209,7 @@ const IMAGE_KEYS = ["image", "images", "hero", "heroImage", "photo", "gallery", 
 const hasImageKey = (obj: Json | null): boolean =>
   obj !== null && IMAGE_KEYS.some((key) => obj[key] !== undefined);
 
-/** Parses a Spell file — tolerant by design: gaps become warnings, never errors. */
+/** Parses a Spell file - tolerant by design: gaps become warnings, never errors. */
 export const parseSpellFile = (text: string): ImportOutcome => {
   let raw: unknown;
   try {
@@ -218,7 +218,7 @@ export const parseSpellFile = (text: string): ImportOutcome => {
     return {
       ok: false,
       error:
-        "The file isn't valid JSON — check for stray characters or ask your AI to output pure JSON only.",
+        "The file isn't valid JSON - check for stray characters or ask your AI to output pure JSON only.",
     };
   }
 
@@ -227,7 +227,7 @@ export const parseSpellFile = (text: string): ImportOutcome => {
     return {
       ok: false,
       error:
-        "This doesn't look like a Logout Spell file — none of the expected fields were found. Download the sample file to see the format.",
+        "This doesn't look like a Logout Spell file - none of the expected fields were found. Download the sample file to see the format.",
     };
   }
 
@@ -258,7 +258,7 @@ export const parseSpellFile = (text: string): ImportOutcome => {
   draft.slug = slugRaw !== "" ? sanitizeSlugInput(slugRaw) : slugify(name);
   draft.slugTouched = slugRaw !== "";
 
-  /* Itinerary — `days` may be the duration number or (loosely) the day array */
+  /* Itinerary - `days` may be the duration number or (loosely) the day array */
   const daysNumber = asNumber(pick(root, ["days", "durationDays", "duration"]));
   const explicitDays =
     Number.isFinite(daysNumber) && daysNumber > 0 ? Math.min(30, Math.round(daysNumber)) : 0;
@@ -474,7 +474,7 @@ export const parseSpellFile = (text: string): ImportOutcome => {
   );
   row("faqs", "FAQs", draft.faqs.length > 0, draft.faqs.length > 0 ? `${draft.faqs.length} questions` : "Not in file");
 
-  /* Field-level gaps — warnings, never blockers */
+  /* Field-level gaps - warnings, never blockers */
   const missing: string[] = [];
   if (name === "") missing.push("Spell name");
   if (hook === "") missing.push("Short hook");
@@ -506,7 +506,7 @@ export const parseSpellFile = (text: string): ImportOutcome => {
     if (draft.stay.rating === 0) missing.push("Accommodation rating");
     if (draft.stay.mapLabel === "") missing.push("Map label");
   }
-  /* Image slots — always uploaded by hand */
+  /* Image slots - always uploaded by hand */
   const images: string[] = ["Hero image"];
   if (aboutRaw) images.push("About image");
   if (draft.itinerary.length > 0) images.push(`Day images · ${draft.itinerary.length}`);
@@ -549,7 +549,7 @@ export const SAMPLE_SPELL_FILE: Json = {
   location: "Darjeeling, West Bengal",
   days: 4,
   nights: 3,
-  dates: "Oct 9–12",
+  dates: "Oct 9-12",
   price: 39000,
   maxSeats: 10,
   category: "stillness",
@@ -564,7 +564,7 @@ export const SAMPLE_SPELL_FILE: Json = {
   },
   about: {
     heading: "A slower kind of magic",
-    body: "Some places ask you to rush. **Darjeeling asks you to sit down.**\n\nWe spend four days between tea bushes and toy-train whistles — learning to taste, to walk without a destination and to let the hills set the pace.\n\n- First-flush tastings with the estate's own master\n- Sunrise over Kanchenjunga from Tiger Hill\n- Evenings around the bukhari with stories and momos",
+    body: "Some places ask you to rush. **Darjeeling asks you to sit down.**\n\nWe spend four days between tea bushes and toy-train whistles - learning to taste, to walk without a destination and to let the hills set the pace.\n\n- First-flush tastings with the estate's own master\n- Sunrise over Kanchenjunga from Tiger Hill\n- Evenings around the bukhari with stories and momos",
     quote: "The mountains were never in a hurry. Neither were we.",
     layout: "right",
   },
@@ -585,7 +585,7 @@ export const SAMPLE_SPELL_FILE: Json = {
       location: "Happy Valley Estate",
       subtitle: "",
       description:
-        "A full day inside a working tea estate — plucking alongside the morning shift, watching the withering troughs, and a private tasting of **six single-estate teas**.",
+        "A full day inside a working tea estate - plucking alongside the morning shift, watching the withering troughs, and a private tasting of **six single-estate teas**.",
       highlights: [
         { emoji: "🫖", text: "Guided tasting with the estate master" },
         { emoji: "📸", text: "Portrait hour among the tea bushes" },
@@ -596,7 +596,7 @@ export const SAMPLE_SPELL_FILE: Json = {
       location: "Tiger Hill",
       subtitle: "",
       description:
-        "A 4 a.m. start, blankets in the jeep, and then — if the sky agrees — **Kanchenjunga turning rose-gold** above the clouds. The rest of the day is yours: toy train, momos, bookshop corners.",
+        "A 4 a.m. start, blankets in the jeep, and then - if the sky agrees - **Kanchenjunga turning rose-gold** above the clouds. The rest of the day is yours: toy train, momos, bookshop corners.",
       highlights: [
         { emoji: "🏔️", text: "Sunrise over Kanchenjunga" },
         { emoji: "🚂", text: "Heritage toy-train loop to Ghum" },
@@ -624,7 +624,7 @@ export const SAMPLE_SPELL_FILE: Json = {
     name: "Singtom Estate Bungalow",
     shortDescription: "A 160-year-old planter's bungalow wrapped in tea bushes, ten minutes above town.",
     longDescription:
-      "Creaking teak floors, claw-foot tubs and a fireplace that gets lit at six sharp. Rooms are shared in twos — each with garden views, endless hot water and a bottomless tea tray.",
+      "Creaking teak floors, claw-foot tubs and a fireplace that gets lit at six sharp. Rooms are shared in twos - each with garden views, endless hot water and a bottomless tea tray.",
     amenities: [
       "Fireplace lounge",
       "Garden-view rooms",
@@ -656,7 +656,7 @@ export const SAMPLE_SPELL_FILE: Json = {
     },
     {
       title: "The Solo First-Timer",
-      description: "Travelling alone but not lonely — ten strangers become a table of friends by night one.",
+      description: "Travelling alone but not lonely - ten strangers become a table of friends by night one.",
     },
     {
       title: "The Tea Romantic",
@@ -693,7 +693,7 @@ export const SAMPLE_SPELL_FILE: Json = {
     {
       question: "How cold does it get in October?",
       answer:
-        "Days sit around 15°C, evenings drop to 5–8°C. Bring layers — we provide hot water bottles and endless tea.",
+        "Days sit around 15°C, evenings drop to 5-8°C. Bring layers - we provide hot water bottles and endless tea.",
     },
     {
       question: "I'm coming alone. Is that okay?",
@@ -703,17 +703,17 @@ export const SAMPLE_SPELL_FILE: Json = {
     {
       question: "How do I reach Darjeeling?",
       answer:
-        "Fly to Bagdogra or train to New Jalpaiguri — we arrange the shared mountain transfer from there, about 3 hours.",
+        "Fly to Bagdogra or train to New Jalpaiguri - we arrange the shared mountain transfer from there, about 3 hours.",
     },
     {
       question: "What if the sunrise is clouded out?",
       answer:
-        "The mountain decides. If Tiger Hill hides, we go again the next morning — and the bungalow lawn has its own view.",
+        "The mountain decides. If Tiger Hill hides, we go again the next morning - and the bungalow lawn has its own view.",
     },
   ],
 };
 
-/** Downloads the sample file — the founder's format reference for any LLM. */
+/** Downloads the sample file - the founder's format reference for any LLM. */
 export const downloadSampleSpell = (): void => {
   const blob = new Blob([JSON.stringify(SAMPLE_SPELL_FILE, null, 2)], {
     type: "application/json",

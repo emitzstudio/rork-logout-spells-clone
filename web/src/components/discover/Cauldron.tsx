@@ -5,32 +5,32 @@ import { MagicDust } from "@/components/site/MagicDust";
 import { cn } from "@/lib/utils";
 
 /**
- * The enchanted cauldron — dark iron, bronze fittings, a golden brew that
+ * The enchanted cauldron - dark iron, bronze fittings, a golden brew that
  * never quite sleeps. Idle it bubbles, breathes and lets slip wisps of smoke;
  * every `stir` makes it shake, flare and exhale; while `conjuring` the magic
- * builds — deeper glow, rushing sparks, a racing vortex, a low rumble.
+ * builds - deeper glow, rushing sparks, a racing vortex, a low rumble.
  *
  * Performance: every looping animation is a pure CSS keyframe animating only
  * transform/opacity, so the compositor runs them off the main thread. Framer
  * Motion is reserved for one-shot reactions (stir shake, splash, flash).
  */
 
-/** Fraction of the cauldron box's height where the mouth sits — flight target. */
+/** Fraction of the cauldron box's height where the mouth sits - flight target. */
 export const CAULDRON_MOUTH_Y = 0.4;
 
 interface CauldronProps {
   /** Increment to make the cauldron react to a new ingredient. */
   stir: number;
-  /** 0..1 — how far along the brew is; drives glow and smoke. */
+  /** 0..1 - how far along the brew is; drives glow and smoke. */
   intensity: number;
-  /** True while the reveal ritual builds — maximum magic. */
+  /** True while the reveal ritual builds - maximum magic. */
   conjuring: boolean;
-  /** True once the brew is complete — the vortex awakens. */
+  /** True once the brew is complete - the vortex awakens. */
   brewed: boolean;
   className?: string;
 }
 
-/* Deterministic idle choreography — no randomness at render time.
+/* Deterministic idle choreography - no randomness at render time.
    Bubbles live in an HTML overlay over the mouth (left is % across it). */
 const BUBBLES = [
   { left: "26.6%", size: 6, dur: 2.3, delay: 0.2, gap: 0.7 },
@@ -42,7 +42,7 @@ const BUBBLES = [
   { left: "65.6%", size: 4, dur: 2.1, delay: 2.8, gap: 0.4 },
 ] as const;
 
-/** Splash droplet positions per stir — % across the mouth overlay. */
+/** Splash droplet positions per stir - % across the mouth overlay. */
 const SPLASH = ["32.8%", "43.8%", "52.3%", "62.5%", "70.3%"] as const;
 
 const SMOKE = [
@@ -80,7 +80,7 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
   const shake = useAnimationControls();
   const firstStir = useRef<boolean>(true);
 
-  /* Every new ingredient rattles the pot — a short, decisive shudder. */
+  /* Every new ingredient rattles the pot - a short, decisive shudder. */
   useEffect(() => {
     if (firstStir.current) {
       firstStir.current = false;
@@ -102,7 +102,7 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
 
   return (
     <div className={cn("relative w-[300px] select-none md:w-[430px]", className)} aria-hidden>
-      {/* Hearth glow beneath the pot — breathing, warmer as the brew grows. */}
+      {/* Hearth glow beneath the pot - breathing, warmer as the brew grows. */}
       <div
         className="absolute bottom-[1%] left-1/2 h-20 w-[74%] -translate-x-1/2 rounded-full bg-gold/25 blur-2xl"
         style={
@@ -184,7 +184,7 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
             {/* Ground shadow */}
             <ellipse cx="130" cy="228" rx="80" ry="9" fill="#000" opacity="0.55" />
 
-            {/* Legs — three curved iron feet */}
+            {/* Legs - three curved iron feet */}
             <path d="M 78 192 C 70 208 62 216 50 223" stroke="#14100b" strokeWidth="10" strokeLinecap="round" fill="none" />
             <path d="M 182 192 C 190 208 198 216 210 223" stroke="#14100b" strokeWidth="10" strokeLinecap="round" fill="none" />
             <path d="M 130 198 L 130 225" stroke="#14100b" strokeWidth="10" strokeLinecap="round" fill="none" />
@@ -213,11 +213,11 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
             <ellipse cx="130" cy="96" rx="86" ry="20" fill="url(#cldRim)" stroke="#20180e" strokeWidth="1.5" />
             <ellipse cx="130" cy="94" rx="80" ry="17" fill="#0d0a07" />
 
-            {/* The brew — static base; the living surface is an HTML overlay */}
+            {/* The brew - static base; the living surface is an HTML overlay */}
             <ellipse cx="130" cy="96" rx="64" ry="12.5" fill="url(#cldLiquid)" />
           </svg>
 
-          {/* The living surface — shimmer, bubbles and splashes as HTML layers.
+          {/* The living surface - shimmer, bubbles and splashes as HTML layers.
               SVG internals never get their own GPU layers, so every loop here
               runs as a compositor-only transform/opacity animation instead. */}
           <div
@@ -264,7 +264,7 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
                 />
               </>
             )}
-            {/* Idle bubbles — pure CSS rises, clipped by the mouth */}
+            {/* Idle bubbles - pure CSS rises, clipped by the mouth */}
             {!reduced &&
               BUBBLES.map((b, i) => (
                 <span
@@ -280,7 +280,7 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
                   }
                 />
               ))}
-            {/* Ingredient splash — a quick burst of droplets per stir */}
+            {/* Ingredient splash - a quick burst of droplets per stir */}
             {!reduced && stir > 0 && (
               <div key={`burst-${stir}`} className="absolute inset-0">
                 {SPLASH.map((left, i) => (
@@ -321,12 +321,12 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
             />
           )}
 
-          {/* Star escape per stir — a few wishes slip out */}
+          {/* Star escape per stir - a few wishes slip out */}
           <div className="absolute left-1/2 top-[40%] z-30 h-0 w-0">
             <MagicDust burst={stir} count={12} spread={96} />
           </div>
 
-          {/* Idle smoke — always some, thicker as the brew grows */}
+          {/* Idle smoke - always some, thicker as the brew grows */}
           {!reduced && (
             <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[42%]" style={{ opacity: smokeStrength }}>
               {SMOKE.map((s, i) => (
@@ -384,7 +384,7 @@ export default function Cauldron({ stir, intensity, conjuring, brewed, className
             </div>
           )}
 
-          {/* The vortex — gentle when brewed, racing while conjuring */}
+          {/* The vortex - gentle when brewed, racing while conjuring */}
           {vortexOn && (
             <>
               <div

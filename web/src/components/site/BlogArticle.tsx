@@ -1,5 +1,5 @@
 /**
- * The one true article renderer — every editorial block the Journal supports,
+ * The one true article renderer - every editorial block the Journal supports,
  * rendered identically on the public story page and inside the Blog Builder's
  * live preview. Add a block kind here and both surfaces learn it at once.
  */
@@ -44,7 +44,7 @@ export function BlogBlockView({ block, isLead = false }: BlockProps) {
           </p>
           {block.by !== undefined && block.by !== "" && (
             <footer className="mt-3 font-sans text-[11px] uppercase tracking-[0.22em] text-cream/40">
-              — {block.by}
+              ~ {block.by}
             </footer>
           )}
         </blockquote>
@@ -225,7 +225,7 @@ interface BlogArticleBodyProps {
   className?: string;
 }
 
-/** The article body — ordered blocks plus the optional field-gallery coda. */
+/** The article body - ordered blocks plus the optional field-gallery coda. */
 export function BlogArticleBody({ blocks, gallery, className }: BlogArticleBodyProps) {
   return (
     <div className={cn("space-y-6", className)}>

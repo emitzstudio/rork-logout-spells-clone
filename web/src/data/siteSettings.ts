@@ -1,12 +1,12 @@
 /**
- * M12 — central site configuration model (pure: safe to import anywhere,
- * including tests — no Supabase client in this file).
+ * M12 - central site configuration model (pure: safe to import anywhere,
+ * including tests - no Supabase client in this file).
  *
  * The `site_settings` table holds ONE row per section. These types, defaults
  * and normalizers are the single contract between that table, the founder
  * console and every public consumer.
  *
- * DEFAULTS mirror the 0022 seeds — the pre-M12 hardcoded truth — so first
+ * DEFAULTS mirror the 0022 seeds - the pre-M12 hardcoded truth - so first
  * paint and any fetch failure fall back to exactly what the site always
  * showed. Launch switches normalize FAIL-OPEN (live · registration on ·
  * forms on): a dropped request can never accidentally lock the site down.
@@ -24,9 +24,9 @@ export interface SiteIdentitySettings {
 }
 
 export interface ContactSettings {
-  /** General contact — the address the public site links to. */
+  /** General contact - the address the public site links to. */
   contactEmail: string;
-  /** Support desk — falls back to contactEmail when empty. */
+  /** Support desk - falls back to contactEmail when empty. */
   supportEmail: string;
   phone: string;
   whatsapp: string;
@@ -42,15 +42,15 @@ export interface SocialLinkSettings {
 
 export interface LaunchSettings {
   websiteStatus: WebsiteStatus;
-  /** Informational only until the payments milestone — always "coming_soon". */
+  /** Informational only until the payments milestone - always "coming_soon". */
   paymentStatus: "coming_soon";
   registrationEnabled: boolean;
-  /** Mirrors the auth server's policy — locked to true until email delivery. */
+  /** Mirrors the auth server's policy - locked to true until email delivery. */
   emailVerificationRequired: boolean;
   publicFormsEnabled: boolean;
 }
 
-/** Internal recipients — staff-only, DORMANT until email delivery exists. */
+/** Internal recipients - staff-only, DORMANT until email delivery exists. */
 export interface RoutingSettings {
   generalRecipient: string;
   bookingRecipient: string;
@@ -122,7 +122,7 @@ export const normalizeSiteSection = (data: unknown): SiteIdentitySettings => {
   const d = asRecord(data);
   const name = str(d.siteName);
   return {
-    /* The site always has a name — a blank save can't erase the identity. */
+    /* The site always has a name - a blank save can't erase the identity. */
     siteName: name !== "" ? name : DEFAULT_SITE_SETTINGS.site.siteName,
     tagline: str(d.tagline),
     description: str(d.description),
@@ -204,7 +204,7 @@ export interface VisibleSocial {
   url: string;
 }
 
-/** Only links that are actually configured — empty ones never render. */
+/** Only links that are actually configured - empty ones never render. */
 export const visibleSocials = (socials: SocialLinkSettings): VisibleSocial[] =>
   SOCIAL_ORDER.map((id) => ({ id, url: socials[id].trim() })).filter((s) => s.url !== "");
 

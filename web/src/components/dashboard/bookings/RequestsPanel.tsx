@@ -1,5 +1,5 @@
 /**
- * The change-request queue. Travellers never modify confirmed bookings —
+ * The change-request queue. Travellers never modify confirmed bookings -
  * they file requests (seat change / transfer / cancellation) and staff decide
  * here. Approving does NOT execute: seat math and money always run through
  * the audited pipeline (cancellations via the booking's Cancel action).
@@ -90,7 +90,7 @@ function DecideDialog({
       <form onSubmit={submit} className="space-y-4">
         {approving && (
           <OpsNote tone="warn">
-            Approving records the decision — it does not execute the change. Seats and money only move through the
+            Approving records the decision - it does not execute the change. Seats and money only move through the
             audited pipeline{item.request.kind === "cancellation" ? ": run the cancellation from the booking page next" : ""}.
           </OpsNote>
         )}
@@ -99,7 +99,7 @@ function DecideDialog({
             value={staffNote}
             onChange={(e) => setStaffNote(e.target.value)}
             rows={3}
-            placeholder={approving ? "e.g. Agreed on the phone — reduce to 2 seats from the next payment" : "e.g. Departure is already locked — offered the next circle instead"}
+            placeholder={approving ? "e.g. Agreed on the phone - reduce to 2 seats from the next payment" : "e.g. Departure is already locked - offered the next circle instead"}
             className={opsTextareaClass}
           />
         </OpsField>
@@ -236,7 +236,7 @@ export default function RequestsPanel() {
         <GitPullRequest className="mx-auto h-7 w-7 text-cream/25" />
         <p className="mt-3 font-serif text-[19px] text-cream/85">The requests couldn't be reached</p>
         <p className="mx-auto mt-1.5 max-w-[420px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-          The connection failed — nothing was lost.
+          The connection failed - nothing was lost.
         </p>
         <button
           type="button"
@@ -255,7 +255,7 @@ export default function RequestsPanel() {
         <GitPullRequest className="mx-auto h-7 w-7 text-cream/25" />
         <p className="mt-3 font-serif text-[19px] text-cream/85">No change requests</p>
         <p className="mx-auto mt-1.5 max-w-[420px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-          When travellers ask to change seats, transfer a spot or cancel, the requests queue here for your decision —
+          When travellers ask to change seats, transfer a spot or cancel, the requests queue here for your decision -
           nothing changes on a booking without you.
         </p>
       </div>
@@ -280,7 +280,7 @@ export default function RequestsPanel() {
       {approved.length > 0 && (
         <section>
           <h3 className="mb-2.5 font-sans text-[10.5px] uppercase tracking-[0.26em] text-cream/40">
-            Approved — awaiting execution · {approved.length}
+            Approved - awaiting execution · {approved.length}
           </h3>
           <ul className="space-y-2.5">
             {approved.map((item, index) => (
@@ -297,7 +297,7 @@ export default function RequestsPanel() {
             onClick={() => setShowHistory((v) => !v)}
             className="mb-2.5 flex items-center gap-2 font-sans text-[10.5px] uppercase tracking-[0.26em] text-cream/40 transition-colors hover:text-cream/70"
           >
-            <Inbox className="h-3.5 w-3.5" /> History · {history.length} {showHistory ? "— hide" : "— show"}
+            <Inbox className="h-3.5 w-3.5" /> History · {history.length} {showHistory ? "- hide" : "- show"}
           </button>
           {showHistory && (
             <ul className="space-y-2.5">

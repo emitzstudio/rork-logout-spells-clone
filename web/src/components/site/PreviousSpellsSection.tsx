@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
- * A completed journey, kept like a postcard — image, season, one line and
+ * A completed journey, kept like a postcard - image, season, one line and
  * its rating. Clicking opens the memory page (not a booking page).
  */
 export function PastSpellCard({ past }: { past: PreviousSpell }) {
@@ -55,7 +55,7 @@ export function PastSpellCard({ past }: { past: PreviousSpell }) {
         }}
       />
 
-      {/* Season seal — this journey already happened. */}
+      {/* Season seal - this journey already happened. */}
       <span className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-gold/30 bg-charcoal-deep/80 px-3.5 py-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-gold-light">
         <span aria-hidden>✦</span> {past.season}
       </span>
@@ -84,13 +84,13 @@ export function PastSpellCard({ past }: { past: PreviousSpell }) {
 }
 
 interface PreviousSpellsSectionProps {
-  /** Section eyebrow — defaults to "A look back". */
+  /** Section eyebrow - defaults to "A look back". */
   eyebrow?: string;
   className?: string;
 }
 
 /**
- * The Previous Spells showcase — same interaction philosophy as the Live
+ * The Previous Spells showcase - same interaction philosophy as the Live
  * Spell carousel (infinite, auto-advancing, centre-crowned) with a memory
  * card instead of a booking card. Dropped in on the homepage and at the
  * bottom of Live Spells.
@@ -141,7 +141,7 @@ export default function PreviousSpellsSection({
         </Reveal>
         <Reveal delay={0.14}>
           <p className="mt-5 max-w-md font-serif text-xl italic leading-snug text-cream/55 md:text-2xl">
-            Circles that already happened — kept here as memories.
+            Circles that already happened, kept here as memories.
           </p>
         </Reveal>
 

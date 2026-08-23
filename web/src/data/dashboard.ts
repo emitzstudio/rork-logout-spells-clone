@@ -1,5 +1,5 @@
 /**
- * Founder console — static navigation + section configuration.
+ * Founder console - static navigation + section configuration.
  * Only intentional, non-numeric config lives here. Every operational number
  * (bookings, revenue, departures, activity, attention counts) comes from the
  * live database via `@/data/dashboardLive` and `@/data/bookingOps`.
@@ -34,7 +34,7 @@ export interface DashNavItem {
   label: string;
   to: string;
   icon: LucideIcon;
-  /** Populated at render time from live operational counts — never hardcoded. */
+  /** Populated at render time from live operational counts - never hardcoded. */
   badge?: number;
   end?: boolean;
 }
@@ -85,8 +85,8 @@ export const DASH_SECTIONS: DashSection[] = [
     label: "Spells",
     tagline: "Create & publish circles",
     description:
-      "Create, edit and publish every Spell — dates, pricing, inclusions, hosts and imagery. The full Spell Builder plugs in right here.",
-    hint: "Spell Builder — Phase 2",
+      "Create, edit and publish every Spell - dates, pricing, inclusions, hosts and imagery. The full Spell Builder plugs in right here.",
+    hint: "Spell Builder - Phase 2",
     icon: Sparkles,
   },
   {
@@ -94,7 +94,7 @@ export const DASH_SECTIONS: DashSection[] = [
     label: "Responses",
     tagline: "Form submissions",
     description:
-      "Every form submission in one place — open a form, read each response, and download the sheet as Excel.",
+      "Every form submission in one place - open a form, read each response, and download the sheet as Excel.",
     hint: "Live since M11.6",
     icon: Inbox,
   },
@@ -103,7 +103,7 @@ export const DASH_SECTIONS: DashSection[] = [
     label: "Categories",
     tagline: "Curate collections",
     description:
-      "Organise Spells into collections — art, culture, movement, travel — and control how they surface across the site.",
+      "Organise Spells into collections - art, culture, movement, travel - and control how they surface across the site.",
     hint: "Arrives in Phase 2",
     icon: FolderOpen,
   },
@@ -112,7 +112,7 @@ export const DASH_SECTIONS: DashSection[] = [
     label: "Bookings",
     tagline: "Seats, payments & guests",
     description:
-      "Every seat in every circle — confirmations, payments, waitlists and guest details, gathered in one ledger.",
+      "Every seat in every circle - confirmations, payments, waitlists and guest details, gathered in one ledger.",
     hint: "Arrives in Phase 2",
     icon: CalendarCheck2,
   },
@@ -130,7 +130,7 @@ export const DASH_SECTIONS: DashSection[] = [
     label: "Settings",
     tagline: "The control room",
     description:
-      "Site identity, contact channels, founder profile, notifications and launch switches — your control room.",
+      "Site identity, contact channels, founder profile, notifications and launch switches - your control room.",
     hint: "Live since M12",
     icon: Settings,
   },
@@ -146,7 +146,7 @@ export interface QuickAction {
   icon: LucideIcon;
 }
 
-/** Honest, non-numeric descriptions — live counts belong to the badges/bell. */
+/** Honest, non-numeric descriptions - live counts belong to the badges/bell. */
 export const QUICK_ACTIONS: QuickAction[] = [
   { id: "qa-spell", label: "New Spell", sub: "Draft a new circle", to: "/dashboard/spells", icon: Sparkles },
   { id: "qa-bookings", label: "Review Bookings", sub: "Seats, payments & waitlists", to: "/dashboard/bookings", icon: CalendarCheck2 },

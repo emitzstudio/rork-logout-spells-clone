@@ -14,10 +14,10 @@ interface RatingFieldProps {
   onRating: (rating: number) => void;
 }
 
-/** Five clickable stars plus a clear button — 0 hides the rating entirely. */
+/** Five clickable stars plus a clear button - 0 hides the rating entirely. */
 function RatingField({ rating, onRating }: RatingFieldProps) {
   return (
-    <FieldShell label="Rating" optional helper="Shown as gold stars beside the name — clear to hide.">
+    <FieldShell label="Rating" optional helper="Shown as gold stars beside the name - clear to hide.">
       <div className="flex h-11 items-center gap-1 rounded-lg border border-cream/10 bg-cream/[0.03] px-3">
         <div role="radiogroup" aria-label="Accommodation rating" className="flex items-center gap-0.5">
           {[1, 2, 3, 4, 5].map((value) => {
@@ -71,7 +71,7 @@ interface StaySectionProps {
   onMoveImage: (id: string, dir: -1 | 1) => void;
 }
 
-/** Section 08 — the accommodation: name, story, amenities and imagery. */
+/** Section 08 - the accommodation: name, story, amenities and imagery. */
 export default function StaySection({
   draft,
   patchStay,
@@ -101,7 +101,7 @@ export default function StaySection({
           onChange={(mapLabel) => patchStay({ mapLabel })}
           placeholder="e.g. 10 min from Manali market"
           optional
-          helper="A small location chip — no real map yet."
+          helper="A small location chip - no real map yet."
           maxLength={60}
         />
       </div>
@@ -126,7 +126,7 @@ export default function StaySection({
         placeholder={
           "The rooms, the verandah, the morning light…\n\nWhat does waking up here feel like?"
         }
-        helper="The fuller story of the place — flows into the preview."
+        helper="The fuller story of the place - flows into the preview."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -151,7 +151,7 @@ export default function StaySection({
 
       <GalleryDrop
         label="Accommodation images"
-        helper="Rooms, verandahs, views — the first image leads."
+        helper="Rooms, verandahs, views - the first image leads."
         images={stay.images}
         onAdd={onAddImages}
         onRemove={onRemoveImage}

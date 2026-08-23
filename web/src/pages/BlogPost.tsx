@@ -30,7 +30,7 @@ function Article({ post }: { post: ManagedBlogPost }) {
       toast.success("Link copied", { description: "Share the story with your circle ✦" });
       window.setTimeout(() => setCopied(false), 2400);
     } catch {
-      toast.error("Couldn't copy the link — your browser said no.");
+      toast.error("Couldn't copy the link. Your browser said no.");
     }
   };
 
@@ -39,7 +39,7 @@ function Article({ post }: { post: ManagedBlogPost }) {
       title={post.seoTitle !== "" ? post.seoTitle : post.title}
       back={{ container: "max-w-[840px]", gutters: "px-5 md:px-8" }}
     >
-      {/* Reading progress — a gold thread across the top. */}
+      {/* Reading progress - a gold thread across the top. */}
       <motion.div
         aria-hidden
         style={{ scaleX: progress }}
@@ -175,7 +175,7 @@ function Article({ post }: { post: ManagedBlogPost }) {
 
 /* ---------------------------------- Page ----------------------------------- */
 
-/** The premium article page — /blog/{slug}. */
+/** The premium article page - /blog/{slug}. */
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
   const { getBySlug, ready, failed, retry } = useBlogStore();
@@ -193,7 +193,7 @@ export default function BlogPostPage() {
     );
   }
 
-  /* A failed read is NOT a missing story — shared links deserve a retry (M10). */
+  /* A failed read is NOT a missing story - shared links deserve a retry (M10). */
   if (!post && failed) {
     return (
       <Page title="The Journal">

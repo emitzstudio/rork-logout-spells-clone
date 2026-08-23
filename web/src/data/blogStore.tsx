@@ -1,9 +1,9 @@
 /**
- * The Journal's CMS — live from Supabase since M5.
+ * The Journal's CMS - live from Supabase since M5.
  *
  * The founder console writes it; the public Journal renders it. Reads go
  * through React Query under RLS (visitors see published stories whose moment
- * has arrived — the read rule IS the scheduler; staff see everything).
+ * has arrived - the read rule IS the scheduler; staff see everything).
  * Every consumer keeps the same API the localStorage era exposed.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ export interface ManagedBlogPost extends BlogPost {
 
 /* --------------------------------- Drafts ---------------------------------- */
 
-/** Editor-side block — a stable id keeps reordering and animation honest. */
+/** Editor-side block - a stable id keeps reordering and animation honest. */
 export type DraftBlock = BlogBlock & { id: string };
 
 export const withBlockIds = (blocks: BlogBlock[]): DraftBlock[] =>
@@ -51,7 +51,7 @@ export interface BlogDraft {
   deck: string;
   category: BlogCategoryId;
   tags: string[];
-  /** yyyy-mm-dd — feeds the date input directly. */
+  /** yyyy-mm-dd - feeds the date input directly. */
   publishDate: string;
   readMinutes: number;
   featured: boolean;
@@ -138,7 +138,7 @@ export const blockHasContent = (block: BlogBlock): boolean => {
   }
 };
 
-/** The slug seed — explicit slug wins, else the title. */
+/** The slug seed - explicit slug wins, else the title. */
 export const draftSlugSource = (draft: BlogDraft): string =>
   draft.slug.trim() !== "" ? draft.slug : draft.title.trim() !== "" ? draft.title : "story";
 
@@ -205,18 +205,18 @@ const fetchPosts = async (): Promise<ManagedBlogPost[]> => {
 };
 
 interface BlogStoreValue {
-  /** Every post the caller may see — staff get drafts, visitors don't. */
+  /** Every post the caller may see - staff get drafts, visitors don't. */
   posts: ManagedBlogPost[];
-  /** True once the first fetch has settled — pages gate their 404s on this. */
+  /** True once the first fetch has settled - pages gate their 404s on this. */
   ready: boolean;
-  /** True when the journal read FAILED — consumers show retry, never "empty" (M10). */
+  /** True when the journal read FAILED - consumers show retry, never "empty" (M10). */
   failed: boolean;
   /** Refetches the journal after a failure. */
   retry: () => void;
   /** Insert-or-update by id; uploads local imagery and returns the saved record. */
   savePost: (record: ManagedBlogPost) => Promise<ManagedBlogPost>;
   /**
-   * Draft stories delete; published ones are blocked (unpublish first — the
+   * Draft stories delete; published ones are blocked (unpublish first - the
    * two-step is deliberate, nothing that was live vanishes in one motion).
    */
   removePost: (id: string) => Promise<"deleted" | "published-blocked">;
@@ -224,7 +224,7 @@ interface BlogStoreValue {
   getBySlug: (slug: string) => ManagedBlogPost | undefined;
   uniqueSlug: (base: string, excludeId?: string) => string;
   refresh: () => void;
-  /** What the public Journal shows — newest first. */
+  /** What the public Journal shows - newest first. */
   publicPosts: ManagedBlogPost[];
 }
 
@@ -245,7 +245,7 @@ export function BlogStoreProvider({ children }: { children: ReactNode }) {
       const existing = posts.find((p) => p.id === record.id);
       let id = existing !== undefined ? record.id : null;
 
-      /* New stories insert first (without imagery) — storage paths need the real id. */
+      /* New stories insert first (without imagery) - storage paths need the real id. */
       if (id === null) {
         const stub = blogWritePayload({ ...record, hero: "", gallery: [], blocks: [] });
         const { data, error } = await supabase.from("blog_posts").insert(stub).select("id").single();

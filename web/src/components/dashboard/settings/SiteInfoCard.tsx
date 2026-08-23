@@ -12,7 +12,7 @@ import {
 import type { SiteIdentitySettings, SiteSettings } from "@/data/siteSettings";
 import { useSaveSettingsSection } from "@/data/siteSettingsStore";
 
-/** §1 — Site identity: name, tagline, short description. */
+/** §1 - Site identity: name, tagline, short description. */
 export default function SiteInfoCard({ settings }: { settings: SiteSettings }) {
   const { value, patch, reset, dirty } = useDraft(settings.site);
   const save = useSaveSettingsSection("site");
@@ -37,7 +37,7 @@ export default function SiteInfoCard({ settings }: { settings: SiteSettings }) {
         flash();
         toast("Site information saved ✦");
       },
-      onError: (e) => setError(e.message !== "" ? e.message : "That didn't save — try again."),
+      onError: (e) => setError(e.message !== "" ? e.message : "That didn't save - try again."),
     });
   };
 
@@ -45,7 +45,7 @@ export default function SiteInfoCard({ settings }: { settings: SiteSettings }) {
     <SettingsCard
       eyebrow="Identity"
       title="Site Information"
-      intro="The words the site leads with. The footer reads these live — page copy stays hand-written."
+      intro="The words the site leads with. The footer reads these live - page copy stays hand-written."
     >
       <div className="space-y-4">
         <TextField

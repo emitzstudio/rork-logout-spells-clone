@@ -1,8 +1,8 @@
 /**
- * M12 — per-staff console notification preferences.
+ * M12 - per-staff console notification preferences.
  *
  * Backed by `staff_notification_prefs` (own-row RLS, staff only). A missing
- * row means "everything on" — the row is only created the first time a
+ * row means "everything on" - the row is only created the first time a
  * toggle is flipped. These preferences tune what the topbar bell surfaces;
  * the underlying pages always keep their own live counts.
  *
@@ -70,7 +70,7 @@ const fetchPrefs = async (): Promise<StaffNotificationPrefs> => {
   return data === null ? DEFAULT_STAFF_PREFS : mapPrefs(data);
 };
 
-/** Raw query — the Settings card shows its own loading / error states. */
+/** Raw query - the Settings card shows its own loading / error states. */
 export function useStaffPrefsQuery(): UseQueryResult<StaffNotificationPrefs> {
   return useQuery({
     queryKey: STAFF_PREFS_KEY,
@@ -79,7 +79,7 @@ export function useStaffPrefsQuery(): UseQueryResult<StaffNotificationPrefs> {
   });
 }
 
-/** Prefs with all-on defaults — the bell never waits on this query. */
+/** Prefs with all-on defaults - the bell never waits on this query. */
 export function useStaffNotificationPrefs(): StaffNotificationPrefs {
   const query = useStaffPrefsQuery();
   return query.data ?? DEFAULT_STAFF_PREFS;
@@ -87,7 +87,7 @@ export function useStaffNotificationPrefs(): StaffNotificationPrefs {
 
 /**
  * Persists the full preference set (update first, insert when no row yet).
- * Optimistic: the toggle flips instantly, rolls back on failure — success
+ * Optimistic: the toggle flips instantly, rolls back on failure - success
  * feedback still only fires after the database confirmed the write.
  */
 export function useSaveStaffPrefs(): UseMutationResult<

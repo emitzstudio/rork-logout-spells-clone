@@ -1,11 +1,11 @@
 /**
- * Core-question visibility — per-form inclusion of the six core questions.
+ * Core-question visibility - per-form inclusion of the six core questions.
  *
  * The rules under test:
  *  · every factory-made question starts switched ON;
  *  · `visibleQuestions` is the single filter the renderer/export/counters use;
  *  · records saved before the toggle existed (no `enabled` in the stored
- *    jsonb) map to ON — existing forms keep asking what they always asked;
+ *    jsonb) map to ON - existing forms keep asking what they always asked;
  *  · switched-off questions can never block publish, but a form must ask at
  *    least one question to publish.
  */

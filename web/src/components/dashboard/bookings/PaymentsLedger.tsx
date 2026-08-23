@@ -1,6 +1,6 @@
 /**
  * The booking's slice of the money ledger. Rows are written only by the
- * audited pipeline — manual money is permanently marked source = 'manual',
+ * audited pipeline - manual money is permanently marked source = 'manual',
  * refunds are their own rows, nothing here is ever edited or deleted.
  */
 import { formatDateTime, formatINR, type PaymentRow } from "@/data/bookingOps";
@@ -26,7 +26,7 @@ export default function PaymentsLedger({ payments }: { payments: PaymentRow[] })
   if (payments.length === 0) {
     return (
       <p className="py-6 text-center font-sans text-[12px] text-cream/40">
-        No money recorded yet — record a manual payment when it arrives.
+        No money recorded yet - record a manual payment when it arrives.
       </p>
     );
   }
@@ -58,7 +58,7 @@ export default function PaymentsLedger({ payments }: { payments: PaymentRow[] })
                 <p className="mt-0.5 font-sans text-[11px] italic text-cream/35">“{payment.note}”</p>
               )}
               {payment.error_message !== "" && (
-                <p className="mt-0.5 font-sans text-[11px] text-red-300/80">{payment.error_code} — {payment.error_message}</p>
+                <p className="mt-0.5 font-sans text-[11px] text-red-300/80">{payment.error_code} - {payment.error_message}</p>
               )}
             </div>
             <p className={cn("shrink-0 font-serif text-[15px] tabular-nums", negative ? "text-red-300/90" : "text-emerald-300/90")}>

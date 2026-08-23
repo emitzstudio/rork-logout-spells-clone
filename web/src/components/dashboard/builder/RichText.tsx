@@ -28,7 +28,7 @@ interface RichTextEditorProps {
 }
 
 /**
- * The builder's rich text editor — a formatting toolbar over a lightweight
+ * The builder's rich text editor - a formatting toolbar over a lightweight
  * markup that the live preview renders as real typography. Supports bold,
  * italic, headings, bulleted & numbered lists and links.
  */
@@ -257,13 +257,13 @@ const renderInline = (text: string, keyBase: string): ReactNode[] => {
 interface RichBodyProps {
   body: string;
   className?: string;
-  /** Paragraph / list-item text classes — sized for the miniature preview. */
+  /** Paragraph / list-item text classes - sized for the miniature preview. */
   pClass?: string;
   /** Natural editorial sizing for the full published page (preview stays miniature). */
   full?: boolean;
 }
 
-/** Renders the editor's markup as real typography — miniature in the builder preview, natural on the published page. */
+/** Renders the editor's markup as real typography - miniature in the builder preview, natural on the published page. */
 export function RichBody({ body, className, pClass, full = false }: RichBodyProps) {
   const blocks = parseBlocks(body);
   if (blocks.length === 0) return null;

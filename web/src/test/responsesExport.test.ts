@@ -36,7 +36,7 @@ const makeResponse = (overrides: Partial<FormResponse>): FormResponse => ({
 });
 
 describe("buildResponsesTable", () => {
-  it("derives columns from the form definition — no internal fields", () => {
+  it("derives columns from the form definition - no internal fields", () => {
     const { columns, rows } = buildResponsesTable(makeForm(), []);
     expect(columns.map((c) => c.header)).toEqual([
       "Submission ID",
@@ -150,7 +150,7 @@ describe("buildResponsesTable", () => {
       ],
     });
     const { columns, rows } = buildResponsesTable(form, [fresh, historical]);
-    /* The switched-off question is not an active field — it trails after the
+    /* The switched-off question is not an active field - it trails after the
        asked columns, exactly like a deleted question, so nothing is lost. */
     expect(columns.map((c) => c.header)).toEqual([
       "Submission ID",

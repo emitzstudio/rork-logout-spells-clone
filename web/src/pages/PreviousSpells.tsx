@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 type Filter = "all" | SpellCategoryId;
 
 /**
- * The archive — every completed spell, kept as a clickable memory.
+ * The archive - every completed spell, kept as a clickable memory.
  * Route: /live-spells/previous. Each card opens its own memory page.
  */
 export default function PreviousSpells() {
@@ -54,7 +54,7 @@ export default function PreviousSpells() {
               Previous <span className="italic text-gold-gradient">Spells</span>
             </h1>
             <p className="mt-6 max-w-md font-serif text-2xl italic leading-snug text-cream/60">
-              Every circle that already happened — stories, photographs and the people who were there.
+              Every circle that already happened: stories, photographs and the people who were there.
             </p>
           </Reveal>
 
@@ -103,7 +103,7 @@ export default function PreviousSpells() {
               </button>
             </div>
           ) : all.length === 0 ? (
-            /* Zero completed journeys is a VALID state — kept intentional, never faked. */
+            /* Zero completed journeys is a VALID state - kept intentional, never faked. */
             <Reveal>
               <div className="mt-14 rounded-[14px] border border-cream/[0.07] bg-charcoal-deep/40 px-8 py-24 text-center">
                 <span
@@ -116,7 +116,7 @@ export default function PreviousSpells() {
                   No previous spells <span className="italic text-gold-gradient">yet.</span>
                 </h2>
                 <p className="mx-auto mt-4 max-w-md font-serif text-xl italic leading-snug text-cream/55">
-                  When a circle completes, its story is kept here — the photographs, the
+                  When a circle completes, its story is kept here: the photographs, the
                   chapters, the people who were there.
                 </p>
               </div>

@@ -1,5 +1,5 @@
 /**
- * Pure derivations — every number the traveller space shows is computed here
+ * Pure derivations - every number the traveller space shows is computed here
  * from the one account bundle (+ the live spell collection). Nothing is
  * hand-maintained twice: book a trip and the wallet, stats, XP, badges,
  * activity feed and calendar all move together.
@@ -30,15 +30,15 @@ export const fmtDay = (isoDate: string): string =>
 export const fmtDayYear = (isoDate: string): string =>
   new Date(isoDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
-/** "2–6 Aug 2026" · "30 Aug – 4 Sep 2026" */
+/** "2-6 Aug 2026" · "30 Aug - 4 Sep 2026" */
 export const fmtRange = (startIso: string, endIso: string): string => {
   const s = new Date(startIso);
   const e = new Date(endIso);
   const year = e.toLocaleDateString("en-IN", { year: "numeric" });
   if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
-    return `${s.getDate()}–${e.getDate()} ${e.toLocaleDateString("en-IN", { month: "short" })} ${year}`;
+    return `${s.getDate()}-${e.getDate()} ${e.toLocaleDateString("en-IN", { month: "short" })} ${year}`;
   }
-  return `${fmtDay(startIso)} – ${fmtDay(endIso)} ${year}`;
+  return `${fmtDay(startIso)} - ${fmtDay(endIso)} ${year}`;
 };
 
 export const daysUntil = (isoDate: string): number =>
@@ -62,7 +62,7 @@ export const timeAgo = (isoDate: string): string => {
 
 /**
  * Bookings auto-transition with real time: an "upcoming" trip whose dates
- * have arrived reads as ongoing, and as completed once the dates pass —
+ * have arrived reads as ongoing, and as completed once the dates pass -
  * so the account stays truthful no matter when it's opened.
  */
 export const effectiveStatus = (booking: TripBooking): TripStatus => {
@@ -95,7 +95,7 @@ export const nextTrip = (bookings: TripBooking[]): TripBooking | null => {
 /* -------------------------------- Wallet ---------------------------------- */
 
 // deriveTransactions is gone (M7C): the ledger is no longer derived from
-// bookings — `AccountData.transactions` carries the REAL payments rows, and
+// bookings - `AccountData.transactions` carries the REAL payments rows, and
 // with them went the mock refund copy that invented percentages.
 
 export interface WalletSummary {
@@ -197,7 +197,7 @@ export const deriveJourney = (data: AccountData): JourneyState => {
     const last = m.photos[m.photos.length - 1];
     push({
       id: `xp-mem-${m.id}`,
-      label: `Kept an album — ${m.title}`,
+      label: `Kept an album - ${m.title}`,
       detail: `${m.photos.length} of ${m.photoLimit} keepsakes`,
       xp: 40,
       date: last?.addedAt ?? m.end,
@@ -205,7 +205,7 @@ export const deriveJourney = (data: AccountData): JourneyState => {
     });
   }
 
-  // Referral XP is paused with the referral programme — events return when it does.
+  // Referral XP is paused with the referral programme - events return when it does.
 
   if (data.wishlist.length > 0) {
     push({
@@ -213,7 +213,7 @@ export const deriveJourney = (data: AccountData): JourneyState => {
       label: `${data.wishlist.length} spell${data.wishlist.length > 1 ? "s" : ""} on your wishlist`,
       detail: "Dreams counted, gently",
       xp: data.wishlist.length * 8,
-      // The REAL moment of the newest save — never an invented timestamp.
+      // The REAL moment of the newest save - never an invented timestamp.
       date: data.wishlistLatestAt ?? data.profile.joinedAt,
       kind: "wishlist",
     });
@@ -385,9 +385,9 @@ const MONTHS: Record<string, number> = {
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
-/** Parses collection date strings like "Sep 18–23" into concrete dates. */
+/** Parses collection date strings like "Sep 18-23" into concrete dates. */
 export const parseSpellDates = (dates: string): { start: Date; end: Date } | null => {
-  const match = /^([A-Za-z]{3,9})\s+(\d{1,2})\s*[–—-]\s*(\d{1,2})$/.exec(dates.trim());
+  const match = /^([A-Za-z]{3,9})\s+(\d{1,2})\s*[---]\s*(\d{1,2})$/.exec(dates.trim());
   if (!match) return null;
   const month = MONTHS[match[1].slice(0, 3).toLowerCase()];
   if (month === undefined) return null;

@@ -14,11 +14,11 @@ import { cn } from "@/lib/utils";
 
 const ALL_INTERESTS = Object.keys(CATEGORY_META) as SpellCategoryId[];
 
-/** Profile — the traveller's own page, and the source of every pre-filled form. */
+/** Profile - the traveller's own page, and the source of every pre-filled form. */
 export default function ProfilePage() {
   const { data, updateProfile } = useAccount();
   const [editing, setEditing] = useState<boolean>(false);
-  /** One leaning saves at a time — rapid taps can't race stale state (M10). */
+  /** One leaning saves at a time - rapid taps can't race stale state (M10). */
   const [savingLeanings, setSavingLeanings] = useState<boolean>(false);
 
   if (!data) return null;
@@ -31,8 +31,8 @@ export default function ProfilePage() {
       : [...p.interests, cat];
     setSavingLeanings(true);
     updateProfile({ interests: next })
-      .then(() => toast("Leanings updated — recommendations will follow ✦"))
-      .catch(() => toast.error("That didn't save — try again."))
+      .then(() => toast("Leanings updated. Recommendations will follow ✦"))
+      .catch(() => toast.error("That didn't save. Try again."))
       .finally(() => setSavingLeanings(false));
   };
 
@@ -45,7 +45,7 @@ export default function ProfilePage() {
           The person behind <span className="italic text-gold-gradient">the journeys.</span>
         </>
       }
-      sub="Everything here quietly pre-fills your bookings — dietary needs, emergency contact, the lot. Answer once, wander forever."
+      sub="Everything here quietly pre-fills your bookings: dietary needs, emergency contact, the lot. Answer once, wander forever."
       actions={
         <button type="button" onClick={() => setEditing(true)} className="btn-gold !px-5 !py-2.5 !text-[12px]">
           <PenLine size={13} /> Edit profile
@@ -85,7 +85,7 @@ export default function ProfilePage() {
               </p>
             </div>
             {p.instagram !== "" && (
-              <p className="hidden pb-1 font-hand text-2xl text-gold/60 md:block">— {p.instagram}</p>
+              <p className="hidden pb-1 font-hand text-2xl text-gold/60 md:block">{p.instagram}</p>
             )}
           </div>
           <p className="mt-5 max-w-2xl font-serif text-[17px] italic leading-relaxed text-cream/65">
@@ -101,11 +101,11 @@ export default function ProfilePage() {
           <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
             {[
               { label: "Email", value: p.email },
-              { label: "Phone", value: p.phone !== "" ? p.phone : "—" },
-              { label: "Birthday", value: p.birthday !== "" ? fmtDayYear(p.birthday) : "—" },
-              { label: "Languages", value: p.languages.length > 0 ? p.languages.join(", ") : "—" },
-              { label: "Dietary", value: p.dietary !== "" ? p.dietary : "—" },
-              { label: "Instagram", value: p.instagram !== "" ? p.instagram : "—" },
+              { label: "Phone", value: p.phone !== "" ? p.phone : "·" },
+              { label: "Birthday", value: p.birthday !== "" ? fmtDayYear(p.birthday) : "·" },
+              { label: "Languages", value: p.languages.length > 0 ? p.languages.join(", ") : "·" },
+              { label: "Dietary", value: p.dietary !== "" ? p.dietary : "·" },
+              { label: "Instagram", value: p.instagram !== "" ? p.instagram : "·" },
             ].map((row) => (
               <div key={row.label}>
                 <dt className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-cream/35">{row.label}</dt>
@@ -119,10 +119,10 @@ export default function ProfilePage() {
             <p className="mt-1.5 font-sans text-[13.5px] text-cream/80">
               {p.emergency.name !== ""
                 ? `${p.emergency.name} (${p.emergency.relation !== "" ? p.emergency.relation : "contact"}) · ${p.emergency.phone !== "" ? p.emergency.phone : "no number yet"}`
-                : "Not set yet — add it before your first spell."}
+                : "Not set yet - add it before your first spell."}
             </p>
             <p className="mt-1 font-sans text-[11px] text-cream/35">
-              Travels with you on every booking — hosts have it before you arrive.
+              Travels with you on every booking - hosts have it before you arrive.
             </p>
           </div>
         </div>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
               Answer once, wander forever.
             </p>
             <p className="mt-2 font-sans text-[12px] leading-relaxed text-cream/50">
-              Booking forms pull your name, contact, dietary needs and emergency details from here —
+              Booking forms pull your name, contact, dietary needs and emergency details from here -
               you'll never type them twice.
             </p>
           </div>
@@ -205,7 +205,7 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
   const [saving, setSaving] = useState<boolean>(false);
   const [form, setForm] = useState<TravellerProfile>(profile);
 
-  /** Closing is refused mid-save — a save in flight must finish honestly (M10). */
+  /** Closing is refused mid-save - a save in flight must finish honestly (M10). */
   const requestClose = (): void => {
     if (!saving) onClose();
   };
@@ -215,7 +215,7 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
     if (open) setForm(profile);
   }, [open, profile]);
 
-  // Escape closes (unless saving) and the page behind stays put — same manners as InvoiceDialog.
+  // Escape closes (unless saving) and the page behind stays put - same manners as InvoiceDialog.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -264,7 +264,7 @@ function EditProfileDialog({ open, profile, onClose }: EditProfileDialogProps) {
         toast("Profile updated ✦");
         onClose();
       })
-      .catch(() => toast.error("Your profile couldn't be saved — try again."))
+      .catch(() => toast.error("Your profile couldn't be saved - try again."))
       .finally(() => setSaving(false));
   };
 

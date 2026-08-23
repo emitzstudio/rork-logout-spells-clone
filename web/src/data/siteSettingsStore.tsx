@@ -1,9 +1,9 @@
 /**
- * M12 — site settings hooks.
+ * M12 - site settings hooks.
  *
  * One cached query (`['site-settings']`) feeds both worlds: the public site
  * (footer, contact, launch switches) and the founder console. RLS decides
- * how much comes back — everyone receives the four public sections, staff
+ * how much comes back - everyone receives the four public sections, staff
  * additionally receive `routing`. Saves go through column-whitelisted
  * UPDATEs and are verified (a write that touched no row is a failure, so
  * "Saved" is never shown on a silent RLS denial).
@@ -46,13 +46,13 @@ const fetchSiteSettings = async (): Promise<SiteSettings> => {
     contact: SECTION_NORMALIZERS.contact(byKey.get("contact")?.data),
     socials: SECTION_NORMALIZERS.socials(byKey.get("socials")?.data),
     launch: SECTION_NORMALIZERS.launch(byKey.get("launch")?.data),
-    /* Hidden by RLS for non-staff — normalizes to honest empties. */
+    /* Hidden by RLS for non-staff - normalizes to honest empties. */
     routing: SECTION_NORMALIZERS.routing(byKey.get("routing")?.data),
     updatedAt,
   };
 };
 
-/** The raw query — the console gates editing on REAL data (no placeholder). */
+/** The raw query - the console gates editing on REAL data (no placeholder). */
 export function useSiteSettingsQuery(): UseQueryResult<SiteSettings> {
   return useQuery({
     queryKey: SITE_SETTINGS_KEY,
@@ -62,7 +62,7 @@ export function useSiteSettingsQuery(): UseQueryResult<SiteSettings> {
 }
 
 /**
- * Settings with instant defaults — public consumers never wait and never
+ * Settings with instant defaults - public consumers never wait and never
  * flash: until (or unless) the database answers, the site shows exactly
  * what it showed before M12.
  */
@@ -72,7 +72,7 @@ export function useSiteSettings(): SiteSettings {
 }
 
 /**
- * Saves one settings section. Verifies the row was actually written —
+ * Saves one settings section. Verifies the row was actually written -
  * RLS silently filtering the update surfaces as an error, never a fake
  * "Saved". On success the cache is patched immediately (no stale flash)
  * and then re-fetched for truth.
@@ -90,7 +90,7 @@ export function useSaveSettingsSection<K extends SettingsSectionKey>(
         .select("key");
       if (error) throw new Error(error.message);
       if (!data || data.length !== 1) {
-        throw new Error("The save didn't reach the database — check your access and try again.");
+        throw new Error("The save didn't reach the database - check your access and try again.");
       }
     },
     onSuccess: (_result, payload) => {

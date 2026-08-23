@@ -2,7 +2,7 @@
  * Row → model mappers (M5).
  *
  * The database is the source of truth; these translate its rows into the
- * exact TypeScript models every component already renders — so the provider
+ * exact TypeScript models every component already renders - so the provider
  * swap changes no UI code. Write-side payload builders live here too, so the
  * column whitelists exist in exactly one place.
  */
@@ -194,7 +194,7 @@ export const mapSpell = (
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     views: Number(row.views),
-    /* Real derived values — ₹0 / 0 until the M7 payments ledger and M6 wishlist exist. */
+    /* Real derived values - ₹0 / 0 until the M7 payments ledger and M6 wishlist exist. */
     revenue: 0,
     wishlists: 0,
     inclusions: row.inclusions,
@@ -362,7 +362,7 @@ export const mapPreviousSpell = (row: PreviousSpellRow): PreviousSpell => ({
 
 export const mapReview = (row: ReviewRow): SpellReview => ({
   id: row.id,
-  /* Invitation reviews (M13) may precede their archive page — they only reach
+  /* Invitation reviews (M13) may precede their archive page - they only reach
      public readers once adopted by a published archive, so the empty id is a
      staff-console-only sight. */
   spellId: row.previous_spell_id ?? "",
@@ -389,7 +389,7 @@ export const mapForm = (row: FormRow): LogoutForm => {
     description: row.description,
     style: row.style,
     status: row.status,
-    // Forms saved before the visibility toggle lack `enabled` — default to ON
+    // Forms saved before the visibility toggle lack `enabled` - default to ON
     // so existing forms keep asking exactly what they always asked.
     questions: questions.map((question) => ({ ...question, enabled: question.enabled !== false })),
     successMessage: row.success_message,

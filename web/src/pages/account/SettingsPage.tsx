@@ -34,11 +34,11 @@ const PRIVACY_ROWS: PrefRowDef[] = [
   { key: "showMemories", label: "Share memory covers", line: "Hosts may feature an album cover (never your photos) on spell pages." },
 ];
 
-/** Settings — preferences, privacy, password and the quiet exit. */
+/** Settings - preferences, privacy, password and the quiet exit. */
 export default function SettingsPage() {
   const { data, updatePrefs, signOut } = useAccount();
   const navigate = useNavigate();
-  /* M12 — the erase-account address comes from the central contact settings. */
+  /* M12 - the erase-account address comes from the central contact settings. */
   const { contact } = useSiteSettings();
 
   if (!data) return null;
@@ -47,7 +47,7 @@ export default function SettingsPage() {
   const setPref = (key: keyof TravellerPrefs, value: boolean): void => {
     void updatePrefs({ [key]: value })
       .then(() => toast("Preference saved"))
-      .catch(() => toast("That didn't save — try again."));
+      .catch(() => toast("That didn't save. Try again."));
   };
 
   const renderRows = (rows: PrefRowDef[]): ReactNode =>
@@ -114,7 +114,7 @@ export default function SettingsPage() {
             onClick={() => {
               signOut();
               navigate("/");
-              toast("Logged out — the circle keeps your seat ✦");
+              toast("Logged out. The circle keeps your seat ✦");
             }}
             className="btn-ghost-gold !px-5 !py-2.5 !text-[12px]"
           >
@@ -128,7 +128,7 @@ export default function SettingsPage() {
               <ShieldAlert size={17} className="text-red-300/80" /> Leave the circle
             </p>
             <p className="mt-1 max-w-md font-sans text-[12px] leading-relaxed text-cream/45">
-              Write to us and a real person will erase your account and every trace of it —
+              Write to us and a real person will erase your account and every trace of it,
               usually within two days. There's no undo spell.
             </p>
           </div>
@@ -170,7 +170,7 @@ function PasswordCard() {
         setConfirm("");
       })
       .catch((err: unknown) => {
-        setError(err instanceof AccountError ? err.message : "Something drifted — try again.");
+        setError(err instanceof AccountError ? err.message : "Something drifted. Try again.");
       })
       .finally(() => setBusy(false));
   };

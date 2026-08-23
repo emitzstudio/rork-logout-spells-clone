@@ -1,5 +1,5 @@
 /**
- * The forms CMS — live from Supabase since M5.
+ * The forms CMS - live from Supabase since M5.
  *
  * The founder console edits forms; the public website renders published ones
  * and files responses back in through the M4 public write path. Door 1
@@ -68,18 +68,18 @@ export interface AddResponseInput {
 }
 
 interface FormStoreValue {
-  /** Every form the caller may see — staff get drafts, visitors don't. */
+  /** Every form the caller may see - staff get drafts, visitors don't. */
   forms: LogoutForm[];
-  /** True once the first fetch has settled — pages gate their 404s on this. */
+  /** True once the first fetch has settled - pages gate their 404s on this. */
   ready: boolean;
-  /** True when the forms read FAILED — consumers show retry, never "empty" (M10). */
+  /** True when the forms read FAILED - consumers show retry, never "empty" (M10). */
   failed: boolean;
   /** Refetches the forms after a failure. */
   retry: () => void;
   /** Insert-or-update by id; returns the saved record (real id for new forms). */
   saveForm: (record: LogoutForm) => Promise<LogoutForm>;
   /**
-   * Unanswered forms delete; answered ones are retired (unpublished) instead —
+   * Unanswered forms delete; answered ones are retired (unpublished) instead -
    * traveller words are never cascade-lost (founder decision, M4).
    */
   deleteForm: (id: string) => Promise<"deleted" | "retired">;
@@ -89,18 +89,18 @@ interface FormStoreValue {
   uniqueFormSlug: (base: string, excludeId?: string) => string;
   /** Only these appear in spell attachment dropdowns and at public URLs. */
   publishedForms: LogoutForm[];
-  /** Newest first — staff inbox (RLS returns none for visitors). */
+  /** Newest first - staff inbox (RLS returns none for visitors). */
   responses: FormResponse[];
-  /** True once the responses read has settled — the console gates counts on this. */
+  /** True once the responses read has settled - the console gates counts on this. */
   responsesReady: boolean;
-  /** True when the responses read FAILED — consumers show retry, never "0 responses" (M10). */
+  /** True when the responses read FAILED - consumers show retry, never "0 responses" (M10). */
   responsesFailed: boolean;
   /** Refetches the responses after a failure. */
   retryResponses: () => void;
   /** Resolves only when the response is really stored; throws on failure. */
   addResponse: (input: AddResponseInput) => Promise<void>;
   markResponseViewed: (id: string) => void;
-  /** Door 1 enquiries — staff inbox, newest first. */
+  /** Door 1 enquiries - staff inbox, newest first. */
   inquiries: ConsoleInquiry[];
   setInquiryStatus: (id: string, status: ConsoleInquiry["status"]) => void;
 }
@@ -110,7 +110,7 @@ const FormStoreContext = createContext<FormStoreValue | null>(null);
 export function FormStoreProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
-  /* Staff inboxes only exist behind a session — spare visitors the empty fetches. */
+  /* Staff inboxes only exist behind a session - spare visitors the empty fetches. */
   const [hasSession, setHasSession] = useState<boolean>(false);
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => setHasSession(data.session !== null));
@@ -206,9 +206,9 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
   );
 
   /**
-   * The public write path — anyone may submit into a published form (RLS
+   * The public write path - anyone may submit into a published form (RLS
    * enforces the gate server-side). M9: the insert is awaited, so the UI can
-   * only show success when the row really landed — failures throw and the
+   * only show success when the row really landed - failures throw and the
    * renderer offers a retry instead of a false "Sent".
    */
   const addResponse = useCallback(
@@ -225,7 +225,7 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
       });
       if (error) {
         console.error("[formStore] Response submit failed:", error.message);
-        throw new Error("Your response couldn't be sent — please try again.");
+        throw new Error("Your response couldn't be sent - please try again.");
       }
       void queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
     },
@@ -243,7 +243,7 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
         .then(({ error }) => {
           if (error) {
             console.error("[formStore] Mark viewed failed:", error.message);
-            toast.error("Couldn't mark that response as viewed — try again");
+            toast.error("Couldn't mark that response as viewed - try again");
             return;
           }
           void queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
@@ -261,7 +261,7 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
         .then(({ error }) => {
           if (error) {
             console.error("[formStore] Enquiry status update failed:", error.message);
-            toast.error("Couldn't update the enquiry — try again");
+            toast.error("Couldn't update the enquiry - try again");
             return;
           }
           void queryClient.invalidateQueries({ queryKey: INQUIRIES_KEY });

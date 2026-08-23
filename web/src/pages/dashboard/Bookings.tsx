@@ -1,5 +1,5 @@
 /**
- * The booking operations hub (M7B) — every seat in every circle, live from
+ * The booking operations hub (M7B) - every seat in every circle, live from
  * the M7A backend: bookings list + search/filters, the waitlist & holds
  * board, and the change-request queue. Offline sales and CSV exports live
  * in the header. All reads run under staff RLS; all privileged writes go
@@ -62,7 +62,7 @@ function ExportMenu({ rows }: { rows: BookingReportRow[] }) {
     setBusy(true);
     try {
       const count = await exportPaymentsCsv();
-      toast.success(count === 0 ? "Payments CSV exported (ledger is empty)" : `Payments CSV exported — ${count} rows`);
+      toast.success(count === 0 ? "Payments CSV exported (ledger is empty)" : `Payments CSV exported - ${count} rows`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Export failed");
     } finally {
@@ -101,7 +101,7 @@ function ExportMenu({ rows }: { rows: BookingReportRow[] }) {
                 role="menuitem"
                 onClick={() => {
                   exportBookingsCsv(rows);
-                  toast.success(`Bookings CSV exported — ${rows.length} rows (current view)`);
+                  toast.success(`Bookings CSV exported - ${rows.length} rows (current view)`);
                   setOpen(false);
                 }}
                 className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left font-sans text-[12px] text-cream/70 transition-colors hover:bg-cream/[0.05] hover:text-cream"
@@ -208,7 +208,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
           <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold/70">Operations</p>
           <h1 className="mt-1 font-serif text-[30px] font-medium leading-tight text-cream">Bookings</h1>
           <p className="mt-1 font-sans text-[12.5px] text-cream/45">
-            Every seat, payment and request — live from the booking ledger.
+            Every seat, payment and request - live from the booking ledger.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
       {adminReady && !isAdmin && (
         <p className="mt-4 flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3.5 py-2.5 font-sans text-[11.5px] text-amber-200/80">
           <ShieldAlert className="h-4 w-4 shrink-0" />
-          Money and booking actions need the admin role — the server enforces this on every call.
+          Money and booking actions need the admin role - the server enforces this on every call.
         </p>
       )}
 
@@ -314,7 +314,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
                   <ShieldAlert className="mx-auto h-7 w-7 text-cream/25" />
                   <p className="mt-3 font-serif text-[20px] text-cream/85">The ledger couldn't be reached</p>
                   <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-                    The connection failed — your bookings are safe and unchanged.
+                    The connection failed - your bookings are safe and unchanged.
                   </p>
                   <button
                     type="button"
@@ -332,7 +332,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
                   </p>
                   <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
                     {rows.length === 0
-                      ? "Bookings appear here the moment a seat is taken. Selling over the phone? Record it as an offline sale — seats, money and notifications all flow through the real pipeline."
+                      ? "Bookings appear here the moment a seat is taken. Selling over the phone? Record it as an offline sale - seats, money and notifications all flow through the real pipeline."
                       : "Try a different search or status filter."}
                   </p>
                   {rows.length === 0 && (
@@ -370,7 +370,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
                             <p className="font-sans text-[10.5px] text-cream/40">{row.lead_email ?? ""}</p>
                           </td>
                           <td className="px-4 py-3.5">
-                            <p className="font-sans text-[12.5px] text-cream/85">{row.spell_name ?? "—"}</p>
+                            <p className="font-sans text-[12.5px] text-cream/85">{row.spell_name ?? "·"}</p>
                             <p className="font-sans text-[10.5px] text-cream/40">{row.departure_label ?? ""}</p>
                           </td>
                           <td className="px-4 py-3.5 font-sans text-[12px] text-cream/65">
@@ -385,7 +385,7 @@ export default function Bookings({ tab }: { tab: OpsTab }) {
                           </td>
                           <td className="px-4 py-3.5">{row.status !== null && <BookingStatusBadge status={row.status} />}</td>
                           <td className="px-4 py-3.5 font-sans text-[11.5px] text-cream/45">
-                            {row.booked_at !== null ? timeAgo(row.booked_at) : "—"}
+                            {row.booked_at !== null ? timeAgo(row.booked_at) : "·"}
                           </td>
                         </tr>
                       ))}

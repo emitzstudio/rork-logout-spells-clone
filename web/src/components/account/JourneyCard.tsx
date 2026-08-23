@@ -12,7 +12,7 @@ interface JourneyCardProps {
   className?: string;
 }
 
-/** The traveller's level + XP progress — the heartbeat of the gamified path. */
+/** The traveller's level + XP progress - the heartbeat of the gamified path. */
 export default function JourneyCard({ journey, compact, className }: JourneyCardProps) {
   const toNext = journey.nextAt !== null ? journey.nextAt - journey.xp : 0;
 

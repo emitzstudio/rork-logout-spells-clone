@@ -37,7 +37,7 @@ const SHELL_ITEMS: ShellItem[] = [
 ];
 
 /**
- * The traveller space shell — session guard, the sub-navigation ribbon and
+ * The traveller space shell - session guard, the sub-navigation ribbon and
  * the content column. Lives inside the standard site chrome (nav + footer),
  * so the account always feels like another chapter of Logout Spells.
  */
@@ -45,7 +45,7 @@ export default function AccountShell({ children }: { children: ReactNode }) {
   const { session, data, booting, ready, loadFailed, retryLoad } = useAccount();
   const location = useLocation();
 
-  // Wait for the stored session to restore before deciding to redirect —
+  // Wait for the stored session to restore before deciding to redirect -
   // otherwise a hard refresh inside the space would bounce to /login.
   if (!ready) {
     return (
@@ -119,7 +119,7 @@ export default function AccountShell({ children }: { children: ReactNode }) {
             </div>
           </nav>
 
-          {/* Content — a failed bundle load gets an honest retry, never an endless skeleton (M10). */}
+          {/* Content - a failed bundle load gets an honest retry, never an endless skeleton (M10). */}
           <div className="mt-7 md:mt-9">
             {loadFailed && !data ? (
               <LoadError message="Your space couldn't be reached." onRetry={retryLoad} />

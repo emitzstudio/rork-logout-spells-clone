@@ -6,7 +6,7 @@
  * admin_confirm_booking, admin_cancel_booking, admin_create_booking) or a
  * column-whitelisted table grant (staff operational fields, waitlist, change
  * requests, reviews moderation, staff notes). The console never computes or
- * writes money/seat state itself — the server is the source of truth.
+ * writes money/seat state itself - the server is the source of truth.
  */
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
@@ -66,16 +66,16 @@ export const rupeesToMinor = (input: string): number | null => {
 };
 
 export const formatDate = (iso: string | null | undefined): string => {
-  if (!iso) return "—";
+  if (!iso) return "·";
   const date = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "·";
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 };
 
 export const formatDateTime = (iso: string | null | undefined): string => {
-  if (!iso) return "—";
+  if (!iso) return "·";
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "·";
   return `${date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} · ${date.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`;
 };
 
@@ -87,7 +87,7 @@ export const formatDateRange = (start: string | null | undefined, end: string | 
     const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
     const startLabel = s.toLocaleDateString("en-IN", { day: "numeric", month: sameMonth ? undefined : "short" });
     const endLabel = e.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-    return `${startLabel}–${endLabel}`;
+    return `${startLabel}-${endLabel}`;
   }
   return formatDate(start ?? end);
 };
@@ -155,7 +155,7 @@ export interface BookingBundle {
   events: BookingEventRow[];
 }
 
-/** One booking with everything attached — the detail page's single source. */
+/** One booking with everything attached - the detail page's single source. */
 export function useBookingBundle(id: string | undefined): UseQueryResult<BookingBundle> {
   return useQuery({
     queryKey: opsKeys.booking(id ?? "none"),
@@ -381,7 +381,7 @@ export function useRequestsQueue(): UseQueryResult<RequestWithBooking[]> {
         const booking = bookingById.get(request.booking_id);
         return {
           request,
-          bookingRef: booking?.ref ?? "—",
+          bookingRef: booking?.ref ?? "·",
           leadName: booking?.lead_name ?? "",
           bookingStatus: booking?.status ?? null,
         };
@@ -413,7 +413,7 @@ export function useReviewQueue(): UseQueryResult<ReviewWithJourney[]> {
       const spellNameById = new Map((spells.data ?? []).map((s) => [s.id, s.name]));
       return (reviews.data ?? []).map((review): ReviewWithJourney => ({
         review,
-        /* Invitation reviews (M13) may precede their archive page — fall back
+        /* Invitation reviews (M13) may precede their archive page - fall back
            to the catalogue spell they were collected for. */
         journeyTitle:
           (review.previous_spell_id !== null ? titleById.get(review.previous_spell_id) : undefined) ??
@@ -431,7 +431,7 @@ export interface OpsBadges {
   pendingReviews: number;
 }
 
-/** Live sidebar counts — pending bookings, open change requests, reviews awaiting moderation. */
+/** Live sidebar counts - pending bookings, open change requests, reviews awaiting moderation. */
 export function useOpsBadges(): UseQueryResult<OpsBadges> {
   return useQuery({
     queryKey: opsKeys.badges,
@@ -457,7 +457,7 @@ export function useOpsBadges(): UseQueryResult<OpsBadges> {
 
 /**
  * Whether the signed-in staff member holds the admin role (RPC-gated actions).
- * `ready` is false while the check is in flight — callers must not flash the
+ * `ready` is false while the check is in flight - callers must not flash the
  * "you need the admin role" warning at real admins during that beat (M10).
  */
 export function useIsAdmin(): { isAdmin: boolean; ready: boolean } {
@@ -620,7 +620,7 @@ export interface OperationsInput {
   timelineStep: TimelineStep;
 }
 
-/** Staff operational fields — the only bookings columns the guard allows staff to edit. */
+/** Staff operational fields - the only bookings columns the guard allows staff to edit. */
 export function useSaveOperations(): UseMutationResult<void, Error, OperationsInput> {
   const invalidate = useInvalidateOps();
   return useMutation({
@@ -779,7 +779,7 @@ export const downloadCsv = (filename: string, headers: string[], rows: (string |
 
 const stamp = (): string => new Date().toISOString().slice(0, 10);
 
-/** The bookings export — one row per booking_report row (₹ as plain numbers). */
+/** The bookings export - one row per booking_report row (₹ as plain numbers). */
 export const exportBookingsCsv = (rows: BookingReportRow[]): void => {
   downloadCsv(
     `logout-spells-bookings-${stamp()}.csv`,
@@ -800,7 +800,7 @@ export const exportBookingsCsv = (rows: BookingReportRow[]): void => {
   );
 };
 
-/** The payments export — every ledger row the caller may see, with booking refs. */
+/** The payments export - every ledger row the caller may see, with booking refs. */
 export const exportPaymentsCsv = async (): Promise<number> => {
   const [payments, bookings] = await Promise.all([
     supabase.from("payments").select("*").order("created_at", { ascending: false }),

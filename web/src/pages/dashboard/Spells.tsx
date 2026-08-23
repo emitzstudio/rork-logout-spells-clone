@@ -47,7 +47,7 @@ interface ToastState {
   message: string;
 }
 
-/** The Spells management hub — backed by the shared local CMS. */
+/** The Spells management hub - backed by the shared local CMS. */
 export default function Spells() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,7 +125,7 @@ export default function Spells() {
     setToast({ id: Date.now(), message });
   }, []);
 
-  /* A fresh publish just landed — greet it and highlight the new card. */
+  /* A fresh publish just landed - greet it and highlight the new card. */
   useEffect(() => {
     const arrival = location.state as { freshId?: string; notice?: string } | null;
     if (!arrival?.freshId && !arrival?.notice) return;
@@ -147,7 +147,7 @@ export default function Spells() {
           setFreshId(copy.id);
           showToast(`“${source.name}” duplicated as a draft`);
         })
-        .catch(() => showToast("Could not duplicate — please try again"));
+        .catch(() => showToast("Could not duplicate - please try again"));
     },
     [spells, duplicateSpellInStore, showToast],
   );
@@ -161,11 +161,11 @@ export default function Spells() {
         .then(() =>
           showToast(
             target
-              ? `“${target.name}” archived${target.status === "published" || target.status === "soldout" ? " — removed from the site" : ""}`
+              ? `“${target.name}” archived${target.status === "published" || target.status === "soldout" ? " - removed from the site" : ""}`
               : "Spell archived",
           ),
         )
-        .catch(() => showToast("Could not archive — please try again"));
+        .catch(() => showToast("Could not archive - please try again"));
     },
     [spells, archiveSpellInStore, showToast],
   );
@@ -175,7 +175,7 @@ export default function Spells() {
       const target = spells.find((s) => s.id === id);
       void restoreSpellInStore(id)
         .then(() => showToast(target ? `“${target.name}” restored to drafts` : "Spell restored"))
-        .catch(() => showToast("Could not restore — please try again"));
+        .catch(() => showToast("Could not restore - please try again"));
     },
     [spells, restoreSpellInStore, showToast],
   );
@@ -185,16 +185,16 @@ export default function Spells() {
       const target = spells.find((s) => s.id === id);
       setConfirmState(null);
       setSelectedId(null);
-      /* Catalogue rows are never erased — the database allows archive only. */
+      /* Catalogue rows are never erased - the database allows archive only. */
       void archiveSpellInStore(id)
         .then(() =>
           showToast(
             target
-              ? `“${target.name}” moved to the archive — spells are never erased`
+              ? `“${target.name}” moved to the archive - spells are never erased`
               : "Spell archived",
           ),
         )
-        .catch(() => showToast("Could not archive — please try again"));
+        .catch(() => showToast("Could not archive - please try again"));
     },
     [spells, archiveSpellInStore, showToast],
   );
@@ -328,7 +328,7 @@ export default function Spells() {
   }, [query, category, status, locationFilter]);
 
   // Real wishlist counts across all travellers (M6). The database gates the
-  // aggregate on staff membership — non-staff callers receive zero rows.
+  // aggregate on staff membership - non-staff callers receive zero rows.
   const { data: wishlistCounts } = useQuery({
     queryKey: ["wishlist-counts"],
     queryFn: async (): Promise<Map<string, number>> => {
@@ -415,7 +415,7 @@ export default function Spells() {
         <div role="alert" className="mt-8 rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-20 text-center">
           <p className="font-serif text-[22px] text-cream/85">The collection couldn't be reached</p>
           <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-            The connection failed — your spells are safe and unchanged.
+            The connection failed - your spells are safe and unchanged.
           </p>
           <button
             type="button"
@@ -560,7 +560,7 @@ export default function Spells() {
         </>
       )}
 
-      {/* New Spell — manual vs import */}
+      {/* New Spell - manual vs import */}
       <AnimatePresence>
         {newOpen && (
           <NewSpellDialog

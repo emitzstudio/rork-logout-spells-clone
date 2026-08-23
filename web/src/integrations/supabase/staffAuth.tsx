@@ -1,7 +1,7 @@
 /**
  * Staff authentication for the founder console (M5 · Option A).
  *
- * The gate is a convenience — RLS is the real enforcement. Signing in flips
+ * The gate is a convenience - RLS is the real enforcement. Signing in flips
  * the shared Supabase client to an authenticated session; staff policies then
  * reveal drafts, responses and enquiries, and every console write is checked
  * row-by-row in the database regardless of what this component renders.
@@ -47,7 +47,7 @@ function ConsoleWait({ label }: { label: string }) {
   );
 }
 
-/** The branded staff sign-in — email + password against native Supabase Auth. */
+/** The branded staff sign-in - email + password against native Supabase Auth. */
 function StaffSignIn() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -87,7 +87,7 @@ function StaffSignIn() {
             The Console
           </h1>
           <p className="mt-2 font-sans text-[12.5px] leading-relaxed text-cream/45">
-            Staff of the coven only — sign in to shape the spells.
+            Staff of the coven only - sign in to shape the spells.
           </p>
         </div>
 
@@ -195,7 +195,7 @@ export function StaffGate({ children }: { children: ReactNode }) {
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
-      // Auth flips what RLS reveals — every cached read must refetch.
+      // Auth flips what RLS reveals - every cached read must refetch.
       void queryClient.invalidateQueries();
     });
     return () => sub.subscription.unsubscribe();
@@ -226,7 +226,7 @@ export function StaffGate({ children }: { children: ReactNode }) {
   if (!sessionReady) return <ConsoleWait label="Opening console" />;
   if (session === null) return <StaffSignIn />;
   if (staffQuery.isPending) return <ConsoleWait label="Checking the wards" />;
-  /* A FAILED ward check is not "not staff" — real staff get a retry, never a wall (M10). */
+  /* A FAILED ward check is not "not staff" - real staff get a retry, never a wall (M10). */
   if (staffQuery.isError) {
     return (
       <div className="grid min-h-screen place-items-center bg-charcoal px-5">
@@ -236,7 +236,7 @@ export function StaffGate({ children }: { children: ReactNode }) {
           </span>
           <h1 className="mt-4 font-serif text-[26px] font-medium text-cream">The wards didn't answer</h1>
           <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
-            Your access couldn't be verified — the connection failed, not your key.
+            Your access couldn't be verified - the connection failed, not your key.
           </p>
           <div className="mt-6 flex items-center justify-center gap-2.5">
             <button

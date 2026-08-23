@@ -1,9 +1,9 @@
 /**
- * Team domain — the people behind Logout Spells.
+ * Team domain - the people behind Logout Spells.
  *
  * M5: the roster is served from Supabase (`team_members`, active rows under
- * RLS). The seeded constants below double as placeholder data — identical to
- * the database seeds — so the About page paints instantly and settles onto
+ * RLS). The seeded constants below double as placeholder data - identical to
+ * the database seeds - so the About page paints instantly and settles onto
  * live content.
  */
 import {
@@ -34,12 +34,12 @@ export interface TeamMember {
   id: string;
   name: string;
   designation: string;
-  /** Which part of the coven they belong to — drives the card chip. */
+  /** Which part of the coven they belong to - drives the card chip. */
   department: TeamDepartment;
-  /** Portrait URL — empty string renders the gold monogram fallback. */
+  /** Portrait URL - empty string renders the gold monogram fallback. */
   photo: string;
   initial: string;
-  /** Short introduction — the first line on the back of the card. */
+  /** Short introduction - the first line on the back of the card. */
   intro: string;
   /** What they do, day to day. */
   focus: string;
@@ -53,7 +53,7 @@ export interface TeamMember {
   socials: TeamSocials;
 }
 
-/** Placeholder socials — the backend phase replaces these per member. */
+/** Placeholder socials - the backend phase replaces these per member. */
 const SOCIAL_PLACEHOLDER: TeamSocials = {
   instagram: "https://www.instagram.com/veedoshe",
   linkedin: "https://www.linkedin.com/in/vidushiverma2409/",
@@ -69,11 +69,11 @@ const TEAM: TeamMember[] = [
     photo: "/team/vidushi.jpg",
     initial: "V",
     featured: true,
-    intro: "The first believer — Logout Spells began as her little experiment with the world.",
+    intro: "The first believer. Logout Spells began as her little experiment with the world.",
     focus:
       "Sets the vision, writes the philosophy and personally reviews every new spell before it goes live.",
     contribution:
-      "Turned one question — “when did we last truly log out?” — into a platform, and still writes every welcome note by hand.",
+      "Turned the question “when did we last truly log out?” into a platform, and still writes every welcome note by hand.",
     quote: "Experiences are the closest thing we have to magic.",
     socials: SOCIAL_PLACEHOLDER,
   },
@@ -85,9 +85,9 @@ const TEAM: TeamMember[] = [
     photo: "/team/bhuvan.jpg",
     initial: "B",
     intro:
-      "The builder — every page, screen and button you're touching right now passed through his hands.",
+      "The builder. Every page, screen and button you're touching right now passed through his hands.",
     focus:
-      "Builds and ships the entire Logout platform — the website, the app and the backend that quietly holds it all together.",
+      "Builds and ships the entire Logout platform: the website, the app and the backend that quietly holds it all together.",
     contribution:
       "Turned the founding vision into a living product: the spell builder, booking flows and traveller accounts, engineered end to end.",
     quote: "If magic is going to scale, someone has to write it down in code.",
@@ -100,9 +100,9 @@ const TEAM: TeamMember[] = [
     department: "Technology",
     photo: "/team/himanshu.jpg",
     initial: "H",
-    intro: "The quiet force behind the curtain — if it stores, syncs or simply works, it's him.",
+    intro: "The quiet force behind the curtain. If it stores, syncs or simply works, it's him.",
     focus:
-      "Owns the backend — the data, APIs and infrastructure every spell runs on, from first click to final booking.",
+      "Owns the backend: the data, APIs and infrastructure every spell runs on, from first click to final booking.",
     contribution:
       "Keeps bookings, journeys and traveller data flowing safely while the rest of the team takes the applause.",
     quote: "The best systems are the ones nobody ever notices.",
@@ -115,9 +115,9 @@ const TEAM: TeamMember[] = [
     department: "Sales",
     photo: "/team/jagriti.jpg",
     initial: "J",
-    intro: "The first voice most travellers and partners ever hear — and the reason they stay.",
+    intro: "The first voice most travellers and partners ever hear, and the reason they stay.",
     focus:
-      "Leads sales — enquiries, partnerships and gently turning “maybe someday” into a booked seat at the table.",
+      "Leads sales: enquiries, partnerships and gently turning “maybe someday” into a booked seat at the table.",
     contribution:
       "Built the relationships that fill every circle, one honest conversation at a time.",
     quote: "People don't buy trips. They buy the feeling of finally saying yes.",
@@ -130,9 +130,9 @@ const TEAM: TeamMember[] = [
     department: "Social Media",
     photo: "/team/shreshta.jpg",
     initial: "S",
-    intro: "Storyteller-in-chief of the feed — she makes the internet stop scrolling.",
+    intro: "Storyteller-in-chief of the feed. She makes the internet stop scrolling.",
     focus:
-      "Shapes our social presence — reels, stories and the little moments that make you want to log out.",
+      "Shapes our social presence: reels, stories and the little moments that make you want to log out.",
     contribution:
       "Turned real journeys into stories that reached thousands before we ever spent a rupee on ads.",
     quote: "A good story travels further than any flight.",
@@ -145,9 +145,9 @@ const TEAM: TeamMember[] = [
     department: "Social Media",
     photo: "/team/namya.jpg",
     initial: "N",
-    intro: "Keeper of the comment section — she knows travellers by name before they ever board.",
+    intro: "Keeper of the comment section. She knows travellers by name before they ever board.",
     focus:
-      "Grows the community — DMs, collabs and keeping the conversation warm between journeys.",
+      "Grows the community: DMs, collabs and keeping the conversation warm between journeys.",
     contribution: "Made the Logout circle feel like a group chat you never want to leave.",
     quote: "Every follower is a friend we haven't travelled with yet.",
     socials: SOCIAL_PLACEHOLDER,
@@ -159,9 +159,9 @@ const TEAM: TeamMember[] = [
     department: "Operations",
     photo: "/team/sagar.jpg",
     initial: "S",
-    intro: "The one on the ground while you're in the moment — logistics is his love language.",
+    intro: "The one on the ground while you're in the moment. Logistics is his love language.",
     focus:
-      "Runs operations — stays, transport, food and the hundred invisible details of every spell.",
+      "Runs operations: stays, transport, food and the hundred invisible details of every spell.",
     contribution:
       "Has walked every route, tasted every thali and triple-checked every homestay before you arrive.",
     quote: "A perfect day outdoors is a hundred solved problems you never saw.",
@@ -178,7 +178,7 @@ const fetchTeam = async (): Promise<TeamMember[]> => {
   return data.map(mapTeamMember);
 };
 
-/** The coven roster — live from Supabase, seeded placeholder for first paint. */
+/** The coven roster - live from Supabase, seeded placeholder for first paint. */
 export function useTeamMembers(): TeamMember[] {
   const { data } = useQuery({
     queryKey: ["team"],
@@ -190,7 +190,7 @@ export function useTeamMembers(): TeamMember[] {
 }
 
 /**
- * The roster WITHOUT the placeholder — editors (M12 Founder Profile) must
+ * The roster WITHOUT the placeholder - editors (M12 Founder Profile) must
  * only ever see real database rows, because saves target real row ids.
  */
 export function useTeamQuery(): UseQueryResult<TeamMember[]> {
@@ -202,7 +202,7 @@ export function useTeamQuery(): UseQueryResult<TeamMember[]> {
 }
 
 /**
- * The featured founder row — the single editable source for founder
+ * The featured founder row - the single editable source for founder
  * identity (M12). Display-only consumers (console chrome, Our Story
  * spotlight) read this; edits happen in Dashboard → Settings.
  */
@@ -222,7 +222,7 @@ export interface FounderProfilePatch {
 
 /**
  * Saves the founder's profile onto their existing `team_members` row through
- * the staff column-whitelisted grant. Verifies the row was actually written —
+ * the staff column-whitelisted grant. Verifies the row was actually written -
  * a save that touched nothing surfaces as an error, never a fake "Saved".
  */
 export function useSaveFounderProfile(): UseMutationResult<
@@ -247,7 +247,7 @@ export function useSaveFounderProfile(): UseMutationResult<
         .select("id");
       if (error) throw new Error(error.message);
       if (!data || data.length !== 1) {
-        throw new Error("The save didn't reach the database — check your access and try again.");
+        throw new Error("The save didn't reach the database - check your access and try again.");
       }
     },
     onSuccess: (_result, { id, patch }) => {

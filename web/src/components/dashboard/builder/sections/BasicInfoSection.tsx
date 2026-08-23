@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/** Attach a reusable application form (Phase 5) — published forms only. */
+/** Attach a reusable application form (Phase 5) - published forms only. */
 function BookingFormPicker({
   value,
   onChange,
@@ -133,7 +133,7 @@ function BookingFormPicker({
                 })
               ) : (
                 <p className="px-2.5 py-2 font-sans text-[11px] italic text-cream/35">
-                  No published forms yet — publish one and it appears here.
+                  No published forms yet - publish one and it appears here.
                 </p>
               )}
 
@@ -152,12 +152,12 @@ function BookingFormPicker({
 
       {current !== undefined && current.status !== "published" && (
         <p className="mt-1.5 font-sans text-[11px] text-amber-300/80">
-          ◌ This form was moved back to draft — the spell uses the standard dialog until it's republished.
+          ◌ This form was moved back to draft - the spell uses the standard dialog until it's republished.
         </p>
       )}
       {value !== null && current === undefined && (
         <p className="mt-1.5 font-sans text-[11px] text-amber-300/80">
-          ◌ The attached form was deleted — pick another or leave it detached.
+          ◌ The attached form was deleted - pick another or leave it detached.
         </p>
       )}
     </div>
@@ -169,7 +169,7 @@ interface BasicInfoSectionProps {
   patch: (partial: Partial<SpellDraft>) => void;
 }
 
-/** Section 01 — the essentials of the spell. */
+/** Section 01 - the essentials of the spell. */
 export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps) {
   const handleName = (name: string): void => {
     patch(draft.slugTouched ? { name } : { name, slug: slugify(name) });
@@ -186,7 +186,7 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
         value={draft.name}
         onChange={handleName}
         placeholder="e.g. Culinary Spell"
-        helper="The title guests see everywhere — keep it short and evocative."
+        helper="The title guests see everywhere - keep it short and evocative."
         maxLength={48}
         showCount
       />
@@ -208,7 +208,7 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
         onChange={(value) => patch({ slug: sanitizeSlugInput(value), slugTouched: true })}
         placeholder="culinary-spell"
         prefix="logoutspells.com/live/"
-        helper={draft.slugTouched ? "Custom slug — no longer follows the name." : "Generated automatically from the spell name."}
+        helper={draft.slugTouched ? "Custom slug - no longer follows the name." : "Generated automatically from the spell name."}
         action={
           draft.slugTouched
             ? { label: "Sync with name", onClick: () => patch({ slug: slugify(draft.name), slugTouched: false }) }
@@ -229,8 +229,8 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
           label="Trip dates"
           value={draft.dates}
           onChange={(dates) => patch({ dates })}
-          placeholder="e.g. Jul 14–18"
-          helper="Shown exactly as written — “Dates TBC” works too."
+          placeholder="e.g. Jul 14-18"
+          helper="Shown exactly as written - “Dates TBC” works too."
         />
       </div>
 
@@ -314,7 +314,7 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
           </p>
         ) : (
           <p className="mt-2 font-sans text-[11px] text-cream/35">
-            Choose the ritual family — it sets the badge and the eyebrow line on the page.
+            Choose the ritual family - it sets the badge and the eyebrow line on the page.
           </p>
         )}
       </div>
@@ -364,7 +364,7 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
           })}
         </div>
         <p className="mt-2 font-sans text-[11px] text-cream/35">
-          A small scarcity chip over the hero — use it honestly.
+          A small scarcity chip over the hero - use it honestly.
         </p>
       </div>
 

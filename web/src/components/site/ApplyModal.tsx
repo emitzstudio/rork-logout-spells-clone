@@ -16,7 +16,7 @@ import { useSiteSettings } from "@/data/siteSettingsStore";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
-/* Context — lets any CTA on the site open the application modal       */
+/* Context - lets any CTA on the site open the application modal       */
 /* ------------------------------------------------------------------ */
 
 interface ApplyContextValue {
@@ -64,12 +64,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** M12: the recipient comes from the central contact settings. */
 function buildMailto(f: FormState, recipient: string): string {
-  const subject = `Apply to Host — ${f.name.trim()}`;
+  const subject = `Apply to Host: ${f.name.trim()}`;
   const body = [
     `Full name: ${f.name.trim()}`,
-    `Instagram: ${f.instagram.trim() || "—"}`,
+    `Instagram: ${f.instagram.trim() || "not shared"}`,
     `Email: ${f.email.trim()}`,
-    `WhatsApp: ${f.whatsapp.trim() || "—"}`,
+    `WhatsApp: ${f.whatsapp.trim() || "not shared"}`,
     "",
     "A little about me:",
     "",
@@ -191,7 +191,7 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [phase, setPhase] = useState<Phase>("form");
   const nameRef = useRef<HTMLInputElement | null>(null);
-  /* M12 — applications land at the centrally configured contact email. */
+  /* M12 - applications land at the centrally configured contact email. */
   const { contact } = useSiteSettings();
   const applyEmail = contact.contactEmail;
 
@@ -367,7 +367,7 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
 
                     <p className="text-center font-sans text-xs text-cream/35">
                       {applyEmail === ""
-                        ? "Applications are briefly paused — our contact inbox is being reconnected."
+                        ? "Applications are briefly paused. Our contact inbox is being reconnected."
                         : "We never share your details. No spam, ever."}
                     </p>
                   </form>
@@ -408,12 +408,12 @@ function ApplyModal({ open, onClose }: ApplyModalProps) {
                     </svg>
                   </div>
 
-                  {/* Truthful copy (M10): only a mail draft was opened — nothing is received until they press send. */}
+                  {/* Truthful copy (M10): only a mail draft was opened - nothing is received until they press send. */}
                   <h2 id="apply-title" className="mt-8 font-serif text-4xl italic text-cream">
                     One step <span className="text-gold-gradient">left</span>
                   </h2>
                   <p className="mt-4 max-w-sm font-sans text-[15px] leading-relaxed text-cream/55">
-                    Your email app just opened with your details — press send there and we'll be in touch within 48 hours.
+                    Your email app just opened with your details. Press send there and we'll be in touch within 48 hours.
                   </p>
                   {applyEmail !== "" && (
                     <p className="mt-3 font-sans text-xs text-cream/40">

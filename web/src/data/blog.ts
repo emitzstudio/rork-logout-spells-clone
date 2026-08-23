@@ -1,9 +1,9 @@
 /**
- * Blog domain — the Logout Journal.
+ * Blog domain - the Logout Journal.
  *
  * Post content lives in the `blog_posts` table (Supabase) and is read through
  * `blogStore`. This module keeps only the shared types, category metadata and
- * pure helpers — no seed or fallback articles exist here (M11: real data only).
+ * pure helpers - no seed or fallback articles exist here (M11: real data only).
  */
 
 export type BlogCategoryId =
@@ -38,7 +38,7 @@ export interface GalleryImage {
   caption?: string;
 }
 
-/** Editorial building blocks — the article body is an ordered list of these. */
+/** Editorial building blocks - the article body is an ordered list of these. */
 export type BlogBlock =
   | { kind: "paragraph"; text: string }
   | { kind: "heading"; text: string }
@@ -73,11 +73,11 @@ export const fmtBlogDate = (iso: string): string =>
 
 /* ----------------------- Collection helpers (store) ----------------------- */
 
-/** The hero of the Journal — the marked feature, else the newest story. */
+/** The hero of the Journal - the marked feature, else the newest story. */
 export const featuredOf = <T extends BlogPost>(posts: T[]): T | undefined =>
   posts.find((p) => p.featured === true) ?? posts[0];
 
-/** Category + shared-tag scoring — same recipe the service used. */
+/** Category + shared-tag scoring - same recipe the service used. */
 export const relatedTo = <T extends BlogPost>(posts: T[], post: BlogPost, max = 3): T[] => {
   const score = (x: BlogPost): number =>
     (x.category === post.category ? 2 : 0) + x.tags.filter((t) => post.tags.includes(t)).length;

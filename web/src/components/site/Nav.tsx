@@ -12,7 +12,7 @@ interface NavItem {
   live?: boolean;
 }
 
-/** Centre menu, in reading order — Live Spells anchors the end. */
+/** Centre menu, in reading order - Live Spells anchors the end. */
 const NAV_ITEMS: NavItem[] = [
   { label: "Spells", to: "/#spells" },
   { label: "Become a Spellcaster", to: "/creators" },
@@ -23,9 +23,9 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 /**
- * Site navigation — brand pinned far left, primary items perfectly centred,
+ * Site navigation - brand pinned far left, primary items perfectly centred,
  * a single quiet Log In on the right. Live Spells carries a soft golden
- * emphasis with a shimmer on hover — noticed, never shouted.
+ * emphasis with a shimmer on hover - noticed, never shouted.
  */
 export default function Nav() {
   const [scrolled, setScrolled] = useState<boolean>(false);
@@ -66,7 +66,7 @@ export default function Nav() {
         )}
       >
         <div className="relative mx-auto flex max-w-[1440px] items-center justify-between px-5 md:px-10">
-          {/* Left — the brand, pinned to the edge */}
+          {/* Left - the brand, pinned to the edge */}
           <Link
             to="/"
             aria-label="Logout Spells home"
@@ -78,7 +78,7 @@ export default function Nav() {
             <span className="font-serif text-[19px] italic leading-[1.05] text-gold">Spells</span>
           </Link>
 
-          {/* Centre — primary navigation, evenly spaced and truly centred */}
+          {/* Centre - primary navigation, evenly spaced and truly centred */}
           <nav
             aria-label="Main navigation"
             className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex xl:gap-8"
@@ -125,7 +125,7 @@ export default function Nav() {
             )}
           </nav>
 
-          {/* Right — a single quiet door in */}
+          {/* Right - a single quiet door in */}
           <div className="hidden shrink-0 items-center lg:flex">
             {session ? (
               <div className="flex items-center gap-3">
@@ -149,7 +149,7 @@ export default function Nav() {
             )}
           </div>
 
-          {/* Mobile — avatar shortcut + hamburger */}
+          {/* Mobile - avatar shortcut + hamburger */}
           <div className="flex items-center gap-2.5 lg:hidden">
             {session && !open && (
               <Link

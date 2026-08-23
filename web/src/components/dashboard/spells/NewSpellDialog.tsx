@@ -63,7 +63,7 @@ export default function NewSpellDialog({ onClose, onManual, onImport }: NewSpell
           How do you want to begin?
         </h3>
         <p className="mt-1.5 font-sans text-[12.5px] text-cream/45">
-          Both paths open the same Spell Builder — one just arrives pre-filled.
+          Both paths open the same Spell Builder - one just arrives pre-filled.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -80,7 +80,7 @@ export default function NewSpellDialog({ onClose, onManual, onImport }: NewSpell
               Create manually
             </span>
             <span className="mt-1.5 font-sans text-[12px] leading-relaxed text-cream/45">
-              A blank canvas — craft every section of the page yourself.
+              A blank canvas - craft every section of the page yourself.
             </span>
             <span className="mt-4 flex items-center gap-1.5 font-sans text-[10.5px] uppercase tracking-[0.18em] text-cream/35 transition-colors duration-250 group-hover:text-cream/60">
               Full control
@@ -109,7 +109,7 @@ export default function NewSpellDialog({ onClose, onManual, onImport }: NewSpell
               Import Spell <span aria-hidden>✨</span>
             </span>
             <span className="mt-1.5 font-sans text-[12px] leading-relaxed text-cream/50">
-              Upload a Logout Spell file and the builder fills itself — you only add the images.
+              Upload a Logout Spell file and the builder fills itself - you only add the images.
             </span>
             <span className="mt-4 flex items-center gap-1.5 font-sans text-[10.5px] uppercase tracking-[0.18em] text-gold/80 transition-colors duration-250 group-hover:text-gold-light">
               Minutes, not hours

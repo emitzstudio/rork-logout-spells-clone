@@ -7,7 +7,7 @@ import type { BlogPost } from "@/data/blog";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/** Small author identity — avatar (or monogram) + name. */
+/** Small author identity - avatar (or monogram) + name. */
 export function AuthorChip({ post }: { post: BlogPost }) {
   return (
     <span className="flex items-center gap-2.5">
@@ -28,7 +28,7 @@ export function AuthorChip({ post }: { post: BlogPost }) {
 }
 
 /**
- * The editorial card used across the Journal — image, category, title, deck
+ * The editorial card used across the Journal - image, category, title, deck
  * and byline. Clicking opens the article.
  */
 export default function BlogCard({ post }: { post: BlogPost }) {

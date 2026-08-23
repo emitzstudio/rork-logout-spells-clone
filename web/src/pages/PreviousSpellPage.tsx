@@ -171,7 +171,7 @@ function ReviewCard({ review }: { review: SpellReview }) {
 
 interface ReviewFormProps {
   past: PreviousSpell;
-  /** The traveller's completed booking of this spell — the server-verified key. */
+  /** The traveller's completed booking of this spell - the server-verified key. */
   bookingId: string;
   authorName: string;
   authorAvatar: string;
@@ -194,7 +194,7 @@ function ReviewForm({ past, bookingId, authorName, authorAvatar, onDone, onCance
       return;
     }
     if (body.trim().length < 20) {
-      setError("Tell the next traveller a little more — at least a few sentences.");
+      setError("Tell the next traveller a little more, at least a few sentences.");
       return;
     }
     setSaving(true);
@@ -210,11 +210,11 @@ function ReviewForm({ past, bookingId, authorName, authorAvatar, onDone, onCance
         authorAvatar,
       });
       toast.success("Your story is with us ✦", {
-        description: "It appears here once it's approved — thank you for lighting the way.",
+        description: "It appears here once it's approved. Thank you for lighting the way.",
       });
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something slipped — please try again.");
+      setError(err instanceof Error ? err.message : "Something slipped. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -276,7 +276,7 @@ function ReviewForm({ past, bookingId, authorName, authorAvatar, onDone, onCance
           </button>
         </div>
         <p className="mt-4 font-sans text-[11px] leading-relaxed text-cream/40">
-          A real person reads every review before it appears — usually within a day.
+          A real person reads every review before it appears, usually within a day.
         </p>
       </div>
     </motion.form>
@@ -320,7 +320,7 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
           <Reveal>
             <div className="card-glass rounded-[16px] p-7 text-center md:sticky md:top-28">
               <p className="heading-serif text-6xl text-gold-gradient">
-                {summary.count > 0 ? summary.average.toFixed(1) : "—"}
+                {summary.count > 0 ? summary.average.toFixed(1) : "·"}
               </p>
               <div className="mt-3 flex justify-center">
                 <RatingStars value={summary.average} size={16} label={`Average rating ${summary.average} out of 5`} />
@@ -347,7 +347,7 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
                 })}
               </div>
 
-              {/* The gate — only travellers who completed THIS spell may write. */}
+              {/* The gate - only travellers who completed THIS spell may write. */}
               <div className="mt-7 border-t border-cream/[0.07] pt-6">
                 {eligible && !already && !gateChecking && (
                   <button
@@ -361,8 +361,8 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
                 {eligible && myReview !== null && (
                   <p className="font-serif text-base italic text-gold/80">
                     {myReview.status === "pending"
-                      ? "Your story is with us — it appears once it's approved ✦"
-                      : "You've shared your review — thank you ✦"}
+                      ? "Your story is with us. It appears once it's approved ✦"
+                      : "You've shared your review. Thank you ✦"}
                   </p>
                 )}
                 {!eligible && session && (
@@ -414,7 +414,7 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
               {reviews.length === 0 && (
                 <div className="rounded-[14px] border border-dashed border-gold/25 px-8 py-16 text-center">
                   <p className="font-serif text-xl italic text-cream/55">
-                    No reviews yet — the circle is still writing home.
+                    No reviews yet. The circle is still writing home.
                   </p>
                 </div>
               )}
@@ -458,7 +458,7 @@ function MemoryError({ onRetry }: { onRetry: () => void }) {
 /* ---------------------------------- Page ----------------------------------- */
 
 /**
- * A previous spell's memory page — /live-spells/previous/{slug}.
+ * A previous spell's memory page - /live-spells/previous/{slug}.
  * Not a booking page: hero, the story, highlights, itinerary recap, gallery,
  * kept memories, community moments and reviews (gated to real travellers).
  */
@@ -471,7 +471,7 @@ export default function PreviousSpellPage() {
   if (!past) return <MemoryNotFound />;
 
   return (
-    <Page title={`${past.title} — Previous Spell`} back={{ container: "max-w-[1100px]" }}>
+    <Page title={`${past.title} · Previous Spell`} back={{ container: "max-w-[1100px]" }}>
       <MemoryHero past={past} />
 
       {/* The story */}
@@ -562,7 +562,7 @@ export default function PreviousSpellPage() {
         </div>
       </section>
 
-      {/* Gallery — only rendered once real photographs exist. */}
+      {/* Gallery - only rendered once real photographs exist. */}
       {past.gallery.length > 0 && (
       <section aria-label="Gallery" className="overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-6xl">
@@ -601,7 +601,7 @@ export default function PreviousSpellPage() {
       </section>
       )}
 
-      {/* Trip memories — only when kept moments were written. */}
+      {/* Trip memories - only when kept moments were written. */}
       {past.memories.length > 0 && (
       <section aria-label="Trip memories" className="px-5 py-20 md:px-10 md:py-28">
 
@@ -631,7 +631,7 @@ export default function PreviousSpellPage() {
       </section>
       )}
 
-      {/* Community moments — only when the circle's voices are on file. */}
+      {/* Community moments - only when the circle's voices are on file. */}
       {past.community.length > 0 && (
       <section aria-label="Community moments" className="bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-5xl">
@@ -678,7 +678,7 @@ export default function PreviousSpellPage() {
             The next circle is <span className="italic text-gold-gradient">forming.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-md font-sans text-[15px] leading-relaxed text-cream/55">
-            This journey lives in the archive now — but a new one is always being written.
+            This journey lives in the archive now, but a new one is always being written.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Link to="/live" className="btn-gold">
@@ -713,7 +713,7 @@ function MemoryNotFound() {
             This memory has <span className="italic text-gold-gradient">drifted.</span>
           </h1>
           <p className="mt-5 font-serif text-2xl italic text-cream/60">
-            It may have been archived — or it was never cast at all.
+            It may have been archived, or it was never cast at all.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/live-spells/previous" className="btn-gold">

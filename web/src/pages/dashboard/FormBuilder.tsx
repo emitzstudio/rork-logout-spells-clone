@@ -57,7 +57,7 @@ interface PanelProps {
   children: React.ReactNode;
 }
 
-/** Collapsible builder panel — same silhouette as the Spell Builder sections. */
+/** Collapsible builder panel - same silhouette as the Spell Builder sections. */
 function Panel({ index, title, description, open, onToggle, complete, summary, children }: PanelProps) {
   return (
     <section className="overflow-hidden rounded-xl border border-cream/[0.07] bg-charcoal-soft/75">
@@ -107,7 +107,7 @@ function Panel({ index, title, description, open, onToggle, complete, summary, c
 /* ------------------------------- Form Builder ------------------------------ */
 
 /**
- * The Form Builder — form details, the question stack (six core questions +
+ * The Form Builder - form details, the question stack (six core questions +
  * unlimited custom ones) and settings on the left; the real form, rendered
  * live by the exact component visitors use, on the right.
  */
@@ -116,7 +116,7 @@ export default function FormBuilder() {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const { getFormById, saveForm, uniqueFormSlug } = useFormStore();
-  /** One save in flight at a time — double-clicks must not insert twice (M10). */
+  /** One save in flight at a time - double-clicks must not insert twice (M10). */
   const [saving, setSaving] = useState<boolean>(false);
 
   const routeState = location.state as { form?: LogoutForm } | null;
@@ -203,9 +203,9 @@ export default function FormBuilder() {
     void saveForm(record)
       .then((saved) => {
         setForm(saved);
-        showToast(wasLive ? "Moved to draft — the public link is paused" : "Draft saved ✦");
+        showToast(wasLive ? "Moved to draft - the public link is paused" : "Draft saved ✦");
       })
-      .catch(() => showToast("Could not save — please try again"))
+      .catch(() => showToast("Could not save - please try again"))
       .finally(() => setSaving(false));
   };
 
@@ -234,12 +234,12 @@ export default function FormBuilder() {
             freshId: saved.id,
             notice:
               form.status === "published"
-                ? `“${title}” updated — live at /forms/${slug} ✦`
+                ? `“${title}” updated - live at /forms/${slug} ✦`
                 : `“${title}” is live at /forms/${slug} ✦`,
           },
         }),
       )
-      .catch(() => showToast("Could not publish — please try again"))
+      .catch(() => showToast("Could not publish - please try again"))
       .finally(() => setSaving(false));
   };
 
@@ -253,13 +253,13 @@ export default function FormBuilder() {
 
   /* -------------------------------- Derived -------------------------------- */
 
-  // Editing a form that no longer exists (deleted in another tab) — bail out.
+  // Editing a form that no longer exists (deleted in another tab) - bail out.
   if (id !== undefined && source === null) {
     return <Navigate to="/dashboard/forms" replace />;
   }
 
   const detailsComplete = form.title.trim() !== "";
-  // A switched-off question can't block publish — it counts as ready.
+  // A switched-off question can't block publish - it counts as ready.
   const questionsReady = form.questions.filter(
     (q, i) => q.enabled === false || questionIssue(q, i + 1) === null,
   ).length;
@@ -314,7 +314,7 @@ export default function FormBuilder() {
 
       {/* Builder grid */}
       <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
-        {/* Left — editor */}
+        {/* Left - editor */}
         <div className="min-w-0 space-y-4">
           {/* 01 · Form details */}
           <Panel
@@ -341,7 +341,7 @@ export default function FormBuilder() {
                 value={form.description}
                 onChange={(description) => patch({ description })}
                 placeholder="e.g. Six small questions before we save you a seat by the fire."
-                helper="A warm line under the title — optional but lovely."
+                helper="A warm line under the title - optional but lovely."
                 optional
                 maxLength={160}
                 showCount
@@ -402,7 +402,7 @@ export default function FormBuilder() {
           <Panel
             index={2}
             title="Questions"
-            description="Six core questions ship with every form — switch off any this form shouldn't ask."
+            description="Six core questions ship with every form - switch off any this form shouldn't ask."
             open={open.questions}
             onToggle={() => toggle("questions")}
             complete={questionsComplete}
@@ -464,7 +464,7 @@ export default function FormBuilder() {
                 label="Success message"
                 value={form.successMessage}
                 onChange={(successMessage) => patch({ successMessage })}
-                placeholder="Your words have reached us — we'll write back within a day ✦"
+                placeholder="Your words have reached us - we'll write back within a day ✦"
                 helper="Shown on the thank-you screen after they submit."
                 maxLength={160}
                 showCount
@@ -475,7 +475,7 @@ export default function FormBuilder() {
                 value={form.redirectUrl}
                 onChange={(redirectUrl) => patch({ redirectUrl })}
                 placeholder="https://…"
-                helper="Optional — offered as a “Continue” step on the thank-you screen."
+                helper="Optional - offered as a “Continue” step on the thank-you screen."
                 optional
                 mono
               />
@@ -502,7 +502,7 @@ export default function FormBuilder() {
                   </div>
                 ) : (
                   <p className="rounded-lg border border-dashed border-cream/12 px-4 py-3 font-sans text-[12px] italic text-cream/35">
-                    The public link appears after the first save — it follows the form title.
+                    The public link appears after the first save - it follows the form title.
                   </p>
                 )}
                 {form.status !== "published" && form.slug !== "" && (
@@ -515,7 +515,7 @@ export default function FormBuilder() {
           </Panel>
         </div>
 
-        {/* Right — live preview */}
+        {/* Right - live preview */}
         <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">

@@ -1,5 +1,5 @@
 /**
- * Reviews domain — server-verified traveller reviews on archive pages.
+ * Reviews domain - server-verified traveller reviews on archive pages.
  *
  * Reads come from Supabase and render APPROVED testimony only. Writes go
  * through `submitReview` (@/data/account/selfService): the server verifies
@@ -21,7 +21,7 @@ export interface SpellReview {
   id: string;
   /** Joins PreviousSpell.id. */
   spellId: string;
-  /** The author's profile id. Legacy null-author rows map to "seed" — the
+  /** The author's profile id. Legacy null-author rows map to "seed" - the
    *  seeded samples were removed in M9.5, so live rows always carry a real id. */
   authorId: string;
   author: string;
@@ -30,7 +30,7 @@ export interface SpellReview {
   rating: number;
   title: string;
   body: string;
-  /** When they travelled — display label, e.g. "June 2026". */
+  /** When they travelled - display label, e.g. "June 2026". */
   travelledOn: string;
   createdAt: string;
   /** True when the booking was verified as completed at submission time. */
@@ -50,8 +50,8 @@ export interface RatingSummary {
 export type EligibleBooking = AccountData["bookings"][number];
 
 /**
- * THE gate: the traveller's COMPLETED booking of this spell — the key the
- * server-verified review write needs — or null when they may only read.
+ * THE gate: the traveller's COMPLETED booking of this spell - the key the
+ * server-verified review write needs - or null when they may only read.
  */
 export const eligibleBookingFor = (
   data: AccountData | null,
@@ -85,7 +85,7 @@ export const ratingSummary = (reviews: SpellReview[]): RatingSummary => {
 export const reviewsKey = (previousSpellId: string) => ["reviews", previousSpellId] as const;
 
 const fetchSpellReviews = async (previousSpellId: string): Promise<SpellReview[]> => {
-  /* Non-uuid ids can't exist in the database — nothing to read. */
+  /* Non-uuid ids can't exist in the database - nothing to read. */
   if (!isUuid(previousSpellId)) return [];
   const { data, error } = await supabase
     .from("reviews")
@@ -97,7 +97,7 @@ const fetchSpellReviews = async (previousSpellId: string): Promise<SpellReview[]
   return data.map(mapReview);
 };
 
-/** Approved reviews for one journey — shared cache for cards and pages alike. */
+/** Approved reviews for one journey - shared cache for cards and pages alike. */
 export function useSpellReviews(previousSpellId: string): SpellReview[] {
   const { data } = useQuery({
     queryKey: reviewsKey(previousSpellId),

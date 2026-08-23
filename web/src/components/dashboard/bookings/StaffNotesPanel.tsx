@@ -1,5 +1,5 @@
 /**
- * Internal team notes — a separate staff-only table (travellers can never
+ * Internal team notes - a separate staff-only table (travellers can never
  * see these under RLS). Append-only by design.
  */
 import { Send } from "lucide-react";

@@ -1,11 +1,11 @@
 /**
- * The spell collection — live from Supabase since M5.
+ * The spell collection - live from Supabase since M5.
  *
  * The founder console edits this collection; the public website renders it.
  * Reads go through React Query (RLS decides what each caller sees: visitors
  * get published/soldout, staff get everything); writes are staff mutations
  * checked row-by-row in the database. Every consumer keeps the same API the
- * localStorage era exposed — only the inside of this provider changed.
+ * localStorage era exposed - only the inside of this provider changed.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
@@ -55,7 +55,7 @@ const fetchSpellCollection = async (): Promise<SpellCollection> => {
     if (dep.spell_id !== null) depBySpell.set(dep.spell_id, dep);
   }
 
-  /* Staff-only rows — RLS silently returns none for visitors. */
+  /* Staff-only rows - RLS silently returns none for visitors. */
   const changesBySpell = new Map<string, SpellChangeRow[]>();
   for (const change of (changesRes.data ?? []) as SpellChangeRow[]) {
     const list = changesBySpell.get(change.spell_id) ?? [];
@@ -73,7 +73,7 @@ const fetchSpellCollection = async (): Promise<SpellCollection> => {
   return { spells, meta };
 };
 
-/** "Jul 14–18" → real dates for sorting; unparseable labels stay label-only. */
+/** "Jul 14-18" → real dates for sorting; unparseable labels stay label-only. */
 const departureDates = (label: string): { start: string | null; end: string | null } => {
   const parsed = parseSpellDates(label);
   if (!parsed) return { start: null, end: null };
@@ -83,11 +83,11 @@ const departureDates = (label: string): { start: string | null; end: string | nu
 };
 
 interface SpellStoreValue {
-  /** Every spell the caller may see — staff get drafts/archived, visitors don't. */
+  /** Every spell the caller may see - staff get drafts/archived, visitors don't. */
   spells: ManagedSpell[];
-  /** True once the first fetch has settled — pages gate their 404s on this. */
+  /** True once the first fetch has settled - pages gate their 404s on this. */
   ready: boolean;
-  /** True when the collection read FAILED — consumers show retry, never "empty" (M10). */
+  /** True when the collection read FAILED - consumers show retry, never "empty" (M10). */
   failed: boolean;
   /** Refetches the collection after a failure. */
   retry: () => void;
@@ -103,7 +103,7 @@ interface SpellStoreValue {
   getBySlug: (slug: string) => ManagedSpell | undefined;
   /** `glow-ground-spell` → `glow-ground-spell-2` when taken by another spell. */
   uniqueSlug: (base: string, excludeId?: string) => string;
-  /** What the public website shows — newest first. */
+  /** What the public website shows - newest first. */
   publicSpells: ManagedSpell[];
 }
 
@@ -161,7 +161,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       const existing = spells.find((s) => s.id === record.id);
       let id = existing !== undefined && isUuid(record.id) ? record.id : null;
 
-      /* New spells insert first (without imagery) — storage paths need the real id. */
+      /* New spells insert first (without imagery) - storage paths need the real id. */
       if (id === null) {
         const stub = spellWritePayload({ ...record, image: "" }, null, null);
         delete stub.page;

@@ -11,7 +11,7 @@ interface ShareFormDialogProps {
   onClose: () => void;
 }
 
-/** Share sheet for a form — copy the public link, open it, QR on the way. */
+/** Share sheet for a form - copy the public link, open it, QR on the way. */
 export default function ShareFormDialog({ form, onClose }: ShareFormDialogProps) {
   const [copied, setCopied] = useState<boolean>(false);
   const url = `${window.location.origin}/forms/${form.slug}`;
@@ -72,7 +72,7 @@ export default function ShareFormDialog({ form, onClose }: ShareFormDialogProps)
           {form.title.trim() !== "" ? form.title : "Untitled Form"}
         </h3>
         <p className="mt-1.5 font-sans text-[12.5px] text-cream/45">
-          Anyone with this link can fill the form — no spell required.
+          Anyone with this link can fill the form - no spell required.
         </p>
 
         {/* Link */}
@@ -91,7 +91,7 @@ export default function ShareFormDialog({ form, onClose }: ShareFormDialogProps)
 
         {!isLive && (
           <p className="mt-2.5 flex items-start gap-1.5 font-sans text-[11.5px] leading-snug text-amber-300/80">
-            <span aria-hidden>◌</span> This form is still a draft — publish it to make the link live.
+            <span aria-hidden>◌</span> This form is still a draft - publish it to make the link live.
           </p>
         )}
 

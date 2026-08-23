@@ -1,9 +1,9 @@
 /**
- * The bucket-list interest catalogue — the dreams a traveller can drop into
+ * The bucket-list interest catalogue - the dreams a traveller can drop into
  * the cauldron on Discover Your Spell.
  *
  * M9: the rendered catalogue comes from Supabase only (`useInterests`), with
- * honest loading / error / empty states — no seed fallback. The static
+ * honest loading / error / empty states - no seed fallback. The static
  * `INTERESTS` list below stays for exactly one job: validating stored
  * bucket-list ids (`isKnownInterest`) so garbage never enters state. It is
  * never rendered in place of live data.
@@ -21,14 +21,14 @@ export interface Interest {
   label: string;
   /** Lowercase fragments matched against a spell's full text. */
   keywords: string[];
-  /** Ritual families this dream leans toward — soft scoring boost. */
+  /** Ritual families this dream leans toward - soft scoring boost. */
   categories?: SpellCategoryId[];
 }
 
 export interface SpellMatch {
   spell: ManagedSpell;
   score: number;
-  /** The traveller's interests this spell answers — for reason chips. */
+  /** The traveller's interests this spell answers - for reason chips. */
   matched: Interest[];
 }
 
@@ -95,7 +95,7 @@ export interface InterestCatalogueState {
   refetch: () => void;
 }
 
-/** The cauldron catalogue — live from Supabase, with honest states. */
+/** The cauldron catalogue - live from Supabase, with honest states. */
 export function useInterests(): InterestCatalogueState {
   const query = useQuery({
     queryKey: ["interests"],
@@ -112,7 +112,7 @@ export function useInterests(): InterestCatalogueState {
 
 /* -------------------------------- Matching -------------------------------- */
 
-/** Full-text haystack per spell — cached so repeat matching stays cheap. */
+/** Full-text haystack per spell - cached so repeat matching stays cheap. */
 const HAYSTACKS = new WeakMap<ManagedSpell, string>();
 
 const haystackOf = (spell: ManagedSpell): string => {
@@ -131,7 +131,7 @@ const haystackOf = (spell: ManagedSpell): string => {
     try {
       parts.push(JSON.stringify(spell.draft));
     } catch {
-      // Circular or unserialisable draft — match on card data alone.
+      // Circular or unserialisable draft - match on card data alone.
     }
   }
   const hay = parts.join(" ").toLowerCase();
@@ -140,7 +140,7 @@ const haystackOf = (spell: ManagedSpell): string => {
 };
 
 /**
- * Client-side matcher — scores LIVE spells by how many chosen dreams their
+ * Client-side matcher - scores LIVE spells by how many chosen dreams their
  * content answers (keyword hits weigh 3, ritual-family affinity weighs 1).
  * Both inputs come from the database; nothing here invents content.
  */
@@ -170,7 +170,7 @@ export function matchSpellsToInterests(
     );
 }
 
-/** "You dream of Trekking ✦ Stargazing" — the little reason line on cards. */
+/** "You dream of Trekking ✦ Stargazing" - the little reason line on cards. */
 export function dreamLine(matched: Interest[], max = 2): string {
   if (matched.length === 0) return "A path worth wandering";
   return `You dream of ${matched

@@ -12,7 +12,7 @@ interface AboutSectionProps {
   onClearImage: () => void;
 }
 
-/** Section 04 — the story block: heading, large image, rich text and quote. */
+/** Section 04 - the story block: heading, large image, rich text and quote. */
 export default function AboutSection({ draft, patchAbout, onPickImage, onClearImage }: AboutSectionProps) {
   return (
     <div className="space-y-6">
@@ -42,7 +42,7 @@ export default function AboutSection({ draft, patchAbout, onPickImage, onClearIm
         value={draft.about.quote}
         onChange={(quote) => patchAbout({ quote })}
         placeholder="e.g. You don’t just go somewhere. You belong somewhere."
-        helper="One line set in italics with a gold rule — leave empty to skip."
+        helper="One line set in italics with a gold rule - leave empty to skip."
         optional
         maxLength={110}
         showCount
@@ -51,7 +51,7 @@ export default function AboutSection({ draft, patchAbout, onPickImage, onClearIm
       <div className="grid gap-5 sm:grid-cols-[1fr_240px]">
         <ImageDrop
           label="Large image"
-          hint="Sits beside — or behind — the story text"
+          hint="Sits beside - or behind - the story text"
           aspectClass="aspect-[4/3]"
           image={draft.about.image}
           onPick={onPickImage}

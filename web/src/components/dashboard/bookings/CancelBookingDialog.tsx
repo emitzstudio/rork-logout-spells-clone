@@ -3,7 +3,7 @@
  *
  * Company cancellation / reschedule refund = business-approved FULL refund of
  * the amount actually paid. Traveller cancellation encodes NO refund math
- * (decision A is open) — the admin enters the amount explicitly, case by
+ * (decision A is open) - the admin enters the amount explicitly, case by
  * case. Seats return idempotently; gateway-money bookings are refused by the
  * server (none can exist until a gateway ships in 7B).
  */
@@ -19,17 +19,17 @@ const MODES: { value: CancelMode; label: string; detail: string }[] = [
   {
     value: "company_cancellation",
     label: "Company cancelled",
-    detail: "We cancelled the departure — full refund of everything paid.",
+    detail: "We cancelled the departure - full refund of everything paid.",
   },
   {
     value: "reschedule_refund",
     label: "Reschedule refund",
-    detail: "Dates moved and the traveller opted out — full refund of everything paid.",
+    detail: "Dates moved and the traveller opted out - full refund of everything paid.",
   },
   {
     value: "traveller_cancellation",
     label: "Traveller cancelled",
-    detail: "Refund policy not finalised — enter the refund amount explicitly.",
+    detail: "Refund policy not finalised - enter the refund amount explicitly.",
   },
 ];
 
@@ -65,7 +65,7 @@ export default function CancelBookingDialog({ booking, onClose }: CancelBookingD
           const refunded = (result as { refund_minor?: number } | null)?.refund_minor ?? 0;
           toast.success(
             refunded > 0
-              ? `${booking.ref ?? "Booking"} cancelled — ${formatINR(refunded)} refund recorded`
+              ? `${booking.ref ?? "Booking"} cancelled - ${formatINR(refunded)} refund recorded`
               : `${booking.ref ?? "Booking"} cancelled`,
           );
           onClose();
@@ -113,7 +113,7 @@ export default function CancelBookingDialog({ booking, onClose }: CancelBookingD
         {travellerMode && (
           <>
             <OpsNote tone="warn">
-              The traveller-refund policy (decision A) is still open with the business — no formula is encoded anywhere.
+              The traveller-refund policy (decision A) is still open with the business - no formula is encoded anywhere.
               Enter the refund for this case explicitly; the server caps it at the amount paid.
             </OpsNote>
             {paid > 0 && (
@@ -131,13 +131,13 @@ export default function CancelBookingDialog({ booking, onClose }: CancelBookingD
           </>
         )}
 
-        <OpsField label="Reason" hint="required — lands in the audit trail and the traveller record">
+        <OpsField label="Reason" hint="required - lands in the audit trail and the traveller record">
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             required
-            placeholder="e.g. Departure cancelled — host unavailable for these dates"
+            placeholder="e.g. Departure cancelled - host unavailable for these dates"
             className={opsTextareaClass}
           />
         </OpsField>
@@ -145,7 +145,7 @@ export default function CancelBookingDialog({ booking, onClose }: CancelBookingD
         {paid > 0 && (
           <OpsNote>
             Manually-settled refunds land in the ledger as <span className="text-cream/70">source = manual</span>; the
-            traveller is told refunds reach the original payment method in 7–10 working days.
+            traveller is told refunds reach the original payment method in 7-10 working days.
           </OpsNote>
         )}
 

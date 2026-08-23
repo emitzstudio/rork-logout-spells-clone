@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export interface RailItem {
   spell: ManagedSpell;
-  /** Small italic line under the name — "Because you lean toward stillness". */
+  /** Small italic line under the name - "Because you lean toward stillness". */
   reason?: string;
 }
 
@@ -24,7 +24,7 @@ interface SpellRailProps {
 }
 
 /**
- * Horizontal rail of compact spell cards — recommendations, recently viewed,
+ * Horizontal rail of compact spell cards - recommendations, recently viewed,
  * "upcoming this month". Scrolls on touch, wishlist hearts included.
  */
 export default function SpellRail({ eyebrow, title, items, to, toLabel, className }: SpellRailProps) {

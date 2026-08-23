@@ -13,7 +13,7 @@ interface BlogPreviewProps {
 }
 
 /**
- * Faithful miniature of the public story page — same fonts, same blocks,
+ * Faithful miniature of the public story page - same fonts, same blocks,
  * same gold. Renders inside the builder rail and the full preview overlay,
  * in desktop or phone framing.
  */
@@ -119,7 +119,7 @@ export default function BlogPreview({ draft, device }: BlogPreviewProps) {
         )}
       </div>
 
-      {/* Body — the real renderer, gently rescaled for the frame */}
+      {/* Body - the real renderer, gently rescaled for the frame */}
       <div className={cn("px-5 py-6", device === "desktop" && "mx-auto max-w-[560px]")}>
         {liveBlocks.length > 0 ? (
           <BlogArticleBody
@@ -129,7 +129,7 @@ export default function BlogPreview({ draft, device }: BlogPreviewProps) {
           />
         ) : (
           <p className="rounded-xl border border-dashed border-cream/15 px-5 py-10 text-center font-serif text-[15px] italic text-cream/35">
-            Add content blocks — the story appears here as you write.
+            Add content blocks - the story appears here as you write.
           </p>
         )}
 

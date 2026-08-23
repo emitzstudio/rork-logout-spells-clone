@@ -213,7 +213,7 @@ function ResponseDrawer({ response, onClose }: { response: FormResponse; onClose
 
 /* ------------------------------ Responses panel ---------------------------- */
 
-/** The response inbox — searchable, filterable, exportable, all local. */
+/** The response inbox - searchable, filterable, exportable, all local. */
 export default function ResponsesPanel() {
   const { responses, markResponseViewed } = useFormStore();
   const [query, setQuery] = useState<string>("");
@@ -223,7 +223,7 @@ export default function ResponsesPanel() {
 
   const selected = selectedId ? (responses.find((r) => r.id === selectedId) ?? null) : null;
 
-  /* Opening a response marks it viewed — the founder has seen it. */
+  /* Opening a response marks it viewed - the founder has seen it. */
   useEffect(() => {
     if (selectedId) markResponseViewed(selectedId);
   }, [selectedId, markResponseViewed]);
@@ -385,7 +385,7 @@ export default function ResponsesPanel() {
           </p>
           <p className="mx-auto mt-2 max-w-xs font-sans text-[12.5px] text-cream/45">
             {responses.length === 0
-              ? "Share a published form or attach it to a spell — every submission lands here."
+              ? "Share a published form or attach it to a spell - every submission lands here."
               : "Try different keywords or clear the filters."}
           </p>
         </motion.div>
@@ -428,7 +428,7 @@ export default function ResponsesPanel() {
                     </span>
                   </span>
                   <span className="row-start-2 truncate font-mono text-[11px] text-cream/45 md:row-start-auto md:text-[11.5px]">
-                    {response.respondentPhone !== "" ? response.respondentPhone : "—"}
+                    {response.respondentPhone !== "" ? response.respondentPhone : "·"}
                   </span>
                   <span className="hidden truncate font-sans text-[12px] text-cream/55 md:block">
                     {response.spellName ?? <span className="text-cream/30">Direct link</span>}

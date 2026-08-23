@@ -1,5 +1,5 @@
 /**
- * Traveller session + account state for the whole app — real Supabase Auth (M6).
+ * Traveller session + account state for the whole app - real Supabase Auth (M6).
  *
  * One provider, one hook, the same API the mock era exposed. The session
  * comes from native Supabase Auth; the account bundle loads through React
@@ -48,9 +48,9 @@ interface AccountValue {
   ready: boolean;
   /** True while a fresh session is loading its account bundle. */
   booting: boolean;
-  /** Session present AND data loaded — the fully signed-in state. */
+  /** Session present AND data loaded - the fully signed-in state. */
   signedIn: boolean;
-  /** True when the account bundle FAILED to load — the shell offers retry (M10). */
+  /** True when the account bundle FAILED to load - the shell offers retry (M10). */
   loadFailed: boolean;
   /** Refetches the bundle after a failure. */
   retryLoad: () => void;
@@ -68,11 +68,11 @@ interface AccountValue {
   toggleChecklistItem: (bookingId: string, itemId: string) => Promise<void>;
   /** Seeds the packing ritual on a booking that arrived without one. */
   startChecklist: (bookingId: string) => Promise<void>;
-  /** The private post-trip star — server-enforced to completed trips. */
+  /** The private post-trip star - server-enforced to completed trips. */
   setTripRating: (bookingId: string, rating: number) => Promise<void>;
   /** Creates the album on a finished trip and returns its id (M8). */
   beginAlbum: (bookingId: string) => Promise<string>;
-  /** Resolves with honest counts — partial batches must never over-claim (M10). */
+  /** Resolves with honest counts - partial batches must never over-claim (M10). */
   addMemoryPhotos: (
     memoryId: string,
     sources: string[],
@@ -102,7 +102,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       setAuthUser(next?.user ?? null);
       setReady(true);
-      // Auth flips what RLS reveals — every cached read must refetch.
+      // Auth flips what RLS reveals - every cached read must refetch.
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         void queryClient.invalidateQueries();
       }
@@ -127,7 +127,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   // M8 · the live inbox. postgres_changes enforces RLS per subscriber, so this
   // socket only ever carries the signed-in traveller's own rows. A dropped
-  // connection heals on the next bundle refetch — no missed-event bookkeeping.
+  // connection heals on the next bundle refetch - no missed-event bookkeeping.
   useEffect(() => {
     if (userId === null) return;
     const channel = supabase
@@ -188,7 +188,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (input: SignUpInput) => {
-    // M11.5: email confirmations are on — signUp returns a user but NO
+    // M11.5: email confirmations are on - signUp returns a user but NO
     // session. The auth listener adopts the real session the moment the
     // inbox is proven; marking the unverified user signed-in here would
     // fake a session that can't read anything under RLS.
@@ -200,7 +200,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setAuthUser(null);
   }, []);
 
-  /** Shared wrapper — every mutation swaps the fresh bundle into the cache. */
+  /** Shared wrapper - every mutation swaps the fresh bundle into the cache. */
   const apply = useCallback(
     async (op: Promise<AccountData>) => {
       const next = await op;
@@ -289,7 +289,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     void accountQuery.refetch();
   }, [accountQuery.refetch]);
 
-  /** Fire-and-forget — public pages call this without awaiting. */
+  /** Fire-and-forget - public pages call this without awaiting. */
   const recordSpellView = useCallback(
     (slug: string) => {
       if (userId === null || !accountQuery.data) return;

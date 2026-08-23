@@ -51,7 +51,7 @@ const coversDay = (event: CalendarEvent, day: Date): boolean => {
 const eventHref = (e: CalendarEvent): string =>
   e.bookingId !== undefined ? `/account/trips/${e.bookingId}` : `/live/${e.slug}`;
 
-/** Every spell on its dates — yours in gold, the rest waiting quietly. */
+/** Every spell on its dates - yours in gold, the rest waiting quietly. */
 export default function CalendarPage() {
   const { data } = useAccount();
   const { publicSpells } = useSpellStore();
@@ -105,7 +105,7 @@ export default function CalendarPage() {
           Time, <span className="italic text-gold-gradient">mapped gently.</span>
         </>
       }
-      sub="Your booked circles in gold, open departures in outline — hover any spell for the details."
+      sub="Your booked circles in gold, open departures in outline. Hover any spell for the details."
       actions={
         <div className="flex items-center gap-2">
           <button
@@ -247,13 +247,13 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Month list — the tap-friendly companion */}
+      {/* Month list - the tap-friendly companion */}
       <div className="mt-8">
         <p className="eyebrow !text-[10px]">In {cursor.toLocaleDateString("en-IN", { month: "long" })}</p>
         <div className="mt-4 grid gap-2.5 md:grid-cols-2">
           {monthEvents.length === 0 && (
             <p className="font-serif text-lg italic text-cream/35">
-              A quiet month — the loveliest kind of blank page. ☾
+              A quiet month, the loveliest kind of blank page. ☾
             </p>
           )}
           {monthEvents.map((e) => (

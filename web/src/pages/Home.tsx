@@ -126,7 +126,7 @@ function Marquee() {
 }
 
 /**
- * A curated glimpse of the live collection — an infinite, auto-advancing
+ * A curated glimpse of the live collection - an infinite, auto-advancing
  * showcase rather than the full catalogue (that lives on /live). Every
  * published spell rotates through; the cards themselves are unchanged.
  */
@@ -177,7 +177,7 @@ function SpellsSection() {
 }
 
 /**
- * Compact bridge to the full story — the long "who we are" editorial now
+ * Compact bridge to the full story - the long "who we are" editorial now
  * lives at /our-story so the homepage stays focused on the spells.
  * Keeps id="about" so legacy /#about links still land here.
  */
@@ -218,7 +218,7 @@ function StoryTeaser() {
             Read Our Story
             <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
-          <p className="mt-5 font-hand text-lg text-gold/50">— a five-minute read</p>
+          <p className="mt-5 font-hand text-lg text-gold/50">a five-minute read</p>
         </Reveal>
       </div>
     </section>
@@ -245,7 +245,7 @@ function FinalCta() {
             Ready to <span className="italic text-gold-gradient">log out?</span>
           </h2>
           <p className="mx-auto mt-6 max-w-md font-sans text-base leading-relaxed text-cream/55">
-            A private invitation. A quiet movement. Find the spell that calls to you — or cast one of your own.
+            A private invitation. A quiet movement. Find the spell that calls to you, or cast one of your own.
           </p>
           <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
             <Link to="/discover" className="btn-gold">
@@ -269,10 +269,10 @@ export default function Home() {
       {/* Signed-in travellers get their next trip + picks right up front. */}
       <HomeWelcome />
       <SpellsSection />
-      {/* Bucket-list recommendations — the cauldron's picks, or the invitation. */}
+      {/* Bucket-list recommendations - the cauldron's picks, or the invitation. */}
       <BucketListSection />
       <StoryTeaser />
-      {/* Completed journeys — the proof, just before the invitation. */}
+      {/* Completed journeys - the proof, just before the invitation. */}
       <PreviousSpellsSection />
       <FinalCta />
     </Page>

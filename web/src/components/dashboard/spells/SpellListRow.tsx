@@ -87,7 +87,7 @@ interface SpellListRowProps extends SpellActionHandlers {
   fresh: boolean;
 }
 
-/** Compact database row — click anywhere to open, actions float in on hover. */
+/** Compact database row - click anywhere to open, actions float in on hover. */
 export default function SpellListRow({
   spell,
   index,

@@ -20,7 +20,7 @@ interface TagsFieldProps {
   onTags: (next: string[]) => void;
 }
 
-/** Chip input — Enter or comma adds, ✕ removes, suggestions fill the gaps. */
+/** Chip input - Enter or comma adds, ✕ removes, suggestions fill the gaps. */
 function TagsField({ tags, onTags }: TagsFieldProps) {
   const [inputValue, setInputValue] = useState<string>("");
 
@@ -54,7 +54,7 @@ function TagsField({ tags, onTags }: TagsFieldProps) {
       label="Interests / tags"
       optional
       counter={tags.length > 0 ? `${tags.length}/${MAX_TAGS}` : undefined}
-      helper="Press Enter to add — these appear as little chips on the back of the host card."
+      helper="Press Enter to add - these appear as little chips on the back of the host card."
     >
       <div
         className={cn(
@@ -126,7 +126,7 @@ interface HostSectionProps {
   onClearImage: () => void;
 }
 
-/** Section 06 — the Spellcaster: portrait, story, socials and tags. */
+/** Section 06 - the Spellcaster: portrait, story, socials and tags. */
 export default function HostSection({ draft, patchHost, onPickImage, onClearImage }: HostSectionProps) {
   const { host } = draft;
 
@@ -157,7 +157,7 @@ export default function HostSection({ draft, patchHost, onPickImage, onClearImag
         placeholder="username"
         prefix="@"
         optional
-        helper="Just the username — the card links it beautifully."
+        helper="Just the username - the card links it beautifully."
         maxLength={30}
       />
 
@@ -178,7 +178,7 @@ export default function HostSection({ draft, patchHost, onPickImage, onClearImag
         onChange={(quote) => patchHost({ quote })}
         placeholder="e.g. This isn't a trip. It's a circle."
         optional
-        helper="The words they live by — italic with a gold rule."
+        helper="The words they live by - italic with a gold rule."
         maxLength={110}
         showCount
       />
@@ -188,7 +188,7 @@ export default function HostSection({ draft, patchHost, onPickImage, onClearImag
       <div className="grid gap-5 sm:grid-cols-[260px_1fr]">
         <ImageDrop
           label="Host portrait"
-          hint="Portrait crop — fills the front of the card"
+          hint="Portrait crop - fills the front of the card"
           aspectClass="aspect-[4/5]"
           image={host.image}
           onPick={onPickImage}
@@ -198,7 +198,7 @@ export default function HostSection({ draft, patchHost, onPickImage, onClearImag
         <div className="flex items-start gap-2.5 rounded-xl border border-cream/[0.06] bg-cream/[0.015] p-4">
           <RefreshCcw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold/60" aria-hidden />
           <p className="font-sans text-[11.5px] leading-relaxed text-cream/40">
-            The preview shows the rotating card exactly as guests see it — portrait and title on
+            The preview shows the rotating card exactly as guests see it - portrait and title on
             the front; story, Instagram, quote and tags on the back. Click the card in the preview
             to flip it.
           </p>

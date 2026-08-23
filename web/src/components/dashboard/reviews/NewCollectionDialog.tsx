@@ -1,5 +1,5 @@
 /**
- * "+ New Review Collection" — pick a REAL spell, choose how many one-time
+ * "+ New Review Collection" - pick a REAL spell, choose how many one-time
  * links to mint, optionally set an expiry. Creation happens in one atomic
  * staff-only RPC; success is announced only after the database confirms.
  */
@@ -58,7 +58,7 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
       { spellId, linkCount: count.count, expiresAt },
       {
         onSuccess: (collectionId) => {
-          toast.success(`Review collection created — ${count.count} unique ${count.count === 1 ? "link" : "links"} ready`);
+          toast.success(`Review collection created - ${count.count} unique ${count.count === 1 ? "link" : "links"} ready`);
           onCreated(collectionId);
         },
         onError: (error) => toast.error(inviteErrorCopy(inviteErrorCode(error.message))),
@@ -76,10 +76,10 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
         }}
       >
         {failed ? (
-          <OpsNote tone="warn">The spell list couldn't be reached — close this and try again.</OpsNote>
+          <OpsNote tone="warn">The spell list couldn't be reached - close this and try again.</OpsNote>
         ) : ready && options.length === 0 ? (
           <OpsNote tone="warn">
-            No spells exist yet. A review collection belongs to a real spell — create the spell first.
+            No spells exist yet. A review collection belongs to a real spell - create the spell first.
           </OpsNote>
         ) : (
           <>
@@ -115,7 +115,7 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
               {errors.links && <p className="mt-1.5 font-sans text-[11.5px] text-red-300">{errors.links}</p>}
             </OpsField>
 
-            <OpsField label="Expiry Date" hint="optional — links stop accepting stories after this date">
+            <OpsField label="Expiry Date" hint="optional - links stop accepting stories after this date">
               <input
                 type="date"
                 value={expiry}
@@ -126,7 +126,7 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
             </OpsField>
 
             <OpsNote>
-              Each link is unique and works exactly once. Stories arrive privately — nothing appears on the
+              Each link is unique and works exactly once. Stories arrive privately - nothing appears on the
               website without your approval.
             </OpsNote>
 

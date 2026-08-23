@@ -1,5 +1,5 @@
 /**
- * Discover domain — generic spell categories (Pinterest meets luxury travel).
+ * Discover domain - generic spell categories (Pinterest meets luxury travel).
  *
  * Discover no longer lists live spells; it showcases moods. Each category
  * curates live spells (via CMS category mapping + explicit picks) and past
@@ -20,7 +20,7 @@ export type DiscoverCategoryId =
 
 export interface DiscoverCategory {
   id: DiscoverCategoryId;
-  /** URL identity — /discover/{slug}. */
+  /** URL identity - /discover/{slug}. */
   slug: DiscoverCategoryId;
   name: string;
   /** One poetic line on the tile. */
@@ -32,11 +32,11 @@ export interface DiscoverCategory {
   tall?: boolean;
   symbol: string;
   gradient: string;
-  /** Mood words — the Pinterest-board feel. */
+  /** Mood words - the Pinterest-board feel. */
   moods: string[];
   /** CMS ritual families this category pulls from. */
   spellCategories: SpellCategoryId[];
-  /** Explicit live-spell picks (by slug) — beats the family mapping. */
+  /** Explicit live-spell picks (by slug) - beats the family mapping. */
   curatedSlugs: string[];
   /** Previous journeys that carry this mood (by slug). */
   pastSlugs: string[];
@@ -51,7 +51,7 @@ const img = (id: string, w = 1100): string =>
 
 /* ----------------------------- Category tiles ------------------------------ */
 /* Mood curation (brand config). curatedSlugs/pastSlugs are picked from the
-   LIVE catalogue/archive by slug — empty until real spells exist (M11). */
+   LIVE catalogue/archive by slug - empty until real spells exist (M11). */
 
 const CATEGORIES: DiscoverCategory[] = [
   {
@@ -60,7 +60,7 @@ const CATEGORIES: DiscoverCategory[] = [
     name: "Art",
     essence: "Make something badly, joyfully, with your own hands.",
     description:
-      "Studios with no grades and no gallery. Ink, clay, pigment and colour — circles for people who miss making things more than they miss being good at them.",
+      "Studios with no grades and no gallery. Ink, clay, pigment and colour: circles for people who miss making things more than they miss being good at them.",
     image: img("1565193566173-7a0ee3dbe261"),
     tall: true,
     symbol: "✳",
@@ -77,7 +77,7 @@ const CATEGORIES: DiscoverCategory[] = [
     name: "Culinary",
     essence: "Cook a meal with strangers who become friends.",
     description:
-      "Long tables, open fires and markets at dawn. Gathering spells built around one truth — food is the excuse, the table is the point.",
+      "Long tables, open fires and markets at dawn. Gathering spells built around one truth: food is the excuse, the table is the point.",
     image: img("1556910103-1c02745aae4d"),
     symbol: "✦",
     gradient: "from-[#3d2c14] via-[#241a0d] to-[#0a0806]",
@@ -93,7 +93,7 @@ const CATEGORIES: DiscoverCategory[] = [
     name: "Yoga",
     essence: "Move at sunrise. Return to your body.",
     description:
-      "Breath, stillness and slow mornings in the mountains. Movement and stillness spells with no performance and no posing — just presence, daily.",
+      "Breath, stillness and slow mornings in the mountains. Movement and stillness spells with no performance and no posing, just presence, daily.",
     image: img("1506126613408-eca07ce68773"),
     tall: true,
     symbol: "◐",
@@ -110,7 +110,7 @@ const CATEGORIES: DiscoverCategory[] = [
     name: "Culture",
     essence: "Old cities, older kitchens, stories that outlive centuries.",
     description:
-      "Lanes, legends and rituals kept alive by the people who live them. Circles that walk you into a place's memory — not past it.",
+      "Lanes, legends and rituals kept alive by the people who live them. Circles that walk you into a place's memory, not past it.",
     image: img("1561361058-c24cecae35ca"),
     symbol: "☾",
     gradient: "from-[#372a15] via-[#1f180c] to-[#0a0806]",
@@ -143,7 +143,7 @@ const CATEGORIES: DiscoverCategory[] = [
     name: "Girls Only",
     essence: "Small circles, soft mornings, sisters you haven't met yet.",
     description:
-      "Women-only circles hosted by women — movement, making and slow days designed around ease, safety and the particular magic of an all-women table.",
+      "Women-only circles hosted by women: movement, making and slow days designed around ease, safety and the particular magic of an all-women table.",
     image: img("1439066615861-d1af74d74000"),
     symbol: "❋",
     gradient: "from-[#1f2e26] via-[#121a15] to-[#0a0806]",
@@ -158,7 +158,7 @@ const CATEGORIES: DiscoverCategory[] = [
 /* --------------------------------- Service -------------------------------- */
 
 /**
- * Discover service — curation rules live here so the backend phase can move
+ * Discover service - curation rules live here so the backend phase can move
  * them server-side without touching the pages.
  */
 export const discoverService = {
@@ -168,13 +168,13 @@ export const discoverService = {
   bySlug(slug: string): DiscoverCategory | undefined {
     return CATEGORIES.find((c) => c.slug === slug);
   },
-  /** Live spells curated into a category — explicit picks + family mapping. */
+  /** Live spells curated into a category - explicit picks + family mapping. */
   curatedSpells(category: DiscoverCategory, publicSpells: ManagedSpell[]): ManagedSpell[] {
     const picked = new Set(category.curatedSlugs);
     const families = new Set(category.spellCategories);
     return publicSpells.filter((s) => picked.has(s.slug) || families.has(s.category));
   },
-  /** Past journeys that carry the category's mood — picked by slug from the
+  /** Past journeys that carry the category's mood - picked by slug from the
    * LIVE archive the caller fetched (M9: no seeded fallback). */
   relatedPast(category: DiscoverCategory, archive: PreviousSpell[]): PreviousSpell[] {
     const out: PreviousSpell[] = [];

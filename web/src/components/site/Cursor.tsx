@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * The wand cursor — a slim, dark-wood wand with gold fittings whose tip
+ * The wand cursor - a slim, dark-wood wand with gold fittings whose tip
  * rides exactly on the pointer. A faint golden dust trail follows movement,
  * a tiny star blinks every few seconds, and hovering anything interactive
  * makes the tip pulse once. All canvas work happens in one rAF loop;
@@ -103,7 +103,7 @@ export default function Cursor() {
       });
     };
 
-    /** A restrained flourish at the tip — used on hover-enter and click. */
+    /** A restrained flourish at the tip - used on hover-enter and click. */
     const pulse = (strong: boolean): void => {
       if (reduced) return;
       spawn({ kind: "ring", x: mx, y: my, size: strong ? 17 : 12, ttl: strong ? 500 : 420 });
@@ -151,7 +151,7 @@ export default function Cursor() {
       wand.style.transform = `translate3d(${mx - TIP}px, ${my - TIP}px, 0) rotate(${tilt}deg) scale(${scale})`;
       glow.style.transform = `translate3d(${mx - 15}px, ${my - 15}px, 0)`;
 
-      // Golden dust shed along the path — one mote every ~7px of travel.
+      // Golden dust shed along the path - one mote every ~7px of travel.
       if (!reduced) {
         travelled += Math.hypot(dx, dy);
         const speed = Math.hypot(dx, dy);
@@ -204,7 +204,7 @@ export default function Cursor() {
       scale += (targetScale - scale) * 0.28;
       wand.style.transform = `translate3d(${mx - TIP}px, ${my - TIP}px, 0) rotate(${tilt}deg) scale(${scale})`;
 
-      // The occasional idle star — a wand never quite sleeps.
+      // The occasional idle star - a wand never quite sleeps.
       if (!reduced && visible && now >= nextStarAt) {
         nextStarAt = now + 2600 + Math.random() * 1800;
         spawn({
@@ -289,7 +289,7 @@ export default function Cursor() {
         style={{ zIndex: 2147483600 }}
       />
 
-      {/* Soft aura at the tip — brightens over interactive elements. */}
+      {/* Soft aura at the tip - brightens over interactive elements. */}
       <div
         ref={glowRef}
         aria-hidden
@@ -301,7 +301,7 @@ export default function Cursor() {
         }}
       />
 
-      {/* The wand itself — tip precisely on the pointer. */}
+      {/* The wand itself - tip precisely on the pointer. */}
       <div
         ref={wandRef}
         aria-hidden
@@ -339,7 +339,7 @@ export default function Cursor() {
             <circle cx="20" cy="4.4" r="1.9" fill="#F0DFAE" opacity="0.45" />
             <circle cx="20" cy="4.4" r="0.95" fill="#FAF2D8" />
 
-            {/* Tapered shaft — warm dark wood with a gold rim-light */}
+            {/* Tapered shaft - warm dark wood with a gold rim-light */}
             <path
               d="M 19.35 5.2 L 20.65 5.2 L 21.85 29.4 L 18.15 29.4 Z"
               fill="url(#wandWood)"
@@ -353,7 +353,7 @@ export default function Cursor() {
             {/* Gold collar between shaft and grip */}
             <rect x="17.9" y="29.5" width="4.2" height="1.1" rx="0.55" fill="url(#wandGold)" />
 
-            {/* Grip — matte espresso, gold-edged */}
+            {/* Grip - matte espresso, gold-edged */}
             <path
               d="M 18.05 31 L 21.95 31 L 22.2 35.9 Q 22.2 36.9 21.2 36.9 L 18.8 36.9 Q 17.8 36.9 17.8 35.9 Z"
               fill="#241C12"

@@ -14,8 +14,8 @@ import { urlFieldError } from "@/data/siteSettings";
 import { useSaveFounderProfile, useTeamQuery, type TeamMember } from "@/data/team";
 
 /**
- * §4 — Founder profile. Edits the founder's existing `team_members` row —
- * the same row Our Story's spotlight already reads — so there is exactly
+ * §4 - Founder profile. Edits the founder's existing `team_members` row -
+ * the same row Our Story's spotlight already reads - so there is exactly
  * one source for founder identity. Page-specific editorial copy stays put.
  */
 export default function FounderCard() {
@@ -25,7 +25,7 @@ export default function FounderCard() {
     <SettingsCard
       eyebrow="The face"
       title="Founder Profile"
-      intro="One editable source for wherever the site introduces you. Our Story keeps its approved treatment — this only feeds it."
+      intro="One editable source for wherever the site introduces you. Our Story keeps its approved treatment - this only feeds it."
       delay={0.1}
     >
       {teamQuery.isPending ? (
@@ -41,7 +41,7 @@ export default function FounderCard() {
       ) : teamQuery.isError ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <p className="font-sans text-[12.5px] text-cream/45">
-            The roster couldn't be read — your profile is safe, just unreachable.
+            The roster couldn't be read - your profile is safe, just unreachable.
           </p>
           <button
             type="button"
@@ -88,7 +88,7 @@ function FounderForm({ founder }: { founder: TeamMember | undefined }) {
   const [photoBroken, setPhotoBroken] = useState<boolean>(false);
 
   if (founder === undefined) {
-    /* The roster read worked but no featured member exists — honest empty state. */
+    /* The roster read worked but no featured member exists - honest empty state. */
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
         <span className="grid h-11 w-11 place-items-center rounded-full border border-cream/12 text-cream/40">
@@ -133,7 +133,7 @@ function FounderForm({ founder }: { founder: TeamMember | undefined }) {
           flash();
           toast("Founder profile saved ✦");
         },
-        onError: (e) => setError(e.message !== "" ? e.message : "That didn't save — try again."),
+        onError: (e) => setError(e.message !== "" ? e.message : "That didn't save - try again."),
       },
     );
   };
@@ -157,10 +157,10 @@ function FounderForm({ founder }: { founder: TeamMember | undefined }) {
         </span>
         <div className="min-w-0">
           <p className="truncate font-serif text-[17px] text-cream">
-            {value.name.trim() !== "" ? value.name : "—"}
+            {value.name.trim() !== "" ? value.name : "·"}
           </p>
           <p className="truncate font-sans text-[11px] uppercase tracking-[0.18em] text-gold/70">
-            {value.designation.trim() !== "" ? value.designation : "—"}
+            {value.designation.trim() !== "" ? value.designation : "·"}
           </p>
         </div>
       </div>

@@ -1,7 +1,7 @@
 /**
  * Confirms a pending booking WITHOUT recording money (comp seats, settlement
  * already recorded elsewhere) via the audited admin_confirm_booking RPC.
- * A reason is mandatory — the server refuses without one.
+ * A reason is mandatory - the server refuses without one.
  */
 import { BadgeCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
@@ -38,20 +38,20 @@ export default function ConfirmBookingDialog({ booking, onClose }: ConfirmBookin
     <OpsDialog title="Confirm without payment" eyebrow={booking.ref ?? "Booking"} icon={BadgeCheck} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <OpsNote>
-          This confirms the seat with <span className="text-cream/70">no money recorded</span> — for comp seats or when
+          This confirms the seat with <span className="text-cream/70">no money recorded</span> - for comp seats or when
           settlement is handled outside the ledger. {booking.amount_paid_minor === 0 && booking.amount_total_minor > 0
             ? `Nothing has been paid against ${formatINR(booking.amount_total_minor)} yet.`
             : ""}{" "}
-          To confirm through money, record a manual payment instead — covering the advance confirms automatically.
+          To confirm through money, record a manual payment instead - covering the advance confirms automatically.
         </OpsNote>
 
-        <OpsField label="Reason" hint="required — lands in the audit trail">
+        <OpsField label="Reason" hint="required - lands in the audit trail">
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             required
-            placeholder="e.g. Comp seat for the host's guest — approved by Vidushi"
+            placeholder="e.g. Comp seat for the host's guest - approved by Vidushi"
             className={opsTextareaClass}
           />
         </OpsField>

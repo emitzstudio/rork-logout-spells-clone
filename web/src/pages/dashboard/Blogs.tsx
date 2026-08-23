@@ -91,12 +91,12 @@ function IconAction({ label, onClick, danger, children }: IconActionProps) {
   );
 }
 
-/** The Journal's newsroom — every story managed from one place. */
+/** The Journal's newsroom - every story managed from one place. */
 export default function Blogs() {
   const navigate = useNavigate();
   const location = useLocation();
   const { posts, ready, failed, retry, savePost, removePost, uniqueSlug, refresh } = useBlogStore();
-  /** One publish flip at a time — and success is only claimed after it lands (M10). */
+  /** One publish flip at a time - and success is only claimed after it lands (M10). */
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const [query, setQuery] = useState<string>("");
@@ -108,7 +108,7 @@ export default function Blogs() {
   const [device, setDevice] = useState<PreviewDevice>("desktop");
   const [freshId, setFreshId] = useState<string | null>(null);
 
-  /* A fresh publish just landed — greet it and highlight the new row. */
+  /* A fresh publish just landed - greet it and highlight the new row. */
   useEffect(() => {
     const arrival = location.state as { freshId?: string; notice?: string } | null;
     if (!arrival?.freshId && !arrival?.notice) return;
@@ -159,10 +159,10 @@ export default function Blogs() {
           toast.success(
             next === "published"
               ? `“${post.title}” is live in the Journal ✦`
-              : `“${post.title}” unpublished — back in your drafts`,
+              : `“${post.title}” unpublished - back in your drafts`,
           );
         })
-        .catch(() => toast.error("Could not update — please try again"))
+        .catch(() => toast.error("Could not update - please try again"))
         .finally(() => setTogglingId(null));
     },
     [savePost, togglingId],
@@ -186,7 +186,7 @@ export default function Blogs() {
           setFreshId(saved.id);
           toast.success(`“${post.title}” duplicated as a draft`);
         })
-        .catch(() => toast.error("Could not duplicate — please try again"));
+        .catch(() => toast.error("Could not duplicate - please try again"));
     },
     [savePost, uniqueSlug],
   );
@@ -198,12 +198,12 @@ export default function Blogs() {
       void removePost(id)
         .then((result) => {
           if (result === "published-blocked") {
-            toast.error("A live story never vanishes in one motion — unpublish it first");
+            toast.error("A live story never vanishes in one motion - unpublish it first");
           } else {
             toast.success(target ? `“${target.title}” deleted` : "Story deleted");
           }
         })
-        .catch(() => toast.error("Could not delete — please try again"));
+        .catch(() => toast.error("Could not delete - please try again"));
     },
     [posts, removePost],
   );
@@ -270,7 +270,7 @@ export default function Blogs() {
             Blog
           </motion.h1>
           <motion.p {...fadeUp(0.1)} className="mt-2 font-sans text-[13px] text-cream/45">
-            The Journal, run like a newsroom — {publishedCount} live · {draftCount} draft
+            The Journal, run like a newsroom - {publishedCount} live · {draftCount} draft
             {draftCount === 1 ? "" : "s"}.
           </motion.p>
         </div>
@@ -290,7 +290,7 @@ export default function Blogs() {
         <div role="alert" className="mt-8 rounded-xl border border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
           <p className="font-serif text-2xl text-cream">The Journal couldn't be reached</p>
           <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-            The connection failed — your stories are safe.
+            The connection failed - your stories are safe.
           </p>
           <button type="button" onClick={retry} className="btn-gold mt-7 !px-5 !py-2.5 !text-[12px]">
             Try again
@@ -307,7 +307,7 @@ export default function Blogs() {
           </span>
           <p className="mt-4 font-serif text-2xl text-cream">The Journal awaits its first story</p>
           <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-            Write something new — the Journal is waiting.
+            Write something new - the Journal is waiting.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-2.5">
             <button type="button" onClick={goNew} className="btn-gold !px-5 !py-2.5 !text-[12px]">

@@ -18,13 +18,13 @@ import { cn } from "@/lib/utils";
 
 interface SpellHeroProps {
   draft: SpellDraft;
-  /** Real availability from the managed spell — total seats minus booked. */
+  /** Real availability from the managed spell - total seats minus booked. */
   seatsLeft: number | null;
   onBook: () => void;
 }
 
 /**
- * The cinematic opening of every published Spell page — a full-viewport
+ * The cinematic opening of every published Spell page - a full-viewport
  * editorial hero: slow Ken Burns imagery, layered light, floating badges,
  * and the title treated like a magazine cover line.
  */
@@ -83,7 +83,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
 
   return (
     <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden bg-charcoal-deep">
-      {/* Imagery — imperceptibly slow Ken Burns drift */}
+      {/* Imagery - imperceptibly slow Ken Burns drift */}
       {heroUrl !== null ? (
         <div className="animate-kenburns absolute inset-0" aria-hidden>
           <img
@@ -106,7 +106,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
         </div>
       )}
 
-      {/* Multi-layer overlay — readable type, soft vignette, gold atmosphere */}
+      {/* Multi-layer overlay - readable type, soft vignette, gold atmosphere */}
       <div aria-hidden className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/25 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[#0a0806]/60 to-transparent" />
@@ -125,7 +125,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
         />
       </div>
 
-      {/* Back orb + floating badges — one hero row, below the fixed nav (M11.5) */}
+      {/* Back orb + floating badges - one hero row, below the fixed nav (M11.5) */}
       <div className="absolute inset-x-0 top-0 z-[2]">
         <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 px-5 pt-24 sm:px-8 md:pt-28">
           <PageBackOrb className="mr-1" />
@@ -154,7 +154,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
         </div>
       </div>
 
-      {/* Editorial content — category → title → tagline → meta → CTAs */}
+      {/* Editorial content - category → title → tagline → meta → CTAs */}
       <div className="relative z-[2] mx-auto w-full max-w-[1200px] px-5 pb-16 pr-14 sm:px-8 sm:pr-16 md:pb-24 md:pr-8">
         <div className="hero-rise flex items-center gap-3" style={{ animationDelay: "0.1s" }}>
           <span aria-hidden className="font-serif text-[16px] leading-none text-gold">
@@ -243,7 +243,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
         </div>
       </div>
 
-      {/* Scroll indicator — a gold thread gliding down its hairline */}
+      {/* Scroll indicator - a gold thread gliding down its hairline */}
       <div
         aria-hidden
         style={{ animationDelay: "0.9s" }}

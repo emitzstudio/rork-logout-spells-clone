@@ -10,7 +10,7 @@ import { formatINR } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
-/** Compact rail card — a spell the cauldron matched to the traveller's dreams. */
+/** Compact rail card - a spell the cauldron matched to the traveller's dreams. */
 function MatchRailCard({ match }: { match: SpellMatch }) {
   const { spell, matched } = match;
   return (
@@ -44,7 +44,7 @@ function MatchRailCard({ match }: { match: SpellMatch }) {
 }
 
 /**
- * The homepage bucket-list band — replaces "Chosen for you". Travellers who
+ * The homepage bucket-list band - replaces "Chosen for you". Travellers who
  * have brewed their bucket list see the spells the cauldron matched; everyone
  * else gets a quiet invitation to Discover Your Spell.
  */
@@ -168,7 +168,7 @@ export default function BucketListSection() {
               <Link to="/discover" className="btn-gold mt-9">
                 Build My Bucket List <ArrowRight size={16} />
               </Link>
-              <p className="mt-5 font-hand text-lg text-gold/50">— drop your dreams in the cauldron</p>
+              <p className="mt-5 font-hand text-lg text-gold/50">drop your dreams in the cauldron</p>
             </div>
           </div>
         </Reveal>

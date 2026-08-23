@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================
-   LOGOUT SPELLS — Design System
+   LOGOUT SPELLS - Design System
    Brand palette (unchanged from original site):
    charcoal #1C1C1A · deep #0a0806 · cream #F5F0E8
    gold #B8963E · gold-light #CFA85A · tan #8b7956
@@ -119,7 +119,7 @@
     @apply h-px w-16 bg-gradient-to-r from-gold to-transparent;
   }
 
-  /* Glass card — no backdrop-filter: blurring a flat charcoal backdrop is
+  /* Glass card - no backdrop-filter: blurring a flat charcoal backdrop is
      visually identical yet forces a GPU re-filter on every scroll frame. */
   .card-glass {
     background:
@@ -136,7 +136,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-gold/35 px-7 py-3.5 font-sans text-sm font-medium tracking-[0.08em] text-gold transition-all duration-300 hover:border-gold/80 hover:bg-gold/10 hover:text-gold-light active:scale-[0.98];
   }
 
-  /* Premium gold range slider — consistent thumb across browsers.
+  /* Premium gold range slider - consistent thumb across browsers.
      The filled portion of the track is painted via an inline gradient. */
   .slider-gold {
     @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-cream/10;
@@ -185,7 +185,7 @@
     display: none;
   }
 
-  /* Live Spells — gradient text that shimmers softly on hover. */
+  /* Live Spells - gradient text that shimmers softly on hover. */
   .nav-live {
     background: linear-gradient(
       100deg,
@@ -212,13 +212,13 @@
     scrollbar-width: none;
   }
 
-  /* Cinematic hero — imperceptibly slow Ken Burns drift on the imagery. */
+  /* Cinematic hero - imperceptibly slow Ken Burns drift on the imagery. */
   .animate-kenburns {
     animation: kenburns 28s ease-in-out infinite alternate;
     will-change: transform;
   }
 
-  /* Editorial entrance — hero content rises softly into place, staggered
+  /* Editorial entrance - hero content rises softly into place, staggered
      via inline animation-delay. */
   .hero-rise {
     opacity: 0;
@@ -230,7 +230,7 @@
     animation: scroll-glide 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
 
-  /* Compositor-only ambient loops — transform/opacity keyframes driven by
+  /* Compositor-only ambient loops - transform/opacity keyframes driven by
      custom properties, promoted off the main thread. Pair with --dur/--delay. */
   .fx-drift-y {
     animation: ls-drift-y var(--dur, 7s) ease-in-out var(--delay, 0s) infinite;
@@ -251,7 +251,7 @@
     animation: ls-wiggle var(--dur, 1.7s) ease-in-out infinite;
   }
 
-  /* 3D flip cards — team, spellcaster-style rotatables. */
+  /* 3D flip cards - team, spellcaster-style rotatables. */
   .perspective-1200 {
     perspective: 1200px;
   }
@@ -264,7 +264,7 @@
   }
 }
 
-/* ——— Discover cauldron — compositor-friendly idle magic ———
+/* --- Discover cauldron - compositor-friendly idle magic ---
    All keyframes animate transform/opacity only so the browser can run them
    off the main thread. Amplitudes arrive via CSS custom properties. */
 @keyframes ls-drift-x {

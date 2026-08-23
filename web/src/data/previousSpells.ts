@@ -1,11 +1,11 @@
 /**
- * Previous Spells domain — completed journeys, kept as memory pages.
+ * Previous Spells domain - completed journeys, kept as memory pages.
  *
  * These are NOT bookable: each record is the story of a circle that already
  * happened (what happened, highlights, itinerary recap, gallery, community
  * moments). Reviews live in `reviews.ts` and join on `PreviousSpell.id`.
  *
- * M9: reads come from Supabase only. No seed fallback — an empty archive
+ * M9: reads come from Supabase only. No seed fallback - an empty archive
  * shows an honest empty state, and a failed read surfaces an error + retry.
  */
 import { useQuery } from "@tanstack/react-query";
@@ -25,14 +25,14 @@ export interface PastGalleryShot {
   tall?: boolean;
 }
 
-/** One line of the itinerary recap — "what we actually did". */
+/** One line of the itinerary recap - "what we actually did". */
 export interface PastChapter {
   day: string;
   title: string;
   line: string;
 }
 
-/** A kept moment — small, specific, human. */
+/** A kept moment - small, specific, human. */
 export interface PastMemoryNote {
   id: string;
   symbol: string;
@@ -40,7 +40,7 @@ export interface PastMemoryNote {
   line: string;
 }
 
-/** Voices from the circle — community moments. */
+/** Voices from the circle - community moments. */
 export interface CommunityMoment {
   id: string;
   quote: string;
@@ -50,13 +50,13 @@ export interface CommunityMoment {
 
 export interface PreviousSpell {
   id: string;
-  /** URL identity — /live-spells/previous/{slug}. */
+  /** URL identity - /live-spells/previous/{slug}. */
   slug: string;
   title: string;
   category: SpellCategoryId;
   location: string;
   region: string;
-  /** When the circle happened — "June 2026". */
+  /** When the circle happened - "June 2026". */
   season: string;
   durationDays: number;
   travellers: number;
@@ -74,7 +74,7 @@ export interface PreviousSpell {
   gradient: string;
   symbol: string;
   /**
-   * The live-spell slug this circle ran as — joins review eligibility to a
+   * The live-spell slug this circle ran as - joins review eligibility to a
    * traveller's completed bookings. Null for journeys older than the CMS.
    */
   spellSlug: string | null;
@@ -98,7 +98,7 @@ export interface PreviousSpellsState {
   refetch: () => void;
 }
 
-/** The archive — published journeys under RLS, with honest load/error states. */
+/** The archive - published journeys under RLS, with honest load/error states. */
 export function usePreviousSpells(): PreviousSpellsState {
   const query = useQuery({
     queryKey: ["previous-spells"],

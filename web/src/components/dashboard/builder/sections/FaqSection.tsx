@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const QUESTION_HINTS = [
-  "e.g. I'm coming alone — will I fit in?",
+  "e.g. I'm coming alone - will I fit in?",
   "e.g. How fit do I need to be?",
   "e.g. What's the cancellation policy?",
   "e.g. Is the food vegetarian-friendly?",
@@ -160,7 +160,7 @@ function FaqRow({
                 <textarea
                   value={faq.answer}
                   onChange={(e) => onUpdate({ answer: e.target.value })}
-                  placeholder="Answer warmly and honestly — like you would over chai."
+                  placeholder="Answer warmly and honestly - like you would over chai."
                   aria-label="Answer"
                   rows={3}
                   maxLength={500}
@@ -182,7 +182,7 @@ interface FaqSectionProps {
   api: ListApi<FaqItem>;
 }
 
-/** Section 13 — the FAQ accordion builder. */
+/** Section 13 - the FAQ accordion builder. */
 export default function FaqSection({ faqs, api }: FaqSectionProps) {
   const prevIds = useRef<string[]>(faqs.map((f) => f.id));
   const [openIds, setOpenIds] = useState<Record<string, boolean>>(() =>
@@ -211,7 +211,7 @@ export default function FaqSection({ faqs, api }: FaqSectionProps) {
   return (
     <div>
       <p className="font-sans text-[12px] leading-relaxed text-cream/45">
-        Answer the questions before they're asked — each one becomes an accordion on the public
+        Answer the questions before they're asked - each one becomes an accordion on the public
         page.
       </p>
 
@@ -222,7 +222,7 @@ export default function FaqSection({ faqs, api }: FaqSectionProps) {
           </span>
           <p className="font-serif text-[17px] italic text-cream/80">No FAQs yet</p>
           <p className="max-w-[280px] font-sans text-[11.5px] leading-relaxed text-cream/40">
-            “I'm coming alone — will I fit in?” is usually the first one. Answer it kindly.
+            “I'm coming alone - will I fit in?” is usually the first one. Answer it kindly.
           </p>
           <button type="button" onClick={api.add} className="btn-ghost-gold !px-5 !py-2.5 !text-xs">
             <Plus className="h-3.5 w-3.5" /> Add First FAQ

@@ -37,7 +37,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * The steps of the two-door flow. "choice" branches into the light Inquire
- * path, the Book Now journey, or — when the circle is full — the waitlist.
+ * path, the Book Now journey, or - when the circle is full - the waitlist.
  * The journey keeps its original shape (travellers → summary → details →
  * review); the old fake payment step is retired and the review step files an
  * honest reserve REQUEST instead. Trip dates stay fixed by the host.
@@ -234,7 +234,7 @@ function SeatStepper({
 
 /**
  * The honest arithmetic of the manual era, shown as WORDS: the 30% advance
- * policy is stated, never computed — advances, taxes and every payable rupee
+ * policy is stated, never computed - advances, taxes and every payable rupee
  * are confirmed personally by the team until online payment opens.
  */
 function PaymentPolicyNote() {
@@ -242,7 +242,7 @@ function PaymentPolicyNote() {
     <div className="mt-3.5 space-y-2 rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-4">
       <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">How payment works</p>
       <ul className="space-y-1.5 font-sans text-[12px] leading-relaxed text-cream/60">
-        <li>· Nothing is paid online today — online payment opens soon.</li>
+        <li>· Nothing is paid online today. Online payment opens soon.</li>
         <li>· A 30% advance confirms your seats; the balance is settled before departure.</li>
         <li>· Departures under 30 days away are confirmed with full payment.</li>
         <li>· Our team confirms the exact payable amount with you personally.</li>
@@ -271,7 +271,7 @@ export interface BookingFlowProps {
 
 /**
  * "Join this Spell" opens two doors: a light Inquiry, or the Book Now journey
- * — travellers, price summary, details, and an honest booking review that
+ * - travellers, price summary, details, and an honest booking review that
  * RESERVES seats through the live request pipeline (online payment opens with
  * the payments milestone; nothing fake happens meanwhile). Full circles offer
  * the real waitlist instead.
@@ -290,7 +290,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   const [inqRef, setInqRef] = useState<string>("");
   const [inqSending, setInqSending] = useState<boolean>(false);
 
-  /* Book Now — dates are fixed by the host; travellers only pick seats. */
+  /* Book Now - dates are fixed by the host; travellers only pick seats. */
   const fallbackDates = useMemo<TripDates>(() => bookingService.tripDates(spell), [spell]);
   const [seats, setSeats] = useState<number>(1);
   const [companions, setCompanions] = useState<string[]>([]);
@@ -305,7 +305,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
 
   const liveSpell = isUuid(spell.id);
 
-  /** The real departure row — hold-aware availability for live spells. */
+  /** The real departure row - hold-aware availability for live spells. */
   const departureQuery = useQuery({
     queryKey: ["active-departure", spell.id],
     queryFn: () => fetchActiveDeparture(spell.id),
@@ -408,8 +408,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
       setInqRef(ref);
       setStep("inquire-sent");
     } catch {
-      /* A network failure is not an email problem — it gets its own line (M10). */
-      setErrs({ inqGeneral: "The message couldn't be sent just now — please try again." });
+      /* A network failure is not an email problem - it gets its own line (M10). */
+      setErrs({ inqGeneral: "The message couldn't be sent just now. Please try again." });
     } finally {
       setInqSending(false);
     }
@@ -439,7 +439,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
       setRequestRef(ref);
       setStep("requested");
     } catch {
-      setErrs({ reserve: "Your request couldn't be sent just now — please try again." });
+      setErrs({ reserve: "Your request couldn't be sent just now. Please try again." });
       setStep("review");
     }
   }, [spell, departure, dates, seats, lead, companions, requestNote]);
@@ -588,7 +588,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                             <ArrowRight size={14} className="text-gold opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
                           </span>
                           <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/55">
-                            Not ready to commit? Ask us anything — we reply personally within 24 hours.
+                            Not ready to commit? Ask us anything. We reply personally within 24 hours.
                           </span>
                         </span>
                       </button>
@@ -608,7 +608,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                               <ArrowRight size={14} className="text-gold-light opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
                             </span>
                             <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/60">
-                              This circle is full. Hold a real place in the queue — we reach out the
+                              This circle is full. Hold a real place in the queue. We reach out the
                               moment seats open.
                             </span>
                           </span>
@@ -631,7 +631,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                               <ArrowRight size={14} className="text-gold-light opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
                             </span>
                             <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/60">
-                              Reserve your seats — our team confirms them personally while online
+                              Reserve your seats. Our team confirms them personally while online
                               payment opens soon.
                             </span>
                           </span>
@@ -644,14 +644,14 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       )}
                     </div>
 
-                    {/* A failed availability check says so — stale numbers never pose as live (M10). */}
+                    {/* A failed availability check says so - stale numbers never pose as live (M10). */}
                     {liveSpell && departureQuery.isError && (
                       <div
                         role="alert"
                         className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3"
                       >
                         <span className="font-sans text-[12px] leading-relaxed text-amber-200/80">
-                          Live seat availability couldn't be checked — numbers shown may be stale.
+                          Live seat availability couldn't be checked. Numbers shown may be stale.
                         </span>
                         <button
                           type="button"
@@ -677,7 +677,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       Ask us <span className="italic text-gold-gradient">anything.</span>
                     </h3>
                     <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
-                      Dates, fitness levels, dietary needs, cold feet — all fair questions.
+                      Dates, fitness levels, dietary needs, cold feet. All fair questions.
                     </p>
 
                     <div className="mt-6 space-y-5">
@@ -752,7 +752,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         Inquiry <span className="text-gold-gradient not-italic">received</span>
                       </h3>
                       <p className="mt-3 max-w-sm font-sans text-[13.5px] leading-relaxed text-cream/55">
-                        Reference <span className="text-gold-light">{inqRef}</span> — a real human reads
+                        Reference <span className="text-gold-light">{inqRef}</span>. A real human reads
                         every inquiry and replies within 24 hours.
                       </p>
                       <button type="button" onClick={onClose} className="btn-ghost-gold mt-8 !px-10">
@@ -767,13 +767,13 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                   <StepShell stepKey="waitlist">
                     <p className="eyebrow !text-[10px]">The waitlist</p>
                     <h3 className="mt-2 font-serif text-3xl font-medium leading-tight text-cream">
-                      Full — but circles <span className="italic text-gold-gradient">shift.</span>
+                      Full, but circles <span className="italic text-gold-gradient">shift.</span>
                     </h3>
 
                     {!session ? (
                       <>
                         <p className="mt-4 font-sans text-[13.5px] leading-relaxed text-cream/55">
-                          The queue is tied to your account, so we always know how to reach you —
+                          The queue is tied to your account, so we always know how to reach you,
                           and you can leave it any time.
                         </p>
                         <Link to="/login" className="btn-gold mt-6 w-full !py-4" onClick={onClose}>
@@ -785,7 +785,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       </>
                     ) : !departure ? (
                       <p className="mt-4 rounded-xl border border-cream/[0.1] bg-cream/[0.02] px-4 py-3.5 font-sans text-[12.5px] leading-relaxed text-cream/55">
-                        This circle's departure isn't taking a queue right now — send an inquiry
+                        This circle's departure isn't taking a queue right now. Send an inquiry
                         instead and we'll find you a way in.
                       </p>
                     ) : waitlistQuery.isError ? (
@@ -817,7 +817,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           </p>
                           <p className="mt-2 max-w-sm font-sans text-[12.5px] leading-relaxed text-cream/55">
                             {myEntry.status === "offered"
-                              ? "Seats are being HELD for you — the team has reached out with next steps. Nothing is paid online."
+                              ? "Seats are being HELD for you. The team has reached out with next steps. Nothing is paid online."
                               : `${myEntry.seats} seat${myEntry.seats > 1 ? "s" : ""} requested · we reach out personally the moment seats open.`}
                           </p>
                         </div>
@@ -869,7 +869,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           <p className="text-center font-sans text-xs text-[#d98a7f]">{errs.waitlist}</p>
                         )}
                         <p className="text-center font-sans text-[11px] leading-relaxed text-cream/35">
-                          Joining costs nothing and holds no payment — seats are offered in person,
+                          Joining costs nothing and holds no payment. Seats are offered in person,
                           never auto-charged.
                         </p>
                       </div>
@@ -885,7 +885,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       Who's <span className="italic text-gold-gradient">coming?</span>
                     </h3>
 
-                    {/* The host sets the dates — travellers simply see them. */}
+                    {/* The host sets the dates - travellers simply see them. */}
                     <div className="mt-6 flex items-center gap-4 rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-4">
                       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/40 text-gold">
                         <CalendarDays size={16} aria-hidden />
@@ -899,7 +899,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       </span>
                     </div>
                     <p className="mt-2.5 font-sans text-[11px] leading-relaxed text-cream/40">
-                      Fixed departure — the whole circle travels together on dates set by your host.
+                      Fixed departure. The whole circle travels together on dates set by your host.
                     </p>
 
                     <div className="mt-5">
@@ -1006,7 +1006,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                     {session ? (
                       <p className="mt-3 flex items-center gap-2 rounded-lg border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 font-sans text-[12px] text-cream/70">
                         <Check size={13} className="shrink-0 text-gold" aria-hidden />
-                        Requesting as {session.firstName} — once the team confirms your seats, the
+                        Requesting as {session.firstName}. Once the team confirms your seats, the
                         trip appears in your Logout Space.
                       </p>
                     ) : (
@@ -1015,7 +1015,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         <Link to="/login" className="text-gold underline-offset-4 hover:underline">
                           Sign in
                         </Link>{" "}
-                        and confirmed trips will live in your Logout Space — countdown, checklist and all.
+                        and confirmed trips will live in your Logout Space: countdown, checklist and all.
                       </p>
                     )}
 
@@ -1082,8 +1082,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                   <StepShell stepKey="review">
                     <p className="eyebrow !text-[10px]">Step 4 · Booking review</p>
                     <h3 className="mt-2 font-serif text-3xl font-medium leading-tight text-cream">
-                      Reserve my seats —{" "}
-                      <span className="italic text-gold-gradient">online payment opens soon.</span>
+                      Reserve my seats.{" "}
+                      <span className="italic text-gold-gradient">Online payment opens soon.</span>
                     </h3>
 
                     {/* The request, exactly as it reaches the team. */}
@@ -1116,7 +1116,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       <ShieldCheck size={13} className="mt-0.5 shrink-0 text-gold" aria-hidden />
                       <span>
                         Nothing is paid today. Your request lands with the Logout Spells team, who
-                        confirm your seats and the 30% advance personally — usually within 24 hours.
+                        confirm your seats and the 30% advance personally, usually within 24 hours.
                       </span>
                     </p>
 
@@ -1146,7 +1146,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       <p className="mt-2 text-center font-sans text-xs text-[#d98a7f]">{errs.reserve}</p>
                     )}
                     <p className="mt-3 text-center font-sans text-[10.5px] text-cream/35">
-                      No payment is collected online yet — no card, no UPI, no charges.
+                      No payment is collected online yet: no card, no UPI, no charges.
                     </p>
                   </StepShell>
                 )}
@@ -1170,7 +1170,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       </div>
                       <SendingWhispers />
                       <p className="mt-3 font-sans text-[11px] text-cream/35">
-                        Don't close this window — it only takes a moment.
+                        Don't close this window. It only takes a moment.
                       </p>
                     </div>
                   </StepShell>
@@ -1217,7 +1217,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       >
                         <p className="font-sans text-[12.5px] leading-relaxed text-cream/60">
                           A real human confirms your seats within 24 hours at{" "}
-                          <span className="text-gold-light">{lead.email.trim()}</span> — payment
+                          <span className="text-gold-light">{lead.email.trim()}</span>. Payment
                           instructions come with that confirmation. Nothing has been charged.
                         </p>
                         {session && (
@@ -1255,7 +1255,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   );
 }
 
-/** Rotating status lines while the request travels — honest ones. */
+/** Rotating status lines while the request travels - honest ones. */
 function SendingWhispers() {
   const LINES = ["Sending your request…", "Reaching the team…", "Almost there…"];
   const [index, setIndex] = useState<number>(0);

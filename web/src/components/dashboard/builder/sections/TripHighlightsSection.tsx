@@ -204,7 +204,7 @@ interface TripHighlightsSectionProps {
   api: ListApi<TripHighlight>;
 }
 
-/** Section 12 — the signature moments, as premium reorderable cards. */
+/** Section 12 - the signature moments, as premium reorderable cards. */
 export default function TripHighlightsSection({ highlights, api }: TripHighlightsSectionProps) {
   const prevIds = useRef<string[]>(highlights.map((h) => h.id));
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -222,7 +222,7 @@ export default function TripHighlightsSection({ highlights, api }: TripHighlight
   return (
     <div>
       <p className="font-sans text-[12px] leading-relaxed text-cream/45">
-        The moments that sell the whole spell. Mark one or two with the gold accent — they glow on
+        The moments that sell the whole spell. Mark one or two with the gold accent - they glow on
         the public page.
       </p>
 

@@ -30,14 +30,14 @@ interface BurstSpec {
 interface PublishOverlayProps {
   name: string;
   slug: string;
-  /** The actual save has completed — success may show once the steps finish. */
+  /** The actual save has completed - success may show once the steps finish. */
   done: boolean;
   onViewLive: () => void;
   onBackToSpells: () => void;
 }
 
 /**
- * The publishing ritual — a staged, ~2.7s sequence while the spell is
+ * The publishing ritual - a staged, ~2.7s sequence while the spell is
  * validated, its images are inlined and the record lands in the local CMS.
  * Ends on a success seal with the live URL and two ways out of the builder.
  */
@@ -97,7 +97,7 @@ export default function PublishOverlay({
       aria-label={success ? "Spell published" : "Publishing spell"}
       className="fixed inset-0 z-[98] grid place-items-center overflow-hidden bg-charcoal-deep/95 px-5"
     >
-      {/* Ambience — a quiet golden sky */}
+      {/* Ambience - a quiet golden sky */}
       <div
         aria-hidden
         className="absolute inset-0"

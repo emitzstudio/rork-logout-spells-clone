@@ -14,11 +14,11 @@ interface PageBackOrbProps {
 
 /**
  * The circular cream/gold back control (M11.5). One treatment, two homes:
- * the bare orb (`PageBackOrb`) drops into a page's own structure — hero
- * badge rows, standalone headers — and the content-aligned band
+ * the bare orb (`PageBackOrb`) drops into a page's own structure - hero
+ * badge rows, standalone headers - and the content-aligned band
  * (`PageBack`, rendered by Layout) sits at the top of the page's own
  * container. It scrolls WITH the page and aligns to each page's content
- * width — never a universal fixed viewport coordinate. Replaces the old
+ * width - never a universal fixed viewport coordinate. Replaces the old
  * viewport-fixed BackFab. Browser/router back behaviour is preserved via
  * useGoBack (history back, or the fallback when the page opened directly).
  */
@@ -48,7 +48,7 @@ export interface PageBackConfig {
   container?: string;
   /** Horizontal gutters matching the page's own sections. */
   gutters?: string;
-  /** Vertical placement — the quiet band between the nav and the hero. */
+  /** Vertical placement - the quiet band between the nav and the hero. */
   top?: string;
 }
 

@@ -20,7 +20,7 @@ const STATUS_OPTIONS: { id: WebsiteStatus; label: string; line: string }[] = [
 ];
 
 /**
- * §6 — Website & launch switches. Every control here only steers behavior
+ * §6 - Website & launch switches. Every control here only steers behavior
  * that already exists; payment stays informational and email verification
  * mirrors the auth server until those milestones arrive.
  */
@@ -48,11 +48,11 @@ export default function LaunchCard({ settings }: { settings: SiteSettings }) {
         flash();
         toast(
           payload.websiteStatus === "maintenance"
-            ? "Saved — the public site is now resting"
+            ? "Saved - the public site is now resting"
             : "Launch settings saved ✦",
         );
       },
-      onError: (e) => setError(e.message !== "" ? e.message : "That didn't save — try again."),
+      onError: (e) => setError(e.message !== "" ? e.message : "That didn't save - try again."),
     });
   };
 
@@ -60,14 +60,14 @@ export default function LaunchCard({ settings }: { settings: SiteSettings }) {
     <SettingsCard
       eyebrow="The switches"
       title="Website & Launch"
-      intro="The site-wide levers. Each one only steers behavior that already exists — nothing here invents features."
+      intro="The site-wide levers. Each one only steers behavior that already exists - nothing here invents features."
       delay={0.15}
     >
       {savedMaintenance && (
         <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-400/30 bg-amber-400/[0.07] px-3.5 py-3">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden />
           <p className="font-sans text-[12px] leading-relaxed text-amber-200/90">
-            Maintenance mode is ON — the public site is showing its rest page. Your console,
+            Maintenance mode is ON - the public site is showing its rest page. Your console,
             sign-in and the traveller space stay open.
           </p>
         </div>
@@ -127,16 +127,16 @@ export default function LaunchCard({ settings }: { settings: SiteSettings }) {
         <p className="mt-2.5 flex items-start gap-2 font-sans text-[11.5px] leading-relaxed text-amber-200/80">
           <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           Saving will hide every public page behind a quiet maintenance note. The console,
-          sign-in and traveller space stay reachable — flip back here anytime.
+          sign-in and traveller space stay reachable - flip back here anytime.
         </p>
       )}
 
-      {/* Payment — informational only */}
+      {/* Payment - informational only */}
       <div className="mt-5 flex items-center justify-between gap-4 border-t border-cream/[0.06] pt-4">
         <div className="min-w-0">
           <p className="font-sans text-[13px] text-cream/85">Payments</p>
           <p className="mt-0.5 font-sans text-[11.5px] leading-relaxed text-cream/40">
-            Informational — the site keeps its honest “online payment opens soon” messaging
+            Informational - the site keeps its honest “online payment opens soon” messaging
             until the payments milestone.
           </p>
         </div>
@@ -147,18 +147,18 @@ export default function LaunchCard({ settings }: { settings: SiteSettings }) {
       <div className="mt-2 border-t border-cream/[0.06] pt-2">
         <ToggleRow
           label="Registration"
-          line="Travellers can create accounts at /join. When off, the join page pauses politely — existing sign-ins are untouched."
+          line="Travellers can create accounts at /join. When off, the join page pauses politely - existing sign-ins are untouched."
           checked={value.registrationEnabled}
           onChange={(v) => patch({ registrationEnabled: v })}
         />
       </div>
 
-      {/* Email verification — mirrors the auth server */}
+      {/* Email verification - mirrors the auth server */}
       <div className="flex items-center justify-between gap-4 border-t border-cream/[0.06] py-3">
         <div className="min-w-0">
           <p className="font-sans text-[13px] text-cream/85">Email verification</p>
           <p className="mt-0.5 font-sans text-[11.5px] leading-relaxed text-cream/40">
-            Every new account proves its inbox — enforced by the authentication server. An
+            Every new account proves its inbox - enforced by the authentication server. An
             optional mode unlocks with the email-delivery milestone.
           </p>
         </div>
@@ -169,7 +169,7 @@ export default function LaunchCard({ settings }: { settings: SiteSettings }) {
       <div className="border-t border-cream/[0.06] pt-2">
         <ToggleRow
           label="Public forms"
-          line="Shared form links accept responses. When off, form pages rest politely — your builder previews keep working."
+          line="Shared form links accept responses. When off, form pages rest politely - your builder previews keep working."
           checked={value.publicFormsEnabled}
           onChange={(v) => patch({ publicFormsEnabled: v })}
         />

@@ -14,7 +14,7 @@ interface BuilderSectionProps {
   state: SectionState;
   open: boolean;
   onToggle: () => void;
-  /** Publish validation failed here — ring the section until it's complete. */
+  /** Publish validation failed here - ring the section until it's complete. */
   flagged?: boolean;
   /** Anchor for scroll-to-section from the validation banner. */
   htmlId?: string;

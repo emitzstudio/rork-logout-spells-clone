@@ -1,9 +1,9 @@
 /**
- * The traveller's bucket list — every dream they've dropped into the cauldron.
+ * The traveller's bucket list - every dream they've dropped into the cauldron.
  *
  * Anonymous visitors keep the list in localStorage exactly as before. Signed-in
  * travellers get the same list from `user_interests` (ordered, own-only under
- * RLS) with `user_settings.brewed_at` as the reveal flag — and on FIRST login
+ * RLS) with `user_settings.brewed_at` as the reveal flag - and on FIRST login
  * this device's local dreams merge up once, preserving their order, so nothing
  * chosen before joining is ever lost. The database copy then mirrors back to
  * localStorage for continuity after sign-out.
@@ -31,7 +31,7 @@ const MERGED_KEY_PREFIX = "ls-bucket-merged-v1:";
 
 /** The brew needs at least this many dreams before the cauldron reveals spells. */
 export const MIN_BREW = 5;
-/** Gentle upper guidance — the UI nudges, never blocks. */
+/** Gentle upper guidance - the UI nudges, never blocks. */
 export const TARGET_BREW = 10;
 
 /** Versioned so future features (companions, circles) can migrate cleanly. */
@@ -46,13 +46,13 @@ interface BucketListSnapshot {
 interface BucketListValue {
   /** Interest ids in the order they were dropped into the cauldron. */
   interests: string[];
-  /** True once the traveller has revealed their spells — an explicit act, not a count. */
+  /** True once the traveller has revealed their spells - an explicit act, not a count. */
   brewed: boolean;
   add: (id: string) => void;
   remove: (id: string) => void;
-  /** Perform the reveal — marks the brew complete and persists it. */
+  /** Perform the reveal - marks the brew complete and persists it. */
   brew: () => void;
-  /** Forgets ONLY the reveal — the dreams stay put (M11.5 stale-reveal recovery). */
+  /** Forgets ONLY the reveal - the dreams stay put (M11.5 stale-reveal recovery). */
   unbrew: () => void;
   /** Empty the cauldron entirely (also forgets the reveal). */
   clear: () => void;
@@ -132,7 +132,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
     persist(localInterests, localBrewed);
   }, [localInterests, localBrewed]);
 
-  // Cross-tab sync — the same dream never needs choosing twice.
+  // Cross-tab sync - the same dream never needs choosing twice.
   useEffect(() => {
     const onStorage = (event: StorageEvent): void => {
       if (event.key !== STORAGE_KEY || event.newValue === null) return;
@@ -146,7 +146,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
         setLocalInterests(next);
         setLocalBrewed(record.brewed === true && next.length >= MIN_BREW);
       } catch {
-        // Malformed payload — keep the in-memory list.
+        // Malformed payload - keep the in-memory list.
       }
     };
     window.addEventListener("storage", onStorage);
@@ -259,8 +259,8 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
         )
         .then(({ error }) => {
           if (error) {
-            /* The optimistic dot reverts — the traveller must hear why (M10). */
-            toast.error("That dream couldn't be saved to your list — try again.", { id: "bucket-add" });
+            /* The optimistic dot reverts - the traveller must hear why (M10). */
+            toast.error("That dream couldn't be saved to your list. Try again.", { id: "bucket-add" });
             refetchCloud();
           }
         });
@@ -279,7 +279,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
         .eq("interest_id", id)
         .then(({ error }) => {
           if (error) {
-            toast.error("That dream couldn't be removed — try again.", { id: "bucket-remove" });
+            toast.error("That dream couldn't be removed. Try again.", { id: "bucket-remove" });
             refetchCloud();
           }
         });
@@ -297,7 +297,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .then(({ error }) => {
         if (error) {
-          toast.error("The brew couldn't be saved — try again.", { id: "bucket-brew" });
+          toast.error("The brew couldn't be saved. Try again.", { id: "bucket-brew" });
           refetchCloud();
         }
       });
@@ -306,7 +306,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
   /**
    * M11.5: clears the reveal flag without touching a single chosen dream.
    * Used when a past visit's reveal has nothing left to show (e.g. the
-   * catalogue emptied) — the ritual returns instead of a dead result page.
+   * catalogue emptied) - the ritual returns instead of a dead result page.
    */
   const unbrew = useCallback(() => {
     setLocalBrewed(false);
@@ -317,7 +317,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       .update({ brewed_at: null })
       .eq("user_id", userId)
       .then(({ error }) => {
-        /* Quiet self-healing — on failure the cache refetches to stay truthful. */
+        /* Quiet self-healing - on failure the cache refetches to stay truthful. */
         if (error) refetchCloud();
       });
   }, [userId, setCloud, refetchCloud]);
@@ -333,7 +333,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .then(({ error }) => {
         if (error) {
-          toast.error("The cauldron couldn't be emptied — try again.", { id: "bucket-clear" });
+          toast.error("The cauldron couldn't be emptied. Try again.", { id: "bucket-clear" });
           refetchCloud();
         }
       });
@@ -343,7 +343,7 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .then(({ error }) => {
         if (error) {
-          toast.error("The cauldron couldn't be emptied — try again.", { id: "bucket-clear" });
+          toast.error("The cauldron couldn't be emptied. Try again.", { id: "bucket-clear" });
           refetchCloud();
         }
       });

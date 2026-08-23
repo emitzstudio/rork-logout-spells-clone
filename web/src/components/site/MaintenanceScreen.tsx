@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useSiteSettings } from "@/data/siteSettingsStore";
 
 /**
- * M12 — shown on every public route while the founder has the website set to
+ * M12 - shown on every public route while the founder has the website set to
  * maintenance. The console, sign-in and traveller space stay reachable; no
  * invented ETA, just an honest rest note.
  */
@@ -11,7 +11,7 @@ export default function MaintenanceScreen() {
   const { site, contact } = useSiteSettings();
 
   useEffect(() => {
-    document.title = `${site.siteName} — Back Soon`;
+    document.title = `${site.siteName} | Back Soon`;
   }, [site.siteName]);
 
   return (
@@ -35,7 +35,7 @@ export default function MaintenanceScreen() {
           A quiet spell of <span className="italic text-gold-gradient">maintenance.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl font-serif text-2xl italic text-cream/60">
-          The site is resting for a moment while we work backstage — back very soon.
+          The site is resting for a moment while we work backstage. Back very soon.
         </p>
         {contact.contactEmail !== "" && (
           <p className="mt-10 font-sans text-[13px] text-cream/40">

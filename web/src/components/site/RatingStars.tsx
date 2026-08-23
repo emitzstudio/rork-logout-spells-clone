@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RatingStarsProps {
-  /** 0–5, halves rendered as partially-filled. */
+  /** 0-5, halves rendered as partially-filled. */
   value: number;
   size?: number;
   className?: string;

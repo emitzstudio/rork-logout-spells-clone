@@ -14,7 +14,7 @@ interface PageProps {
   /**
    * Content-aligned back orb (M11.5). Defaults to the site's widest
    * container; pass the page's own container/gutters so the orb hugs that
-   * page's content edge — or `false` when the page carries its own back
+   * page's content edge - or `false` when the page carries its own back
    * treatment (hero back links, shell chrome) to avoid duplicates.
    */
   back?: PageBackConfig | false;
@@ -33,7 +33,7 @@ export default function Page({ title, back, children }: PageProps) {
   const showBack = back !== false && location.pathname !== "/";
 
   useEffect(() => {
-    document.title = `${title} — Logout Spells`;
+    document.title = `${title} | Logout Spells`;
   }, [title]);
 
   useEffect(() => {

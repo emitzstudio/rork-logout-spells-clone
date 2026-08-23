@@ -43,11 +43,11 @@ const SECTION_META: Record<BlogSectionId, { title: string; description: string }
   story: { title: "Story Details", description: "Title, summary, category, tags and timing" },
   cover: { title: "Cover & Gallery", description: "The hero image and optional field photographs" },
   author: { title: "Author", description: "Whose voice carries this story" },
-  content: { title: "Content", description: "The article itself — built block by block" },
+  content: { title: "Content", description: "The article itself - built block by block" },
   seo: { title: "SEO", description: "How the story appears in search results" },
 };
 
-/** Which sections gate publishing — SEO politely falls back to the story fields. */
+/** Which sections gate publishing - SEO politely falls back to the story fields. */
 const REQUIRED_SECTIONS: BlogSectionId[] = ["story", "cover", "author", "content"];
 
 function sectionStates(draft: BlogDraft): Record<BlogSectionId, SectionState> {
@@ -105,7 +105,7 @@ function DateField({
   );
 }
 
-/** The publish ritual in flight — done flips once the CMS holds the record. */
+/** The publish ritual in flight - done flips once the CMS holds the record. */
 interface PublishState {
   slug: string;
   done: boolean;
@@ -113,7 +113,7 @@ interface PublishState {
 }
 
 /**
- * The Blog Builder — a premium editorial desk: split editor (left) + sticky
+ * The Blog Builder - a premium editorial desk: split editor (left) + sticky
  * live preview (right), block-based content, drafts and the publish ritual.
  * Mirrors the Spell Builder's workflow exactly.
  */
@@ -142,7 +142,7 @@ export default function BlogBuilder() {
   const [saving, setSaving] = useState<boolean>(false);
   const [publishAttempted, setPublishAttempted] = useState<boolean>(false);
   const [publishState, setPublishState] = useState<PublishState | null>(null);
-  /** The CMS id this session writes to — set on first save/publish. */
+  /** The CMS id this session writes to - set on first save/publish. */
   const savedIdRef = useRef<string | null>(source?.id ?? null);
   /** Once the founder edits the slug by hand, the title stops driving it. */
   const slugTouched = useRef<boolean>(isEdit);
@@ -196,7 +196,7 @@ export default function BlogBuilder() {
   useEffect(() => {
     if (publishAttempted && missingSections.length === 0) {
       setPublishAttempted(false);
-      toast.success("Every required section is ready — publish when you are ✦");
+      toast.success("Every required section is ready - publish when you are ✦");
     }
   }, [publishAttempted, missingSections.length]);
 
@@ -229,10 +229,10 @@ export default function BlogBuilder() {
         savedIdRef.current = saved.id;
         setDraft((d) => ({ ...d, slug }));
         setDirty(false);
-        toast.success(keepLive ? "Saved — the live story is updated" : "Draft saved to the Journal");
+        toast.success(keepLive ? "Saved - the live story is updated" : "Draft saved to the Journal");
       } catch (error) {
         console.error("[blog-builder] Save failed:", error);
-        toast.error("Could not save — please try again");
+        toast.error("Could not save - please try again");
       } finally {
         setSaving(false);
       }
@@ -261,7 +261,7 @@ export default function BlogBuilder() {
         } catch (error) {
           console.error("[blog-builder] Publish failed:", error);
           setPublishState(null);
-          toast.error("Something interrupted the ritual — please try again");
+          toast.error("Something interrupted the ritual - please try again");
         }
       })();
     }, 950);
@@ -290,7 +290,7 @@ export default function BlogBuilder() {
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.35, ease: EASE }}
     >
-      {/* Builder navigation — sticky under the console topbar */}
+      {/* Builder navigation - sticky under the console topbar */}
       <div className="sticky top-16 z-40 -mx-4 border-b border-cream/[0.05] bg-charcoal/95 px-4 py-3 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <button
@@ -385,7 +385,7 @@ export default function BlogBuilder() {
         </div>
       </div>
 
-      {/* Publish validation — which sections still need attention */}
+      {/* Publish validation - which sections still need attention */}
       <AnimatePresence>
         {publishAttempted && missingSections.length > 0 && (
           <motion.div
@@ -402,7 +402,7 @@ export default function BlogBuilder() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-serif text-[18px] font-medium leading-tight text-cream">
-                    Almost ready — {missingSections.length} section
+                    Almost ready - {missingSections.length} section
                     {missingSections.length > 1 ? "s" : ""} need{missingSections.length === 1 ? "s" : ""} attention
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -473,13 +473,13 @@ export default function BlogBuilder() {
                     patch({ slug: slugify(draft.title) });
                   },
                 }}
-                helper="The story's web address — kept unique automatically."
+                helper="The story's web address - kept unique automatically."
               />
               <TextAreaField
                 label="Short description"
                 value={draft.deck}
                 onChange={(deck) => patch({ deck })}
-                placeholder="The editorial deck under the title — one or two sentences."
+                placeholder="The editorial deck under the title - one or two sentences."
                 maxLength={240}
                 showCount
                 rows={2}
@@ -510,7 +510,7 @@ export default function BlogBuilder() {
                 value={tagsInput}
                 onChange={onTags}
                 placeholder="stillness, himalayas, design"
-                helper="Comma separated — powers the tag cloud and related stories."
+                helper="Comma separated - powers the tag cloud and related stories."
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <StepperField
@@ -525,7 +525,7 @@ export default function BlogBuilder() {
                   label="Publish date"
                   value={draft.publishDate}
                   onChange={(publishDate) => patch({ publishDate })}
-                  helper="Orders the Journal — newest first."
+                  helper="Orders the Journal - newest first."
                 />
               </div>
               <ToggleField
@@ -553,13 +553,13 @@ export default function BlogBuilder() {
                 label="Cover image"
                 value={draft.hero}
                 onChange={(hero) => patch({ hero })}
-                helper="The hero — shown full-bleed on the story and on every card."
+                helper="The hero - shown full-bleed on the story and on every card."
               />
               <ImageListEditor
                 label="Field gallery"
                 images={draft.gallery}
                 onChange={(gallery) => patch({ gallery })}
-                helper="Optional — a strip of photographs at the end of the story."
+                helper="Optional - a strip of photographs at the end of the story."
               />
             </div>
           </BuilderSection>
@@ -670,7 +670,7 @@ export default function BlogBuilder() {
               <div className="rounded-lg border border-cream/[0.08] bg-cream/[0.02] p-4">
                 <p className="truncate font-sans text-[15px] text-[#8AB4F8]">
                   {(draft.seoTitle.trim() !== "" ? draft.seoTitle : draft.title.trim() !== "" ? draft.title : "Untitled Story")}{" "}
-                  — Logout Spells
+                  | Logout Spells
                 </p>
                 <p className="mt-0.5 font-sans text-[11px] text-emerald-300/70">
                   logoutspells.com/blog/{draft.slug.trim() !== "" ? draft.slug : "…"}
@@ -711,7 +711,7 @@ export default function BlogBuilder() {
               </div>
             </motion.div>
             <p className="mt-2.5 text-center font-sans text-[10.5px] text-cream/30">
-              Updates as you type — exactly how readers will see it.
+              Updates as you type - exactly how readers will see it.
             </p>
           </div>
         </aside>

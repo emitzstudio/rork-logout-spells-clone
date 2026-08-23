@@ -93,7 +93,7 @@ export function BookingStrip({ draft, seatsLeft, onBook }: BookingStripProps) {
         <div className="min-w-0">
           <p className="font-sans text-[12px] text-cream/50">{bits.join(" · ")}</p>
           <p className="mt-1.5 font-serif text-[24px] leading-none text-gold-light md:text-[27px]">
-            {priceNumber > 0 ? formatINR(priceNumber) : "₹ —"}{" "}
+            {priceNumber > 0 ? formatINR(priceNumber) : "₹ TBA"}{" "}
             <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">per seat</span>
           </p>
         </div>
@@ -111,7 +111,7 @@ export function BookingStrip({ draft, seatsLeft, onBook }: BookingStripProps) {
 
 /* --------------------------------- About ---------------------------------- */
 
-/** "About the Spell" — the story that opens the page. */
+/** "About the Spell" - the story that opens the page. */
 export function SpellAbout({ draft }: { draft: SpellDraft }) {
   const about = draft.about;
   const hasAbout =
@@ -176,7 +176,7 @@ export function SpellAbout({ draft }: { draft: SpellDraft }) {
 
 /* -------------------------------- Quick info -------------------------------- */
 
-/** "At a glance" — the essentials as quiet glass cards. */
+/** "At a glance" - the essentials as quiet glass cards. */
 export function SpellQuickInfo({ draft }: { draft: SpellDraft }) {
   const cards = draft.quickInfo.filter((card) => quickEffectiveValue(card, draft) !== "");
   if (cards.length === 0) return null;
@@ -212,10 +212,10 @@ export function SpellQuickInfo({ draft }: { draft: SpellDraft }) {
 
 /* ---------------------------------- Host ----------------------------------- */
 
-/** "Meet your Spellcaster" — the rotating host card: portrait front, story back. */
+/** "Meet your Spellcaster" - the rotating host card: portrait front, story back. */
 export function SpellHost({ draft }: { draft: SpellDraft }) {
   const [flipped, setFlipped] = useState<boolean>(false);
-  /* Every reveal — either direction — releases a whisper of stardust. */
+  /* Every reveal - either direction - releases a whisper of stardust. */
   const [dust, setDust] = useState<number>(0);
   if (!hostHasContent(draft)) return null;
 
@@ -240,7 +240,7 @@ export function SpellHost({ draft }: { draft: SpellDraft }) {
             aria-label={flipped ? "Show the host portrait" : "Read about the host"}
             className="relative block h-[520px] w-full [transform-style:preserve-3d]"
           >
-            {/* Front — portrait + title */}
+            {/* Front - portrait + title */}
             <div className="absolute inset-0 overflow-hidden rounded-2xl border border-cream/[0.1] [backface-visibility:hidden]">
               {host.image ? (
                 <img src={host.image.url} alt={name} className="absolute inset-0 h-full w-full object-cover" />
@@ -267,7 +267,7 @@ export function SpellHost({ draft }: { draft: SpellDraft }) {
               </span>
             </div>
 
-            {/* Back — story, socials, quote, tags */}
+            {/* Back - story, socials, quote, tags */}
             <div className="absolute inset-0 overflow-hidden rounded-2xl border border-gold/25 bg-[#18160f] [transform:rotateY(180deg)] [backface-visibility:hidden]">
               <span
                 aria-hidden
@@ -320,7 +320,7 @@ export function SpellHost({ draft }: { draft: SpellDraft }) {
 
 /* --------------------------------- Journey --------------------------------- */
 
-/** "Day by day" — each day of the journey reads like a chapter. */
+/** "Day by day" - each day of the journey reads like a chapter. */
 export function SpellJourney({ draft }: { draft: SpellDraft }) {
   const days = draft.itinerary.filter(dayHasContent);
   if (days.length === 0) return null;
@@ -349,7 +349,7 @@ export function SpellJourney({ draft }: { draft: SpellDraft }) {
   );
 }
 
-/** One chapter — odd days image-right, even days image-left; stacked on mobile. */
+/** One chapter - odd days image-right, even days image-left; stacked on mobile. */
 function JourneyDay({ day, index }: { day: ItineraryDay; index: number }) {
   const number = index + 1;
   const highlights = day.highlights.filter((h) => h.text.trim() !== "");
@@ -433,7 +433,7 @@ export function SpellGallery({ draft }: { draft: SpellDraft }) {
 
 /* ------------------------------ Trip highlights ----------------------------- */
 
-/** Highlight cards — accented ones glow gold. */
+/** Highlight cards - accented ones glow gold. */
 export function SpellTripHighlights({ draft }: { draft: SpellDraft }) {
   const visible = draft.tripHighlights.filter(
     (h) => h.title.trim() !== "" || h.description.trim() !== "",
@@ -481,7 +481,7 @@ export function SpellTripHighlights({ draft }: { draft: SpellDraft }) {
 
 /* ----------------------------------- Stay ----------------------------------- */
 
-/** "Where we'll stay" — imagery-led home card. */
+/** "Where we'll stay" - imagery-led home card. */
 export function SpellStay({ draft }: { draft: SpellDraft }) {
   if (!stayHasContent(draft)) return null;
 
@@ -580,7 +580,7 @@ export function SpellStay({ draft }: { draft: SpellDraft }) {
 
 /* -------------------------------- Inclusions -------------------------------- */
 
-/** What's included / not included — two quiet columns. */
+/** What's included / not included - two quiet columns. */
 export function SpellInclusions({ draft }: { draft: SpellDraft }) {
   const inc = draft.included.filter((i) => i.text.trim() !== "");
   const exc = draft.notIncluded.filter((i) => i.text.trim() !== "");
@@ -630,7 +630,7 @@ export function SpellInclusions({ draft }: { draft: SpellDraft }) {
 
 /* --------------------------------- Audience --------------------------------- */
 
-/** "Who this Spell is for" — soul-matching cards. */
+/** "Who this Spell is for" - soul-matching cards. */
 export function SpellAudience({ draft }: { draft: SpellDraft }) {
   const visible = draft.audience.filter((c) => c.title.trim() !== "" || c.description.trim() !== "");
   if (visible.length === 0) return null;
@@ -670,7 +670,7 @@ export function SpellAudience({ draft }: { draft: SpellDraft }) {
 
 /* ----------------------------------- FAQs ----------------------------------- */
 
-/** "Questions, answered" — the gold accordion. */
+/** "Questions, answered" - the gold accordion. */
 export function SpellFaqs({ draft }: { draft: SpellDraft }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const visible = draft.faqs.filter((f) => f.question.trim() !== "");
@@ -734,7 +734,7 @@ export function SpellFaqs({ draft }: { draft: SpellDraft }) {
 
 /* --------------------------------- Final CTA -------------------------------- */
 
-/** The closing invitation — fixed copy, identical on every spell page. */
+/** The closing invitation - fixed copy, identical on every spell page. */
 export function SpellFinalCta({ onBook }: { onBook: () => void }) {
   return (
     <section className="relative overflow-hidden border-t border-cream/[0.05]">

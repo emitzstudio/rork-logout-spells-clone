@@ -1,10 +1,10 @@
 /**
- * Phase 5 — Dynamic Form Builder model.
+ * Phase 5 - Dynamic Form Builder model.
  *
  * A form exists independently of spells: many spells may point at the same
  * form via `ManagedSpell.formId`, and a form never belongs to a single spell.
  * Live form data flows through `@/data/formStore` (Supabase); this module is
- * types, metadata, factories and validation only — no seed forms (M9).
+ * types, metadata, factories and validation only - no seed forms (M9).
  */
 import {
   AlignLeft,
@@ -55,12 +55,12 @@ export interface FormQuestion {
   helper: string;
   placeholder: string;
   required: boolean;
-  /** Core questions ship with every form — reorder yes, delete no. */
+  /** Core questions ship with every form - reorder yes, delete no. */
   core: boolean;
   /**
    * Per-form inclusion. Switched-off questions stay defined (cores are never
    * deletable) but don't render, validate or submit for THIS form. Records
-   * saved before the toggle existed lack the field — the mapper reads that
+   * saved before the toggle existed lack the field - the mapper reads that
    * as ON, so existing forms keep asking everything they always asked.
    */
   enabled: boolean;
@@ -73,14 +73,14 @@ export interface FormQuestion {
 export interface LogoutForm {
   id: string;
   title: string;
-  /** URL identity — logoutspells.com/forms/{slug}. */
+  /** URL identity - logoutspells.com/forms/{slug}. */
   slug: string;
   description: string;
   style: FormStyle;
   status: FormStatus;
   questions: FormQuestion[];
   successMessage: string;
-  /** Optional — offered as a "Continue" step after submission. */
+  /** Optional - offered as a "Continue" step after submission. */
   redirectUrl: string;
   submitLabel: string;
   createdAt: string;
@@ -95,7 +95,7 @@ export interface ResponseAnswer {
   questionId: string;
   questionTitle: string;
   type: QuestionType;
-  /** Display-ready value — multiple choice joined with " · ". */
+  /** Display-ready value - multiple choice joined with " · ". */
   value: string;
 }
 
@@ -103,7 +103,7 @@ export interface FormResponse {
   id: string;
   formId: string;
   formTitle: string;
-  /** The spell the visitor applied through — null for direct form links. */
+  /** The spell the visitor applied through - null for direct form links. */
   spellId: string | null;
   spellName: string | null;
   respondentName: string;
@@ -127,14 +127,14 @@ export interface QuestionTypeMeta {
 export const QUESTION_TYPE_META: Record<QuestionType, QuestionTypeMeta> = {
   short_text: {
     label: "Short Text",
-    description: "A single line — names, cities, one-liners.",
+    description: "A single line - names, cities, one-liners.",
     icon: Type,
     hasOptions: false,
     hasPlaceholder: true,
   },
   long_text: {
     label: "Long Text",
-    description: "A paragraph — stories and intentions.",
+    description: "A paragraph - stories and intentions.",
     icon: AlignLeft,
     hasOptions: false,
     hasPlaceholder: true,
@@ -155,7 +155,7 @@ export const QUESTION_TYPE_META: Record<QuestionType, QuestionTypeMeta> = {
   },
   number: {
     label: "Number",
-    description: "Digits only — ages, counts, budgets.",
+    description: "Digits only - ages, counts, budgets.",
     icon: Hash,
     hasOptions: false,
     hasPlaceholder: true,
@@ -196,7 +196,7 @@ export const RATING_STYLE_META: Record<RatingStyle, { label: string; scale: numb
   star5: { label: "5 Star", scale: 5, hint: "★ ★ ★ ★ ★" },
   star10: { label: "10 Star", scale: 10, hint: "Ten stars, more room" },
   emoji: { label: "Emoji", scale: 5, hint: "😐 → 🤩" },
-  numeric: { label: "Numeric", scale: 10, hint: "1 – 10 scale" },
+  numeric: { label: "Numeric", scale: 10, hint: "1 - 10 scale" },
 };
 
 /** Worst → best, matched to the emoji rating scale of 5. */
@@ -208,7 +208,7 @@ export const FORM_STYLE_META: Record<
 > = {
   conversational: {
     label: "Conversational",
-    hint: "One question at a time — feels like a conversation.",
+    hint: "One question at a time - feels like a conversation.",
     icon: MessagesSquare,
   },
   traditional: {
@@ -258,7 +258,7 @@ const coreQuestion = (partial: Partial<FormQuestion> & Pick<FormQuestion, "type"
 });
 
 /**
- * The six fixed questions every new form begins with — reorderable,
+ * The six fixed questions every new form begins with - reorderable,
  * never deletable. Fresh ids each call so forms stay independent.
  */
 export const createDefaultQuestions = (): FormQuestion[] => [
@@ -275,7 +275,7 @@ export const createDefaultQuestions = (): FormQuestion[] => [
   coreQuestion({
     type: "single_choice",
     title: "Which era of life are you currently in?",
-    options: [createOption("18–24"), createOption("25–30"), createOption("31–40"), createOption("40+")],
+    options: [createOption("18-24"), createOption("25-30"), createOption("31-40"), createOption("40+")],
   }),
   coreQuestion({
     type: "single_choice",
@@ -309,7 +309,7 @@ export const createEmptyForm = (): LogoutForm => {
     style: "conversational",
     status: "draft",
     questions: createDefaultQuestions(),
-    successMessage: "Your words have reached us — we'll write back within a day ✦",
+    successMessage: "Your words have reached us - we'll write back within a day ✦",
     redirectUrl: "",
     submitLabel: "Submit",
     createdAt: now,
@@ -317,7 +317,7 @@ export const createEmptyForm = (): LogoutForm => {
   };
 };
 
-/** Deep-copies a question with fresh ids — duplicated cores become deletable, and copies always start switched on. */
+/** Deep-copies a question with fresh ids - duplicated cores become deletable, and copies always start switched on. */
 export const duplicateQuestion = (question: FormQuestion): FormQuestion => ({
   ...question,
   id: makeId("q"),
@@ -327,7 +327,7 @@ export const duplicateQuestion = (question: FormQuestion): FormQuestion => ({
 });
 
 /**
- * The questions THIS form actually asks — switched-off ones never render,
+ * The questions THIS form actually asks - switched-off ones never render,
  * validate or submit. `!== false` keeps unmapped pre-toggle data ON.
  */
 export const visibleQuestions = (questions: FormQuestion[]): FormQuestion[] =>
@@ -354,7 +354,7 @@ export const formIssues = (form: LogoutForm): string[] => {
     issues.push("Switch on at least one question");
   }
   form.questions.forEach((question, index) => {
-    // Switched-off questions can't block publish — they aren't asked.
+    // Switched-off questions can't block publish - they aren't asked.
     if (question.enabled === false) return;
     const issue = questionIssue(question, index + 1);
     if (issue) issues.push(issue);

@@ -2,7 +2,7 @@
  * Records money received OUTSIDE any gateway (bank transfer, UPI to the
  * company account, cash) via the audited record_manual_payment RPC. The
  * server writes the ledger row (source = 'manual'), rolls the booking up
- * exactly like a capture, and audits the act — the console only asks.
+ * exactly like a capture, and audits the act - the console only asks.
  */
 import { IndianRupee } from "lucide-react";
 import { useState, type FormEvent } from "react";
@@ -21,7 +21,7 @@ import {
 const MANUAL_KINDS: { value: PaymentKind; label: string; hint: string }[] = [
   { value: "advance", label: "Advance", hint: "the 30% (or full) booking amount" },
   { value: "balance", label: "Balance", hint: "the remaining 70%" },
-  { value: "adjustment", label: "Adjustment", hint: "correction — may be negative" },
+  { value: "adjustment", label: "Adjustment", hint: "correction - may be negative" },
 ];
 
 interface RecordPaymentDialogProps {
@@ -63,7 +63,7 @@ export default function RecordPaymentDialog({ booking, onClose }: RecordPaymentD
           const status = (result as { status?: string } | null)?.status;
           toast.success(
             status === "confirmed"
-              ? `Payment recorded — ${booking.ref ?? "booking"} is now confirmed`
+              ? `Payment recorded - ${booking.ref ?? "booking"} is now confirmed`
               : "Payment recorded in the ledger",
           );
           onClose();
@@ -110,7 +110,7 @@ export default function RecordPaymentDialog({ booking, onClose }: RecordPaymentD
           </div>
           <p className="mt-1.5 font-sans text-[11px] text-cream/35">
             {MANUAL_KINDS.find((o) => o.value === kind)?.hint}
-            {kind === "advance" && advanceLeft > 0 ? ` — ${formatINR(advanceLeft)} left to confirm` : ""}
+            {kind === "advance" && advanceLeft > 0 ? ` - ${formatINR(advanceLeft)} left to confirm` : ""}
           </p>
         </OpsField>
 
@@ -155,7 +155,7 @@ export default function RecordPaymentDialog({ booking, onClose }: RecordPaymentD
         </OpsField>
 
         <OpsNote>
-          Recorded as <span className="text-cream/70">source = manual</span> — permanently distinguishable from gateway
+          Recorded as <span className="text-cream/70">source = manual</span> - permanently distinguishable from gateway
           money, fully audited. If it covers the advance, the booking confirms automatically.
         </OpsNote>
 

@@ -1,5 +1,5 @@
 /**
- * The one-time review invitation page — logoutspells.com/review/{token}.
+ * The one-time review invitation page - logoutspells.com/review/{token}.
  *
  * Each token is a single traveller's private door: the server decides whether
  * it is valid, used or expired (the client never guesses), the five questions
@@ -39,24 +39,24 @@ const STATE_COPY: Record<Exclude<InviteLookupState, "ok">, { glyph: string; titl
   used: {
     glyph: "✦",
     title: "This review link has already been used.",
-    subline: "One link carries one story — and this one has already been told.",
+    subline: "One link carries one story, and this one has already been told.",
   },
   expired: {
     glyph: "☾",
     title: "This review link has expired.",
-    subline: "This collection has closed its doors — thank you for being part of the spell.",
+    subline: "This collection has closed its doors. Thank you for being part of the spell.",
   },
   invalid: {
     glyph: "☾",
     title: "This review link is no longer available.",
-    subline: "It may have been mistyped — check the link you received.",
+    subline: "It may have been mistyped. Check the link you received.",
   },
 };
 
 function StateScreen({ state, spellName }: { state: Exclude<InviteLookupState, "ok">; spellName: string }) {
   const copy = STATE_COPY[state];
   useEffect(() => {
-    document.title = "Review Link — Logout Spells";
+    document.title = "Review Link | Logout Spells";
   }, []);
   return (
     <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
@@ -165,8 +165,8 @@ function ConsentChoice({
   );
   return (
     <div role="radiogroup" aria-label={REVIEW_QUESTIONS.consent} className="grid gap-2.5 sm:grid-cols-2">
-      {option(true, "Yes — share my story", "Your words may appear on the Logout Spells website.")}
-      {option(false, "No — keep it private", "Only the team will read it. Nothing is published.")}
+      {option(true, "Yes, share my story", "Your words may appear on the Logout Spells website.")}
+      {option(false, "No, keep it private", "Only the team will read it. Nothing is published.")}
     </div>
   );
 }
@@ -175,7 +175,7 @@ function ConsentChoice({
 
 function ReceivedScreen({ spellName }: { spellName: string }) {
   useEffect(() => {
-    document.title = "Story Received — Logout Spells";
+    document.title = "Story Received | Logout Spells";
   }, []);
   return (
     <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
@@ -227,7 +227,7 @@ function ReceivedScreen({ spellName }: { spellName: string }) {
 export default function ReviewInvitePage() {
   const { token: rawToken } = useParams<{ token: string }>();
   const raw = rawToken ?? "";
-  /* Obviously malformed tokens don't need a round trip — the server stays the
+  /* Obviously malformed tokens don't need a round trip - the server stays the
      authority for anything shaped like a real token. */
   const token = looksLikeInviteToken(raw) ? raw : "";
   const lookup = useInviteLookup(token);
@@ -238,11 +238,11 @@ export default function ReviewInvitePage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [received, setReceived] = useState<boolean>(false);
   /* When the SERVER rejects a submit as used/expired/invalid, the page flips
-     to that honest state — the client never decides on its own. */
+     to that honest state - the client never decides on its own. */
   const [overrideState, setOverrideState] = useState<Exclude<InviteLookupState, "ok"> | null>(null);
 
   useEffect(() => {
-    document.title = "Leave Your Story — Logout Spells";
+    document.title = "Leave Your Story | Logout Spells";
   }, []);
 
   if (raw === "" || token === "") return <StateScreen state="invalid" spellName="" />;
@@ -288,7 +288,7 @@ export default function ReviewInvitePage() {
           else if (code === "review_link_expired") setOverrideState("expired");
           else if (code === "review_link_invalid") setOverrideState("invalid");
           else setServerError(inviteErrorCopy(code));
-          /* Entered values stay exactly as typed — nothing is cleared. */
+          /* Entered values stay exactly as typed - nothing is cleared. */
         },
       },
     );
@@ -341,7 +341,7 @@ export default function ReviewInvitePage() {
               }}
               noValidate
             >
-              {/* 01 — credit */}
+              {/* 01 - credit */}
               <div>
                 <QuestionLabel index={1} text={REVIEW_QUESTIONS.credit} />
                 <div className="mt-3">
@@ -358,7 +358,7 @@ export default function ReviewInvitePage() {
                 </div>
               </div>
 
-              {/* 02 — rating */}
+              {/* 02 - rating */}
               <div>
                 <QuestionLabel index={2} text={REVIEW_QUESTIONS.rating} />
                 <div className="mt-3">
@@ -367,7 +367,7 @@ export default function ReviewInvitePage() {
                 </div>
               </div>
 
-              {/* 03 — one line */}
+              {/* 03 - one line */}
               <div>
                 <QuestionLabel index={3} text={REVIEW_QUESTIONS.summary} />
                 <div className="mt-3">
@@ -389,7 +389,7 @@ export default function ReviewInvitePage() {
                 </div>
               </div>
 
-              {/* 04 — the experience */}
+              {/* 04 - the experience */}
               <div>
                 <QuestionLabel index={4} text={REVIEW_QUESTIONS.experience} />
                 <div className="mt-3">
@@ -397,7 +397,7 @@ export default function ReviewInvitePage() {
                     value={draft.experience}
                     maxLength={REVIEW_LIMITS.experience}
                     onChange={(e) => setDraft((d) => ({ ...d, experience: e.target.value }))}
-                    placeholder="The moments, the people, the feeling — take your time"
+                    placeholder="The moments, the people, the feeling. Take your time"
                     rows={7}
                     className={cn(inputClass, "resize-y leading-relaxed")}
                     aria-label={REVIEW_QUESTIONS.experience}
@@ -411,7 +411,7 @@ export default function ReviewInvitePage() {
                 </div>
               </div>
 
-              {/* 05 — consent */}
+              {/* 05 - consent */}
               <div>
                 <QuestionLabel index={5} text={REVIEW_QUESTIONS.consent} />
                 <div className="mt-3">
@@ -437,7 +437,7 @@ export default function ReviewInvitePage() {
                 {submit.isPending ? "Sending your story…" : "Send your story"}
               </button>
               <p className="text-center font-sans text-[11px] text-cream/30">
-                This link works exactly once — your story sends when you press the button.
+                This link works exactly once. Your story sends when you press the button.
               </p>
             </form>
           </div>

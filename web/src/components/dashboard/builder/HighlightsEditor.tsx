@@ -125,7 +125,7 @@ function HighlightRow({
           </div>
         </div>
 
-        {/* Inline emoji strip — expands below the row, never clipped */}
+        {/* Inline emoji strip - expands below the row, never clipped */}
         <AnimatePresence initial={false}>
           {pickerOpen && (
             <motion.div
@@ -186,7 +186,7 @@ interface HighlightsEditorProps {
 }
 
 /**
- * The day's highlight list — unlimited items, each with an optional emoji,
+ * The day's highlight list - unlimited items, each with an optional emoji,
  * inline editing, duplicate, delete and drag-to-reorder.
  */
 export default function HighlightsEditor({
@@ -264,7 +264,7 @@ export default function HighlightsEditor({
         <Plus className="h-3.5 w-3.5" /> Add Highlight
       </button>
       <p className="mt-1.5 font-sans text-[11px] text-cream/35">
-        The little moments that sell the day — press Enter to keep adding, drag to reorder.
+        The little moments that sell the day - press Enter to keep adding, drag to reorder.
       </p>
     </div>
   );

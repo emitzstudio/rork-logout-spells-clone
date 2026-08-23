@@ -1,5 +1,5 @@
 /**
- * The editorial block editor — add, edit, reorder (drag or arrows), duplicate
+ * The editorial block editor - add, edit, reorder (drag or arrows), duplicate
  * and remove the structured blocks that make up a Journal story.
  */
 import { AnimatePresence, Reorder, useDragControls } from "framer-motion";
@@ -54,7 +54,7 @@ const readFileAsDataUrl = (file: File, onDone: (dataUrl: string) => void): void 
   reader.readAsDataURL(file);
 };
 
-/** URL field + upload button + live thumbnail — every image in one pattern. */
+/** URL field + upload button + live thumbnail - every image in one pattern. */
 export function ImageInput({ label, value, onChange, optional, helper }: ImageInputProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const isData = value.startsWith("data:");
@@ -87,7 +87,7 @@ export function ImageInput({ label, value, onChange, optional, helper }: ImageIn
           <input
             type="text"
             value={isData ? "" : value}
-            placeholder={isData ? "Uploaded image — paste a URL to replace" : "Paste an image URL…"}
+            placeholder={isData ? "Uploaded image - paste a URL to replace" : "Paste an image URL…"}
             aria-label={label}
             onChange={(e) => onChange(e.target.value)}
             className="h-full w-full bg-transparent px-3.5 font-sans text-[12.5px] text-cream outline-none placeholder:text-cream/25"
@@ -117,7 +117,7 @@ interface ImageListEditorProps {
   helper?: string;
 }
 
-/** Manages an ordered set of image URLs — used for the story's field gallery. */
+/** Manages an ordered set of image URLs - used for the story's field gallery. */
 export function ImageListEditor({ label, images, onChange, helper }: ImageListEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -439,7 +439,7 @@ function BlockCard({ block, index, count, onReplace, onDuplicate, onRemove, onMo
       case "divider":
         return (
           <p className="font-sans text-[11.5px] text-cream/35">
-            A quiet gold ornament — gives the story room to breathe. Nothing to configure.
+            A quiet gold ornament - gives the story room to breathe. Nothing to configure.
           </p>
         );
       case "highlight":
@@ -621,7 +621,7 @@ export default function BlogBlocksEditor({ blocks, onChange }: BlogBlocksEditorP
     <div>
       {blocks.length === 0 ? (
         <p className="rounded-xl border border-dashed border-cream/15 px-5 py-10 text-center font-serif text-[15px] italic text-cream/35">
-          No blocks yet — pick one below and start telling the story.
+          No blocks yet - pick one below and start telling the story.
         </p>
       ) : (
         <Reorder.Group axis="y" values={blocks} onReorder={onChange} className="space-y-3">

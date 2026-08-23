@@ -27,10 +27,10 @@ interface PreviewHostProps {
   isMobile: boolean;
 }
 
-/** The rotating host card — portrait front, story back. Click to flip. */
+/** The rotating host card - portrait front, story back. Click to flip. */
 export function PreviewHost({ host, isMobile }: PreviewHostProps) {
   const [flipped, setFlipped] = useState<boolean>(false);
-  /* Each flip releases a small whisper of stardust — preview-sized. */
+  /* Each flip releases a small whisper of stardust - preview-sized. */
   const [dust, setDust] = useState<number>(0);
   const title = host.title.trim() !== "" ? host.title : "Your Host";
   const name = host.name.trim() !== "" ? host.name : "Your Spellcaster";
@@ -51,7 +51,7 @@ export function PreviewHost({ host, isMobile }: PreviewHostProps) {
           aria-label={flipped ? "Show the host portrait" : "Read about the host"}
           className="relative block h-[310px] w-full [transform-style:preserve-3d]"
         >
-          {/* Front — portrait + title */}
+          {/* Front - portrait + title */}
           <div className="absolute inset-0 overflow-hidden rounded-xl border border-cream/[0.1] [backface-visibility:hidden]">
             {host.image ? (
               <img src={host.image.url} alt={name} className="absolute inset-0 h-full w-full object-cover" />
@@ -78,7 +78,7 @@ export function PreviewHost({ host, isMobile }: PreviewHostProps) {
             </span>
           </div>
 
-          {/* Back — story, socials, quote, tags */}
+          {/* Back - story, socials, quote, tags */}
           <div className="absolute inset-0 overflow-hidden rounded-xl border border-gold/25 bg-[#18160f] [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <span
               aria-hidden
@@ -397,7 +397,7 @@ interface PreviewFaqsProps {
   faqs: FaqItem[];
 }
 
-/** Interactive accordion — matches the public site FAQ behaviour. */
+/** Interactive accordion - matches the public site FAQ behaviour. */
 export function PreviewFaqs({ faqs }: PreviewFaqsProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   const visible = faqs.filter((f) => f.question.trim() !== "");
@@ -463,7 +463,7 @@ interface PreviewFinalCtaProps {
   onOpenBooking: () => void;
 }
 
-/** The closing invitation — fixed copy, identical on every spell page. */
+/** The closing invitation - fixed copy, identical on every spell page. */
 export function PreviewFinalCta({ onOpenBooking }: PreviewFinalCtaProps) {
   return (
     <div className={cn(blockClass, "relative overflow-hidden py-10 text-center")}>
@@ -505,7 +505,7 @@ interface PreviewBookingModalProps {
   onClose: () => void;
 }
 
-/** The placeholder booking modal — the real form plugs in with a later phase. */
+/** The placeholder booking modal - the real form plugs in with a later phase. */
 export function PreviewBookingModal({ open, spellName, buttonText, onClose }: PreviewBookingModalProps) {
   return (
     <AnimatePresence>
@@ -562,7 +562,7 @@ export function PreviewBookingModal({ open, spellName, buttonText, onClose }: Pr
             </div>
 
             <p className="border-t border-cream/[0.06] px-3.5 py-2.5 text-center font-serif text-[9.5px] italic leading-snug text-cream/40">
-              A preview — the real booking form arrives in a later phase ✦
+              A preview - the real booking form arrives in a later phase ✦
             </p>
           </motion.div>
         </motion.div>

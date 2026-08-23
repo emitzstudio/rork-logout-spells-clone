@@ -2,7 +2,7 @@
  * Records an offline/phone sale as a REAL booking via the audited
  * admin_create_booking RPC. All money is computed SERVER-side (30% advance,
  * full amount when the trip starts <30 days out); the preview here is
- * display-only. The traveller must already hold an account — bookings belong
+ * display-only. The traveller must already hold an account - bookings belong
  * to travellers. Optionally consumes a waitlist offer (manual allocation).
  */
 import { ChevronDown, ChevronUp, Plus, Ticket, Trash2 } from "lucide-react";
@@ -127,7 +127,7 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
       },
       {
         onSuccess: (result) => {
-          toast.success(`Booking ${result.ref ?? ""} created — advance due ${formatINR(result.amount_advance_minor ?? 0)}`);
+          toast.success(`Booking ${result.ref ?? ""} created - advance due ${formatINR(result.amount_advance_minor ?? 0)}`);
           onClose();
           if (result.booking_id) navigate(`/dashboard/bookings/${result.booking_id}`);
         },
@@ -167,7 +167,7 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
                   value={option.id}
                   disabled={!option.bookable && !(consumingHold && option.id === prefill?.departureId)}
                 >
-                  {option.spellName} — {option.dateLabel}
+                  {option.spellName} - {option.dateLabel}
                   {option.tbc
                     ? " · dates TBC (not bookable)"
                     : !option.scheduled
@@ -197,7 +197,7 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
 
         {consumingHold && (
           <OpsNote>
-            This booking consumes the traveller's waitlist offer — their held seats are converted, not double-counted.
+            This booking consumes the traveller's waitlist offer - their held seats are converted, not double-counted.
           </OpsNote>
         )}
 
@@ -216,11 +216,11 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
             <div>
               <p className="font-sans text-[9.5px] uppercase tracking-[0.2em] text-cream/40">Balance due</p>
               <p className="mt-0.5 font-serif text-[15px] text-cream/80">
-                {preview.due ? formatDate(preview.due.toISOString()) : "—"}
+                {preview.due ? formatDate(preview.due.toISOString()) : "·"}
               </p>
             </div>
             <p className="col-span-3 font-sans text-[10px] text-cream/35">
-              Preview only — the server derives the final figures from the live price.
+              Preview only - the server derives the final figures from the live price.
             </p>
           </div>
         )}
@@ -228,7 +228,7 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
         <div>
           <div className="flex items-center justify-between">
             <p className="font-sans text-[10.5px] uppercase tracking-[0.22em] text-cream/45">
-              Participants <span className="text-cream/30">({participants.length}/{seats} — optional)</span>
+              Participants <span className="text-cream/30">({participants.length}/{seats} - optional)</span>
             </p>
             <button
               type="button"
@@ -241,7 +241,7 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
           </div>
           {participants.length === 0 && (
             <p className="mt-1.5 font-sans text-[11.5px] leading-relaxed text-cream/35">
-              Left empty, the traveller is recorded as the lead — per-seat details can be completed later through a
+              Left empty, the traveller is recorded as the lead - per-seat details can be completed later through a
               change request.
             </p>
           )}
@@ -254,7 +254,7 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
                     <input
                       value={participant.full_name}
                       onChange={(e) => setParticipant(index, { full_name: e.target.value })}
-                      placeholder={`Traveller ${index + 1} — full name`}
+                      placeholder={`Traveller ${index + 1} - full name`}
                       className={opsInputClass}
                     />
                     <input
@@ -332,17 +332,17 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
             className="mt-0.5 h-4 w-4 accent-[#B8963E]"
           />
           <span className="font-sans text-[12px] leading-relaxed text-cream/60">
-            The traveller accepted the booking terms offline (phone / in person) — record the consent with this booking.
+            The traveller accepted the booking terms offline (phone / in person) - record the consent with this booking.
           </span>
         </label>
 
         <OpsField label="Internal note" hint="optional">
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="e.g. Sold over the phone — bank transfer to follow" className={opsTextareaClass} />
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="e.g. Sold over the phone - bank transfer to follow" className={opsTextareaClass} />
         </OpsField>
 
         <OpsNote>
           Seats are reserved atomically (active holds honoured) and the booking lands as{" "}
-          <span className="text-cream/70">pending</span> — record the advance when the money arrives, and it confirms
+          <span className="text-cream/70">pending</span> - record the advance when the money arrives, and it confirms
           automatically.
         </OpsNote>
 

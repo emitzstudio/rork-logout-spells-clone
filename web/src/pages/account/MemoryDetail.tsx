@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const friendly = (error: unknown, fallback: string): string =>
   error instanceof AccountError ? error.message : fallback;
 
-/** One album — a small number of keepsakes, kept on purpose. Live since M8. */
+/** One album - a small number of keepsakes, kept on purpose. Live since M8. */
 export default function MemoryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function MemoryDetail() {
   const [uploading, setUploading] = useState<boolean>(false);
   const [note, setNote] = useState<string>("");
   const [momentDraft, setMomentDraft] = useState<string>("");
-  /** One moment saves at a time — a double-Enter can't file duplicates (M10). */
+  /** One moment saves at a time - a double-Enter can't file duplicates (M10). */
   const [addingMoment, setAddingMoment] = useState<boolean>(false);
   const [letGoArmed, setLetGoArmed] = useState<boolean>(false);
   const [lettingGo, setLettingGo] = useState<boolean>(false);
@@ -44,7 +44,7 @@ export default function MemoryDetail() {
   }, [memory?.id]);
 
   useEffect(() => {
-    document.title = `${memory ? memory.title : "Memory"} · Memories — Logout Spells`;
+    document.title = `${memory ? memory.title : "Memory"} · Memories | Logout Spells`;
   }, [memory]);
 
   // The "let go" confirmation quietly disarms itself.
@@ -74,23 +74,23 @@ export default function MemoryDetail() {
   const onPickFiles = async (files: FileList | null): Promise<void> => {
     if (!files || files.length === 0) return;
     if (remaining <= 0) {
-      toast(`This album keeps ${memory.photoLimit} keepsakes — remove one to add another.`);
+      toast(`This album keeps ${memory.photoLimit} keepsakes - remove one to add another.`);
       return;
     }
     setUploading(true);
     try {
       const picked = Array.from(files).slice(0, remaining);
       const sources = await Promise.all(picked.map((f) => fileToKeepsake(f)));
-      /* The service reports honest counts — the toast never over-claims (M10). */
+      /* The service reports honest counts - the toast never over-claims (M10). */
       const { added, failed } = await addMemoryPhotos(memory.id, sources);
       if (added > 0) {
         toast(added === 1 ? "Keepsake added ✦" : `${added} keepsakes added ✦`);
       }
       if (failed > 0) {
-        toast.error(`${failed} photo${failed > 1 ? "s" : ""} couldn't be added — try again.`);
+        toast.error(`${failed} photo${failed > 1 ? "s" : ""} couldn't be added - try again.`);
       }
       if (files.length > remaining) {
-        toast(`Album full — ${files.length - remaining} photo${files.length - remaining > 1 ? "s" : ""} didn't fit.`);
+        toast(`Album full - ${files.length - remaining} photo${files.length - remaining > 1 ? "s" : ""} didn't fit.`);
       }
     } catch (e) {
       toast.error(friendly(e, "Those photos couldn't be added."));
@@ -115,7 +115,7 @@ export default function MemoryDetail() {
       return;
     }
     if (memory.highlights.length >= 6) {
-      toast("Six little moments is the limit — let one go first.");
+      toast("Six little moments is the limit - let one go first.");
       return;
     }
     setAddingMoment(true);
@@ -279,7 +279,7 @@ export default function MemoryDetail() {
             </div>
             <GoldBar value={memory.photos.length / memory.photoLimit} className="mt-2" />
             <p className="mt-3 font-sans text-[11px] leading-relaxed text-cream/35">
-              Every spell keeps a small, deliberate album — {memory.photoLimit} keepsakes for this one.
+              Every spell keeps a small, deliberate album - {memory.photoLimit} keepsakes for this one.
               Choose slowly; that's the point.
             </p>
           </div>

@@ -1,5 +1,5 @@
 /**
- * One review collection — its real invitation rows ("Traveller 1…N"), each
+ * One review collection - its real invitation rows ("Traveller 1…N"), each
  * with a copyable one-time link, live state (pending / submitted / expired),
  * and the submitted story behind a View Review drawer with the consent-gated
  * publish control.
@@ -144,7 +144,7 @@ export default function ReviewCollection() {
   const copyLink = async (token: string, position: number): Promise<void> => {
     const ok = await copyText(reviewLinkUrl(window.location.origin, token));
     if (ok) toast.success(`Link copied for Traveller ${position}`);
-    else toast.error("Couldn't copy the link — your browser blocked it. Try again.");
+    else toast.error("Couldn't copy the link - your browser blocked it. Try again.");
   };
 
   if (query.isPending) {
@@ -161,7 +161,7 @@ export default function ReviewCollection() {
         <MailPlus className="mx-auto h-7 w-7 text-cream/25" />
         <p className="mt-3 font-serif text-[20px] text-cream/85">This collection couldn't be reached</p>
         <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-          The connection failed — nothing was lost.
+          The connection failed - nothing was lost.
         </p>
         <button
           type="button"

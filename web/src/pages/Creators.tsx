@@ -32,7 +32,7 @@ const BENEFITS: Benefit[] = [
   {
     icon: HeartHandshake,
     title: "Community",
-    line: "Turn followers into a circle that knows your name — twelve people at a real table beat twelve thousand on a screen.",
+    line: "Turn followers into a circle that knows your name. Twelve people at a real table beat twelve thousand on a screen.",
   },
   {
     icon: Coins,
@@ -42,7 +42,7 @@ const BENEFITS: Benefit[] = [
   {
     icon: Compass,
     title: "Travel",
-    line: "See places worth seeing — routes scouted, stays booked, logistics invisible. You just arrive and host.",
+    line: "See places worth seeing: routes scouted, stays booked, logistics invisible. You just arrive and host.",
   },
   {
     icon: Sparkles,
@@ -52,7 +52,7 @@ const BENEFITS: Benefit[] = [
   {
     icon: LifeBuoy,
     title: "Support",
-    line: "A team behind you before, during and after — planning calls, on-ground help and a host playbook that works.",
+    line: "A team behind you before, during and after: planning calls, on-ground help and a host playbook that works.",
   },
 ];
 
@@ -84,7 +84,7 @@ const STAGES: Stage[] = [
     title: "Apply",
     essence: "One form, honestly filled.",
     lines: [
-      "Apply through the Interest Form — five minutes, no pitch deck.",
+      "Apply through the Interest Form. Five minutes, no pitch deck.",
       "We review your profile and what your people gather around.",
       "We shortlist creators whose circles are ready to travel.",
     ],
@@ -104,7 +104,7 @@ const STAGES: Stage[] = [
     title: "We Build, You Cast",
     essence: "Your spell goes live.",
     lines: [
-      "We design the full experience — stays, days, tables, logistics.",
+      "We design the full experience: stays, days, tables, logistics.",
       "We craft your spell page and open bookings.",
       "You promote it to your people.",
       "You earn from every successful booking.",
@@ -115,7 +115,7 @@ const STAGES: Stage[] = [
     title: "Host & Repeat",
     essence: "The part you'll never forget.",
     lines: [
-      "Host your trip — travel with your audience, not for it.",
+      "Host your trip. Travel with your audience, not for it.",
       "Create the memories your circle will retell for years.",
       "Come home. Rest. Then we do it again.",
     ],
@@ -146,10 +146,10 @@ const DELIVERABLES: DeliverablePhase[] = [
     timing: "On the trip itself",
     symbol: "✦",
     items: [
-      "Show up as the host — lead the daily sessions",
+      "Show up as the host and lead the daily sessions",
       "Open and close each day's circle",
       "Capture moments for one recap reel",
-      "Stay present — phones down with everyone else",
+      "Stay present, phones down with everyone else",
     ],
   },
   {
@@ -160,7 +160,7 @@ const DELIVERABLES: DeliverablePhase[] = [
       "1 recap reel + 3 stories within a week",
       "Share your photographs for the memory page",
       "A thank-you note to your circle",
-      "One feedback call — we make the next spell better",
+      "One feedback call to make the next spell better",
     ],
   },
 ];
@@ -213,7 +213,7 @@ function CreatorHero() {
           transition={{ duration: 0.9, delay: 1, ease: EASE }}
           className="mt-8 max-w-xl font-serif text-2xl italic leading-snug text-cream/65"
         >
-          A Spellcaster turns their craft into a journey — and their audience into a circle
+          A Spellcaster turns their craft into a journey, and their audience into a circle
           that travels together.
         </motion.p>
 
@@ -246,7 +246,7 @@ function CreatorHero() {
   );
 }
 
-/** Section 1 — Why become a Spellcaster. */
+/** Section 1 - Why become a Spellcaster. */
 function WhySection() {
   return (
     <section aria-labelledby="why-heading" className="px-5 py-24 md:px-10 md:py-32">
@@ -257,7 +257,7 @@ function WhySection() {
             Why Become a <span className="italic text-gold-gradient">Spellcaster?</span>
           </h2>
           <p className="mx-auto mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-cream/50">
-            Because the internet gave you an audience — and a spell gives you a circle.
+            Because the internet gave you an audience, and a spell gives you a circle.
           </p>
         </Reveal>
 
@@ -276,13 +276,13 @@ function WhySection() {
               </Reveal>
             );
           })}
-          {/* The sixth cell — a quiet promise instead of a sixth pitch. */}
+          {/* The sixth cell - a quiet promise instead of a sixth pitch. */}
           <Reveal delay={0.41}>
             <div className="flex h-full flex-col justify-center rounded-[16px] border border-gold/30 bg-gold/[0.06] p-8">
               <span className="font-serif text-3xl text-gold/70" aria-hidden>✦</span>
               <p className="mt-4 font-serif text-xl italic leading-relaxed text-cream/85">
-                You focus on your people and your craft. Every unglamorous detail — routes, stays,
-                payments, safety — is ours.
+                You focus on your people and your craft. Every unglamorous detail is ours: routes,
+                stays, payments, safety.
               </p>
             </div>
           </Reveal>
@@ -292,7 +292,7 @@ function WhySection() {
   );
 }
 
-/** Section 2 — Who is a Spellcaster. */
+/** Section 2 - Who is a Spellcaster. */
 function WhoSection() {
   return (
     <section aria-labelledby="who-heading" className="relative overflow-hidden bg-charcoal-deep/40 px-5 py-24 md:px-10 md:py-32">
@@ -335,7 +335,7 @@ function WhoSection() {
         <Reveal delay={0.2}>
           <p className="mx-auto mt-14 max-w-2xl font-serif text-2xl italic leading-relaxed text-cream/80 md:text-3xl">
             If people cook your recipes, move to your flows, save your work or simply trust your
-            taste — <span className="text-gold-gradient">you already are one.</span>
+            taste, <span className="text-gold-gradient">you already are one.</span>
           </p>
         </Reveal>
       </div>
@@ -343,7 +343,7 @@ function WhoSection() {
   );
 }
 
-/** Section 3 — How it works: four stages on a gold thread. */
+/** Section 3 - How it works: four stages on a gold thread. */
 function HowSection() {
   const railRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -399,7 +399,7 @@ function HowSection() {
                   className="relative z-10 flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-gold/30 bg-charcoal font-serif text-lg text-gold"
                   aria-hidden
                 >
-                  {/* Pre-painted glow — opacity-only reveal. */}
+                  {/* Pre-painted glow - opacity-only reveal. */}
                   <motion.span
                     aria-hidden
                     className="absolute inset-0 rounded-full"
@@ -433,7 +433,7 @@ function HowSection() {
   );
 }
 
-/** Section 4 — What you earn: 10% commission on organic bookings. */
+/** Section 4 - What you earn: 10% commission on organic bookings. */
 function CommissionSection() {
   return (
     <section
@@ -455,11 +455,11 @@ function CommissionSection() {
             What You <span className="italic text-gold-gradient">Earn</span>
           </h2>
           <p className="mx-auto mt-5 max-w-md font-sans text-[15px] leading-relaxed text-cream/50">
-            One number, no fine print — the same promise to every Spellcaster.
+            One number, no fine print. The same promise to every Spellcaster.
           </p>
         </Reveal>
 
-        {/* The seal — 10%, held like a wax stamp, not a pricing card. */}
+        {/* The seal - 10%, held like a wax stamp, not a pricing card. */}
         <Reveal delay={0.12} className="mt-16 flex flex-col items-center">
           <div className="relative flex h-[250px] w-[250px] items-center justify-center md:h-[300px] md:w-[300px]">
             <div
@@ -470,7 +470,7 @@ function CommissionSection() {
                 filter: "blur(8px)",
               }}
             />
-            {/* The outer ring turns imperceptibly — a seal, alive. */}
+            {/* The outer ring turns imperceptibly - a seal, alive. */}
             <div
               aria-hidden
               className="absolute inset-0 rounded-full border border-dashed border-gold/25"
@@ -506,7 +506,7 @@ function CommissionSection() {
           </p>
         </Reveal>
 
-        {/* The honest definition — what counts, and what doesn't. */}
+        {/* The honest definition - what counts, and what doesn't. */}
         <div className="mx-auto mt-14 grid max-w-4xl gap-5 md:grid-cols-2">
           <Reveal delay={0.08}>
             <div className="card-glass h-full rounded-[16px] p-8 transition-colors duration-500 hover:!border-gold/40">
@@ -514,7 +514,7 @@ function CommissionSection() {
               <h3 className="heading-serif mt-4 text-3xl italic text-cream">Organic bookings only</h3>
               <p className="mt-3 font-sans text-sm leading-relaxed text-cream/60">
                 You earn a 10% commission when your content genuinely influences someone to
-                discover and book a Logout Spells trip — a traveller who found the journey
+                discover and book a Logout Spells trip: a traveller who found the journey
                 through you, and chose it because of you.
               </p>
             </div>
@@ -524,8 +524,8 @@ function CommissionSection() {
               <span className="font-serif text-3xl text-gold/50" aria-hidden>☾</span>
               <h3 className="heading-serif mt-4 text-3xl italic text-cream">What doesn't count</h3>
               <p className="mt-3 font-sans text-sm leading-relaxed text-cream/60">
-                Bookings from your friends, family or personal circle — or from travellers who
-                would have booked on their own anyway — aren't counted as organic. The
+                Bookings from your friends, family or personal circle, or from travellers who
+                would have booked on their own anyway, aren't counted as organic. The
                 commission honours genuine influence, not proximity.
               </p>
             </div>
@@ -540,7 +540,7 @@ function CommissionSection() {
   );
 }
 
-/** Section 5 — Creator deliverables: before, during, after. */
+/** Section 5 - Creator deliverables: before, during, after. */
 function DeliverablesSection() {
   return (
     <section aria-labelledby="deliverables-heading" className="relative overflow-hidden bg-charcoal-deep/40 px-5 py-24 md:px-10 md:py-32">
@@ -558,7 +558,7 @@ function DeliverablesSection() {
             What You <span className="italic text-gold-gradient">Bring</span>
           </h2>
           <p className="mx-auto mt-5 max-w-xl font-sans text-[15px] leading-relaxed text-cream/50">
-            Clear, honest deliverables — so both sides always know what a great spell asks of its
+            Clear, honest deliverables, so both sides always know what a great spell asks of its
             caster.
           </p>
         </Reveal>
@@ -591,7 +591,7 @@ function DeliverablesSection() {
         <Reveal delay={0.2} className="mt-10 text-center">
           <p className="inline-flex items-center gap-2.5 rounded-full border border-gold/25 px-6 py-3 font-serif text-lg italic text-cream/70">
             <Camera size={16} className="text-gold/70" aria-hidden />
-            One honest recap reel beats ten polished ads — your circle is the proof.
+            One honest recap reel beats ten polished ads. Your circle is the proof.
           </p>
         </Reveal>
       </div>
@@ -616,7 +616,7 @@ function CreatorFinalCta() {
           Your circle is <span className="italic text-gold-gradient">waiting.</span>
         </h2>
         <p className="mx-auto mt-6 max-w-md font-sans text-[15px] leading-relaxed text-cream/55">
-          Tell us about yourself in the Interest Form. Applications are read personally — every
+          Tell us about yourself in the Interest Form. Applications are read personally, every
           single one.
         </p>
         <button type="button" onClick={openApply} className="btn-gold mt-10">
@@ -629,7 +629,7 @@ function CreatorFinalCta() {
 }
 
 /**
- * Become a Spellcaster — pure storytelling: why, who, how it works in four
+ * Become a Spellcaster - pure storytelling: why, who, how it works in four
  * stages, what you earn (10% on organic bookings), and what creators bring
  * before / during / after.
  */

@@ -86,7 +86,7 @@ export interface SpellPageBodyProps {
 }
 
 /**
- * The Spell page itself — hero to final CTA. This single renderer powers both
+ * The Spell page itself - hero to final CTA. This single renderer powers both
  * the Spell Builder preview (inside the device frame) and the real public
  * page at /live/:slug, so what you preview is exactly what gets published.
  */
@@ -133,7 +133,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
   const titleTail = named && titleWords.length > 1 ? titleWords[titleWords.length - 1] : null;
   const titleHead = titleTail !== null ? titleWords.slice(0, -1).join(" ") : spellName;
 
-  // The emotional sentence under the title — the founder's one-line hook is the
+  // The emotional sentence under the title - the founder's one-line hook is the
   // real data source; a poetic house line stands in until one is written.
   const heroTaglineRaw = draft.hook.trim();
   const taglineIsPlaceholder = heroTaglineRaw === "" && !live;
@@ -225,9 +225,9 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
 
   return (
     <Fragment>
-      {/* Hero — a cinematic, editorial opening: the image tells the story first */}
+      {/* Hero - a cinematic, editorial opening: the image tells the story first */}
       <div className={cn("relative overflow-hidden", isMobile ? "aspect-[9/16]" : "aspect-[16/11]")}>
-        {/* Imagery — imperceptibly slow Ken Burns drift */}
+        {/* Imagery - imperceptibly slow Ken Burns drift */}
         {heroImage ? (
           <div className="animate-kenburns absolute inset-0">
             <img src={heroImage.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -248,7 +248,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
           </div>
         )}
 
-        {/* Multi-layer overlay — readable type, soft vignette, gold atmosphere */}
+        {/* Multi-layer overlay - readable type, soft vignette, gold atmosphere */}
         <div aria-hidden className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/30 to-transparent" />
           <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a0806]/50 to-transparent" />
@@ -307,7 +307,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
           </div>
         )}
 
-        {/* Editorial content — category → title → tagline → meta → CTAs */}
+        {/* Editorial content - category → title → tagline → meta → CTAs */}
         <div
           className={cn(
             "absolute inset-x-0 bottom-0 z-[2]",
@@ -421,7 +421,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
           </div>
         </div>
 
-        {/* Scroll indicator — a gold thread gliding down its hairline */}
+        {/* Scroll indicator - a gold thread gliding down its hairline */}
         <div
           aria-hidden
           style={{ animationDelay: "0.95s" }}
@@ -447,7 +447,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
             {draft.location.trim() !== "" ? ` · ${draft.location}` : ""}
           </p>
           <p className="mt-0.5 font-serif text-[16px] leading-none text-gold-light">
-            {priceNumber > 0 ? formatINR(priceNumber) : "₹ —"}{" "}
+            {priceNumber > 0 ? formatINR(priceNumber) : "₹ -"}{" "}
             <span className="font-sans text-[8px] uppercase tracking-[0.14em] text-cream/35">per seat</span>
           </p>
         </div>
@@ -460,7 +460,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
         </button>
       </div>
 
-      {/* About the Spell — the story opens the page */}
+      {/* About the Spell - the story opens the page */}
       {(hasAbout || !live) && (
         <div className="px-5 py-6">
           {hasAbout ? (
@@ -496,7 +496,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
           ) : (
             <div className="rounded-lg border border-dashed border-cream/10 px-3 py-4 text-center">
               <p className="font-sans text-[9px] uppercase tracking-[0.2em] text-cream/25">
-                “About the Spell” appears here — section 04
+                “About the Spell” appears here - section 04
               </p>
             </div>
           )}
@@ -523,7 +523,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
                       value !== "" ? "text-cream/85" : "text-cream/25",
                     )}
                   >
-                    {value !== "" ? value : "—"}
+                    {value !== "" ? value : "·"}
                   </p>
                 </div>
               );
@@ -532,10 +532,10 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
         </div>
       )}
 
-      {/* Meet your Spellcaster — the rotating host card */}
+      {/* Meet your Spellcaster - the rotating host card */}
       {hostHasContent(draft) && <PreviewHost host={draft.host} isMobile={isMobile} />}
 
-      {/* Itinerary — the centerpiece: each day reads like a chapter */}
+      {/* Itinerary - the centerpiece: each day reads like a chapter */}
       {(hasJourney || !live) && (
         <div id={journeyId} className="scroll-mt-10 border-t border-cream/[0.05] px-5 py-7">
           <p className="font-sans text-[7.5px] uppercase tracking-[0.28em] text-cream/30">
@@ -570,7 +570,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
           ) : (
             <div className="mt-2.5 rounded-lg border border-dashed border-cream/10 px-3 py-4 text-center">
               <p className="font-sans text-[9px] uppercase tracking-[0.2em] text-cream/25">
-                Day-by-day journey appears here — section 05
+                Day-by-day journey appears here - section 05
               </p>
             </div>
           )}
@@ -617,10 +617,10 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
       {/* FAQs */}
       {showFaqs && <PreviewFaqs faqs={draft.faqs} />}
 
-      {/* Final CTA — fixed closing invitation, same on every spell page */}
+      {/* Final CTA - fixed closing invitation, same on every spell page */}
       <PreviewFinalCta onOpenBooking={openBooking} />
 
-      {/* Booking modal placeholder — used unless the host page brings its own */}
+      {/* Booking modal placeholder - used unless the host page brings its own */}
       {!onBook && (
         <PreviewBookingModal
           open={bookingOpen}
@@ -641,8 +641,8 @@ interface SpellPreviewProps {
 }
 
 /**
- * A miniature of the real Logout Spells page — same typography, colors and
- * spacing — that re-renders on every keystroke in the editor.
+ * A miniature of the real Logout Spells page - same typography, colors and
+ * spacing - that re-renders on every keystroke in the editor.
  */
 export default function SpellPreview({ draft, device }: SpellPreviewProps) {
   const isMobile = device === "mobile";
@@ -697,7 +697,7 @@ export default function SpellPreview({ draft, device }: SpellPreviewProps) {
           </div>
         </div>
 
-        {/* The page itself — the exact renderer the public site uses */}
+        {/* The page itself - the exact renderer the public site uses */}
         <SpellPageBody draft={draft} device={device} />
 
         {/* Mini footer */}
@@ -722,7 +722,7 @@ interface PreviewDayProps {
 }
 
 /**
- * One day of the journey, rendered exactly like the public page — the layout
+ * One day of the journey, rendered exactly like the public page - the layout
  * alternates automatically: odd days text-left / image-right, even days flipped.
  */
 function PreviewDay({ day, index, isMobile, symbol, live }: PreviewDayProps) {
@@ -736,7 +736,7 @@ function PreviewDay({ day, index, isMobile, symbol, live }: PreviewDayProps) {
           {number}
         </span>
         <span className="font-sans text-[8.5px] uppercase tracking-[0.18em] text-cream/25">
-          Day {number} — still being written
+          Day {number} - still being written
         </span>
       </div>
     );

@@ -21,7 +21,7 @@ interface ActivityFeedProps {
   className?: string;
 }
 
-/** Vertical activity timeline — every XP moment on the traveller's path. */
+/** Vertical activity timeline - every XP moment on the traveller's path. */
 export default function ActivityFeed({ events, limit, className }: ActivityFeedProps) {
   const shown = limit !== undefined ? events.slice(0, limit) : events;
 

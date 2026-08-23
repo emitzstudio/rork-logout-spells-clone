@@ -30,7 +30,7 @@ interface ToastState {
 }
 
 /**
- * The Forms hub — every reusable application form, plus the response inbox.
+ * The Forms hub - every reusable application form, plus the response inbox.
  * Forms exist independently of spells: attach one form to many spells, and
  * every submission flows back here.
  */
@@ -80,7 +80,7 @@ export default function Forms() {
 
   const showToast = useCallback((message: string) => setToast({ id: Date.now(), message }), []);
 
-  /* A fresh publish just landed — greet it and highlight the new card. */
+  /* A fresh publish just landed - greet it and highlight the new card. */
   useEffect(() => {
     const arrival = location.state as { freshId?: string; notice?: string } | null;
     if (!arrival?.freshId && !arrival?.notice) return;
@@ -150,7 +150,7 @@ export default function Forms() {
           setFreshId(saved.id);
           showToast(`“${source.title}” duplicated as a draft`);
         })
-        .catch(() => showToast("Could not duplicate — please try again"));
+        .catch(() => showToast("Could not duplicate - please try again"));
     },
     [forms, saveForm, uniqueFormSlug, showToast],
   );
@@ -179,12 +179,12 @@ export default function Forms() {
           } else {
             showToast(
               target
-                ? `“${target.title}” has responses — unpublished instead, link paused`
+                ? `“${target.title}” has responses - unpublished instead, link paused`
                 : "Form unpublished",
             );
           }
         })
-        .catch(() => showToast("Could not delete — please try again"));
+        .catch(() => showToast("Could not delete - please try again"));
     },
     [forms, deleteForm, detachFormFromSpells, showToast],
   );
@@ -217,7 +217,7 @@ export default function Forms() {
             Forms
           </motion.h1>
           <motion.p {...fadeUp(0.1)} className="mt-2 font-sans text-[13px] text-cream/45">
-            Reusable application forms — attach one to many spells, or share it anywhere.
+            Reusable application forms - attach one to many spells, or share it anywhere.
           </motion.p>
         </div>
         <motion.div {...fadeUp(0.12)}>
@@ -283,7 +283,7 @@ export default function Forms() {
             <div role="alert" className="rounded-xl border border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
               <p className="font-serif text-2xl text-cream">The forms couldn't be reached</p>
               <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-                The connection failed — your forms are safe.
+                The connection failed - your forms are safe.
               </p>
               <button type="button" onClick={retry} className="btn-gold mt-7 !px-5 !py-2.5 !text-[12px]">
                 Try again
@@ -301,7 +301,7 @@ export default function Forms() {
               </span>
               <p className="mt-5 font-serif text-3xl text-cream">No forms yet</p>
               <p className="mx-auto mt-2 max-w-sm font-sans text-[13px] leading-relaxed text-cream/45">
-                Create your first form — it starts with six core questions and becomes the
+                Create your first form - it starts with six core questions and becomes the
                 application every spell can share.
               </p>
               <button type="button" onClick={goNew} className="btn-gold mt-7 !px-6 !py-3 !text-[12.5px]">

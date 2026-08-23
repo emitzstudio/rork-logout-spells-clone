@@ -32,7 +32,7 @@ type AltarState = "standing" | "collapsing" | "gone";
 
 /* ------------------------------ Tiny helpers ------------------------------ */
 
-/** Deterministic pseudo-random — stable tag constellation across renders. */
+/** Deterministic pseudo-random - stable tag constellation across renders. */
 const prand = (n: number): number => {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
@@ -45,7 +45,7 @@ const TRAIL_GOLDS = ["#CFA85A", "#F0DFAE", "#E8CE8C", "#B8963E"] as const;
 /* ------------------------------ Dream bubbles ------------------------------ */
 
 /**
- * Deterministic orb diameter — wide enough that the longest word in the
+ * Deterministic orb diameter - wide enough that the longest word in the
  * label never clips, with seeded variety so no two orbs feel stamped.
  */
 const bubbleSize = (interest: Interest, seed: number): number => {
@@ -66,13 +66,13 @@ const bubbleSize = (interest: Interest, seed: number): number => {
 interface DreamBubbleProps {
   label: string;
   size: number;
-  /** Mid-flight styling — the orb glows as the cauldron pulls it in. */
+  /** Mid-flight styling - the orb glows as the cauldron pulls it in. */
   lit?: boolean;
   className?: string;
 }
 
 /**
- * The orb itself — a glassy golden bubble, shared by the floating buttons
+ * The orb itself - a glassy golden bubble, shared by the floating buttons
  * and the flights so what you tap is exactly what the cauldron swallows.
  */
 function DreamBubble({ label, size, lit, className }: DreamBubbleProps) {
@@ -91,7 +91,7 @@ function DreamBubble({ label, size, lit, className }: DreamBubbleProps) {
           "inset 0 0 20px rgba(184,150,62,0.12), inset 0 -10px 18px rgba(0,0,0,0.5), 0 0 22px -8px rgba(207,168,90,0.35)",
       }}
     >
-      {/* Hover / in-flight glow — its own layer so inline shadows never fight. */}
+      {/* Hover / in-flight glow - its own layer so inline shadows never fight. */}
       <span
         aria-hidden
         className={cn(
@@ -103,7 +103,7 @@ function DreamBubble({ label, size, lit, className }: DreamBubbleProps) {
             "0 0 36px -6px rgba(207,168,90,0.7), inset 0 0 24px rgba(184,150,62,0.18)",
         }}
       />
-      {/* Specular glint — what makes it read as a bubble, not a disc. */}
+      {/* Specular glint - what makes it read as a bubble, not a disc. */}
       <span
         aria-hidden
         className="pointer-events-none absolute rounded-full"
@@ -138,7 +138,7 @@ function DreamBubble({ label, size, lit, className }: DreamBubbleProps) {
 interface Placement {
   left: number;
   top: number;
-  /** Bob amplitudes in px — small, calm drift. */
+  /** Bob amplitudes in px - small, calm drift. */
   ax: number;
   ay: number;
   durX: number;
@@ -149,7 +149,7 @@ interface Placement {
   delayIn: number;
 }
 
-/** Invisible safe zone around the cauldron — no tag may drift inside. */
+/** Invisible safe zone around the cauldron - no tag may drift inside. */
 const EXCLUDE = { x: 50, y: 45, rx: 26, ry: 32 } as const;
 /** Converts height-% into width-% so distances are roughly isotropic. */
 const Y_SCALE = 0.7;
@@ -208,7 +208,7 @@ function computePlacements(catalogue: Interest[]): Record<string, Placement> {
         p.y = EXCLUDE.y + (p.y - EXCLUDE.y) * t;
       }
       p.x = clamp(p.x, 4, 96);
-      /* Orbs are taller than the old pills — keep them off the hero above. */
+      /* Orbs are taller than the old pills - keep them off the hero above. */
       p.y = clamp(p.y, 7, 92);
     }
   }
@@ -299,7 +299,7 @@ function TagButton({ interest, size, delayIn, onPick }: TagButtonProps) {
   );
 }
 
-/** CSS-driven idle bob — two nested layers so x and y breathe independently. */
+/** CSS-driven idle bob - two nested layers so x and y breathe independently. */
 function BobbingTag({
   placement,
   reduced,
@@ -340,16 +340,16 @@ function BobbingTag({
 
 const brewCopy = (n: number): string => {
   if (n === 0) return "The cauldron waits for your first dream.";
-  if (n === 1) return "One dream in — the brew stirs.";
-  if (n === 2) return "2 dreams collected — the surface shimmers.";
-  if (n < MIN_BREW) return `${n} dreams collected — your spell is brewing…`;
+  if (n === 1) return "One dream in. The brew stirs.";
+  if (n === 2) return "2 dreams collected. The surface shimmers.";
+  if (n < MIN_BREW) return `${n} dreams collected. Your spell is brewing…`;
   if (n < TARGET_BREW) return `${n} dreams gathered ✦ the brew is potent.`;
   return "The cauldron trembles with power…";
 };
 
 /* ------------------------------- Match cards ------------------------------ */
 
-/** Compact spell card — sized to be summoned in place around the cauldron. */
+/** Compact spell card - sized to be summoned in place around the cauldron. */
 function MatchCard({ match }: { match: SpellMatch }) {
   const { spell, matched } = match;
   return (
@@ -417,14 +417,14 @@ interface CardOffset {
   dy: number;
 }
 
-/** Per-card entrance tilt — subtle, alternating, never uniform. */
+/** Per-card entrance tilt - subtle, alternating, never uniform. */
 const summonTilt = (i: number): number => (i % 2 === 0 ? -1 : 1) * (2.5 + (i % 3) * 1.2);
 
 /**
- * Discover Your Spell — an enchanted cauldron surrounded by floating dream
+ * Discover Your Spell - an enchanted cauldron surrounded by floating dream
  * bubbles. Tap an orb and it is pulled along a golden trail into the brew. At five
  * the traveller may reveal; at ten the cauldron acts on its own: the magic
- * builds, bursts, and the matching spells are summoned out of the smoke —
+ * builds, bursts, and the matching spells are summoned out of the smoke -
  * in place, no scrolling. The cauldron then bows out, leaving only spells.
  */
 export default function Discover() {
@@ -446,7 +446,7 @@ export default function Discover() {
 
   const [phase, setPhase] = useState<RitualPhase>(() => (brewed ? "revealed" : "brewing"));
   const [altar, setAltar] = useState<AltarState>(() => (brewed ? "gone" : "standing"));
-  /** True when the reveal ran this session — cards emerge from the cauldron. */
+  /** True when the reveal ran this session - cards emerge from the cauldron. */
   const [ceremony, setCeremony] = useState<boolean>(false);
   const [stir, setStir] = useState<number>(0);
   const [finale, setFinale] = useState<number>(0);
@@ -464,7 +464,7 @@ export default function Discover() {
 
   const phaseRef = useRef<RitualPhase>(phase);
   const countRef = useRef<number>(selectedIds.length);
-  /** True once the traveller performed the reveal in THIS visit — a fresh
+  /** True once the traveller performed the reveal in THIS visit - a fresh
    *  ceremony's honest empty result must stay visible, never bounce back. */
   const revealedThisSessionRef = useRef<boolean>(false);
   /** The stale-reveal recovery below runs at most once per visit. */
@@ -473,7 +473,7 @@ export default function Discover() {
   const cauldronBoxRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const timeouts = useRef<number[]>([]);
-  /** Synchronous mirror of `flying` — double-taps outrun React state. */
+  /** Synchronous mirror of `flying` - double-taps outrun React state. */
   const flyingRef = useRef<Set<string>>(new Set());
 
   const setPhaseSafe = useCallback((p: RitualPhase) => {
@@ -537,17 +537,17 @@ export default function Discover() {
     );
   }, [brew, reduced, setPhaseSafe]);
 
-  /* Ten dreams and the cauldron needs no button — it reveals on its own.
+  /* Ten dreams and the cauldron needs no button - it reveals on its own.
      Only once a dream has landed THIS visit (stir > 0): a returning traveller
      with ten saved dreams gets the stage back, not an instant ceremony (M11.5). */
   useEffect(() => {
     if (phase === "brewing" && count >= TARGET_BREW && stir > 0) startConjure();
   }, [phase, count, stir, startConjure]);
 
-  /* M11.5 — restore the ritual. A PAST visit's reveal with nothing left to
+  /* M11.5 - restore the ritual. A PAST visit's reveal with nothing left to
      show (e.g. the catalogue emptied since) would hide the cauldron and every
-     dream bubble forever. Once the live reads have settled — and ONLY on
-     genuine emptiness, never on a failed read (M10) — return the traveller to
+     dream bubble forever. Once the live reads have settled - and ONLY on
+     genuine emptiness, never on a failed read (M10) - return the traveller to
      the brewing stage. Their chosen dreams stay; only the stale reveal flag
      clears (locally for visitors, `brewed_at` for signed-in travellers). */
   useEffect(() => {
@@ -596,7 +596,7 @@ export default function Discover() {
     );
   }, [phase, ceremony, offsets, matches]);
 
-  /* Once every card has landed, the cauldron's work is done — it bows out. */
+  /* Once every card has landed, the cauldron's work is done - it bows out. */
   useEffect(() => {
     if (phase !== "revealed" || altar !== "standing") return;
     if (!ceremony) {
@@ -610,7 +610,7 @@ export default function Discover() {
     );
   }, [phase, altar, ceremony, matches.length]);
 
-  /** The reset — the smoke clears backwards and the ritual begins anew. */
+  /** The reset - the smoke clears backwards and the ritual begins anew. */
   const resetBrew = useCallback(() => {
     clear();
     setPhaseSafe("brewing");
@@ -630,7 +630,7 @@ export default function Discover() {
   const onPick = useCallback(
     (interest: Interest, el: HTMLElement): void => {
       if (phaseRef.current !== "brewing") return;
-      /* Double-tap guard — one bubble, one flight, one selection. */
+      /* Double-tap guard - one bubble, one flight, one selection. */
       if (flyingRef.current.has(interest.id)) return;
       const stage = stageRef.current;
       const box = cauldronBoxRef.current;
@@ -647,7 +647,7 @@ export default function Discover() {
         x: c.left + c.width / 2 - s.left,
         y: c.top + c.height * CAULDRON_MOUTH_Y - s.top,
       };
-      /* A graceful arc — outward first, then drawn down into the mouth. */
+      /* A graceful arc - outward first, then drawn down into the mouth. */
       const side = start.x < target.x ? -1 : 1;
       const mid = { x: (start.x + target.x) / 2, y: (start.y + target.y) / 2 };
       const ctrl = {
@@ -666,7 +666,7 @@ export default function Discover() {
         const q = u * u;
         xs.push(a * start.x + b * ctrl.x + q * target.x);
         ys.push(a * start.y + b * ctrl.y + q * target.y);
-        /* More time early, less late — the cauldron's pull accelerates. */
+        /* More time early, less late - the cauldron's pull accelerates. */
         times.push(Math.pow(u, 0.55));
       }
 
@@ -743,7 +743,7 @@ export default function Discover() {
     </div>
   );
 
-  /** Status band — progress, brew copy, chips, and the reveal CTA. */
+  /** Status band - progress, brew copy, chips, and the reveal CTA. */
   const statusBand = (
     <div className="relative z-20 mx-auto max-w-2xl px-5 text-center">
       <div className="flex items-center justify-center gap-2.5" aria-hidden>
@@ -765,10 +765,10 @@ export default function Discover() {
         {brewCopy(count)}
       </p>
       <p className="mt-2 font-sans text-[11px] uppercase tracking-[0.24em] text-cream/35">
-        Choose {MIN_BREW}–{TARGET_BREW} dreams to brew your perfect spell
+        Choose {MIN_BREW} to {TARGET_BREW} dreams to brew your perfect spell
       </p>
 
-      {/* The reveal — emerges the moment the brew turns potent. */}
+      {/* The reveal - emerges the moment the brew turns potent. */}
       {count >= MIN_BREW && (
         <motion.div
           initial={{ opacity: 0, scale: 0.85, y: 12 }}
@@ -793,7 +793,7 @@ export default function Discover() {
             )}
           </button>
           <p className="mt-3.5 font-sans text-[10px] uppercase tracking-[0.22em] text-cream/35">
-            or keep dreaming — at {TARGET_BREW} the cauldron reveals on its own
+            or keep dreaming. At {TARGET_BREW} the cauldron reveals on its own
           </p>
         </motion.div>
       )}
@@ -834,7 +834,7 @@ export default function Discover() {
     </div>
   );
 
-  /** Under-stage message — band while brewing, incantation while conjuring. */
+  /** Under-stage message - band while brewing, incantation while conjuring. */
   const bandOrCaption = (
     <AnimatePresence mode="wait">
       {phase === "brewing" && (
@@ -857,14 +857,14 @@ export default function Discover() {
           className="mx-auto max-w-xl px-5 text-center"
         >
           <p className="font-serif text-2xl italic leading-snug text-gold-light/90 md:text-3xl">
-            The cauldron stirs — drawing your spells from the smoke…
+            The cauldron stirs, drawing your spells from the smoke…
           </p>
         </motion.div>
       )}
     </AnimatePresence>
   );
 
-  /** The summoned spells — header, cards, and the way back. */
+  /** The summoned spells - header, cards, and the way back. */
   const results = (
     <div className={cn("relative z-30 w-full", isDesktop ? "px-6" : "px-5")}>
       <motion.div
@@ -924,7 +924,7 @@ export default function Discover() {
           })}
         </div>
       ) : spellsFailed && publicSpells.length === 0 ? (
-        /* A failed catalogue read is NOT "no matches" — say so, with a retry (M10). */
+        /* A failed catalogue read is NOT "no matches" - say so, with a retry (M10). */
         <div className="mx-auto mt-8 max-w-xl">
           <LoadError
             message="Your matches couldn't be drawn from the smoke."
@@ -943,7 +943,7 @@ export default function Discover() {
             ✦
           </span>
           <p className="mt-4 font-serif text-2xl italic leading-snug text-cream/80">
-            The mists searched every corner — no live spell carries these exact dreams yet.
+            The mists searched every corner. No live spell carries these exact dreams yet.
           </p>
           <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/50">
             New spells are cast every season. Wander the live collection while the cauldron keeps your list warm.
@@ -954,7 +954,7 @@ export default function Discover() {
         </motion.div>
       )}
 
-      {/* Begin again — the ritual is always waiting. */}
+      {/* Begin again - the ritual is always waiting. */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -997,7 +997,7 @@ export default function Discover() {
               Discover <span className="italic text-gold-gradient">Your Spell</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl font-serif text-2xl italic leading-snug text-cream/60">
-              Tell us what experiences you dream about — and we'll craft the perfect spell for you.
+              Tell us what experiences you dream about, and we'll craft the perfect spell for you.
             </p>
             <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.26em] text-cream/35">
               Tap the dreams that call to you ✦ the cauldron does the rest
@@ -1005,7 +1005,7 @@ export default function Discover() {
           </Reveal>
         </div>
 
-        {/* The stage — cauldron, floating dreams, flights, and the summoning */}
+        {/* The stage - cauldron, floating dreams, flights, and the summoning */}
         <div
           ref={stageRef}
           className={cn(
@@ -1013,7 +1013,7 @@ export default function Discover() {
             isDesktop ? "h-[780px] lg:h-[820px]" : "flex flex-col items-center pt-4",
           )}
         >
-          {/* Honest catalogue states — the dreams come from the database only. */}
+          {/* Honest catalogue states - the dreams come from the database only. */}
           {phase === "brewing" && catalogue.length === 0 && (
             <div
               className={cn(
@@ -1053,7 +1053,7 @@ export default function Discover() {
           )}
           {isDesktop ? (
             <>
-              {/* The cauldron — hero of the stage, absolute so nothing shifts. */}
+              {/* The cauldron - hero of the stage, absolute so nothing shifts. */}
               {altar !== "gone" && (
                 <div
                   className="absolute left-1/2 top-[45%] z-20"
@@ -1072,7 +1072,7 @@ export default function Discover() {
                 </div>
               )}
 
-              {/* Floating dreams — fade to stillness while the magic builds. */}
+              {/* Floating dreams - fade to stillness while the magic builds. */}
               {phase !== "revealed" && (
                 <motion.div
                   className="absolute inset-0 z-10"
@@ -1106,7 +1106,7 @@ export default function Discover() {
                 </motion.div>
               )}
 
-              {/* The summoned spells — revealed in place, no scrolling. */}
+              {/* The summoned spells - revealed in place, no scrolling. */}
               {phase === "revealed" && (
                 <div className="absolute inset-0 z-30 flex flex-col items-center justify-center">
                   {results}
@@ -1115,7 +1115,7 @@ export default function Discover() {
             </>
           ) : (
             <>
-              {/* Mobile — the cauldron leads, then dreams gather beneath it. */}
+              {/* Mobile - the cauldron leads, then dreams gather beneath it. */}
               {altar !== "gone" && (
                 <motion.div
                   className="relative z-20 w-full"
@@ -1169,7 +1169,7 @@ export default function Discover() {
             </>
           )}
 
-          {/* Flights — dreams mid-air, trailing gold dust */}
+          {/* Flights - dreams mid-air, trailing gold dust */}
           {phase !== "revealed" && (
             <div className="pointer-events-none absolute inset-0 z-[15]" aria-hidden>
               {flights.map((f) => (
@@ -1231,7 +1231,7 @@ export default function Discover() {
           )}
         </div>
 
-        {/* Desktop — the band (or incantation) sits beneath the stage. */}
+        {/* Desktop - the band (or incantation) sits beneath the stage. */}
         {isDesktop && phase !== "revealed" && <div className="mt-2">{bandOrCaption}</div>}
 
         {/* Quiet exit for the impatient */}

@@ -22,7 +22,7 @@ const CIRCLE_CLASS =
 
 /**
  * M12: contact email, social links, tagline and site name read from the
- * central settings source — only configured links render (no dead buttons).
+ * central settings source - only configured links render (no dead buttons).
  */
 export default function Footer() {
   const { site, contact, socials } = useSiteSettings();

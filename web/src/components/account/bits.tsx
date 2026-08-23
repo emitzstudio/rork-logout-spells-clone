@@ -1,5 +1,5 @@
 /**
- * Shared atoms for the traveller space — page wrapper, status chips,
+ * Shared atoms for the traveller space - page wrapper, status chips,
  * skeletons, empty states and the live countdown. Every account page builds
  * from these so the whole space feels like one hand designed it.
  */
@@ -35,7 +35,7 @@ interface AccountPageProps {
 /** Standard account page: sets the tab title and animates content in. */
 export function AccountPage({ title, eyebrow, heading, sub, actions, children }: AccountPageProps) {
   useEffect(() => {
-    document.title = `${title} · My Space — Logout Spells`;
+    document.title = `${title} · My Space | Logout Spells`;
   }, [title]);
 
   return (
@@ -262,7 +262,7 @@ interface CountdownUnitsProps {
   className?: string;
 }
 
-/** The ticking unit boxes — days · hours · minutes · seconds. */
+/** The ticking unit boxes - days · hours · minutes · seconds. */
 export function CountdownUnits({ target, size = "lg", className }: CountdownUnitsProps) {
   const parts = useCountdown(target);
   const units: { value: string; label: string }[] = [
@@ -313,7 +313,7 @@ export function CountdownUnits({ target, size = "lg", className }: CountdownUnit
 /* ------------------------------- Progress bar ------------------------------ */
 
 interface GoldBarProps {
-  /** 0–1 */
+  /** 0-1 */
   value: number;
   className?: string;
 }

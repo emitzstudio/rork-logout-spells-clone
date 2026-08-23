@@ -1,7 +1,7 @@
 /**
  * The waitlist + holds board. Allocation is MANUAL by ruling (decision G):
  * staff offer freed seats, convert offers into bookings, or hold seats out
- * of public reach. Offered rows with a live expiry keep seats reserved —
+ * of public reach. Offered rows with a live expiry keep seats reserved -
  * availability everywhere derives from seats_total − booked − active holds.
  */
 import { AnimatePresence, motion } from "framer-motion";
@@ -52,7 +52,7 @@ function OfferSeatsDialog({ entry, onClose }: { entry: WaitlistEntry; onClose: (
       },
       {
         onSuccess: () => {
-          toast.success(`Seats offered to ${entry.displayName} — held out of public availability`);
+          toast.success(`Seats offered to ${entry.displayName} - held out of public availability`);
           onClose();
         },
         onError: (error) => toast.error(error.message),
@@ -64,14 +64,14 @@ function OfferSeatsDialog({ entry, onClose }: { entry: WaitlistEntry; onClose: (
     <OpsDialog title="Offer seats" eyebrow={entry.displayName} icon={HandHelping} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <OpsNote>
-          Offering marks {entry.row.seats_requested} seat(s) as a HOLD — they leave public availability until the offer
+          Offering marks {entry.row.seats_requested} seat(s) as a HOLD - they leave public availability until the offer
           converts, expires or is released. Tell the traveller, then convert once they say yes.
         </OpsNote>
-        <OpsField label="Offer expires" hint="optional — empty holds until released">
+        <OpsField label="Offer expires" hint="optional - empty holds until released">
           <input type="datetime-local" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={opsInputClass} />
         </OpsField>
         <OpsField label="Note">
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="e.g. Offered by phone — answer expected by Friday" className={opsTextareaClass} />
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="e.g. Offered by phone - answer expected by Friday" className={opsTextareaClass} />
         </OpsField>
         <OpsSubmit label="Offer & hold seats" busyLabel="Offering…" busy={mutation.isPending} />
       </form>
@@ -112,7 +112,7 @@ function AddEntryDialog({ onClose }: { onClose: () => void }) {
       },
       {
         onSuccess: () => {
-          toast.success(kind === "hold" ? "Seats held — out of public availability" : "Added to the waitlist");
+          toast.success(kind === "hold" ? "Seats held - out of public availability" : "Added to the waitlist");
           onClose();
         },
         onError: (error) => toast.error(error.message),
@@ -152,7 +152,7 @@ function AddEntryDialog({ onClose }: { onClose: () => void }) {
             </option>
             {options.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.spellName} — {option.dateLabel} · {option.free} free
+                {option.spellName} - {option.dateLabel} · {option.free} free
                 {option.holds > 0 ? ` (${option.holds} on hold)` : ""}
               </option>
             ))}
@@ -190,7 +190,7 @@ function AddEntryDialog({ onClose }: { onClose: () => void }) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            placeholder={kind === "hold" ? "e.g. Reserved for the host's family — release by 20 Aug" : "Anything worth remembering"}
+            placeholder={kind === "hold" ? "e.g. Reserved for the host's family - release by 20 Aug" : "Anything worth remembering"}
             className={opsTextareaClass}
           />
         </OpsField>
@@ -249,10 +249,10 @@ function EntryActions({ entry, onConvert }: { entry: WaitlistEntry; onConvert: W
       </button>
       {status === "offered" && (
         <>
-          <button type="button" disabled={mutation.isPending} onClick={() => act({ status: "waiting", clearOffer: true }, "Back to waiting — hold released")} className={buttonClass}>
+          <button type="button" disabled={mutation.isPending} onClick={() => act({ status: "waiting", clearOffer: true }, "Back to waiting - hold released")} className={buttonClass}>
             <Undo2 className="h-3 w-3" /> Back to waiting
           </button>
-          <button type="button" disabled={mutation.isPending} onClick={() => act({ status: "expired" }, "Offer marked expired — seats released")} className={buttonClass}>
+          <button type="button" disabled={mutation.isPending} onClick={() => act({ status: "expired" }, "Offer marked expired - seats released")} className={buttonClass}>
             <Hourglass className="h-3 w-3" /> Mark expired
           </button>
         </>
@@ -325,7 +325,7 @@ export default function WaitlistPanel({ onConvert }: WaitlistPanelProps) {
           <CalendarClock className="mx-auto h-7 w-7 text-cream/25" />
           <p className="mt-3 font-serif text-[19px] text-cream/85">The queue couldn't be reached</p>
           <p className="mx-auto mt-1.5 max-w-[420px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-            The connection failed — no entries were lost.
+            The connection failed - no entries were lost.
           </p>
           <button
             type="button"

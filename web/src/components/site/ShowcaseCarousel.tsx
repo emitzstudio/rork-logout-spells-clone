@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const AUTOPLAY_MS = 4000;
 /** How long autoplay sleeps after the visitor touches the carousel. */
 const RESUME_MS = 8000;
-/** How much the centre card grows — deliberately whisper-subtle. */
+/** How much the centre card grows - deliberately whisper-subtle. */
 const MAX_SCALE = 0.04;
 /** Side cards settle at this opacity; the hero card at 1. */
 const MIN_OPACITY = 0.88;
@@ -44,7 +44,7 @@ export interface ShowcaseCarouselProps<T> {
 }
 
 /**
- * The site's signature infinite showcase — one engine shared by the Live
+ * The site's signature infinite showcase - one engine shared by the Live
  * Spells and Previous Spells carousels. Loops seamlessly (embla loop +
  * duplicated slides when the collection is small), auto-advances one card
  * every 4s, pauses ~8s after any manual touch, and gently crowns whichever
@@ -72,7 +72,7 @@ export default function ShowcaseCarousel<T>({
     skipSnaps: false,
   });
 
-  /* Called on any manual interaction — rests autoplay, resumes after RESUME_MS. */
+  /* Called on any manual interaction - rests autoplay, resumes after RESUME_MS. */
   const wake = useRef<(() => void) | null>(null);
 
   const interact = useCallback((action: () => void) => {
@@ -84,7 +84,7 @@ export default function ShowcaseCarousel<T>({
      On every frame of movement, each card is scaled/brightened by how close
      it is to the viewport centre, so the "hero" emphasis hands over smoothly
      mid-slide instead of snapping between cards. Writes touch ONLY transform
-     and opacity — the gold glow is a pre-painted overlay whose opacity is
+     and opacity - the gold glow is a pre-painted overlay whose opacity is
      tweened, so no frame ever repaints a shadow. */
   useEffect(() => {
     if (!embla) return;
@@ -102,7 +102,7 @@ export default function ShowcaseCarousel<T>({
 
         const dist = Math.abs((rect.left + rect.width / 2 - centre) / rootRect.width);
         const raw = Math.max(0, 1 - dist * 3);
-        const e = raw * raw * (3 - 2 * raw); // smoothstep — no harsh hand-off
+        const e = raw * raw * (3 - 2 * raw); // smoothstep - no harsh hand-off
 
         inner.style.transform = `scale(${(1 + MAX_SCALE * e).toFixed(4)})`;
         inner.style.opacity = (MIN_OPACITY + (1 - MIN_OPACITY) * e).toFixed(3);
@@ -157,7 +157,7 @@ export default function ShowcaseCarousel<T>({
 
   if (items.length === 0) return null;
 
-  /* With one or two items a carousel is theatre without a cast —
+  /* With one or two items a carousel is theatre without a cast -
      show them as a calm, centred row instead. */
   if (items.length < 3) {
     return (
@@ -188,7 +188,7 @@ export default function ShowcaseCarousel<T>({
       }}
       className="group/showcase relative focus-visible:outline-none"
     >
-      {/* Viewport — vertical padding gives the hero scale + hover lift room to breathe. */}
+      {/* Viewport - vertical padding gives the hero scale + hover lift room to breathe. */}
       <div
         ref={viewportRef}
         className="cursor-grab select-none overflow-hidden px-3 py-8 active:cursor-grabbing md:px-0"
@@ -202,7 +202,7 @@ export default function ShowcaseCarousel<T>({
               className="min-w-0 flex-[0_0_100%] pl-5 md:flex-[0_0_50%] md:pl-6 lg:flex-[0_0_33.3333%]"
             >
               <div className="relative rounded-[14px] will-change-transform">
-                {/* Pre-painted gold glow — only its opacity is animated. */}
+                {/* Pre-painted gold glow - only its opacity is animated. */}
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0 rounded-[14px] opacity-0"
@@ -218,7 +218,7 @@ export default function ShowcaseCarousel<T>({
         </div>
       </div>
 
-      {/* Edge veils — a quiet hint that the collection continues off-stage. */}
+      {/* Edge veils - a quiet hint that the collection continues off-stage. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-14 bg-gradient-to-r from-charcoal via-charcoal/55 to-transparent md:block lg:w-24"

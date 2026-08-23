@@ -33,7 +33,7 @@ interface SelectMenuProps {
   placeholder: string;
   options: FilterOption[];
   activeId: string;
-  /** Considered "engaged" when not the "all" option — turns gold. */
+  /** Considered "engaged" when not the "all" option - turns gold. */
   engaged: boolean;
   icon?: LucideIcon;
   open: boolean;
@@ -141,7 +141,7 @@ export interface SpellsToolbarProps {
   totalCount: number;
 }
 
-/** Search, filters, sort and grid/list toggle — the command strip of the hub. */
+/** Search, filters, sort and grid/list toggle - the command strip of the hub. */
 export default function SpellsToolbar({
   query,
   onQuery,

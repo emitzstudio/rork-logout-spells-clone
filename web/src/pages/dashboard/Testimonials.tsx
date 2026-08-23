@@ -2,7 +2,7 @@
  * Review moderation (M7B). Travellers submit from verified completed
  * bookings; nothing goes public without staff approval, and authors can
  * never edit or delete after submission. Approve/reject flips the status
- * (audited); Remove deletes outright — the moderation path of last resort.
+ * (audited); Remove deletes outright - the moderation path of last resort.
  */
 import { AnimatePresence, motion } from "framer-motion";
 import { BadgeCheck, MessageSquareQuote, Star, Trash2 } from "lucide-react";
@@ -48,7 +48,7 @@ function RemoveDialog({ item, onClose }: { item: ReviewWithJourney; onClose: () 
     <OpsDialog title="Remove this review?" eyebrow={item.review.author_name} icon={Trash2} onClose={onClose}>
       <div className="space-y-4">
         <OpsNote tone="warn">
-          Removal is permanent — the review disappears for good. To simply keep it off the site, reject it instead: the
+          Removal is permanent - the review disappears for good. To simply keep it off the site, reject it instead: the
           record stays for your history.
         </OpsNote>
         <p className="rounded-lg border border-cream/[0.07] bg-cream/[0.02] px-3.5 py-3 font-sans text-[12.5px] italic leading-relaxed text-cream/60">
@@ -81,7 +81,7 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
   const moderate = useModerateReview();
   const [removing, setRemoving] = useState<boolean>(false);
   const { review } = item;
-  /* M13: invitation reviews carry the traveller's explicit consent — without
+  /* M13: invitation reviews carry the traveller's explicit consent - without
      it, publishing is locked here AND in the database. */
   const consentLocked = review.invitation_id !== null && !review.consent_to_publish;
 
@@ -127,7 +127,7 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
               type="button"
               disabled={moderate.isPending || consentLocked}
               title={consentLocked ? "This traveller did not consent to sharing their story publicly" : undefined}
-              onClick={() => act("approved", "Published — it now shows on the journey page")}
+              onClick={() => act("approved", "Published - it now shows on the journey page")}
               className={cn(buttonClass, "border-gold/40 bg-gold/10 text-gold-light hover:bg-gold/20")}
             >
               <BadgeCheck className="h-3.5 w-3.5" /> {review.status === "rejected" ? "Publish anyway" : "Approve"}
@@ -137,7 +137,7 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
             <button
               type="button"
               disabled={moderate.isPending}
-              onClick={() => act("rejected", review.status === "approved" ? "Unpublished — hidden from the site" : "Rejected")}
+              onClick={() => act("rejected", review.status === "approved" ? "Unpublished - hidden from the site" : "Rejected")}
               className={cn(buttonClass, "border-cream/12 text-cream/60 hover:border-red-400/40 hover:text-red-300")}
             >
               {review.status === "approved" ? "Unpublish" : "Reject"}
@@ -179,7 +179,7 @@ export default function Testimonials() {
         <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold/70">Moderation</p>
         <h1 className="mt-1 font-serif text-[30px] font-medium leading-tight text-cream">Testimonials</h1>
         <p className="mt-1 font-sans text-[12.5px] text-cream/45">
-          Words from the circles — submitted from verified completed journeys, published only with your approval.
+          Words from the circles - submitted from verified completed journeys, published only with your approval.
         </p>
       </div>
 
@@ -222,7 +222,7 @@ export default function Testimonials() {
             <MessageSquareQuote className="mx-auto h-7 w-7 text-cream/25" />
             <p className="mt-3 font-serif text-[20px] text-cream/85">The reviews couldn't be reached</p>
             <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-              The connection failed — nothing was lost.
+              The connection failed - nothing was lost.
             </p>
             <button
               type="button"
@@ -240,7 +240,7 @@ export default function Testimonials() {
             </p>
             <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
               {tab === "pending"
-                ? "New reviews from completed journeys land here first — nothing reaches the site without you."
+                ? "New reviews from completed journeys land here first - nothing reaches the site without you."
                 : tab === "approved"
                   ? "Approved words flow straight onto the journey pages."
                   : "Rejected reviews stay recorded here, off the site."}

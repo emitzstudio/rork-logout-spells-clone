@@ -18,7 +18,7 @@ import Trips from "./Trips";
 import WishlistPage from "./WishlistPage";
 
 /**
- * The traveller space — lazy chunk mounted at /account/*. The shell (guard,
+ * The traveller space - lazy chunk mounted at /account/*. The shell (guard,
  * ribbon nav, chrome) persists across sub-pages; only the content animates.
  */
 export default function Account() {
@@ -37,7 +37,7 @@ export default function Account() {
           <Route path="memories/:id" element={<MemoryDetail />} />
           <Route path="journey" element={<JourneyPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
-          {/* Wallet & referrals are parked for now — old links land gently. */}
+          {/* Wallet & referrals are parked for now - old links land gently. */}
           <Route path="wallet" element={<Navigate to="/account/transactions" replace />} />
           <Route path="referrals" element={<Navigate to="/account" replace />} />
           <Route path="notifications" element={<NotificationsPage />} />

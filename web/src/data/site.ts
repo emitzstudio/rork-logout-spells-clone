@@ -1,7 +1,7 @@
 /**
  * Central content model for the Logout Spells site.
  *
- * M12: CONTACT_EMAIL and SOCIALS are FALLBACK values only — the live source
+ * M12: CONTACT_EMAIL and SOCIALS are FALLBACK values only - the live source
  * of truth is the `site_settings` table, edited in Dashboard → Settings and
  * read through `useSiteSettings()`. These constants seed those defaults so
  * the site paints instantly and stays itself if a fetch ever fails.
@@ -62,7 +62,7 @@ export interface PhilosophyTenet {
   symbol: string;
 }
 
-/** The five words every new Spell is written against — Our Story, Chapter 05. */
+/** The five words every new Spell is written against - Our Story, Chapter 05. */
 export const PHILOSOPHY: PhilosophyTenet[] = [
   {
     numeral: "I",

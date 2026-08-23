@@ -25,7 +25,7 @@ export interface SpellActionHandlers {
   onView: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
-  /** Archive for active spells, restore for archived ones — parent decides. */
+  /** Archive for active spells, restore for archived ones - parent decides. */
   onArchive: () => void;
   onDelete: () => void;
 }
@@ -33,7 +33,7 @@ export interface SpellActionHandlers {
 interface SpellCardProps extends SpellActionHandlers {
   spell: ManagedSpell;
   index: number;
-  /** Freshly duplicated — briefly glows gold. */
+  /** Freshly duplicated - briefly glows gold. */
   fresh: boolean;
 }
 

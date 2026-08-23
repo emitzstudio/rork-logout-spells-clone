@@ -10,10 +10,10 @@ interface DustParticle {
   shape: DustShape;
   color: string;
   size: number;
-  /** Birth point — a tight cluster around the card's heart, in %. */
+  /** Birth point - a tight cluster around the card's heart, in %. */
   left: number;
   top: number;
-  /** Drift vector in px — radiating outward with a gentle upward lift. */
+  /** Drift vector in px - radiating outward with a gentle upward lift. */
   dx: number;
   dy: number;
   duration: number;
@@ -26,7 +26,7 @@ interface DustParticle {
 interface MagicDustProps {
   /** Increment to release a burst; 0 renders nothing. */
   burst: number;
-  /** Particles per burst — enchanted stardust, not fireworks. Keep within 20–35. */
+  /** Particles per burst - enchanted stardust, not fireworks. Keep within 20-35. */
   count?: number;
   /** How far the burst may reach from the centre, in px. */
   spread?: number;
@@ -35,7 +35,7 @@ interface MagicDustProps {
 
 const DUST_EASE = [0.16, 1, 0.3, 1] as const;
 
-/** Warm gold, champagne, soft ivory and a whisper of amber — nothing else. */
+/** Warm gold, champagne, soft ivory and a whisper of amber - nothing else. */
 const DUST_GOLDS = ["#B8963E", "#CFA85A", "#F0DFAE", "#E8CE8C", "#D9A452"] as const;
 
 /** 4-point sparkle path centred on the origin (radius 10). */
@@ -44,7 +44,7 @@ const SPARKLE_PATH =
 
 /**
  * One breath of magic: every particle is born in a tight cluster at the
- * card's centre — right where the eye rests — then drifts outward and
+ * card's centre - right where the eye rests - then drifts outward and
  * slightly upward, rotating softly as it fades. Some race ahead, some
  * linger; nothing is synchronized, nothing loops.
  */
@@ -96,7 +96,7 @@ function makeParticles(count: number, spread: number): DustParticle[] {
 }
 
 /**
- * Magic released from the heart of a flipping card — a soft bloom of light
+ * Magic released from the heart of a flipping card - a soft bloom of light
  * and a burst of golden stardust over the content area, as if the card
  * briefly lets its story escape. Screen-blended so text stays readable;
  * pure transforms + opacity via Framer Motion; auto-clears after ~1.7s;
@@ -128,7 +128,7 @@ export function MagicDust({ burst, count = 26, spread = 150, className }: MagicD
       className={cn("pointer-events-none absolute inset-0 z-20", className)}
       style={{ overflow: "visible", mixBlendMode: "screen" }}
     >
-      {/* The release — one soft breath of light at the card's heart. */}
+      {/* The release - one soft breath of light at the card's heart. */}
       <motion.span
         key={`bloom-${live}`}
         className="absolute left-1/2 top-1/2 rounded-full"

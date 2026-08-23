@@ -9,7 +9,7 @@ import { useAccount } from "@/data/account/AccountProvider";
 import { deriveBadges, deriveJourney, deriveStats, XP_RULES } from "@/data/account/derive";
 import { cn } from "@/lib/utils";
 
-/** Journey Progress — XP, level, statistics and the badge collection. */
+/** Journey Progress - XP, level, statistics and the badge collection. */
 export default function JourneyPage() {
   const { data } = useAccount();
 
@@ -41,7 +41,7 @@ export default function JourneyPage() {
           The path you're <span className="italic text-gold-gradient">walking.</span>
         </>
       }
-      sub="Every booking, circle and shared code moves you along it. No leaderboard — just you, further from the noise."
+      sub="Every booking, circle and shared code moves you along it. No leaderboard, just you, further from the noise."
     >
       <div className="space-y-12 md:space-y-14">
         {/* Level + how XP works */}
@@ -62,7 +62,7 @@ export default function JourneyPage() {
           </div>
         </section>
 
-        {/* Statistics — beside the journey, where they belong */}
+        {/* Statistics - beside the journey, where they belong */}
         <section>
           <SectionTitle eyebrow="Travel statistics">Numbers with a heartbeat</SectionTitle>
           <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">

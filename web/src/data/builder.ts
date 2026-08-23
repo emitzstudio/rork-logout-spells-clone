@@ -1,5 +1,5 @@
 /**
- * Spell Builder model — the complete public Spell page, section by section:
+ * Spell Builder model - the complete public Spell page, section by section:
  * basics, imagery, story, itinerary, host, accommodation, inclusions,
  * audience, highlights and FAQs. The closing invitation is fixed copy shared
  * by every spell, so it never appears in the editor.
@@ -51,7 +51,7 @@ export type BuilderSectionId =
   | "tripHighlights"
   | "faqs";
 
-/** The closing invitation — fixed copy, identical on every spell page. */
+/** The closing invitation - fixed copy, identical on every spell page. */
 export const FINAL_CTA = {
   heading: "Ready to Logout?",
   button: "Join this spell",
@@ -82,7 +82,7 @@ export interface AboutBlock {
 
 export interface DayHighlight {
   id: string;
-  /** Emoji marker — empty string renders the ✦ house mark instead. */
+  /** Emoji marker - empty string renders the ✦ house mark instead. */
   emoji: string;
   text: string;
 }
@@ -92,7 +92,7 @@ export interface ItineraryDay {
   title: string;
   locationTag: string;
   subtitle: string;
-  /** Rich text — same lightweight markup as the About story. */
+  /** Rich text - same lightweight markup as the About story. */
   body: string;
   image: DraftImage | null;
   highlights: DayHighlight[];
@@ -105,14 +105,14 @@ export interface HostBlock {
   /** e.g. “Your Mountain Host”. */
   title: string;
   instagram: string;
-  /** Rich text — same lightweight markup as the About story. */
+  /** Rich text - same lightweight markup as the About story. */
   about: string;
   quote: string;
   tags: string[];
   image: DraftImage | null;
 }
 
-/** Generic icon + text row — inclusions, amenities, stay highlights. */
+/** Generic icon + text row - inclusions, amenities, stay highlights. */
 export interface ListItem {
   id: string;
   icon: BuilderIconId;
@@ -126,7 +126,7 @@ export interface StayBlock {
   longDescription: string;
   amenities: ListItem[];
   highlights: ListItem[];
-  /** 0 hides the rating; otherwise 1–5 stars. */
+  /** 0 hides the rating; otherwise 1-5 stars. */
   rating: number;
   mapLabel: string;
   images: DraftImage[];
@@ -141,7 +141,7 @@ export interface AudienceCard {
 
 export interface TripHighlight {
   id: string;
-  /** Emoji marker — empty string renders the ✦ house mark instead. */
+  /** Emoji marker - empty string renders the ✦ house mark instead. */
   emoji: string;
   title: string;
   description: string;
@@ -165,19 +165,19 @@ export interface SpellDraft {
   days: number;
   nights: number;
   dates: string;
-  /** Raw digits only — formatted with Indian separators for display. */
+  /** Raw digits only - formatted with Indian separators for display. */
   price: string;
   maxSeats: number;
   category: SpellCategoryId | null;
   urgency: UrgencyId | null;
   featured: boolean;
   status: BuilderStatus;
-  /** Attached booking form — visitors apply through it. Null = standard dialog. */
+  /** Attached booking form - visitors apply through it. Null = standard dialog. */
   formId: string | null;
   hero: DraftImage | null;
   mobileHero: DraftImage | null;
   cover: DraftImage | null;
-  /** When true the hero doubles as the cover — one upload powers the page and the cards. */
+  /** When true the hero doubles as the cover - one upload powers the page and the cards. */
   heroAsCover?: boolean;
   gallery: DraftImage[];
   quickInfo: QuickInfoCard[];
@@ -259,7 +259,7 @@ export const BUILDER_SECTION_META: Record<
 > = {
   basic: {
     title: "Basic Information",
-    description: "Name, place, dates, price and badges — the essentials.",
+    description: "Name, place, dates, price and badges - the essentials.",
   },
   hero: {
     title: "Hero Images",
@@ -271,19 +271,19 @@ export const BUILDER_SECTION_META: Record<
   },
   about: {
     title: "About the Spell",
-    description: "The story — heading, image, description and quote.",
+    description: "The story - heading, image, description and quote.",
   },
   itinerary: {
     title: "Itinerary Builder",
-    description: "The journey, day by day — stories, images and highlights.",
+    description: "The journey, day by day - stories, images and highlights.",
   },
   host: {
     title: "Meet Your Spellcaster",
-    description: "The host — portrait, story, socials and the words they live by.",
+    description: "The host - portrait, story, socials and the words they live by.",
   },
   stay: {
     title: "Where We'll Stay",
-    description: "The accommodation — name, story, amenities and imagery.",
+    description: "The accommodation - name, story, amenities and imagery.",
   },
   included: {
     title: "What's Included",
@@ -291,11 +291,11 @@ export const BUILDER_SECTION_META: Record<
   },
   notIncluded: {
     title: "What's Not Included",
-    description: "Set expectations — what guests arrange themselves.",
+    description: "Set expectations - what guests arrange themselves.",
   },
   audience: {
     title: "Who This Spell Is For",
-    description: "The people this circle is calling — as beautiful cards.",
+    description: "The people this circle is calling - as beautiful cards.",
   },
   tripHighlights: {
     title: "Trip Highlights",
@@ -367,7 +367,7 @@ export const quickEffectiveValue = (card: QuickInfoCard, draft: SpellDraft): str
 
 /* ------------------------------- Itinerary -------------------------------- */
 
-/** Emoji presets offered on each highlight — curated to the ritual mood. */
+/** Emoji presets offered on each highlight - curated to the ritual mood. */
 export const HIGHLIGHT_EMOJIS = [
   "🌅",
   "🔥",
@@ -406,7 +406,7 @@ export const seedItinerary = (count: number): ItineraryDay[] =>
   Array.from({ length: Math.max(0, count) }, () => createItineraryDay());
 
 /**
- * Clones a day — title gets "(Copy)" appended (falling back to the positional
+ * Clones a day - title gets "(Copy)" appended (falling back to the positional
  * label) so the founder can spot it until they rename it.
  */
 export const duplicateItineraryDay = (day: ItineraryDay, fallbackName: string): ItineraryDay => ({
@@ -428,7 +428,7 @@ export const dayHasContent = (day: ItineraryDay): boolean =>
   day.image !== null ||
   day.highlights.some((h) => h.text.trim() !== "");
 
-/** “Day 3, Day 4 and Day 5” — natural-language list of day labels. */
+/** “Day 3, Day 4 and Day 5” - natural-language list of day labels. */
 export const joinDayLabels = (labels: string[]): string =>
   labels.length <= 1
     ? (labels[0] ?? "")

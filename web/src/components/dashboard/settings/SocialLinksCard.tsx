@@ -27,7 +27,7 @@ const PLACEHOLDERS: Record<keyof SocialLinkSettings, string> = {
   whatsapp: "https://wa.me/…",
 };
 
-/** §3 — Social links. Only configured links ever appear on the site. */
+/** §3 - Social links. Only configured links ever appear on the site. */
 export default function SocialLinksCard({ settings }: { settings: SiteSettings }) {
   const { value, patch, reset, dirty } = useDraft(settings.socials);
   const save = useSaveSettingsSection("socials");
@@ -57,7 +57,7 @@ export default function SocialLinksCard({ settings }: { settings: SiteSettings }
         flash();
         toast("Social links saved ✦");
       },
-      onError: (e) => setError(e.message !== "" ? e.message : "That didn't save — try again."),
+      onError: (e) => setError(e.message !== "" ? e.message : "That didn't save - try again."),
     });
   };
 
@@ -65,7 +65,7 @@ export default function SocialLinksCard({ settings }: { settings: SiteSettings }
     <SettingsCard
       eyebrow="Presence"
       title="Social Links"
-      intro="Only filled links appear in the site footer — empty ones never render dead buttons."
+      intro="Only filled links appear in the site footer - empty ones never render dead buttons."
       delay={0.05}
     >
       <div className="space-y-4">

@@ -1,8 +1,8 @@
 /**
- * Reviews — the M13 review collection console. One collection per completed
+ * Reviews - the M13 review collection console. One collection per completed
  * spell run: N unique one-time links, real submission counts, and a door into
  * each collection. No invented data anywhere: counts derive from the actual
- * invitation rows, and a failed read shows a retry — never a fake empty state.
+ * invitation rows, and a failed read shows a retry - never a fake empty state.
  */
 import { AnimatePresence, motion } from "framer-motion";
 import { MailPlus, MapPin, Plus } from "lucide-react";
@@ -86,7 +86,7 @@ export default function Reviews() {
           <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold/70">Story collection</p>
           <h1 className="mt-1 font-serif text-[30px] font-medium leading-tight text-cream">Reviews</h1>
           <p className="mt-1 font-sans text-[12.5px] text-cream/45">
-            After a spell completes, mint one-time links — one per traveller — and choose what reaches the site.
+            After a spell completes, mint one-time links - one per traveller - and choose what reaches the site.
           </p>
         </div>
         <button
@@ -109,7 +109,7 @@ export default function Reviews() {
             <MailPlus className="mx-auto h-7 w-7 text-cream/25" />
             <p className="mt-3 font-serif text-[20px] text-cream/85">The collections couldn't be reached</p>
             <p className="mx-auto mt-1.5 max-w-[440px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-              The connection failed — nothing was lost.
+              The connection failed - nothing was lost.
             </p>
             <button
               type="button"
@@ -124,7 +124,7 @@ export default function Reviews() {
             <MailPlus className="mx-auto h-7 w-7 text-cream/25" />
             <p className="mt-3 font-serif text-[20px] text-cream/85">No review collections yet.</p>
             <p className="mx-auto mt-1.5 max-w-[460px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-              When a spell completes, create a collection — each traveller receives their own one-time link,
+              When a spell completes, create a collection - each traveller receives their own one-time link,
               and their stories land here for your approval.
             </p>
             <button

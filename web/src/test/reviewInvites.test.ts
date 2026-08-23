@@ -1,5 +1,5 @@
 /**
- * M13 review collection rules — the client-side mirror of the server laws.
+ * M13 review collection rules - the client-side mirror of the server laws.
  * (The server-side enforcement itself is probed live in migrations 0025/0026.)
  */
 import { describe, expect, it } from "vitest";
@@ -50,7 +50,7 @@ describe("token validation", () => {
     expect(looksLikeInviteToken(VALID_TOKEN)).toBe(true);
   });
 
-  it("rejects legacy/invalid shapes — short, uuid-with-dashes, non-hex, empty", () => {
+  it("rejects legacy/invalid shapes - short, uuid-with-dashes, non-hex, empty", () => {
     expect(looksLikeInviteToken("")).toBe(false);
     expect(looksLikeInviteToken("abc123")).toBe(false);
     expect(looksLikeInviteToken("a".repeat(63))).toBe(false);
@@ -60,7 +60,7 @@ describe("token validation", () => {
     expect(looksLikeInviteToken("123e4567-e89b-42d3-a456-426614174000123e4567-e89b-42d3-a456-42661417")).toBe(false);
   });
 
-  it("builds the public link from the token only — no internal ids", () => {
+  it("builds the public link from the token only - no internal ids", () => {
     expect(reviewLinkPath(VALID_TOKEN)).toBe(`/review/${VALID_TOKEN}`);
     expect(reviewLinkUrl("https://logoutspells.com/", VALID_TOKEN)).toBe(
       `https://logoutspells.com/review/${VALID_TOKEN}`,
@@ -76,7 +76,7 @@ describe("lookup parsing", () => {
     expect(parseInviteLookup({ state: "invalid" }).state).toBe("invalid");
   });
 
-  it("THROWS on malformed payloads — a broken response is never a fake 'invalid link'", () => {
+  it("THROWS on malformed payloads - a broken response is never a fake 'invalid link'", () => {
     expect(() => parseInviteLookup(null)).toThrow();
     expect(() => parseInviteLookup("nope")).toThrow();
     expect(() => parseInviteLookup({ state: "weird" })).toThrow();
@@ -101,7 +101,7 @@ describe("draft validation (all five required)", () => {
     expect(result.errors.consent).toBeTruthy();
   });
 
-  it("bounds the rating to 1–5 whole stars", () => {
+  it("bounds the rating to 1-5 whole stars", () => {
     expect(validateReviewDraft({ ...validDraft, rating: 0 }).ok).toBe(false);
     expect(validateReviewDraft({ ...validDraft, rating: 6 }).ok).toBe(false);
     expect(validateReviewDraft({ ...validDraft, rating: 3.5 }).ok).toBe(false);
@@ -115,7 +115,7 @@ describe("draft validation (all five required)", () => {
     expect(validateReviewDraft({ ...validDraft, name: "x".repeat(REVIEW_LIMITS.name + 1) }).ok).toBe(false);
   });
 
-  it("consent must be answered EXPLICITLY — null fails, false passes and is stored as false", () => {
+  it("consent must be answered EXPLICITLY - null fails, false passes and is stored as false", () => {
     expect(validateReviewDraft({ ...validDraft, consent: null }).ok).toBe(false);
     const declined = validateReviewDraft({ ...validDraft, consent: false });
     expect(declined.ok).toBe(true);
@@ -140,7 +140,7 @@ describe("invitation states", () => {
     expect(isExpired(null, now)).toBe(false);
   });
 
-  it("a USED link stays used even past expiry — submitted stories survive", () => {
+  it("a USED link stays used even past expiry - submitted stories survive", () => {
     expect(inviteRowState("used", past, now)).toBe("used");
   });
 
@@ -227,7 +227,7 @@ describe("link count + expiry inputs", () => {
     expect(expiryFromDateInput("30-09-2026")).toBeNull();
   });
 
-  it("labels expiry like the console — '30 Sept 2026' style day-month-year", () => {
+  it("labels expiry like the console - '30 Sept 2026' style day-month-year", () => {
     expect(formatExpiryLabel(null)).toBe("");
     expect(formatExpiryLabel("")).toBe("");
     const label = formatExpiryLabel(new Date(2026, 8, 30, 12).toISOString());

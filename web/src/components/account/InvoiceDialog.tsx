@@ -132,7 +132,7 @@ export default function InvoiceDialog({ booking, profile, onClose }: InvoiceDial
                   )}
                   {refunded && (
                     <div className="flex justify-between">
-                      <span>Refund issued · {booking.refundedAt !== undefined ? fmtDayYear(booking.refundedAt) : "—"}</span>
+                      <span>Refund issued · {booking.refundedAt !== undefined ? fmtDayYear(booking.refundedAt) : "·"}</span>
                       <span className="text-red-300/90">− {formatINR(booking.refundAmount ?? 0)}</span>
                     </div>
                   )}
@@ -145,7 +145,7 @@ export default function InvoiceDialog({ booking, profile, onClose }: InvoiceDial
 
               <p className="font-sans text-[10.5px] leading-relaxed text-cream/35">
                 Booked {fmtDayYear(booking.bookedAt)} · A record of your booking and payments as
-                kept by Logout Spells — a formal tax invoice is available from the team on request.
+                kept by Logout Spells. A formal tax invoice is available from the team on request.
               </p>
 
               <button type="button" onClick={() => printInvoice(booking, profile)} className="btn-gold w-full !py-3.5 !text-[13px]">
@@ -176,7 +176,7 @@ const printInvoice = (booking: TripBooking, profile: TravellerProfile): void => 
     )
     .join("");
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${booking.ref} — Logout Spells</title>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${booking.ref} | Logout Spells</title>
 <style>body{font-family:Georgia,'Times New Roman',serif;color:#1c1c1a;max-width:640px;margin:48px auto;padding:0 24px}
 .mono{font-family:Inter,-apple-system,sans-serif}
 h1{font-size:15px;letter-spacing:.42em;margin:0}
@@ -192,13 +192,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 <h2 style="font-size:22px;margin:26px 0 2px">${booking.spell.name}</h2>
 <p class="mono" style="font-size:12px;color:#777;margin:0 0 18px">${booking.spell.location} · ${fmtRange(booking.start, booking.end)} · ${booking.seats} seat${booking.seats > 1 ? "s" : ""} × ${formatINR(booking.pricePerSeat)}</p>
 <table class="mono">${rows}<tr class="total"><td><em style="font-family:Georgia,serif">Total</em></td><td style="text-align:right;font-weight:600">${formatINR(booking.amountTotal)}</td></tr></table>
-<p class="mono" style="font-size:10px;color:#999;margin-top:32px">Booked ${fmtDayYear(booking.bookedAt)} · A record of your booking and payments — formal tax invoice available on request · Logout Spells ✦</p>
+<p class="mono" style="font-size:10px;color:#999;margin-top:32px">Booked ${fmtDayYear(booking.bookedAt)} · A record of your booking and payments, formal tax invoice available on request · Logout Spells ✦</p>
 <script>window.onload=function(){window.print()}</script></body></html>`;
 
   const win = window.open("", "_blank", "width=760,height=920");
   if (!win) {
     /* Pop-up blockers must not make the button feel dead (M10). */
-    toast.error("Your browser blocked the print window — allow pop-ups and try again.");
+    toast.error("Your browser blocked the print window. Allow pop-ups and try again.");
     return;
   }
   win.document.write(html);

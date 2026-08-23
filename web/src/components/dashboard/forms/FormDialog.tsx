@@ -12,7 +12,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 interface FormDialogProps {
   open: boolean;
   form: LogoutForm;
-  /** The spell the visitor is applying through — null for standalone use. */
+  /** The spell the visitor is applying through - null for standalone use. */
   spell: ManagedSpell | null;
   onClose: () => void;
 }
@@ -66,7 +66,7 @@ export default function FormDialog({ open, form, spell, onClose }: FormDialogPro
               className="pointer-events-none absolute -top-20 left-1/2 h-40 w-72 -translate-x-1/2 rounded-full bg-gold/[0.09] blur-[60px]"
             />
 
-            {/* Slim header — the form brings its own title */}
+            {/* Slim header - the form brings its own title */}
             <div className="relative flex items-center justify-between gap-4 border-b border-cream/[0.06] px-5 py-3.5">
               <p className="eyebrow !text-[10px]">
                 {spell ? `Join the ${spell.name}` : "Application"}

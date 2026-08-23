@@ -11,7 +11,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 interface IconPickerProps {
   value: BuilderIconId | null;
   onChange: (id: BuilderIconId | null) => void;
-  /** Offers a "None" cell — for cards where the icon is optional. */
+  /** Offers a "None" cell - for cards where the icon is optional. */
   allowNone?: boolean;
   /** Compact 8×8 trigger for dense list rows. */
   size?: "md" | "sm";
@@ -28,7 +28,7 @@ export default function IconPicker({ value, onChange, allowNone, size = "md" }: 
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label={`Change icon — currently ${value ? BUILDER_ICONS[value].label : "none"}`}
+        aria-label={`Change icon - currently ${value ? BUILDER_ICONS[value].label : "none"}`}
         title="Change icon"
         className={cn(
           "grid shrink-0 place-items-center rounded-lg border transition-all duration-200 active:scale-95",

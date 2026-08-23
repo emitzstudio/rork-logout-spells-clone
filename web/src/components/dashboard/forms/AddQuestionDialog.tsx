@@ -12,7 +12,7 @@ interface AddQuestionDialogProps {
   onClose: () => void;
 }
 
-/** The "+ Add Question" fork — pick a question type, land in its editor. */
+/** The "+ Add Question" fork - pick a question type, land in its editor. */
 export default function AddQuestionDialog({ onPick, onClose }: AddQuestionDialogProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -62,7 +62,7 @@ export default function AddQuestionDialog({ onPick, onClose }: AddQuestionDialog
           What do you want to ask?
         </h3>
         <p className="mt-1.5 font-sans text-[12.5px] text-cream/45">
-          Pick a type — you'll write the question itself in the next step.
+          Pick a type - you'll write the question itself in the next step.
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3">

@@ -1,5 +1,5 @@
 /**
- * Signed-in navbar cluster — notification bell + avatar dropdown, plus the
+ * Signed-in navbar cluster - notification bell + avatar dropdown, plus the
  * account block for the mobile menu. Rendered by the site Nav when a
  * traveller session exists.
  */
@@ -87,7 +87,7 @@ export function NavBell() {
     <div ref={ref} className="relative">
       <button
         type="button"
-        aria-label={unreadCount > 0 ? `Notifications — ${unreadCount} unread` : "Notifications"}
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
@@ -113,7 +113,7 @@ export function NavBell() {
               type="button"
               onClick={() =>
                 void markAllNotificationsRead().catch(() =>
-                  toast.error("Couldn't mark them read — try again"),
+                  toast.error("Couldn't mark them read. Try again"),
                 )
               }
               className="font-sans text-[10px] uppercase tracking-[0.18em] text-gold transition-colors hover:text-gold-light"
@@ -124,7 +124,7 @@ export function NavBell() {
         </div>
         {recent.length === 0 ? (
           <p className="px-4 py-8 text-center font-serif text-[14px] italic text-cream/40">
-            All quiet — exactly how it should be ☾
+            All quiet, exactly how it should be ☾
           </p>
         ) : (
           <ul>
@@ -138,7 +138,7 @@ export function NavBell() {
                     onClick={() => {
                       setOpen(false);
                       void markNotificationRead(n.id).catch(() =>
-                        toast.error("Couldn't mark that as read — it stays unread"),
+                        toast.error("Couldn't mark that as read. It stays unread"),
                       );
                       if (n.link) navigate(n.link);
                     }}

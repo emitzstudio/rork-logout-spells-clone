@@ -11,7 +11,7 @@ import { useSiteSettings } from "@/data/siteSettingsStore";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
- * The public form page — logoutspells.com/forms/{slug}. Deliberately minimal
+ * The public form page - logoutspells.com/forms/{slug}. Deliberately minimal
  * chrome so the questions get the whole stage. Only published forms are
  * visible; the founder can open drafts with ?preview=1 (nothing recorded).
  */
@@ -20,7 +20,7 @@ export default function FormPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
   const { getFormBySlug, addResponse, ready, failed, retry } = useFormStore();
-  /* M12 — the public-forms switch. Fail-open: forms stay on unless the
+  /* M12 - the public-forms switch. Fail-open: forms stay on unless the
      founder explicitly turned them off. */
   const { launch } = useSiteSettings();
 
@@ -29,8 +29,8 @@ export default function FormPage() {
 
   useEffect(() => {
     document.title = form
-      ? `${form.title.trim() !== "" ? form.title : "Form"} — Logout Spells`
-      : "Form — Logout Spells";
+      ? `${form.title.trim() !== "" ? form.title : "Form"} | Logout Spells`
+      : "Form | Logout Spells";
   }, [form]);
 
   if (!ready && !failed && !form) {
@@ -40,7 +40,7 @@ export default function FormPage() {
       </section>
     );
   }
-  /* A failed read is NOT a faded form — shared links deserve a retry (M10). */
+  /* A failed read is NOT a faded form - shared links deserve a retry (M10). */
   if (!form && failed) {
     return (
       <section className="flex min-h-[100svh] items-center justify-center px-5">
@@ -120,7 +120,7 @@ export default function FormPage() {
 /** Shown while the founder has public forms switched off (M12). */
 function FormsResting() {
   useEffect(() => {
-    document.title = "Forms Are Resting — Logout Spells";
+    document.title = "Forms Are Resting | Logout Spells";
   }, []);
 
   return (
@@ -140,7 +140,7 @@ function FormsResting() {
           The forms are <span className="italic text-gold-gradient">resting.</span>
         </h1>
         <p className="mt-5 font-serif text-2xl italic text-cream/60">
-          Responses are paused for a little while — come back soon.
+          Responses are paused for a little while. Come back soon.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link to="/live" className="btn-gold">
@@ -157,10 +157,10 @@ function FormsResting() {
 
 /* -------------------------------- Not found -------------------------------- */
 
-/** Shown when the slug is unknown — or the form is still a draft. */
+/** Shown when the slug is unknown - or the form is still a draft. */
 function FormNotFound() {
   useEffect(() => {
-    document.title = "Form Not Found — Logout Spells";
+    document.title = "Form Not Found | Logout Spells";
   }, []);
 
   return (
@@ -180,7 +180,7 @@ function FormNotFound() {
           This form has <span className="italic text-gold-gradient">faded.</span>
         </h1>
         <p className="mt-5 font-serif text-2xl italic text-cream/60">
-          It may still be drafted in the workshop — or it was never cast at all.
+          It may still be drafted in the workshop, or it was never cast at all.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link to="/live" className="btn-gold">

@@ -1,5 +1,5 @@
 /**
- * Traveller self-service (M7C) — the surfaces a signed-in traveller may touch
+ * Traveller self-service (M7C) - the surfaces a signed-in traveller may touch
  * around their bookings, riding ENTIRELY on the M7 RLS policies:
  *
  * - live departure availability (public view, hold-aware)
@@ -10,7 +10,7 @@
  *   then watch its moderation state
  *
  * NO money is computed here and NO payment provider exists yet (decisions
- * F/C open) — every write below is a zero-rupee operation the server allows
+ * F/C open) - every write below is a zero-rupee operation the server allows
  * a traveller to make about their own rows.
  */
 import { supabase } from "@/integrations/supabase/client";
@@ -50,20 +50,20 @@ const mapDeparture = (row: DepartureViewRow): DepartureInfo | null => {
   };
 };
 
-/** The active departure for one spell — hold-aware availability included. */
+/** The active departure for one spell - hold-aware availability included. */
 export const fetchActiveDeparture = async (spellId: string): Promise<DepartureInfo | null> => {
   const { data, error } = await supabase
     .from("spell_active_departures")
     .select("*")
     .eq("spell_id", spellId)
     .maybeSingle();
-  /* Errors THROW (M10) — a failed check must never masquerade as "no departure". */
-  if (error) throw new Error("Live availability couldn't be checked — try again.");
+  /* Errors THROW (M10) - a failed check must never masquerade as "no departure". */
+  if (error) throw new Error("Live availability couldn't be checked - try again.");
   if (!data) return null;
   return mapDeparture(data);
 };
 
-/** Every visible spell's active departure — for resolving waitlist entries. */
+/** Every visible spell's active departure - for resolving waitlist entries. */
 export const fetchActiveDepartures = async (): Promise<DepartureInfo[]> => {
   const { data, error } = await supabase.from("spell_active_departures").select("*");
   if (error) return [];
@@ -96,14 +96,14 @@ const mapWaitlist = (row: WaitlistRow): MyWaitlistEntry => ({
   expiresAt: row.expires_at,
 });
 
-/** Own entries only — RLS hides everyone else's place in the queue. */
+/** Own entries only - RLS hides everyone else's place in the queue. */
 export const fetchMyWaitlist = async (userId: string): Promise<MyWaitlistEntry[]> => {
   const { data, error } = await supabase
     .from("booking_waitlist")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-  if (error) throw new Error("The waitlist couldn't be reached — try again.");
+  if (error) throw new Error("The waitlist couldn't be reached - try again.");
   return (data ?? []).map(mapWaitlist);
 };
 
@@ -127,14 +127,14 @@ export const joinWaitlist = async (input: {
     })
     .select()
     .single();
-  if (error || !data) throw new Error("The queue couldn't take you just now — try again.");
+  if (error || !data) throw new Error("The queue couldn't take you just now - try again.");
   return mapWaitlist(data);
 };
 
-/** Leaving is the traveller's right — while still 'waiting' (policy-pinned). */
+/** Leaving is the traveller's right - while still 'waiting' (policy-pinned). */
 export const leaveWaitlist = async (id: string): Promise<void> => {
   const { error } = await supabase.from("booking_waitlist").delete().eq("id", id);
-  if (error) throw new Error("That couldn't be done — offered seats are held by the team.");
+  if (error) throw new Error("That couldn't be done - offered seats are held by the team.");
 };
 
 /* ----------------------------- Change requests ----------------------------- */
@@ -179,12 +179,12 @@ export const fetchChangeRequests = async (bookingId: string): Promise<MyChangeRe
     .select("*")
     .eq("booking_id", bookingId)
     .order("created_at", { ascending: false });
-  if (error) throw new Error("Your requests couldn't be reached — try again.");
+  if (error) throw new Error("Your requests couldn't be reached - try again.");
   return (data ?? []).map(mapChangeRequest);
 };
 
 /**
- * Files the ask. Execution NEVER happens here — staff decide in the console
+ * Files the ask. Execution NEVER happens here - staff decide in the console
  * and any actual change moves through the audited pipeline.
  */
 export const fileChangeRequest = async (input: {
@@ -205,7 +205,7 @@ export const fileChangeRequest = async (input: {
     .select()
     .single();
   if (error || !data)
-    throw new Error("The request couldn't be filed — the booking may already be closed.");
+    throw new Error("The request couldn't be filed - the booking may already be closed.");
   return mapChangeRequest(data);
 };
 
@@ -217,7 +217,7 @@ export const withdrawChangeRequest = async (id: string): Promise<void> => {
     .eq("id", id)
     .select("id");
   if (error || data === null || data.length === 0)
-    throw new Error("Too late to withdraw — the team has already picked this up.");
+    throw new Error("Too late to withdraw - the team has already picked this up.");
 };
 
 /* --------------------------------- Reviews --------------------------------- */
@@ -262,7 +262,7 @@ export interface ReviewTarget {
 }
 
 /**
- * A review lives on the spell's ARCHIVE page — the story submission opens
+ * A review lives on the spell's ARCHIVE page - the story submission opens
  * only when that page exists and is published.
  */
 export const fetchReviewTarget = async (spellId: string): Promise<ReviewTarget | null> => {
@@ -280,7 +280,7 @@ export const fetchReviewTarget = async (spellId: string): Promise<ReviewTarget |
 };
 
 /**
- * Submits the public story — lands 'pending' for staff moderation. The server
+ * Submits the public story - lands 'pending' for staff moderation. The server
  * verifies the booking really is the author's completed trip on this spell,
  * and the 0008 unique index makes a second submission impossible.
  */
@@ -294,11 +294,11 @@ export const submitReview = async (input: {
   authorName: string;
   authorAvatar: string;
 }): Promise<MyReview> => {
-  // author_id has NO column default — the policy pins it to auth.uid(), so
+  // author_id has NO column default - the policy pins it to auth.uid(), so
   // it must travel explicitly with the insert.
   const { data: sess } = await supabase.auth.getSession();
   const uid = sess.session?.user.id;
-  if (uid === undefined) throw new Error("Your session drifted — sign in again.");
+  if (uid === undefined) throw new Error("Your session drifted - sign in again.");
   const { data, error } = await supabase
     .from("reviews")
     .insert({
@@ -318,7 +318,7 @@ export const submitReview = async (input: {
   if (error) {
     if (error.code === "23505")
       throw new Error("You've already shared your story for this trip.");
-    throw new Error("Your story couldn't be sent — the trip may not be complete yet.");
+    throw new Error("Your story couldn't be sent - the trip may not be complete yet.");
   }
   return mapMyReview(data);
 };

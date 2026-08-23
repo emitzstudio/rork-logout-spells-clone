@@ -1,7 +1,7 @@
 /**
- * Founder console — live overview data (M9 · Website Truth Pass).
+ * Founder console - live overview data (M9 · Website Truth Pass).
  *
- * Every number the dashboard renders flows from these hooks — real rows read
+ * Every number the dashboard renders flows from these hooks - real rows read
  * under the signed-in staff session's RLS. Nothing here is invented: when the
  * database is empty the console shows honest zeros, and when a read fails the
  * console says so instead of showing seed content.
@@ -23,7 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /* --------------------------------- Stats ---------------------------------- */
 
-/** An honest overview metric — a real value plus a real, derived context line. */
+/** An honest overview metric - a real value plus a real, derived context line. */
 export interface DashStat {
   id: string;
   label: string;
@@ -49,7 +49,7 @@ const humanize = (eventType: string): string => {
   return text.length === 0 ? "Event" : text.charAt(0).toUpperCase() + text.slice(1);
 };
 
-/** Icon for an audit event type — matched on meaning, defaulting gently. */
+/** Icon for an audit event type - matched on meaning, defaulting gently. */
 export const activityIcon = (eventType: string): LucideIcon => {
   const t = eventType.toLowerCase();
   if (t.includes("payment") || t.includes("refund")) return IndianRupee;
@@ -62,7 +62,7 @@ export const activityIcon = (eventType: string): LucideIcon => {
 };
 
 /**
- * The most recent booking audit events with their booking references —
+ * The most recent booking audit events with their booking references -
  * the same `booking_events` spine the booking detail timeline reads.
  */
 export function useRecentActivity(): UseQueryResult<LiveActivity[]> {
@@ -94,7 +94,7 @@ export function useRecentActivity(): UseQueryResult<LiveActivity[]> {
       return rows.map((row): LiveActivity => {
         const booking = row.booking_id !== null ? byId.get(row.booking_id) : undefined;
         const refLabel = booking
-          ? `${booking.ref ?? "—"}${booking.lead_name !== "" ? ` · ${booking.lead_name}` : ""}`
+          ? `${booking.ref ?? "·"}${booking.lead_name !== "" ? ` · ${booking.lead_name}` : ""}`
           : "";
         const detail =
           row.detail !== "" ? row.detail : refLabel !== "" ? refLabel : "System event";
@@ -102,7 +102,7 @@ export function useRecentActivity(): UseQueryResult<LiveActivity[]> {
           id: row.id,
           eventType: row.event_type,
           title: humanize(row.event_type),
-          detail: refLabel !== "" && row.detail !== "" ? `${refLabel} — ${row.detail}` : detail,
+          detail: refLabel !== "" && row.detail !== "" ? `${refLabel} - ${row.detail}` : detail,
           createdAt: row.created_at,
         };
       });

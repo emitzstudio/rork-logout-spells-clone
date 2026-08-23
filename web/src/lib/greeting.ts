@@ -1,7 +1,7 @@
 /**
  * Resolves the time-of-day greeting from the visitor's local clock.
- * Bands: 5:00–11:59 Morning · 12:00–16:59 Afternoon · 17:00–20:59 Evening ·
- * 21:00–4:59 Night. Computed fresh on every call — never cached, never mocked —
+ * Bands: 5:00-11:59 Morning · 12:00-16:59 Afternoon · 17:00-20:59 Evening ·
+ * 21:00-4:59 Night. Computed fresh on every call - never cached, never mocked -
  * so a refresh at a different hour always greets correctly.
  */
 export function timeGreeting(now: Date = new Date()): string {

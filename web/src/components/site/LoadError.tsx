@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 interface LoadErrorProps {
-  /** One italic serif line — honest, in the site's voice. */
+  /** One italic serif line - honest, in the site's voice. */
   message: string;
   onRetry: () => void;
   /** full = tall page-level card; compact = slimmer in-section card. */
@@ -10,7 +10,7 @@ interface LoadErrorProps {
 }
 
 /**
- * The shared "this couldn't be reached" card (M10) — visually distinct from
+ * The shared "this couldn't be reached" card (M10) - visually distinct from
  * every empty state, always with a retry. Same anatomy as the archive's
  * error card so failures speak one language across the site.
  */

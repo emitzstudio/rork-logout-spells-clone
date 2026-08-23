@@ -1,12 +1,12 @@
 /**
- * Review collections store (M13) — staff reads, collection creation, the
+ * Review collections store (M13) - staff reads, collection creation, the
  * public token lookup/submit, and consent-gated publishing.
  *
  * Staff reads go through RLS (collections + invitations are staff-only rows);
  * creation and traveller submission go through the database RPCs so the exact
  * link count, one-time tokens and spell association are server-enforced.
- * Publishing flips the EXISTING reviews.status moderation field — the same
- * one Testimonials uses — so there is exactly ONE review system.
+ * Publishing flips the EXISTING reviews.status moderation field - the same
+ * one Testimonials uses - so there is exactly ONE review system.
  */
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 
@@ -46,7 +46,7 @@ type CollectionJoinRow = ReviewCollectionRow & {
 };
 
 /**
- * Every collection with its invitations and their submitted reviews — one
+ * Every collection with its invitations and their submitted reviews - one
  * cache shared by the overview list and the collection detail page.
  */
 export function useReviewCollections(): UseQueryResult<CollectionBundle[]> {
@@ -102,7 +102,7 @@ export interface CreateCollectionInput {
 /**
  * Creates the collection + EXACTLY linkCount one-time invitations atomically
  * via the staff-only RPC. Resolves with the new collection id only after the
- * database confirms — no optimistic success.
+ * database confirms - no optimistic success.
  */
 export function useCreateReviewCollection(): UseMutationResult<string, Error, CreateCollectionInput> {
   const queryClient = useQueryClient();
@@ -153,7 +153,7 @@ export interface SubmitInviteInput {
 
 /**
  * The one-time submission. The RPC validates the token (unused + unexpired),
- * writes the review as PENDING and burns the invitation — atomically.
+ * writes the review as PENDING and burns the invitation - atomically.
  */
 export function useSubmitInviteReview(): UseMutationResult<void, Error, SubmitInviteInput> {
   const queryClient = useQueryClient();
@@ -188,7 +188,7 @@ export interface PublishReviewInput {
 
 /**
  * Staff-only publish toggle on the EXISTING moderation field. The database
- * trigger blocks approving a review whose traveller did not consent — the UI
+ * trigger blocks approving a review whose traveller did not consent - the UI
  * disables the control, the server enforces it. The write is verified: zero
  * affected rows is an error, never a silent success.
  */
@@ -202,7 +202,7 @@ export function usePublishReview(): UseMutationResult<void, Error, PublishReview
         .eq("id", input.reviewId)
         .select("id, status");
       if (error) throw new Error(error.message);
-      if ((data ?? []).length !== 1) throw new Error("The review could not be updated — nothing was changed.");
+      if ((data ?? []).length !== 1) throw new Error("The review could not be updated - nothing was changed.");
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: reviewInviteKeys.collections });

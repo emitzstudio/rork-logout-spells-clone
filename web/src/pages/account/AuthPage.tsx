@@ -55,13 +55,13 @@ const QUOTES: Record<AuthMode, { big: ReactNode; hand: string }> = {
   },
 };
 
-/** Auth screens — real Supabase flows behind the same three doors (M6). */
+/** Auth screens - real Supabase flows behind the same three doors (M6). */
 export default function AuthPage({ mode }: { mode: AuthMode }) {
   const { session, signIn, signUp } = useAccount();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/account";
-  /* M12 — the registration switch pauses ONLY the join form. Logins, resets
+  /* M12 - the registration switch pauses ONLY the join form. Logins, resets
      and in-flight verifications continue untouched. Fail-open: enabled. */
   const { launch } = useSiteSettings();
   const registrationPaused = mode === "join" && !launch.registrationEnabled;
@@ -75,7 +75,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<FieldError | null>(null);
 
-  /* M11.5 — the prove-your-inbox step of the join flow. */
+  /* M11.5 - the prove-your-inbox step of the join flow. */
   const [code, setCode] = useState<string[]>(EMPTY_CODE);
   const [verifying, setVerifying] = useState<boolean>(false);
   const [resending, setResending] = useState<boolean>(false);
@@ -84,17 +84,17 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   const lastTriedRef = useRef<string>("");
 
   useEffect(() => {
-    document.title = `${TITLES[mode]} — Logout Spells`;
+    document.title = `${TITLES[mode]} | Logout Spells`;
   }, [mode]);
 
-  /* Resend cooldown — one tick per second. */
+  /* Resend cooldown - one tick per second. */
   useEffect(() => {
     if (cooldown <= 0) return undefined;
     const id = window.setTimeout(() => setCooldown((c) => c - 1), 1_000);
     return () => window.clearTimeout(id);
   }, [cooldown]);
 
-  /* The emailed sign-in link completes verification in one tap — often in
+  /* The emailed sign-in link completes verification in one tap - often in
      another tab. Sessions sync across tabs; the moment one lands while we
      hold the verify step, the ceremony continues on its own. */
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       await op();
     } catch (e) {
       if (e instanceof AccountError) setError({ field: e.field, message: e.message });
-      else setError({ field: null, message: "Something drifted — try again." });
+      else setError({ field: null, message: "Something drifted. Try again." });
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
 
   const codeValue = code.join("");
 
-  /** Verifies the emailed 6-digit code — single-flight, honest errors. */
+  /** Verifies the emailed 6-digit code - single-flight, honest errors. */
   const submitCode = useCallback((): void => {
     if (verifying || codeValue.length !== 6) return;
     lastTriedRef.current = codeValue;
@@ -132,13 +132,13 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         setError(
           e instanceof AccountError
             ? { field: e.field, message: e.message }
-            : { field: null, message: "Something drifted — try again." },
+            : { field: null, message: "Something drifted. Try again." },
         );
       })
       .finally(() => setVerifying(false));
   }, [verifying, codeValue, email]);
 
-  /* A complete code verifies itself — no second tap needed. */
+  /* A complete code verifies itself - no second tap needed. */
   useEffect(() => {
     if (step !== "verify" || verifying) return;
     if (codeValue.length === 6 && lastTriedRef.current !== codeValue) submitCode();
@@ -155,7 +155,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       .then(() => setCooldown(60))
       .catch((e: unknown) => {
         setOtpNote(
-          e instanceof AccountError ? e.message : "The courier is resting — try again soon.",
+          e instanceof AccountError ? e.message : "The courier is resting. Try again soon.",
         );
       })
       .finally(() => setResending(false));
@@ -168,7 +168,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         try {
           await signIn(email, password);
         } catch (err) {
-          /* M11.5 — an unverified email isn't a wrong password. Re-arm the
+          /* M11.5 - an unverified email isn't a wrong password. Re-arm the
              ceremony, send a fresh verification and carry them straight there. */
           if (err instanceof AccountError && err.field === "email_unverified") {
             setCode(EMPTY_CODE);
@@ -191,7 +191,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
     } else if (mode === "join") {
       void run(async () => {
         await signUp({ firstName, lastName, email, password });
-        /* M11.5 — the account is forged and Supabase has already mailed the
+        /* M11.5 - the account is forged and Supabase has already mailed the
            verification. No session exists until the inbox is proven. */
         setCode(EMPTY_CODE);
         lastTriedRef.current = "";
@@ -209,7 +209,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
 
   // Already signed in? The space is that way. (Never mid-flow: joining holds
   // a brief session before the verify step, and verification itself signs
-  // the traveller in — those steps render their own way forward.)
+  // the traveller in - those steps render their own way forward.)
   if (session && step === "form" && !loading) return <Navigate to={from} replace />;
 
   return (
@@ -255,7 +255,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
             transition={{ duration: 0.9, delay: 0.7 }}
             className="mt-6 font-hand text-2xl text-gold/60"
           >
-            — {quote.hand}
+            {quote.hand}
           </motion.p>
         </div>
 
@@ -336,7 +336,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                       ? "Your trips, wishlist and journey are waiting."
                       : mode === "join"
                         ? "One account for every spell you'll ever cast."
-                        : "Tell us your email — we'll send a golden thread to forge a new key."}
+                        : "Tell us your email and we'll send a golden thread to forge a new key."}
                   </p>
 
                   <form onSubmit={onSubmitForm} className="mt-8 space-y-4" noValidate>
@@ -431,9 +431,9 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                     Prove your inbox
                   </h1>
                   <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
-                    Your account is forged — we sent a golden thread to{" "}
+                    Your account is forged. We sent a golden thread to{" "}
                     <span className="text-cream/80">{email || "your inbox"}</span>. Tap the
-                    confirmation link inside and this page completes on its own — or enter
+                    confirmation link inside and this page completes on its own, or enter
                     the 6-digit code below if your email shows one.
                   </p>
 
@@ -484,7 +484,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
 
                   <div className="mt-7 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
                     <p className="font-serif text-[15px] italic leading-relaxed text-cream/70">
-                      Give it a minute and peek at spam — golden threads sometimes land
+                      Give it a minute and peek at spam. Golden threads sometimes land
                       sideways. Still nothing? The resend above conjures a fresh one.
                     </p>
                   </div>
@@ -499,12 +499,12 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                   <h1 className="heading-serif mt-3 text-4xl text-cream">Check your email</h1>
                   <p className="mt-3 font-sans text-[13px] leading-relaxed text-cream/45">
                     We whispered a reset link to <span className="text-cream/80">{email || "your inbox"}</span>.
-                    Follow it and we'll forge you a new key — the link opens right back here.
+                    Follow it and we'll forge you a new key. The link opens right back here.
                   </p>
 
                   <div className="mt-8 rounded-2xl border border-gold/25 bg-gold/[0.05] p-5">
                     <p className="font-serif text-[15px] italic leading-relaxed text-cream/70">
-                      Nothing in the inbox? Give it a minute, and peek at spam — golden threads
+                      Nothing in the inbox? Give it a minute, and peek at spam. Golden threads
                       sometimes land sideways.
                     </p>
                   </div>
@@ -531,7 +531,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
                     </h1>
                     <p className="mx-auto mt-4 max-w-xs font-sans text-[13px] leading-relaxed text-cream/50">
                       Account created, inbox proven. Your trips, wishlist and journey are
-                      ready — there's even a first whisper waiting.
+                      ready. There's even a first whisper waiting.
                     </p>
                     <button
                       type="button"
@@ -691,7 +691,7 @@ interface CodeBoxesProps {
   invalid: boolean;
 }
 
-/** Six golden cells — auto-advance, backspace steps back, paste fills all (M11.5). */
+/** Six golden cells - auto-advance, backspace steps back, paste fills all (M11.5). */
 function CodeBoxes({ value, onChange, disabled, invalid }: CodeBoxesProps) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -757,7 +757,7 @@ function CodeBoxes({ value, onChange, disabled, invalid }: CodeBoxesProps) {
 }
 
 /**
- * Resend with a real cooldown — the reset mailer is deliberately gentle
+ * Resend with a real cooldown - the reset mailer is deliberately gentle
  * (a couple of threads per hour) until the branded-email milestone.
  */
 function ResendLine({ email }: { email: string }) {
@@ -789,7 +789,7 @@ function ResendLine({ email }: { email: string }) {
               /* The cooldown starts only when a thread actually went out (M10). */
               .then(() => setCooldown(60))
               .catch((e: unknown) => {
-                setNote(e instanceof AccountError ? e.message : "The courier is resting — try again soon.");
+                setNote(e instanceof AccountError ? e.message : "The courier is resting. Try again soon.");
               })
               .finally(() => setSending(false));
           }}

@@ -142,7 +142,7 @@ interface ListEditorProps {
 }
 
 /**
- * Generic reorderable list editor — unlimited rows, each with an optional
+ * Generic reorderable list editor - unlimited rows, each with an optional
  * icon, inline editing, duplicate, delete and drag-to-reorder.
  */
 export default function ListEditor({

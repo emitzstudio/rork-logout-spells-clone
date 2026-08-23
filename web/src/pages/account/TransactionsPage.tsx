@@ -37,7 +37,7 @@ interface UpcomingDue {
 }
 
 /**
- * Transaction History — bookings, advance payments, refunds and what's still
+ * Transaction History - bookings, advance payments, refunds and what's still
  * due, each with a proper invoice. The wallet returns with the payments phase.
  */
 export default function TransactionsPage() {
@@ -45,7 +45,7 @@ export default function TransactionsPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [invoiceBooking, setInvoiceBooking] = useState<TripBooking | null>(null);
 
-  /* The REAL payments ledger (M7C) — every row server-recorded. */
+  /* The REAL payments ledger (M7C) - every row server-recorded. */
   const txns = useMemo(() => data?.transactions ?? [], [data]);
   const summary = useMemo(() => deriveWalletSummary(txns), [txns]);
 
@@ -79,7 +79,7 @@ export default function TransactionsPage() {
           Every rupee, <span className="italic text-gold-gradient">accounted for.</span>
         </>
       }
-      sub="Bookings, advance payments, refunds and upcoming dues — with a proper invoice for each circle."
+      sub="Bookings, advance payments, refunds and upcoming dues, with a proper invoice for each circle."
     >
       {/* Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -118,7 +118,7 @@ export default function TransactionsPage() {
             ₹<CountUp to={dueTotal} />
           </p>
           <p className="mt-1.5 font-sans text-[11px] text-cream/45">
-            {dueTotal > 0 ? "Balances due before departure" : "Nothing pending — travel easy"}
+            {dueTotal > 0 ? "Balances due before departure" : "Nothing pending, travel easy"}
           </p>
         </div>
       </div>
@@ -160,7 +160,7 @@ export default function TransactionsPage() {
             })}
           </div>
           <p className="mt-2.5 font-sans text-[11px] text-cream/35">
-            Online balance payment opens soon — until then the team collects it personally, well in time.
+            Online balance payment opens soon. Until then the team collects it personally, well in time.
           </p>
         </div>
       )}

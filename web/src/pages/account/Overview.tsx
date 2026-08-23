@@ -39,7 +39,7 @@ const EVENT_DOT: Record<CalendarEventKind, string> = {
   available: "bg-transparent border border-cream/40",
 };
 
-/** The traveller dashboard — the welcome-home screen of the space. */
+/** The traveller dashboard - the welcome-home screen of the space. */
 export default function Overview() {
   const { data } = useAccount();
   const { publicSpells } = useSpellStore();
@@ -181,7 +181,7 @@ export default function Overview() {
         ) : (
           <EmptyState
             symbol="☾"
-            title="No spell on the horizon — yet."
+            title="No spell on the horizon - yet."
             line="The calendar is quiet and the world is loud. Sounds like exactly the right time."
             to="/live"
             toLabel="Find your next spell"
@@ -237,7 +237,7 @@ export default function Overview() {
                   compact
                   symbol="✧"
                   title="A quiet month."
-                  line="Nothing on the calendar — the best trips often start that way."
+                  line="Nothing on the calendar - the best trips often start that way."
                   to="/account/calendar"
                   toLabel="Open calendar"
                 />

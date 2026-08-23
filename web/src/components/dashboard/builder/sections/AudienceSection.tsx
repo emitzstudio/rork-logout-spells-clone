@@ -112,7 +112,7 @@ interface AudienceSectionProps {
   api: ListApi<AudienceCard>;
 }
 
-/** Section 11 — “Who This Spell Is For”: reorderable persona cards. */
+/** Section 11 - “Who This Spell Is For”: reorderable persona cards. */
 export default function AudienceSection({ cards, api }: AudienceSectionProps) {
   const prevIds = useRef<string[]>(cards.map((c) => c.id));
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -130,7 +130,7 @@ export default function AudienceSection({ cards, api }: AudienceSectionProps) {
   return (
     <div>
       <p className="font-sans text-[12px] leading-relaxed text-cream/45">
-        Help the right people recognise themselves — each card is a little portrait of who belongs
+        Help the right people recognise themselves - each card is a little portrait of who belongs
         in this circle.
       </p>
 
@@ -141,7 +141,7 @@ export default function AudienceSection({ cards, api }: AudienceSectionProps) {
           </span>
           <p className="font-serif text-[17px] italic text-cream/80">Who is this Spell calling?</p>
           <p className="max-w-[260px] font-sans text-[11.5px] leading-relaxed text-cream/40">
-            Start with one persona — the solo traveller, the burnt-out founder, the quiet creative.
+            Start with one persona - the solo traveller, the burnt-out founder, the quiet creative.
           </p>
           <button type="button" onClick={api.add} className="btn-ghost-gold !px-5 !py-2.5 !text-xs">
             <Plus className="h-3.5 w-3.5" /> Add First Card

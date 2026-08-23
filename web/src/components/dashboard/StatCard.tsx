@@ -5,7 +5,7 @@ import type { DashStat } from "@/data/dashboardLive";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/** Overview metric card — count-up value plus its real, derived context line. */
+/** Overview metric card - count-up value plus its real, derived context line. */
 export default function StatCard({ stat, index }: { stat: DashStat; index: number }) {
   const reduce = useReducedMotion() ?? false;
   const [display, setDisplay] = useState<number>(reduce ? stat.value : 0);

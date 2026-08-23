@@ -15,7 +15,7 @@ interface FieldShellProps {
   children: ReactNode;
 }
 
-/** Label row + control + helper text — the skeleton every field shares. */
+/** Label row + control + helper text - the skeleton every field shares. */
 export function FieldShell({ label, helper, optional, counter, action, children }: FieldShellProps) {
   return (
     <div>

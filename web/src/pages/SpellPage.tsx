@@ -29,7 +29,7 @@ import { isPublic, useSpellStore } from "@/data/spellStore";
 import { isUuid, supabase } from "@/integrations/supabase/client";
 
 /**
- * The public Spell page — rendered dynamically from the local CMS at full,
+ * The public Spell page - rendered dynamically from the local CMS at full,
  * natural editorial scale. "Join this Spell" opens the two-door flow:
  * a light Inquiry, or the full Book Now payment journey.
  */
@@ -44,7 +44,7 @@ export default function SpellPage() {
 
   /** The two-door booking flow (choice → inquire / pay). */
   const [flowOpen, setFlowOpen] = useState<boolean>(false);
-  /** The attached interest form — the Inquire door when one exists. */
+  /** The attached interest form - the Inquire door when one exists. */
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
   const spell = slug ? getBySlug(slug) : undefined;
@@ -56,7 +56,7 @@ export default function SpellPage() {
     if (visibleSlug !== null) recordSpellView(visibleSlug);
   }, [visibleSlug, recordSpellView]);
 
-  // Public page views bump the real counter — once per spell per session.
+  // Public page views bump the real counter - once per spell per session.
   const spellDbId = spell !== undefined && visible && isUuid(spell.id) ? spell.id : null;
   useEffect(() => {
     if (spellDbId !== null && !viewedSpellIds.has(spellDbId)) {
@@ -79,7 +79,7 @@ export default function SpellPage() {
       </Page>
     );
   }
-  /* A failed read is NOT a faded spell — shared links deserve a retry (M10). */
+  /* A failed read is NOT a faded spell - shared links deserve a retry (M10). */
   if (!spell && failed) {
     return (
       <Page title="Live Spell">
@@ -92,7 +92,7 @@ export default function SpellPage() {
   if (!spell || !visible || !draft) return <SpellNotFound />;
 
   // A spell with an attached (and published) form routes its Inquire door
-  // through THAT form — submissions land in the founder's response inbox.
+  // through THAT form - submissions land in the founder's response inbox.
   const attachedForm = spell.formId ? getFormById(spell.formId) : undefined;
   const bookingForm =
     attachedForm !== undefined && attachedForm.status === "published" ? attachedForm : null;
@@ -101,7 +101,7 @@ export default function SpellPage() {
   const openBooking = (): void => setFlowOpen(true);
 
   return (
-    /* SpellHero carries the back orb inside its badge row — no second orb (M11.5). */
+    /* SpellHero carries the back orb inside its badge row - no second orb (M11.5). */
     <Page title={spell.name} back={false}>
       <SpellHero draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <BookingStrip draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
@@ -117,7 +117,7 @@ export default function SpellPage() {
       <SpellFaqs draft={draft} />
       <SpellFinalCta onBook={openBooking} />
 
-      {/* The two doors — Inquire or the full Book Now journey. */}
+      {/* The two doors - Inquire or the full Book Now journey. */}
       <BookingFlow
         open={flowOpen}
         spell={spell}
@@ -145,7 +145,7 @@ export default function SpellPage() {
 
 /* -------------------------------- Not found -------------------------------- */
 
-/** Shown when the slug is unknown — or the spell is a draft / archived. */
+/** Shown when the slug is unknown - or the spell is a draft / archived. */
 function SpellNotFound() {
   return (
     <Page title="Spell Not Found">
@@ -166,7 +166,7 @@ function SpellNotFound() {
             This spell has <span className="italic text-gold-gradient">faded.</span>
           </h1>
           <p className="mt-5 font-serif text-2xl italic text-cream/60">
-            It may be resting as a draft — or it was never cast at all.
+            It may be resting as a draft, or it was never cast at all.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/discover" className="btn-gold">

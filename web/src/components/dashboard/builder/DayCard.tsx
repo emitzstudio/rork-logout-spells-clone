@@ -75,7 +75,7 @@ interface DayCardProps {
   index: number;
   total: number;
   open: boolean;
-  /** True while any day is being dragged — cards compact for a clean sort. */
+  /** True while any day is being dragged - cards compact for a clean sort. */
   dragging: boolean;
   onToggle: () => void;
   onDragStart: () => void;
@@ -84,7 +84,7 @@ interface DayCardProps {
 }
 
 /**
- * One day of the journey — a premium collapsible card with drag handle,
+ * One day of the journey - a premium collapsible card with drag handle,
  * move / duplicate / delete controls, rich story, its own image and highlights.
  */
 export default function DayCard({
@@ -273,13 +273,13 @@ export default function DayCard({
                 value={day.body}
                 onChange={(body) => api.updateDay(day.id, { body })}
                 rows={5}
-                placeholder={`What happens on ${label}?\n\nMornings, meals, rituals — walk them through it.`}
+                placeholder={`What happens on ${label}?\n\nMornings, meals, rituals - walk them through it.`}
                 helper="Renders in the live preview exactly as guests will read it."
               />
 
               <ImageDrop
                 label={`Image for ${label}`}
-                hint="One frame that captures the day — drag & drop or browse"
+                hint="One frame that captures the day - drag & drop or browse"
                 aspectClass="aspect-[21/9]"
                 image={day.image}
                 onPick={(file) => api.pickDayImage(day.id, file)}

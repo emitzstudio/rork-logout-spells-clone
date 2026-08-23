@@ -13,7 +13,7 @@ const COPY: Record<
 > = {
   included: {
     intro:
-      "Everything a seat covers. Each item gets a gold check on the public page — pick an icon that matches.",
+      "Everything a seat covers. Each item gets a gold check on the public page - pick an icon that matches.",
     label: "Included items",
     placeholder: "e.g. Accommodation & all meals",
     addLabel: "Add Included Item",
@@ -21,7 +21,7 @@ const COPY: Record<
   },
   notIncluded: {
     intro:
-      "Set expectations kindly — what guests arrange themselves. These render muted with a small ✕ on the public page.",
+      "Set expectations kindly - what guests arrange themselves. These render muted with a small ✕ on the public page.",
     label: "Not included items",
     placeholder: "e.g. Flights to and from the circle",
     addLabel: "Add Excluded Item",
@@ -29,7 +29,7 @@ const COPY: Record<
   },
 };
 
-/** Sections 09 & 10 — the included / not included lists, same premium editor. */
+/** Sections 09 & 10 - the included / not included lists, same premium editor. */
 export default function InclusionsSection({ kind, items, api }: InclusionsSectionProps) {
   const copy = COPY[kind];
   return (

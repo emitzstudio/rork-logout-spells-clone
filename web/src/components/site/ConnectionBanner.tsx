@@ -54,7 +54,7 @@ export default function ConnectionBanner() {
         {state === "offline" ? (
           <>
             <WifiOff size={13} aria-hidden />
-            You're offline — some things may not load
+            You're offline. Some things may not load
           </>
         ) : (
           <>

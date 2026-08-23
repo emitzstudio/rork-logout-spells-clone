@@ -37,7 +37,7 @@ const HOW_IT_WORKS: { icon: typeof FileJson; title: string; copy: string }[] = [
   {
     icon: FileJson,
     title: "Upload your file",
-    copy: "One .json written by you — or by ChatGPT, Gemini, any LLM.",
+    copy: "One .json written by you - or by ChatGPT, Gemini, any LLM.",
   },
   {
     icon: Wand2,
@@ -47,7 +47,7 @@ const HOW_IT_WORKS: { icon: typeof FileJson; title: string; copy: string }[] = [
   {
     icon: ImagePlus,
     title: "Add images & publish",
-    copy: "Images are never imported — drop yours into the ready-made slots.",
+    copy: "Images are never imported - drop yours into the ready-made slots.",
   },
 ];
 
@@ -58,7 +58,7 @@ const ORBITERS: { symbol: string; className: string; delay: number }[] = [
 ];
 
 /**
- * Import Spell — upload one Logout Spell file, review what was mapped, then
+ * Import Spell - upload one Logout Spell file, review what was mapped, then
  * land in the Spell Builder with every text field already filled.
  * Everything happens in the browser: no upload, no API, no backend.
  */
@@ -91,7 +91,7 @@ export default function SpellImport() {
     setFileName(file.name);
     const isJson = file.name.toLowerCase().endsWith(".json") || file.type === "application/json";
     if (!isJson) {
-      setError("Only .json files are supported — export your Spell as JSON and try again.");
+      setError("Only .json files are supported - export your Spell as JSON and try again.");
       setStage("error");
       return;
     }
@@ -216,7 +216,7 @@ export default function SpellImport() {
             transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
             className="mx-auto mt-3 max-w-md font-sans text-[13px] leading-relaxed text-cream/45"
           >
-            Import a Logout Spell file to automatically populate the entire Spell Builder — then
+            Import a Logout Spell file to automatically populate the entire Spell Builder - then
             review, add images and publish.
           </motion.p>
         </div>
@@ -329,7 +329,7 @@ export default function SpellImport() {
                     {dragActive ? "Drop it right here" : "Drag & drop your Spell file"}
                   </h2>
                   <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] leading-relaxed text-cream/45">
-                    One file fills all fourteen sections of the builder. Read locally — nothing
+                    One file fills all fourteen sections of the builder. Read locally - nothing
                     leaves this device.
                   </p>
 
@@ -359,7 +359,7 @@ export default function SpellImport() {
                     >
                       <Download className="h-3.5 w-3.5" /> Download the sample file
                     </button>
-                    <span>— hand it to ChatGPT or Gemini and ask for your trip in the same shape.</span>
+                    <span>then hand it to ChatGPT or Gemini and ask for your trip in the same shape.</span>
                   </div>
                 </div>
 
@@ -540,7 +540,7 @@ export default function SpellImport() {
                         ))}
                       </div>
                       <p className="mt-2.5 font-sans text-[11px] text-cream/35">
-                        Everything else was imported — these fields were simply left blank for you to
+                        Everything else was imported - these fields were simply left blank for you to
                         fill in the builder.
                       </p>
                     </div>
@@ -562,7 +562,7 @@ export default function SpellImport() {
                       ))}
                     </div>
                     <p className="mt-2.5 font-sans text-[11px] text-cream/35">
-                      Images are never imported — every slot is waiting as an upload placeholder in
+                      Images are never imported - every slot is waiting as an upload placeholder in
                       the builder.
                       {result.ignoredImageLinks && " Image links found in the file were ignored."}
                     </p>

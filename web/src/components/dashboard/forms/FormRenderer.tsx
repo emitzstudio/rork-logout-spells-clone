@@ -57,7 +57,7 @@ interface ControlProps {
   question: FormQuestion;
   value: AnswerValue | undefined;
   onChange: (value: AnswerValue) => void;
-  /** Enter pressed inside a text control — advance in conversational mode. */
+  /** Enter pressed inside a text control - advance in conversational mode. */
   onEnter?: () => void;
   variant: "conversational" | "traditional";
   autoFocus?: boolean;
@@ -289,7 +289,7 @@ function RatingControl({ question, value, onChange }: ControlProps) {
   );
 }
 
-/** One control per question type — extend here when new types arrive. */
+/** One control per question type - extend here when new types arrive. */
 export function QuestionControl(props: ControlProps) {
   if (props.question.type === "single_choice" || props.question.type === "multiple_choice") {
     return <ChoiceControl {...props} />;
@@ -341,7 +341,7 @@ function SuccessScreen({ form, preview }: { form: LogoutForm; preview: boolean }
         )}
         {preview && (
           <p className="mt-6 font-sans text-[10.5px] uppercase tracking-[0.22em] text-cream/30">
-            Preview only — nothing was recorded
+            Preview only - nothing was recorded
           </p>
         )}
       </div>
@@ -356,9 +356,9 @@ interface FlowProps {
   answers: AnswerMap;
   setValue: (id: string, value: AnswerValue) => void;
   onFinish: () => void;
-  /** True while the response is being written — the submit control waits honestly. */
+  /** True while the response is being written - the submit control waits honestly. */
   submitting: boolean;
-  /** Failure from the write — shown at the submit control; retrying is allowed. */
+  /** Failure from the write - shown at the submit control; retrying is allowed. */
   submitError: string | null;
 }
 
@@ -684,7 +684,7 @@ function TraditionalFlow({ form, answers, setValue, onFinish, submitting, submit
 interface FormRendererProps {
   form: LogoutForm;
   /**
-   * Persists the response. Omit for preview mode — the flow still works,
+   * Persists the response. Omit for preview mode - the flow still works,
    * but the success screen notes that nothing was recorded. May return a
    * promise: success shows only after it resolves; a rejection surfaces at
    * the submit control with a retry.
@@ -694,7 +694,7 @@ interface FormRendererProps {
 }
 
 /**
- * The form exactly as visitors experience it — conversational (one question
+ * The form exactly as visitors experience it - conversational (one question
  * at a time) or traditional (full page). One renderer powers the builder
  * preview, the public /forms/{slug} page and spell booking dialogs, so what
  * the founder previews is exactly what gets published.
@@ -706,7 +706,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   /**
-   * Only the questions this form has switched ON exist here — switched-off
+   * Only the questions this form has switched ON exist here - switched-off
    * questions never render, never validate and never enter the submission.
    */
   const liveForm = useMemo<LogoutForm>(
@@ -719,7 +719,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
 
   /**
    * M9: the success screen shows only after the write really lands. A failed
-   * write keeps the visitor on the form with the error and a retry — the UI
+   * write keeps the visitor on the form with the error and a retry - the UI
    * can never claim "Sent" for a response that was lost.
    */
   const completeSubmit = async (): Promise<void> => {
@@ -735,7 +735,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
       setDone(true);
     } catch (error) {
       setSubmitError(
-        error instanceof Error ? error.message : "Your response couldn't be sent — please try again.",
+        error instanceof Error ? error.message : "Your response couldn't be sent - please try again.",
       );
     } finally {
       setSending(false);

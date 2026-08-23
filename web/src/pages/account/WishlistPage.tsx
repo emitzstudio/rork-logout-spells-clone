@@ -10,11 +10,11 @@ import type { ManagedSpell } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
-/** Saved spells — one heartbeat away from booked. */
+/** Saved spells - one heartbeat away from booked. */
 export default function WishlistPage() {
   const { data, toggleWishlist } = useAccount();
   const { spells } = useSpellStore();
-  /** The spell currently being removed — guards double-clicks (M10). */
+  /** The spell currently being removed - guards double-clicks (M10). */
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   const items = useMemo<ManagedSpell[]>(() => {
@@ -30,7 +30,7 @@ export default function WishlistPage() {
     const url = `${window.location.origin}/live/${spell.slug}`;
     void navigator.clipboard
       .writeText(url)
-      .then(() => toast("Spell link copied — send it to someone real ✦"))
+      .then(() => toast("Spell link copied. Send it to someone real ✦"))
       .catch(() => toast(url));
   };
 
@@ -40,7 +40,7 @@ export default function WishlistPage() {
     setRemovingId(spell.id);
     toggleWishlist(spell.id)
       .then(() => toast("Removed from your wishlist"))
-      .catch(() => toast.error("Couldn't update your wishlist — try again"))
+      .catch(() => toast.error("Couldn't update your wishlist. Try again"))
       .finally(() => setRemovingId(null));
   };
 
@@ -53,7 +53,7 @@ export default function WishlistPage() {
           Kept close, <span className="italic text-gold-gradient">for later.</span>
         </>
       }
-      sub="Spells you've saved. They wait patiently — though their seats don't always."
+      sub="Spells you've saved. They wait patiently, though their seats don't always."
       actions={
         <Link to="/live" className="btn-ghost-gold !px-5 !py-2.5 !text-[12px]">
           Find more spells
@@ -63,7 +63,7 @@ export default function WishlistPage() {
       {items.length === 0 ? (
         <EmptyState
           symbol="♡"
-          title="Nothing kept — yet."
+          title="Nothing kept yet."
           line="Tap the heart on any spell and it will wait for you here."
           to="/live"
           toLabel="Browse live spells"
@@ -91,7 +91,7 @@ export default function WishlistPage() {
                   <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a0806]/85 via-transparent to-[#0a0806]/20" />
                   {soldOut ? (
                     <span className="absolute left-3 top-3 rounded-full border border-cream/20 bg-charcoal-deep/80 px-2.5 py-1 font-sans text-[9.5px] uppercase tracking-[0.18em] text-cream/70 backdrop-blur-sm">
-                      Sold out — waitlist open
+                      Sold out · waitlist open
                     </span>
                   ) : (
                     seatsLeft <= 4 && (

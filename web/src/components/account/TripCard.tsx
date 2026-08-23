@@ -14,7 +14,7 @@ const NEXT_STEP_LINE: Partial<Record<TimelineStepId, string>> = {
   payment: "Balance payment due",
   host: "Host confirming your circle",
   documents: "Travel documents arriving soon",
-  begins: "All set — see you at the meeting point",
+  begins: "All set. See you at the meeting point",
 };
 
 interface TripCardProps {

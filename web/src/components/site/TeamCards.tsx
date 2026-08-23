@@ -26,7 +26,7 @@ const DEPARTMENT_ICONS: Record<TeamDepartment, LucideIcon> = {
   Operations: Compass,
 };
 
-/** Tiny department pill — worn on the front of every card. */
+/** Tiny department pill - worn on the front of every card. */
 function DepartmentChip({ department }: { department: TeamDepartment }) {
   const Icon = DEPARTMENT_ICONS[department];
   return (
@@ -37,7 +37,7 @@ function DepartmentChip({ department }: { department: TeamDepartment }) {
   );
 }
 
-/** The socials row — identical treatment on spotlight and card backs. */
+/** The socials row - identical treatment on spotlight and card backs. */
 function SocialLinks({ member, tabbable }: { member: TeamMember; tabbable: boolean }) {
   const socials = [
     { label: "Instagram", href: member.socials.instagram, Icon: Instagram },
@@ -63,7 +63,7 @@ function SocialLinks({ member, tabbable }: { member: TeamMember; tabbable: boole
   );
 }
 
-/** Portrait art — studio cutout on black with a candlelit gold aura. */
+/** Portrait art - studio cutout on black with a candlelit gold aura. */
 function Portrait({
   member,
   className,
@@ -112,7 +112,7 @@ function Portrait({
 /* ------------------------- Founder spotlight card ------------------------- */
 
 /**
- * Vidushi's wide editorial card — no flip, everything on display: the
+ * Vidushi's wide editorial card - no flip, everything on display: the
  * portrait melting into black, the story, the quote and the seal.
  */
 function FounderSpotlight({ member }: { member: TeamMember }) {
@@ -188,13 +188,13 @@ function FounderSpotlight({ member }: { member: TeamMember }) {
 /* ------------------------------- Flip cards ------------------------------- */
 
 /**
- * One rotatable team card — Spellcaster-card energy: photo front, story back.
+ * One rotatable team card - Spellcaster-card energy: photo front, story back.
  * The front is a button (tap/Enter flips); the back offers a flip-back
  * control plus real links, so nothing interactive ever nests illegally.
  */
 function TeamCard({ member }: { member: TeamMember }) {
   const [flipped, setFlipped] = useState<boolean>(false);
-  /* Each flip — either direction — releases a whisper of stardust. */
+  /* Each flip - either direction - releases a whisper of stardust. */
   const [dust, setDust] = useState<number>(0);
 
   return (
@@ -314,7 +314,7 @@ function TeamCard({ member }: { member: TeamMember }) {
 /* --------------------------------- Layout --------------------------------- */
 
 /**
- * The coven — founder spotlight up top, then the circle as rotatable cards.
+ * The coven - founder spotlight up top, then the circle as rotatable cards.
  * Desktop: grid. Mobile: swipe carousel (snap scrolling). Members come from
  * `teamService`, so the future CMS can add unlimited people without touching
  * this component.

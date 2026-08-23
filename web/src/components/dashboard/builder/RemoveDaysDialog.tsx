@@ -9,7 +9,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 interface RemoveDaysDialogProps {
   /** Positional labels at the moment of asking, e.g. ["Day 4", "Day 5"]. */
   labels: string[];
-  /** Titles of the affected days that have one — shown as chips. */
+  /** Titles of the affected days that have one - shown as chips. */
   titles: string[];
   /** True when any affected day carries content the founder wrote. */
   losesContent: boolean;
@@ -77,7 +77,7 @@ export default function RemoveDaysDialog({
           {losesContent
             ? "Everything written in " +
               (many ? "them" : "it") +
-              " — stories, images and highlights — will be lost."
+              " - stories, images and highlights - will be lost."
             : (many ? "They’re" : "It’s") + " still empty, so nothing will be lost."}
         </p>
 

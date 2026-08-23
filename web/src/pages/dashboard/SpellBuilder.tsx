@@ -91,7 +91,7 @@ interface RemovePlan {
   losesContent: boolean;
 }
 
-/** The publish ritual in flight — done flips once the CMS holds the record. */
+/** The publish ritual in flight - done flips once the CMS holds the record. */
 interface PublishState {
   slug: string;
   done: boolean;
@@ -99,7 +99,7 @@ interface PublishState {
 }
 
 /**
- * The Spell Builder — every section of the public Spell page, editable from
+ * The Spell Builder - every section of the public Spell page, editable from
  * one place: split editor (left) + sticky live preview (right). Local state
  * only; publishing and persistence arrive with the backend phase.
  */
@@ -111,7 +111,7 @@ export default function SpellBuilder() {
 
   /**
    * The spell being edited comes from the local CMS (route state as fallback)
-   * — and an imported file arrives as a ready-made draft.
+   * - and an imported file arrives as a ready-made draft.
    */
   const routeState = location.state as {
     spell?: ManagedSpell;
@@ -153,20 +153,20 @@ export default function SpellBuilder() {
     imported
       ? {
           id: Date.now(),
-          message: `Imported from ${routeState?.importedFile ?? "file"} — review each section and upload the images`,
+          message: `Imported from ${routeState?.importedFile ?? "file"} - review each section and upload the images`,
         }
       : null,
   );
-  /** Expanded day cards — lives here so it survives collapsing section 05. */
+  /** Expanded day cards - lives here so it survives collapsing section 05. */
   const [openDays, setOpenDays] = useState<Record<string, boolean>>(() =>
     draft.itinerary.length > 0 ? { [draft.itinerary[0].id]: true } : {},
   );
   const [removePlan, setRemovePlan] = useState<RemovePlan | null>(null);
-  /** Publish was attempted — incomplete sections stay flagged until fixed. */
+  /** Publish was attempted - incomplete sections stay flagged until fixed. */
   const [publishAttempted, setPublishAttempted] = useState<boolean>(false);
   const [publishState, setPublishState] = useState<PublishState | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
-  /** The CMS id this builder session writes to — set on first save/publish. */
+  /** The CMS id this builder session writes to - set on first save/publish. */
   const savedIdRef = useRef<string | null>(source?.id ?? null);
 
   /* --------------------------- Local image URLs --------------------------- */
@@ -376,18 +376,18 @@ export default function SpellBuilder() {
     const day = createItineraryDay(true);
     setItinerary((days) => [...days, day]);
     expandDays([day.id]);
-    showToast(`Custom day added — Day ${draft.itinerary.length + 1}`);
+    showToast(`Custom day added - Day ${draft.itinerary.length + 1}`);
   };
 
   const addFirstDay = (): void => {
     const day = createItineraryDay();
     setItinerary((days) => [...days, day]);
     expandDays([day.id]);
-    showToast("Day 1 created — the journey begins");
+    showToast("Day 1 created - the journey begins");
   };
 
   /**
-   * Day images skip eager URL revocation — duplicated days may share the same
+   * Day images skip eager URL revocation - duplicated days may share the same
    * object URL, so everything is released together on unmount.
    */
   const pickDayImage = (dayId: string, file: File): void => {
@@ -521,7 +521,7 @@ export default function SpellBuilder() {
 
   /* -------------------------------- List APIs ------------------------------- */
 
-  /** Builds the shared list surface — add, update, remove, duplicate, reorder. */
+  /** Builds the shared list surface - add, update, remove, duplicate, reorder. */
   const makeListApi = <T extends { id: string }>(
     read: (d: SpellDraft) => T[],
     apply: (d: SpellDraft, items: T[]) => SpellDraft,
@@ -620,7 +620,7 @@ export default function SpellBuilder() {
 
   const states = sectionStates(draft);
   const readyCount = SECTION_ORDER.filter((sectionId) => states[sectionId].complete).length;
-  /** Sections still blocking publish — "Not Included" is optional by design. */
+  /** Sections still blocking publish - "Not Included" is optional by design. */
   const missingSections = incompleteSections(draft);
   const flaggedSections = new Set<BuilderSectionId>(publishAttempted ? missingSections : []);
 
@@ -628,7 +628,7 @@ export default function SpellBuilder() {
   useEffect(() => {
     if (publishAttempted && missingSections.length === 0) {
       setPublishAttempted(false);
-      showToast("Every required section is ready — publish when you are ✦");
+      showToast("Every required section is ready - publish when you are ✦");
     }
   }, [publishAttempted, missingSections.length]);
 
@@ -642,7 +642,7 @@ export default function SpellBuilder() {
   };
 
   /**
-   * Save — writes the spell into the local CMS with the chosen Visibility.
+   * Save - writes the spell into the local CMS with the chosen Visibility.
    * Setting a live spell back to Draft here is what unpublishes it.
    */
   const handleSaveDraft = (): void => {
@@ -666,21 +666,21 @@ export default function SpellBuilder() {
         setDirty(false);
         showToast(
           keepLive
-            ? "Saved — your live page is updated"
+            ? "Saved - your live page is updated"
             : wasPublic
-              ? "Moved to drafts — removed from the live site"
+              ? "Moved to drafts - removed from the live site"
               : "Draft saved to your Spells",
         );
       } catch (error) {
         console.error("[builder] Save failed:", error);
-        showToast("Could not save — please try again");
+        showToast("Could not save - please try again");
       } finally {
         setSaving(false);
       }
     })();
   };
 
-  /** Publish — validate everything, run the ritual, land in the local CMS. */
+  /** Publish - validate everything, run the ritual, land in the local CMS. */
   const handlePublish = (): void => {
     if (publishState !== null) return;
     if (missingSections.length > 0) {
@@ -703,7 +703,7 @@ export default function SpellBuilder() {
       } catch (error) {
         console.error("[builder] Publish failed:", error);
         setPublishState(null);
-        showToast("Something interrupted the ritual — please try publishing again");
+        showToast("Something interrupted the ritual - please try publishing again");
       }
     })();
   };
@@ -735,7 +735,7 @@ export default function SpellBuilder() {
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.35, ease: EASE }}
     >
-      {/* Builder navigation — sticky under the console topbar */}
+      {/* Builder navigation - sticky under the console topbar */}
       <div className="sticky top-16 z-40 -mx-4 border-b border-cream/[0.05] bg-charcoal/95 px-4 py-3 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <button
@@ -828,7 +828,7 @@ export default function SpellBuilder() {
         </div>
       </div>
 
-      {/* Publish validation — which sections still need attention */}
+      {/* Publish validation - which sections still need attention */}
       <AnimatePresence>
         {publishAttempted && missingSections.length > 0 && (
           <motion.div
@@ -845,11 +845,11 @@ export default function SpellBuilder() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-serif text-[18px] font-medium leading-tight text-cream">
-                    Almost ready — {missingSections.length} section
+                    Almost ready - {missingSections.length} section
                     {missingSections.length > 1 ? "s" : ""} need{missingSections.length === 1 ? "s" : ""} attention
                   </p>
                   <p className="mt-1 font-sans text-[12px] text-cream/45">
-                    Your spell can go live the moment these are complete — tap one to jump straight to it.
+                    Your spell can go live the moment these are complete - tap one to jump straight to it.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {missingSections.map((sectionId) => (
@@ -1096,7 +1096,7 @@ export default function SpellBuilder() {
               </div>
             </motion.div>
             <p className="mt-2.5 text-center font-sans text-[10.5px] text-cream/30">
-              Updates as you type — exactly how guests will see it.
+              Updates as you type - exactly how guests will see it.
             </p>
           </div>
         </aside>

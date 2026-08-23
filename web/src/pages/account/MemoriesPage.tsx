@@ -5,7 +5,7 @@ import { AccountPage, EmptyState, GoldBar } from "@/components/account/bits";
 import { useAccount } from "@/data/account/AccountProvider";
 import { fmtRange } from "@/data/account/derive";
 
-/** My Memories — one curated album per completed spell. */
+/** My Memories - one curated album per completed spell. */
 export default function MemoriesPage() {
   const { data } = useAccount();
   if (!data) return null;
@@ -21,7 +21,7 @@ export default function MemoriesPage() {
           Proof you were <span className="italic text-gold-gradient">really there.</span>
         </>
       }
-      sub="Each completed spell keeps a small, deliberate album — a handful of keepsakes, chosen slowly, not a camera roll."
+      sub="Each completed spell keeps a small, deliberate album: a handful of keepsakes, chosen slowly, not a camera roll."
     >
       {memories.length === 0 ? (
         <EmptyState

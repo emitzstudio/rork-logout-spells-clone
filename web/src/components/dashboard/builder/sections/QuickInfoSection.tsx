@@ -9,12 +9,12 @@ interface QuickInfoSectionProps {
   onCard: (id: QuickInfoId, partial: Partial<Omit<QuickInfoCard, "id">>) => void;
 }
 
-/** Section 03 — the editable “at a glance” cards shown below the hero. */
+/** Section 03 - the editable “at a glance” cards shown below the hero. */
 export default function QuickInfoSection({ draft, onCard }: QuickInfoSectionProps) {
   return (
     <div>
       <p className="font-sans text-[12px] leading-relaxed text-cream/45">
-        These become the small cards under the hero. Edit them like cards — icon, label, value —
+        These become the small cards under the hero. Edit them like cards - icon, label, value -
         no code, ever.
       </p>
 
@@ -65,7 +65,7 @@ export default function QuickInfoSection({ draft, onCard }: QuickInfoSectionProp
         {/* Balance the grid with a quiet note card */}
         <div className="hidden items-center justify-center rounded-xl border border-dashed border-cream/[0.08] p-3.5 text-center sm:flex">
           <p className="max-w-[200px] font-sans text-[10.5px] leading-relaxed text-cream/30">
-            Five cards keep the glance quick — more card types arrive with later phases.
+            Five cards keep the glance quick - more card types arrive with later phases.
           </p>
         </div>
       </div>

@@ -13,7 +13,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 export interface FormCardProps {
   form: LogoutForm;
   index: number;
-  /** Freshly created/duplicated — briefly glows gold. */
+  /** Freshly created/duplicated - briefly glows gold. */
   fresh: boolean;
   attachedCount: number;
   responseCount: number;
@@ -57,7 +57,7 @@ function QuickAction({
   );
 }
 
-/** Grid card for one form — style, status, reach and hover quick actions. */
+/** Grid card for one form - style, status, reach and hover quick actions. */
 export default function FormCard({
   form,
   index,

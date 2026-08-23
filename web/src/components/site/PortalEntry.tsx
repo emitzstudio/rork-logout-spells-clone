@@ -38,7 +38,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /** Accelerating climb curve for the little plane's take-off. */
 const CLIMB: [number, number, number, number] = [0.62, -0.01, 0.86, 0.5];
 
-/** The hero plane's crossing — gentle lift-in, confident cruise, eased exit. */
+/** The hero plane's crossing - gentle lift-in, confident cruise, eased exit. */
 const FLIGHT_EASE: [number, number, number, number] = [0.55, 0.08, 0.42, 0.96];
 const flightEase = cubicBezier(...FLIGHT_EASE);
 const FLIGHT_MS = 3000;
@@ -49,7 +49,7 @@ const HOLD_AT_MS = FLIGHT_DELAY_MS + FLIGHT_MS + 430;
 /** Hold the completed title card for a beat, then melt into the site. */
 const FINISH_AT_MS = HOLD_AT_MS + 1150;
 
-/** Find t such that flightEase(t) = p — used to sync letters to the plane's nose. */
+/** Find t such that flightEase(t) = p - used to sync letters to the plane's nose. */
 function invertFlightEase(p: number): number {
   if (p <= 0) return 0;
   if (p >= 1) return 1;
@@ -81,7 +81,7 @@ function drawSparkle(ctx: CanvasRenderingContext2D, s: number): void {
   ctx.fill();
 }
 
-/** The logo's three sparkles — geometry mapped from the brand mark. */
+/** The logo's three sparkles - geometry mapped from the brand mark. */
 const LOGO_STARS = [
   { x: 500, y: 128, s: 52, d: 0 },
   { x: 440, y: 206, s: 31, d: 0.07 },
@@ -93,13 +93,13 @@ interface BrandLetter {
   italic: boolean;
 }
 
-/** LOGOUT in serif caps over Spells in italic gold — the site lockup, stacked. */
+/** LOGOUT in serif caps over Spells in italic gold - the site lockup, stacked. */
 const LINE1: BrandLetter[] = "LOGOUT".split("").map((ch) => ({ ch, italic: false }));
 const LINE2: BrandLetter[] = "Spells".split("").map((ch) => ({ ch, italic: true }));
 const LETTERS: BrandLetter[] = [...LINE1, ...LINE2];
 
 /**
- * Large cinematic aircraft seen straight from above, flying right —
+ * Large cinematic aircraft seen straight from above, flying right -
  * the flight-map silhouette: slim fuselage, swept wings, tailplane.
  */
 function HeroPlane({ width }: { width: number }) {
@@ -123,7 +123,7 @@ function HeroPlane({ width }: { width: number }) {
         </linearGradient>
       </defs>
 
-      {/* main wings — swept back, spanning the frame */}
+      {/* main wings - swept back, spanning the frame */}
       <path
         d="M 162 93.5 L 88 13 Q 84 8.6 78.6 11.4 L 76.4 12.8 Q 72.6 15.4 75.4 19.8 L 118 97 Z"
         fill="url(#peHeroGold)"
@@ -147,7 +147,7 @@ function HeroPlane({ width }: { width: number }) {
       <rect x="122" y="48.4" width="30" height="9.2" rx="4.6" fill="url(#peHeroGold)" />
       <rect x="122" y="142.4" width="30" height="9.2" rx="4.6" fill="url(#peHeroGold)" />
 
-      {/* fuselage — nose to the right */}
+      {/* fuselage - nose to the right */}
       <path
         d="M 234 100 C 233 96, 226 92.8, 213 91.8 L 132 90 C 90 89.2, 46 92.4, 16 96.6 C 12.6 97.2, 12.6 102.8, 16 103.4 C 46 107.6, 90 110.8, 132 110 L 213 108.2 C 226 107.2, 233 104, 234 100 Z"
         fill="url(#peHeroGold)"
@@ -161,9 +161,9 @@ function HeroPlane({ width }: { width: number }) {
 }
 
 interface PortalEntryProps {
-  /** Fired the moment the user ignites the portal — mount the site behind the overlay. */
+  /** Fired the moment the user ignites the portal - mount the site behind the overlay. */
   onIgnite: () => void;
-  /** Fired once the overlay has fully faded — safe to unmount. */
+  /** Fired once the overlay has fully faded - safe to unmount. */
   onDone: () => void;
 }
 
@@ -171,8 +171,8 @@ interface PortalEntryProps {
  * Full-screen ritual gate. The brand mark waits on black; a tap sends the
  * little plane climbing out while the gold ring dissolves into particles.
  * A large top-down aircraft then crosses the exact centre of the screen,
- * its tall golden wake unveiling the stacked LOGOUT / Spells lockup —
- * both lines together, in one pass — before melting into the site.
+ * its tall golden wake unveiling the stacked LOGOUT / Spells lockup -
+ * both lines together, in one pass - before melting into the site.
  */
 export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -193,7 +193,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
   const [flightPx, setFlightPx] = useState<{ x0: number; x1: number } | null>(null);
   /** Rendered width of the hero aircraft, sized against the viewport. */
   const [planeW, setPlaneW] = useState<number>(180);
-  /** Height of the golden wake band — tall enough to bathe both title lines. */
+  /** Height of the golden wake band - tall enough to bathe both title lines. */
   const [trailH, setTrailH] = useState<number>(120);
 
   const setPh = useCallback((p: Phase) => {
@@ -543,7 +543,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
-      {/* ——— The brand mark + prompts — exactly the idle scene, dissolving on tap ——— */}
+      {/* --- The brand mark + prompts - exactly the idle scene, dissolving on tap --- */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <motion.div
           className="relative"
@@ -551,7 +551,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 1.0, ease: EASE }}
         >
-          {/* Soft halo behind the ring — one last flare as it dissolves. */}
+          {/* Soft halo behind the ring - one last flare as it dissolves. */}
           <motion.div
             aria-hidden
             className="pointer-events-none absolute -inset-12 rounded-full"
@@ -577,7 +577,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
               idle ? { duration: 3.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }
             }
           >
-            {/* The real brand mark — visible while the gate waits. */}
+            {/* The real brand mark - visible while the gate waits. */}
             <motion.img
               src={MARK_SRC}
               alt=""
@@ -588,7 +588,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
               transition={{ duration: reduced ? 0.55 : 0.12 }}
             />
 
-            {/* Animatable twin of the mark — takes over the instant of take-off. */}
+            {/* Animatable twin of the mark - takes over the instant of take-off. */}
             <motion.svg
               viewBox="0 0 1000 1000"
               className="absolute inset-0 h-full w-full"
@@ -617,7 +617,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
                 </linearGradient>
               </defs>
 
-              {/* Power ring — its purpose complete, it softens and dissolves away. */}
+              {/* Power ring - its purpose complete, it softens and dissolves away. */}
               <motion.path
                 d="M 341 416 A 240 240 0 1 0 659 416"
                 fill="none"
@@ -651,7 +651,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
                 />
               )}
 
-              {/* The little plane — a breath of anticipation, then it climbs out. */}
+              {/* The little plane - a breath of anticipation, then it climbs out. */}
               <motion.g
                 animate={swap ? { y: [0, 26, -2800] } : { y: 0 }}
                 transition={
@@ -689,7 +689,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
                 />
               </motion.g>
 
-              {/* The mark's three sparkles — a last shimmer, then gone with the ring. */}
+              {/* The mark's three sparkles - a last shimmer, then gone with the ring. */}
               {LOGO_STARS.map((st, i) => (
                 <g key={i} transform={`translate(${st.x} ${st.y})`}>
                   <motion.path
@@ -711,7 +711,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
           </motion.div>
         </motion.div>
 
-        {/* Prompts show up with the logo — gone the instant the ritual starts. */}
+        {/* Prompts show up with the logo - gone the instant the ritual starts. */}
         <motion.p
           className="mt-9 font-sans text-[16px] font-medium uppercase tracking-[0.5em] text-cream/90 md:text-[17px]"
           style={{ marginRight: "-0.5em" }}
@@ -736,7 +736,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
         </motion.p>
       </div>
 
-      {/* ——— The title card — LOGOUT Spells at the exact centre of the frame ——— */}
+      {/* --- The title card - LOGOUT Spells at the exact centre of the frame --- */}
       <motion.div
         className="pointer-events-none absolute inset-0 flex items-center justify-center"
         animate={
@@ -756,7 +756,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
             className="pointer-events-none absolute left-1/2 h-0 w-[100vw] -translate-x-1/2"
             style={{ top: "50%" }}
           >
-            {/* Golden wake — bright at the aircraft's tail, melting away behind it. */}
+            {/* Golden wake - bright at the aircraft's tail, melting away behind it. */}
             {flightPx && (
               <motion.div
                 className="absolute"
@@ -778,7 +778,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
                   opacity: { duration: 0.9, ease: "easeOut" },
                 }}
               >
-                {/* Tall soft bloom — the reveal band bathing both lines at once. */}
+                {/* Tall soft bloom - the reveal band bathing both lines at once. */}
                 <div
                   className="absolute inset-x-0 rounded-full"
                   style={{
@@ -789,7 +789,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
                       "linear-gradient(90deg, rgba(207,168,90,0) 0%, rgba(207,168,90,0.12) 68%, rgba(207,168,90,0.26) 100%)",
                   }}
                 />
-                {/* Inner band — warmer and brighter towards the aircraft's tail. */}
+                {/* Inner band - warmer and brighter towards the aircraft's tail. */}
                 <div
                   className="absolute inset-x-0 rounded-full"
                   style={{
@@ -812,7 +812,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
               </motion.div>
             )}
 
-            {/* The aircraft — a steady, perfectly level crossing over the title. */}
+            {/* The aircraft - a steady, perfectly level crossing over the title. */}
             {flightPx && phase === "flight" && (
               <motion.div
                 className="absolute left-0 top-0"
@@ -828,7 +828,7 @@ export default function PortalEntry({ onIgnite, onDone }: PortalEntryProps) {
             )}
           </div>
 
-          {/* The letters — both lines set in place, unveiled together by the wake. */}
+          {/* The letters - both lines set in place, unveiled together by the wake. */}
           {[LINE1, LINE2].map((line, li) => (
             <div
               key={li}

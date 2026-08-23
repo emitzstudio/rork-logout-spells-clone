@@ -12,7 +12,7 @@ import { useSiteSettingsQuery } from "@/data/siteSettingsStore";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
- * M12 — the control room. Six focused cards over one central configuration
+ * M12 - the control room. Six focused cards over one central configuration
  * source (`site_settings` + the founder's team row + per-staff bell prefs).
  * Editing is gated on REAL data: cards only render once the database has
  * answered, so a save can never overwrite unseen values with defaults.
@@ -35,7 +35,7 @@ export default function Settings() {
         </h1>
         <p className="mt-2 max-w-xl font-sans text-[13px] leading-relaxed text-cream/45">
           Site identity, contact channels, social links, your profile and the launch
-          switches — the public site reads every saved value live.
+          switches - the public site reads every saved value live.
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export default function Settings() {
         <div className="mt-7 flex flex-col items-center gap-4 rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-14 text-center">
           <p className="font-serif text-xl text-cream">The control room couldn't be read.</p>
           <p className="max-w-sm font-sans text-[12.5px] leading-relaxed text-cream/45">
-            Your configuration is safe — the connection failed, not the settings. Nothing
+            Your configuration is safe - the connection failed, not the settings. Nothing
             can be edited until it loads, so a save never overwrites unseen values.
           </p>
           <button

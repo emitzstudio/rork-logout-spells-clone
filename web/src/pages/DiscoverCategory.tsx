@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-/** A curated live spell — discovery framing, booking stays on the spell page. */
+/** A curated live spell - discovery framing, booking stays on the spell page. */
 function CuratedSpellCard({ spell }: { spell: ManagedSpell }) {
   const navigate = useNavigate();
 
@@ -77,7 +77,7 @@ function CuratedSpellCard({ spell }: { spell: ManagedSpell }) {
 }
 
 /**
- * A Discover category — /discover/{slug}. Curated live spells, past
+ * A Discover category - /discover/{slug}. Curated live spells, past
  * journeys and inspiration. Pure discovery; bookings live on spell pages.
  */
 export default function DiscoverCategoryPage() {
@@ -116,8 +116,8 @@ export default function DiscoverCategoryPage() {
   }
 
   return (
-    /* The hero carries its own "All moods" back link — no second orb (M11.5). */
-    <Page title={`${category.name} — Discover`} back={false}>
+    /* The hero carries its own "All moods" back link - no second orb (M11.5). */
+    <Page title={`${category.name} · Discover`} back={false}>
       {/* Hero */}
       <section className="relative flex min-h-[74svh] items-end overflow-hidden">
         <div aria-hidden className="absolute inset-0 overflow-hidden">
@@ -225,7 +225,7 @@ export default function DiscoverCategoryPage() {
                   No live circles in this mood right now.
                 </p>
                 <p className="mt-2 font-sans text-sm text-cream/45">
-                  The next one is already being written — check the live collection meanwhile.
+                  The next one is already being written. Check the live collection meanwhile.
                 </p>
                 <Link to="/live" className="btn-ghost-gold mt-7">
                   See All Live Spells
@@ -238,7 +238,7 @@ export default function DiscoverCategoryPage() {
         </div>
       </section>
 
-      {/* Past journeys in this mood — a failed archive read says so instead of vanishing (M10). */}
+      {/* Past journeys in this mood - a failed archive read says so instead of vanishing (M10). */}
       {(past.length > 0 || pastFailed) && (
         <section aria-label="Past journeys" className="px-5 py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-5xl">

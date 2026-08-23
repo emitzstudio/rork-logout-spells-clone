@@ -208,10 +208,10 @@ function OptionRow({
 /* ------------------------------ Question card ------------------------------ */
 
 /**
- * One editable question — drag handle, collapse/expand, full editor.
+ * One editable question - drag handle, collapse/expand, full editor.
  * Core questions ship with every form: they reorder but never delete, and
  * stay required while asked. The CORE switch controls whether THIS form
- * asks the question — off means hidden from the public form (not deleted),
+ * asks the question - off means hidden from the public form (not deleted),
  * and it can be switched back on any time.
  */
 export default function QuestionCard({
@@ -291,7 +291,7 @@ export default function QuestionCard({
             <span className="block font-sans text-[10px] uppercase tracking-[0.14em] text-cream/30">
               {meta.label}
               {question.type === "rating" && ` · ${RATING_STYLE_META[question.ratingStyle].label}`}
-              {!question.enabled && <span className="text-cream/45"> · off — not asked in this form</span>}
+              {!question.enabled && <span className="text-cream/45"> · off - not asked in this form</span>}
             </span>
           </span>
         </button>
@@ -318,8 +318,8 @@ export default function QuestionCard({
             aria-label={`Ask “${question.title.trim() !== "" ? question.title.trim() : "Untitled question"}” in this form`}
             title={
               question.enabled
-                ? "Asked in this form — switch off to hide it (never deleted)"
-                : "Hidden from this form — switch on to ask it again"
+                ? "Asked in this form - switch off to hide it (never deleted)"
+                : "Hidden from this form - switch on to ask it again"
             }
             className="mr-0.5 shrink-0 rounded-full p-1 transition-transform duration-150 active:scale-90"
           >

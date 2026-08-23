@@ -1,5 +1,5 @@
 /**
- * Status chips for the booking operations console — one place for every
+ * Status chips for the booking operations console - one place for every
  * badge so colours stay consistent across list, detail, waitlist and queues.
  */
 import type {

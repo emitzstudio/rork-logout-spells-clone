@@ -4,14 +4,14 @@ import { lazy, memo, Suspense } from "react";
  * The 3D starfield (three.js + react-three-fiber) is by far the heaviest
  * dependency on the site, so it's code-split into its own async chunk.
  * The gradient sky paints instantly; the stars fade in the moment the
- * chunk arrives — usually while the portal gate is still covering the page.
+ * chunk arrives - usually while the portal gate is still covering the page.
  */
 const GoldDust = lazy(() => import("@/components/site/GoldDust"));
 
 /**
  * Site-wide fixed golden starfield rendered once behind every route.
  * Sits at negative z-index so page content (with translucent section
- * tints) floats above a continuous night sky — even during page
+ * tints) floats above a continuous night sky - even during page
  * transitions, since it lives outside the animated routes.
  * Memoised: app-level state changes (portal phases) never re-render it.
  */

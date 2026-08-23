@@ -45,7 +45,7 @@ const daysUntil = (startDate: string): number =>
     Math.ceil((new Date(`${startDate.slice(0, 10)}T00:00:00`).getTime() - Date.now()) / 86_400_000),
   );
 
-/** Live status chip — same recipe the Spells console uses. */
+/** Live status chip - same recipe the Spells console uses. */
 function StatusChip({ status }: { status: ManagedSpell["status"] }) {
   const meta = STATUS_META[status];
   return (
@@ -97,7 +97,7 @@ function PanelEmpty({ label }: { label: string }) {
 
 export default function Overview() {
   const greeting = timeGreeting();
-  /* M12 — greeting reads the central founder profile. */
+  /* M12 - greeting reads the central founder profile. */
   const founder = useFounderProfile();
   const { spells, ready: spellsReady, failed: spellsFailed, retry: retrySpells } = useSpellStore();
   const report = useBookingReport();
@@ -236,7 +236,7 @@ export default function Overview() {
         </motion.div>
       </div>
 
-      {/* Overview stats — every figure comes from the live database */}
+      {/* Overview stats - every figure comes from the live database */}
       {statsError ? (
         <div className="mt-7 rounded-xl border border-cream/[0.07] bg-charcoal-soft/75">
           <PanelError label="The overview couldn't be read." onRetry={retryStats} />
@@ -272,7 +272,7 @@ export default function Overview() {
                 <RowSkeleton />
               </ul>
             ) : recentSpells.length === 0 ? (
-              <PanelEmpty label="No spells yet — draft your first circle ✦" />
+              <PanelEmpty label="No spells yet - draft your first circle ✦" />
             ) : (
               <ul className="divide-y divide-cream/[0.05]">
                 {recentSpells.map((spell) => {
@@ -411,7 +411,7 @@ export default function Overview() {
             ) : activity.isError ? (
               <PanelError label="Activity couldn't be read." onRetry={() => void activity.refetch()} />
             ) : (activity.data ?? []).length === 0 ? (
-              <PanelEmpty label="Quiet — activity appears as bookings move ✦" />
+              <PanelEmpty label="Quiet - activity appears as bookings move ✦" />
             ) : (
               <ol>
                 {(activity.data ?? []).map((item, i, list) => {

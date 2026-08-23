@@ -1,22 +1,22 @@
 /**
- * Booking domain — the two doors behind "Join this Spell".
+ * Booking domain - the two doors behind "Join this Spell".
  *
- * Door 1 — Inquire: a light question for the team. LIVE (M7C): the
+ * Door 1 - Inquire: a light question for the team. LIVE (M7C): the
  * `submit_inquiry` RPC stores it in the inquiries table with a
  * server-generated IQ-MMYY-### ref, where the console inbox works it.
  *
- * Door 2 — Book Now: the full journey (fixed departure → seats → traveller
+ * Door 2 - Book Now: the full journey (fixed departure → seats → traveller
  * details → review). ⛔ The PAYMENT STEP IS DELIBERATELY ABSENT while the
  * payment architecture is decided (provider + taxes/fees rulings open): the
  * journey ends with an honest RESERVE REQUEST filed through the same live
- * pipeline — a real intent the team confirms personally and converts through
+ * pipeline - a real intent the team confirms personally and converts through
  * the console's offline-sale workflow. No money moves online, no taxes or
  * fees are invented, no fake success is celebrated. When the gateway ruling
  * lands, the payment step slots back in HERE with no changes to the
  * surrounding journey.
  *
  * The old mock checkout (fake UPI/card fields, 5% invented tax, ₹5,000/seat
- * advance) is RETIRED, not migrated — those numbers contradicted the server.
+ * advance) is RETIRED, not migrated - those numbers contradicted the server.
  */
 import { fmtRange, parseSpellDates } from "@/data/account/derive";
 import type { DepartureInfo } from "@/data/account/selfService";
@@ -27,7 +27,7 @@ import { isUuid, supabase } from "@/integrations/supabase/client";
 /* --------------------------------- Types --------------------------------- */
 
 export interface TripDates {
-  /** "12–15 Oct 2026" — exactly as the host published it. */
+  /** "12-15 Oct 2026" - exactly as the host published it. */
   label: string;
   start: string;
   end: string;
@@ -42,7 +42,7 @@ export interface TravellerDetails {
 
 /**
  * Published-price arithmetic ONLY: per-seat price × seats. Advances, taxes,
- * fees and every other rupee are the SERVER's to derive — nothing here
+ * fees and every other rupee are the SERVER's to derive - nothing here
  * invents them (payment rules are pending until the payment architecture is
  * finalised).
  */
@@ -56,7 +56,7 @@ export interface PriceInfo {
 
 const DAY = 86_400_000;
 
-/** Shared Door 1/Door 2 pipe — the live inquiries table via its RPC. */
+/** Shared Door 1/Door 2 pipe - the live inquiries table via its RPC. */
 const sendInquiry = async (input: {
   spell: ManagedSpell;
   name: string;
@@ -73,7 +73,7 @@ const sendInquiry = async (input: {
   });
   if (error || typeof data !== "string" || data === "") {
     console.warn("[booking] Inquiry failed:", error?.message);
-    throw new Error("The message couldn't be sent just now — please try again.");
+    throw new Error("The message couldn't be sent just now - please try again.");
   }
   return data;
 };
@@ -101,7 +101,7 @@ export interface ReserveRequestInput {
 export const bookingService = {
   /**
    * The fixed, host-published dates of this spell. There is nothing to
-   * choose — the whole circle travels together — so the flow simply
+   * choose - the whole circle travels together - so the flow simply
    * displays these throughout. Live spells refine this with the real
    * departure row (hold-aware seats) fetched in the flow.
    */
@@ -122,12 +122,12 @@ export const bookingService = {
     };
   },
 
-  /** Published arithmetic only — see PriceInfo. */
+  /** Published arithmetic only - see PriceInfo. */
   price(spell: ManagedSpell, seats: number): PriceInfo {
     return { seats, pricePerSeat: spell.price, total: spell.price * seats };
   },
 
-  /** Door 1 — the enquiry. Returns the server-generated IQ ref. */
+  /** Door 1 - the enquiry. Returns the server-generated IQ ref. */
   async submitInquiry(input: SubmitInquiryInput): Promise<string> {
     return sendInquiry({ ...input, note: input.note.trim() });
   },
@@ -141,13 +141,13 @@ export const bookingService = {
     const { spell, departure, dates, seats, lead, companions, note } = input;
     const names = companions.map((c) => c.trim()).filter((c) => c !== "");
     const lines: string[] = [
-      "[BOOKING REQUEST — reserve seats]",
+      "[BOOKING REQUEST - reserve seats]",
       `Departure: ${dates.label}${departure !== null ? ` · departure ${departure.id}` : ""}`,
       `Seats: ${seats}`,
       `Lead: ${lead.fullName.trim()} · ${lead.phone.trim()}`,
-      `Companions: ${names.length > 0 ? names.join(", ") : "—"}`,
+      `Companions: ${names.length > 0 ? names.join(", ") : "·"}`,
       `Published price: ${formatINR(spell.price)} × ${seats} = ${formatINR(spell.price * seats)}`,
-      "Payment: none taken online — advance policy shown as text; team to confirm and collect personally.",
+      "Payment: none taken online - advance policy shown as text; team to confirm and collect personally.",
     ];
     if (note.trim() !== "") lines.push(`Traveller note: ${note.trim()}`);
     return sendInquiry({

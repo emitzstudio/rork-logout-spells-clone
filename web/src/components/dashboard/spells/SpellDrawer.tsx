@@ -87,7 +87,7 @@ interface SpellDrawerProps {
   onDelete: () => void;
 }
 
-/** Right-side details drawer — the pre-editor view of a single Spell. */
+/** Right-side details drawer - the pre-editor view of a single Spell. */
 export default function SpellDrawer({
   spell,
   onClose,
@@ -124,7 +124,7 @@ export default function SpellDrawer({
 
   const stats: { id: string; label: string; value: string; sub: string; bar?: boolean }[] = [
     { id: "seats", label: "Seats filled", value: `${spell.seatsBooked}/${spell.seatsTotal}`, sub: `${pct}% full`, bar: true },
-    { id: "revenue", label: "Revenue", value: spell.revenue > 0 ? formatCompactINR(spell.revenue) : "—", sub: "collected" },
+    { id: "revenue", label: "Revenue", value: spell.revenue > 0 ? formatCompactINR(spell.revenue) : "·", sub: "collected" },
     { id: "views", label: "Page views", value: spell.views.toLocaleString("en-IN"), sub: "last 30 days" },
     { id: "wishlists", label: "Wishlists", value: spell.wishlists.toLocaleString("en-IN"), sub: "saved by guests" },
   ];

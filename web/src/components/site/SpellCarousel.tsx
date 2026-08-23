@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
- * The homepage spell card — identical design to the original grid card
+ * The homepage spell card - identical design to the original grid card
  * (gradient, cover photo, hover lift, gold sweep). Only its presentation
  * around it changed, not the card itself.
  */
@@ -31,7 +31,7 @@ function SpellCard({ spell }: { spell: ManagedSpell }) {
     >
       {spell.image !== "" ? (
         <>
-          {/* Cover photo card — falls back to the gradient + symbol design below. */}
+          {/* Cover photo card - falls back to the gradient + symbol design below. */}
           <img
             src={spell.image}
             alt=""
@@ -74,7 +74,7 @@ function SpellCard({ spell }: { spell: ManagedSpell }) {
 }
 
 /**
- * Infinite showcase carousel for the homepage — a curated glimpse, not the
+ * Infinite showcase carousel for the homepage - a curated glimpse, not the
  * catalogue. Runs on the shared ShowcaseCarousel engine (loop, autoplay,
  * centre-stage crowning) so Live and Previous spells behave identically.
  */

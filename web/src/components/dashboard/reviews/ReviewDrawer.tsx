@@ -1,5 +1,5 @@
 /**
- * The full traveller review — complete story (never truncated), consent,
+ * The full traveller review - complete story (never truncated), consent,
  * timestamps, moderation status and the consent-gated publish control.
  * The database trigger enforces the consent rule even if this UI is bypassed.
  */
@@ -47,7 +47,7 @@ export default function ReviewDrawer({ review, spellName, travellerLabel, onClos
       { reviewId: review.id, publish: next },
       {
         onSuccess: () =>
-          toast.success(next ? "Published — this story is now on the website" : "Unpublished — private again"),
+          toast.success(next ? "Published - this story is now on the website" : "Unpublished - private again"),
         onError: (error) => {
           const code = inviteErrorCode(error.message);
           toast.error(code === "unknown" ? error.message : inviteErrorCopy(code));
@@ -78,7 +78,7 @@ export default function ReviewDrawer({ review, spellName, travellerLabel, onClos
 
         <div>
           <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">Their experience</p>
-          {/* The complete story — deliberately never truncated. */}
+          {/* The complete story - deliberately never truncated. */}
           <p className="mt-1.5 whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-cream/75">
             {review.body}
           </p>
@@ -95,7 +95,7 @@ export default function ReviewDrawer({ review, spellName, travellerLabel, onClos
           </p>
         </div>
 
-        {/* Publish control — staff-only, consent-gated in the database too. */}
+        {/* Publish control - staff-only, consent-gated in the database too. */}
         <div className="rounded-xl border border-cream/[0.08] bg-cream/[0.02] px-4 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -103,9 +103,9 @@ export default function ReviewDrawer({ review, spellName, travellerLabel, onClos
               <p className="mt-0.5 font-sans text-[11px] leading-relaxed text-cream/40">
                 {published
                   ? review.previous_spell_id !== null
-                    ? "Live — it shows on this journey's archive page."
-                    : "Approved — it appears automatically once this spell's archive page is published."
-                  : "Private — visible only to the team."}
+                    ? "Live - it shows on this journey's archive page."
+                    : "Approved - it appears automatically once this spell's archive page is published."
+                  : "Private - visible only to the team."}
               </p>
             </div>
             <button
@@ -133,7 +133,7 @@ export default function ReviewDrawer({ review, spellName, travellerLabel, onClos
           {!review.consent_to_publish && (
             <div className="mt-3">
               <OpsNote tone="warn">
-                This traveller asked to keep their story private — publishing is locked, here and in the
+                This traveller asked to keep their story private - publishing is locked, here and in the
                 database.
               </OpsNote>
             </div>

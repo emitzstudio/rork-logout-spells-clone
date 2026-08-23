@@ -36,7 +36,7 @@ const NEXT_STEP: Record<ConsoleInquiry["status"], { to: ConsoleInquiry["status"]
 };
 
 /**
- * Door 1's inbox — every "Inquire" from the public site, with its
+ * Door 1's inbox - every "Inquire" from the public site, with its
  * server-generated reference, worked through new → contacted → closed.
  */
 export default function InquiriesPanel() {

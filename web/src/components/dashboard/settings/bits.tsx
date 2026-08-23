@@ -1,5 +1,5 @@
 /**
- * M12 — shared building blocks for the Settings page. Same hairline-card,
+ * M12 - shared building blocks for the Settings page. Same hairline-card,
  * cream-on-charcoal, gold-accent language as the rest of the console.
  */
 import { motion } from "framer-motion";
@@ -144,7 +144,7 @@ export function ToggleRow({ label, line, checked, onChange, disabled, chip }: To
 
 /* --------------------------------- Chips ---------------------------------- */
 
-/** Small neutral chip — for stored-but-dormant switches. */
+/** Small neutral chip - for stored-but-dormant switches. */
 export function DormantChip({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-full border border-cream/12 bg-cream/[0.04] px-2 py-0.5 font-sans text-[9px] uppercase tracking-[0.16em] text-cream/40">
@@ -153,7 +153,7 @@ export function DormantChip({ children }: { children: ReactNode }) {
   );
 }
 
-/** Gold locked chip — for values the founder can see but not change yet. */
+/** Gold locked chip - for values the founder can see but not change yet. */
 export function LockedChip({ children }: { children: ReactNode }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/[0.07] px-2.5 py-1 font-sans text-[10px] uppercase tracking-[0.18em] text-gold-light">

@@ -31,9 +31,9 @@ import PreviousSpells from "./pages/PreviousSpells";
 import ReviewInvitePage from "./pages/ReviewInvitePage";
 import SpellPage from "./pages/SpellPage";
 
-/** Founder console — lazy chunk so the public site bundle is unaffected. */
+/** Founder console - lazy chunk so the public site bundle is unaffected. */
 const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
-/** Traveller space + auth — also lazy, same reasoning. */
+/** Traveller space + auth - also lazy, same reasoning. */
 const Account = lazy(() => import("./pages/account/Account"));
 const AuthPage = lazy(() => import("./pages/account/AuthPage"));
 const ResetPasswordPage = lazy(() => import("./pages/account/ResetPasswordPage"));
@@ -84,27 +84,27 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/creators" element={<Creators />} />
         <Route path="/our-story" element={<OurStory />} />
-        {/* The Journal — Experience grew up into the blog. */}
+        {/* The Journal - Experience grew up into the blog. */}
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/experience" element={<Navigate to="/blog" replace />} />
-        {/* Discover — mood categories, each opening a curated collection. */}
+        {/* Discover - mood categories, each opening a curated collection. */}
         <Route path="/discover" element={<Discover />} />
         <Route path="/discover/:slug" element={<DiscoverCategoryPage />} />
         <Route path="/live" element={<Live />} />
-        {/* Completed journeys — the archive and its memory pages. */}
+        {/* Completed journeys - the archive and its memory pages. */}
         <Route path="/live-spells/previous" element={<PreviousSpells />} />
         <Route path="/live-spells/previous/:slug" element={<PreviousSpellPage />} />
         <Route path="/live-spells" element={<Navigate to="/live" replace />} />
-        {/* Generated spell pages — rendered dynamically from the local CMS. */}
+        {/* Generated spell pages - rendered dynamically from the local CMS. */}
         <Route path="/live/:slug" element={<SpellPage />} />
         <Route path="/spells/:slug" element={<LegacySpellRedirect />} />
         <Route path="/spell/:slug" element={<LegacySpellRedirect />} />
-        {/* Public form pages — share links open straight into the questions. */}
+        {/* Public form pages - share links open straight into the questions. */}
         <Route path="/forms/:slug" element={<FormPage />} />
-        {/* One-time review invitations — each token opens its own story form (M13). */}
+        {/* One-time review invitations - each token opens its own story form (M13). */}
         <Route path="/review/:token" element={<ReviewInvitePage />} />
-        {/* Traveller auth — native Supabase sessions (M6). */}
+        {/* Traveller auth - native Supabase sessions (M6). */}
         <Route
           path="/login"
           element={
@@ -138,7 +138,7 @@ const AnimatedRoutes = () => {
             </Suspense>
           }
         />
-        {/* The traveller space — every logged-in page lives here. */}
+        {/* The traveller space - every logged-in page lives here. */}
         <Route
           path="/account/*"
           element={
@@ -163,7 +163,7 @@ const AnimatedRoutes = () => {
 };
 
 /**
- * The ritual portal + starfield wrap the public site only — the founder
+ * The ritual portal + starfield wrap the public site only - the founder
  * console at /dashboard bypasses both and renders immediately.
  */
 const AppShell = () => {
@@ -171,14 +171,14 @@ const AppShell = () => {
   const [portalDone, setPortalDone] = useState<boolean>(false);
   const location = useLocation();
   const isDashboard = location.pathname.startsWith("/dashboard");
-  /* Shared form links skip the ritual portal — respondents land straight on the questions. */
+  /* Shared form links skip the ritual portal - respondents land straight on the questions. */
   const isFormPage = location.pathname.startsWith("/forms/");
-  /* Review invitation links too — invited travellers land straight on the form (M13). */
+  /* Review invitation links too - invited travellers land straight on the form (M13). */
   const isReviewInvite = location.pathname.startsWith("/review/");
-  /* The traveller space + auth also skip the portal — returning travellers land straight in. */
+  /* The traveller space + auth also skip the portal - returning travellers land straight in. */
   const isAccount = isAccountArea(location.pathname);
   const skipPortal = isFormPage || isAccount || isReviewInvite;
-  /* M12 — maintenance mode rests the PUBLIC site only. The console, sign-in
+  /* M12 - maintenance mode rests the PUBLIC site only. The console, sign-in
      and the traveller space stay reachable (the founder must always be able
      to flip the switch back). Fail-open: defaults keep the site live. */
   const { launch } = useSiteSettings();
@@ -192,7 +192,7 @@ const AppShell = () => {
       ) : (
         <>
           {(entered || isDashboard || skipPortal) && <AnimatedRoutes />}
-          {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) — no global fixed button. */}
+          {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) - no global fixed button. */}
           {!isDashboard && !skipPortal && !portalDone && (
             <PortalEntry onIgnite={() => setEntered(true)} onDone={() => setPortalDone(true)} />
           )}
@@ -208,11 +208,11 @@ const App = () => (
     <SpellStoreProvider>
       {/* Forms + responses share the same local-CMS pattern as spells. */}
       <FormStoreProvider>
-        {/* The Journal — blog posts managed in the console, rendered on the site. */}
+        {/* The Journal - blog posts managed in the console, rendered on the site. */}
         <BlogStoreProvider>
-        {/* Traveller session + account data — native Supabase Auth (M6). */}
+        {/* Traveller session + account data - native Supabase Auth (M6). */}
         <AccountProvider>
-          {/* The traveller's bucket list — dreams dropped into the Discover cauldron. */}
+          {/* The traveller's bucket list - dreams dropped into the Discover cauldron. */}
           <BucketListProvider>
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             {/* Honour the OS "reduce motion" preference across every animation. */}
@@ -220,7 +220,7 @@ const App = () => (
               <AppShell />
             </MotionConfig>
           </BrowserRouter>
-          {/* M10: honest offline indicator — appears only when the network drops. */}
+          {/* M10: honest offline indicator - appears only when the network drops. */}
           <ConnectionBanner />
           <Toaster
             position="bottom-right"

@@ -1,8 +1,8 @@
 /**
- * Storage upload pipeline (M5) — replaces the data-URL persistence.
+ * Storage upload pipeline (M5) - replaces the data-URL persistence.
  *
  * Rules (backend/docs/storage-structure.md + data-evolution-strategy.md §3):
- * - resize client-side BEFORE upload (≤1440px, JPEG q0.78 — the existing pipeline)
+ * - resize client-side BEFORE upload (≤1440px, JPEG q0.78 - the existing pipeline)
  * - object names embed generated ids and are never reused
  * - replacement order: upload new → repoint the row → best-effort delete old
  */
@@ -71,7 +71,7 @@ export const uploadLocalImage = async (
 
 /**
  * The `memories` bucket is the only PRIVATE bucket: no public URLs exist.
- * Paths follow {userId}/{memoryId}/{generatedId}.jpg — the storage policy
+ * Paths follow {userId}/{memoryId}/{generatedId}.jpg - the storage policy
  * checks the first segment, the database path-guard trigger checks the first
  * two. Renders go through short-lived signed URLs (1 hour, decision Q) which
  * are NEVER persisted; rows store paths only.
@@ -130,7 +130,7 @@ export const signMemoryPaths = async (paths: string[]): Promise<Map<string, stri
 /**
  * Best-effort removal of private keepsake objects by path. Row deletes come
  * FIRST (a dangling row is a broken image; an orphaned object is only a cost
- * nuisance) — failures are logged, never surfaced.
+ * nuisance) - failures are logged, never surfaced.
  */
 export const deleteMemoryPaths = async (paths: string[]): Promise<void> => {
   if (paths.length === 0) return;
@@ -145,7 +145,7 @@ export const deleteMemoryPaths = async (paths: string[]): Promise<void> => {
 
 /**
  * Uploads a traveller's avatar or profile cover into their own folder
- * (avatars/{userId}/… — the storage policy checks that first segment) and
+ * (avatars/{userId}/… - the storage policy checks that first segment) and
  * returns the permanent public URL. Object names are never reused, so CDN
  * caches stay valid; the caller deletes the replaced object after repointing.
  */
@@ -173,7 +173,7 @@ export const isOwnStorageUrl = (url: string): boolean => storageRefFromUrl(url) 
 
 /**
  * Best-effort removal of replaced objects. An orphaned file is a cost
- * nuisance; a broken URL is a user-facing bug — so this NEVER runs before
+ * nuisance; a broken URL is a user-facing bug - so this NEVER runs before
  * the row repoint, and failures are only logged.
  */
 export const deleteStorageUrls = async (urls: string[]): Promise<void> => {
@@ -262,7 +262,7 @@ export const uploadSpellDraftImages = async (
   };
 };
 
-/** Every storage URL a draft references — for replace-then-cleanup diffs. */
+/** Every storage URL a draft references - for replace-then-cleanup diffs. */
 export const collectDraftStorageUrls = (draft: SpellDraft | null | undefined): string[] => {
   if (!draft) return [];
   const urls: string[] = [];
@@ -328,7 +328,7 @@ export const uploadBlogImages = async (
   return { hero, gallery, blocks };
 };
 
-/** Every storage URL a journal story references — for cleanup diffs. */
+/** Every storage URL a journal story references - for cleanup diffs. */
 export const collectBlogStorageUrls = (payload: BlogImagePayload): string[] => {
   const urls: string[] = [];
   if (isOwnStorageUrl(payload.hero)) urls.push(payload.hero);

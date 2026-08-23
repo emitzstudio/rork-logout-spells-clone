@@ -17,7 +17,7 @@ import {
 } from "@/data/siteSettings";
 import { useSaveSettingsSection } from "@/data/siteSettingsStore";
 
-/** §2 — Contact channels + internal routing recipients (dormant until email delivery). */
+/** §2 - Contact channels + internal routing recipients (dormant until email delivery). */
 export default function ContactCard({ settings }: { settings: SiteSettings }) {
   const contact = useDraft(settings.contact);
   const routing = useDraft(settings.routing);
@@ -64,7 +64,7 @@ export default function ContactCard({ settings }: { settings: SiteSettings }) {
       flash();
       toast("Contact information saved ✦");
     } catch (e) {
-      setError(e instanceof Error && e.message !== "" ? e.message : "That didn't save — try again.");
+      setError(e instanceof Error && e.message !== "" ? e.message : "That didn't save - try again.");
     }
   };
 
@@ -72,7 +72,7 @@ export default function ContactCard({ settings }: { settings: SiteSettings }) {
     <SettingsCard
       eyebrow="Reach"
       title="Contact Information"
-      intro="Where travellers and partners reach you. Empty fields simply stay off the site — nothing is invented."
+      intro="Where travellers and partners reach you. Empty fields simply stay off the site - nothing is invented."
       delay={0.05}
     >
       <div className="space-y-4">
@@ -117,7 +117,7 @@ export default function ContactCard({ settings }: { settings: SiteSettings }) {
             Internal routing <DormantChip>Dormant</DormantChip>
           </p>
           <p className="mt-1.5 font-sans text-[11.5px] leading-relaxed text-cream/40">
-            Stored now, used when email delivery is connected — no emails are sent yet.
+            Stored now, used when email delivery is connected - no emails are sent yet.
           </p>
           <div className="mt-3 space-y-3.5">
             <TextField
@@ -125,7 +125,7 @@ export default function ContactCard({ settings }: { settings: SiteSettings }) {
               type="email"
               value={routing.value.generalRecipient}
               onChange={(v) => routing.patch({ generalRecipient: v })}
-              placeholder="Empty — not configured"
+              placeholder="Empty - not configured"
               error={emailErrors.generalRecipient}
             />
             <TextField
@@ -133,7 +133,7 @@ export default function ContactCard({ settings }: { settings: SiteSettings }) {
               type="email"
               value={routing.value.bookingRecipient}
               onChange={(v) => routing.patch({ bookingRecipient: v })}
-              placeholder="Empty — not configured"
+              placeholder="Empty - not configured"
               error={emailErrors.bookingRecipient}
             />
             <TextField
@@ -141,7 +141,7 @@ export default function ContactCard({ settings }: { settings: SiteSettings }) {
               type="email"
               value={routing.value.formRecipient}
               onChange={(v) => routing.patch({ formRecipient: v })}
-              placeholder="Empty — not configured"
+              placeholder="Empty - not configured"
               error={emailErrors.formRecipient}
             />
           </div>

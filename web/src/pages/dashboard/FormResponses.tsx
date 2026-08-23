@@ -29,7 +29,7 @@ const formatSubmitted = (iso: string): string =>
 /* ----------------------------- Response drawer ----------------------------- */
 
 /**
- * The individual response view — submission id, timestamp and every stored
+ * The individual response view - submission id, timestamp and every stored
  * answer in submission order, long text never truncated. Only submitted data
  * is shown; internal fields (user ids, status flags) stay out of sight.
  */
@@ -104,7 +104,7 @@ function ResponseDetail({
           )}
         </div>
 
-        {/* Answers — full values, never truncated */}
+        {/* Answers - full values, never truncated */}
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {response.answers.length === 0 ? (
             <p className="rounded-xl border border-dashed border-cream/12 px-4 py-8 text-center font-sans text-[12.5px] italic text-cream/35">
@@ -152,7 +152,7 @@ function ResponseDetail({
 /* ------------------------------ Page ------------------------------ */
 
 /**
- * M11.6 — one form's responses, newest first. Fields are read from each
+ * M11.6 - one form's responses, newest first. Fields are read from each
  * stored submission (never hardcoded), the drawer shows the full answers,
  * and Export Excel downloads a real .xlsx built from the form definition.
  */
@@ -185,7 +185,7 @@ export default function FormResponses() {
     : -1;
   const selected = selectedIndex >= 0 ? formResponses[selectedIndex] : null;
 
-  /* Opening a response marks it viewed — same behaviour as the Forms inbox. */
+  /* Opening a response marks it viewed - same behaviour as the Forms inbox. */
   useEffect(() => {
     if (selectedId) markResponseViewed(selectedId);
   }, [selectedId, markResponseViewed]);
@@ -220,13 +220,13 @@ export default function FormResponses() {
       toast.success("Excel downloaded");
     } catch (error) {
       console.error("[responses] Excel export failed:", error);
-      toast.error("Couldn't build the Excel file — please try again");
+      toast.error("Couldn't build the Excel file - please try again");
     } finally {
       setExporting(false);
     }
   };
 
-  /* First two answered fields per row — derived from the stored submission. */
+  /* First two answered fields per row - derived from the stored submission. */
   const previewAnswers = (response: FormResponse): { title: string; value: string }[] =>
     response.answers
       .filter((answer) => answer.value.trim() !== "")
@@ -266,7 +266,7 @@ export default function FormResponses() {
         <div role="alert" className="mt-6 rounded-xl border border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
           <p className="font-serif text-2xl text-cream">Couldn't load responses.</p>
           <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-            The connection failed — every submission is safe in the database.
+            The connection failed - every submission is safe in the database.
           </p>
           <button type="button" onClick={retryAll} className="btn-gold mt-7 !px-5 !py-2.5 !text-[12px]">
             Try again
@@ -276,7 +276,7 @@ export default function FormResponses() {
         <div className="mt-6 rounded-xl border border-dashed border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
           <p className="font-serif text-2xl text-cream">This form doesn't exist</p>
           <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-            It may have been deleted — every form with responses is listed on the Responses page.
+            It may have been deleted - every form with responses is listed on the Responses page.
           </p>
           <Link to="/dashboard/responses" className="btn-ghost-gold mt-7 inline-flex !px-5 !py-2.5 !text-[12px]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Responses
@@ -341,7 +341,7 @@ export default function FormResponses() {
               </span>
               <p className="mt-4 font-serif text-2xl text-cream">No responses yet.</p>
               <p className="mx-auto mt-2 max-w-xs font-sans text-[12.5px] text-cream/45">
-                Share the published form or attach it to a spell — every submission lands here.
+                Share the published form or attach it to a spell - every submission lands here.
               </p>
             </motion.div>
           ) : (

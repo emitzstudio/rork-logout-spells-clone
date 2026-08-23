@@ -77,11 +77,11 @@ function NavEntry({
   );
 }
 
-/** Brand block, grouped nav, "view website" and founder chip — shared by desktop rail and mobile drawer. */
+/** Brand block, grouped nav, "view website" and founder chip - shared by desktop rail and mobile drawer. */
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const staff = useStaffAuth();
   const badges = useOpsBadges();
-  /* M12 — the chip reads the central founder profile (Settings → Founder Profile). */
+  /* M12 - the chip reads the central founder profile (Settings → Founder Profile). */
   const founder = useFounderProfile();
 
   /** Live operational counts replace any static badge for these entries. */

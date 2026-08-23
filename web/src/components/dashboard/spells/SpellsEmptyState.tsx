@@ -15,7 +15,7 @@ interface SpellsEmptyStateProps {
   onRestore: () => void;
 }
 
-/** Shown when every spell has been deleted — the very first-run moment. */
+/** Shown when every spell has been deleted - the very first-run moment. */
 export default function SpellsEmptyState({ onNew, onRestore }: SpellsEmptyStateProps) {
   return (
     <motion.div
@@ -85,8 +85,8 @@ export default function SpellsEmptyState({ onNew, onRestore }: SpellsEmptyStateP
         transition={{ delay: 0.32, duration: 0.5, ease: EASE }}
         className="mx-auto mt-3 max-w-sm font-sans text-[13.5px] leading-relaxed text-cream/50"
       >
-        Every circle begins with a single spell. Draft your first experience — dates, seats, price and
-        story — and it will appear here.
+        Every circle begins with a single spell. Draft your first experience - dates, seats, price and
+        story - and it will appear here.
       </motion.p>
 
       <motion.div

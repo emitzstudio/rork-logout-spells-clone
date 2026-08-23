@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AUTO-GENERATED — DO NOT EDIT
+// AUTO-GENERATED - DO NOT EDIT
 // Run migrations to regenerate.
 
 export type Json =

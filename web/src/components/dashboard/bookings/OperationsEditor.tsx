@@ -1,5 +1,5 @@
 /**
- * Staff operational fields — the ONLY bookings columns staff may edit
+ * Staff operational fields - the ONLY bookings columns staff may edit
  * directly (stay/meeting/host notes + the timeline step). The database
  * guard trigger enforces exactly this whitelist; money and status move
  * through the audited pipeline only.
@@ -38,7 +38,7 @@ export default function OperationsEditor({ booking }: { booking: BookingRow }) {
     mutation.mutate(
       { bookingId: booking.id, timelineStep, stayNote, meetingPoint, hostNote },
       {
-        onSuccess: () => toast.success("Trip details saved — the traveller sees these on their trip page"),
+        onSuccess: () => toast.success("Trip details saved - the traveller sees these on their trip page"),
         onError: (error) => toast.error(error.message),
       },
     );

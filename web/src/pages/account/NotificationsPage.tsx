@@ -16,7 +16,7 @@ interface Group {
   items: AppNotification[];
 }
 
-/** Notification center — whispers from your trips, wallet and circle. */
+/** Notification center - whispers from your trips, wallet and circle. */
 export default function NotificationsPage() {
   const { data, unreadCount, markNotificationRead, markAllNotificationsRead } = useAccount();
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ export default function NotificationsPage() {
     setMarkingAll(true);
     markAllNotificationsRead()
       .then(() => toast("All caught up ✦"))
-      .catch(() => toast.error("Couldn't mark them read — try again"))
+      .catch(() => toast.error("Couldn't mark them read - try again"))
       .finally(() => setMarkingAll(false));
   };
 
@@ -63,7 +63,7 @@ export default function NotificationsPage() {
           Quiet <span className="italic text-gold-gradient">whispers.</span>
         </>
       }
-      sub="Only the things worth telling you — trips, payments, memories and your circle."
+      sub="Only the things worth telling you - trips, payments, memories and your circle."
       actions={
         unreadCount > 0 ? (
           <button
@@ -81,7 +81,7 @@ export default function NotificationsPage() {
         <EmptyState
           symbol="☾"
           title="Perfect silence."
-          line="No notifications — the world will whisper when it needs you."
+          line="No notifications - the world will whisper when it needs you."
         />
       ) : (
         <div className="space-y-9">
@@ -98,7 +98,7 @@ export default function NotificationsPage() {
                       type="button"
                       onClick={() => {
                         void markNotificationRead(n.id).catch(() =>
-                          toast.error("Couldn't mark that as read — it stays unread"),
+                          toast.error("Couldn't mark that as read - it stays unread"),
                         );
                         if (n.link !== undefined) navigate(n.link);
                       }}

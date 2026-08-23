@@ -3,7 +3,7 @@
  *
  * Public reads and the two public write paths run on the anon key under RLS;
  * the founder console signs in with native Supabase Auth (email + password),
- * which upgrades this same client's session — staff RLS policies then reveal
+ * which upgrades this same client's session - staff RLS policies then reveal
  * drafts, responses and enquiries. No service keys ever reach the browser.
  */
 import { createClient } from "@supabase/supabase-js";
@@ -27,7 +27,7 @@ if (missingSupabaseConfig.length > 0) {
   console.error(`[supabase] Missing required configuration: ${missingSupabaseConfig.join(", ")}`);
 }
 
-/* Placeholders keep module evaluation from throwing — the config screen in
+/* Placeholders keep module evaluation from throwing - the config screen in
    main.tsx guarantees this client is never actually used when misconfigured. */
 export const supabase = createClient<Database>(
   url !== "" ? url : "https://missing-config.supabase.co",
@@ -37,7 +37,7 @@ export const supabase = createClient<Database>(
     persistSession: true,
     autoRefreshToken: true,
     // M6: password-recovery links land on /reset-password with tokens in the
-    // URL hash — the client consumes them into a session automatically.
+    // URL hash - the client consumes them into a session automatically.
     detectSessionInUrl: true,
   },
   },

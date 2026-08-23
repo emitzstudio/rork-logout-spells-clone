@@ -1642,6 +1642,35 @@ only.
 
 ---
 
+## No dashes in rendered copy — 0028 (2026-08-23)
+
+- Founder request: the website must not show em dashes anywhere (they read
+  as AI-generated). `0028_remove_dashes_from_copy.sql` rewrote every piece
+  of DB copy the site renders — targeted quality rewrites first (real
+  punctuation in the founder's voice: periods, commas, colons; plain
+  hyphens for ranges), then a guarded catch-all covering staff-only drafts
+  the anon inventory could not see.
+- Tables touched: previous_spells (stories, chapters, captions, seasons,
+  date labels — now "26-28 June 2026" / "31 July to 2 August 2026" /
+  "13-15 August 2026"), team_members (all 7 bios), spells (the live
+  Udaipur page jsonb), forms (question sets), blog_posts + site_settings
+  (catch-all; already clean).
+- Hard asserts prove ZERO U+2014/U+2013 remain in any of the six tables,
+  and that the three archive date labels landed exactly as intended.
+- Companion web sweep (same day, no schema impact): every em/en dash in
+  the web app itself removed — ~1,500 instances across 185 files (page
+  copy, UI labels, toasts, titles now "|"-separated, placeholder glyphs
+  now "·", comments) — with `web/src/data/team.ts` seed placeholders kept
+  byte-identical to the rewritten DB rows. Unit tests 53/53, checks green.
+
+### Baseline after 0028
+
+Same row counts as 0027 (3 archive journeys · 7 team members · 1 live
+spell · 2 forms · reviews 0) — content unchanged in meaning, punctuation
+now dash-free everywhere the site reads.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

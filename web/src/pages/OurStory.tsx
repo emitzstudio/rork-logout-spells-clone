@@ -16,7 +16,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /* ----------------------------- Atmosphere ------------------------------ */
 
 /**
- * The page breathes as you read — three fixed gradient veils cross-fade
+ * The page breathes as you read - three fixed gradient veils cross-fade
  * with scroll position: quiet and dark at the question, warming through
  * the first spell, open and hopeful by the final invitation.
  */
@@ -58,7 +58,7 @@ function AmbientBackdrop() {
 
 /* --------------------------- Editorial atoms --------------------------- */
 
-/** Tiny handwritten margin note — like a pencil scribble in a travel journal. */
+/** Tiny handwritten margin note - like a pencil scribble in a travel journal. */
 function HandNote({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <span className={cn("inline-block rotate-[-2deg] font-hand text-lg leading-snug text-gold/55", className)}>
@@ -67,7 +67,7 @@ function HandNote({ children, className }: { children: React.ReactNode; classNam
   );
 }
 
-/** Chapter heading — numbered eyebrow with gold rules, then the serif title. */
+/** Chapter heading - numbered eyebrow with gold rules, then the serif title. */
 function ChapterMark({
   no,
   title,
@@ -215,7 +215,7 @@ const PILLARS: Pillar[] = [
   {
     symbol: "❋",
     title: "Belonging First",
-    line: "Designed around identity — who you are, not what you booked.",
+    line: "Designed around identity: who you are, not what you booked.",
   },
 ];
 
@@ -235,7 +235,7 @@ function ChapterWhy() {
           <Reveal delay={0.14}>
             <div className="mt-10 space-y-7 font-sans text-[15px] leading-relaxed text-cream/60 md:text-base">
               <p>
-                We are a <strong className="font-medium text-cream">creator-led community platform</strong> — not a
+                We are a <strong className="font-medium text-cream">creator-led community platform</strong>, not a
                 travel agency, not a tour operator. We design intimate experiences around identity: who you are, not
                 where you're going.
               </p>
@@ -282,7 +282,7 @@ function ChapterWhy() {
   );
 }
 
-/* --------------- Chapters 02–03 · The origin timeline ------------------ */
+/* --------------- Chapters 02-03 · The origin timeline ------------------ */
 
 interface Atmosphere {
   note: string;
@@ -331,7 +331,7 @@ function DiaryChapter({ entry, index }: { entry: DiaryEntry; index: number }) {
         onLeft ? "md:pr-16 md:text-right" : "md:ml-auto md:pl-16",
       )}
     >
-      {/* Per-day atmosphere — the wash grows warmer with every entry. */}
+      {/* Per-day atmosphere - the wash grows warmer with every entry. */}
       <div
         aria-hidden
         className="pointer-events-none absolute -inset-x-8 -inset-y-12"
@@ -340,7 +340,7 @@ function DiaryChapter({ entry, index }: { entry: DiaryEntry; index: number }) {
         }}
       />
 
-      {/* Station node — illuminates while its chapter is the active one. */}
+      {/* Station node - illuminates while its chapter is the active one. */}
       <motion.span
         initial={{ scale: 0.7, opacity: 0.35 }}
         whileInView={{
@@ -356,7 +356,7 @@ function DiaryChapter({ entry, index }: { entry: DiaryEntry; index: number }) {
         )}
         aria-hidden
       >
-        {/* Pre-painted glow — only its opacity animates, never the shadow. */}
+        {/* Pre-painted glow - only its opacity animates, never the shadow. */}
         <motion.span
           aria-hidden
           className="absolute inset-0 rounded-full"
@@ -394,7 +394,7 @@ function DiaryChapter({ entry, index }: { entry: DiaryEntry; index: number }) {
   );
 }
 
-/** Chapter 03 marker — a little station sitting directly on the line. */
+/** Chapter 03 marker - a little station sitting directly on the line. */
 function TimelineStation() {
   return (
     <div className="relative pl-14 md:pl-0 md:text-center">
@@ -470,7 +470,7 @@ function ChapterOrigins() {
 /* ---------------------- Chapter 04 · The Team --------------------------- */
 
 /**
- * The people behind the spells — rotatable cards in the Spellcaster style.
+ * The people behind the spells - rotatable cards in the Spellcaster style.
  * Members come from the team service, so the CMS phase can add unlimited
  * people without touching this page.
  */
@@ -496,7 +496,7 @@ function ChapterTeam() {
         />
         <Reveal delay={0.12} className="mt-7 text-center">
           <p className="mx-auto max-w-xl font-sans text-[15px] leading-relaxed text-cream/50">
-            Seven believers who dream, build, sell, tell and run every journey — the whole
+            Seven believers who dream, build, sell, tell and run every journey, the whole
             coven, card by card.
           </p>
           <HandNote className="mt-4">tap a card to meet them ↓</HandNote>
@@ -551,11 +551,11 @@ function ChapterPhilosophy() {
 
 /* ------------------------- The story in numbers ------------------------- */
 
-/** Real numbers only (M9.5) — live catalogue counts, never invented claims. */
+/** Real numbers only (M9.5) - live catalogue counts, never invented claims. */
 function StorySoFar() {
   const { publicSpells, ready, failed } = useSpellStore();
   /* While loading (or after a failed read with nothing cached) the live
-     numbers stay honest dashes instead of counting up to a false zero (M10). */
+     numbers stay an honest placeholder instead of counting up to a false zero (M10). */
   const counted = publicSpells.length > 0 || (ready && !failed);
   const places = new Set(publicSpells.map((s) => s.location)).size;
   const stats: { num: number; label: string; live: boolean }[] = [
@@ -575,7 +575,7 @@ function StorySoFar() {
             {stats.map((s) => (
               <div key={s.label}>
                 <span className="heading-serif block text-4xl text-gold md:text-6xl">
-                  {s.live && !counted ? <span aria-label="Not loaded yet">—</span> : <CountUp to={s.num} />}
+                  {s.live && !counted ? <span aria-label="Not loaded yet">…</span> : <CountUp to={s.num} />}
                 </span>
                 <span className="mt-3 block font-sans text-[11px] uppercase tracking-[0.18em] text-cream/45">
                   {s.label}
@@ -606,12 +606,12 @@ function ChapterFinale() {
       />
       <div className="relative mx-auto max-w-3xl">
         <Reveal>
-          <p className="eyebrow">Chapter 06 — Yours to Write</p>
+          <p className="eyebrow">Chapter 06 · Yours to Write</p>
           <h2 className="heading-serif mt-7 text-5xl text-cream md:text-7xl">
             Ready to experience your <span className="italic text-gold-gradient">first Spell?</span>
           </h2>
           <p className="mx-auto mt-7 max-w-md font-sans text-base leading-relaxed text-cream/55">
-            You've read how it began. The next chapter isn't written in words — it's written around long tables,
+            You've read how it began. The next chapter isn't written in words. It's written around long tables,
             open fires and slow sunrises. Stop reading. Start experiencing.
           </p>
           <div className="mt-11 flex flex-col justify-center gap-3 sm:flex-row">
@@ -634,7 +634,7 @@ function ChapterFinale() {
 /* --------------------------------- Page --------------------------------- */
 
 /**
- * Our Story — the founder narrative as a six-chapter editorial journey.
+ * Our Story - the founder narrative as a six-chapter editorial journey.
  * The homepage keeps only a teaser; this page is where the philosophy,
  * the origin diary, the letter from Vidushi and the final invitation live.
  */

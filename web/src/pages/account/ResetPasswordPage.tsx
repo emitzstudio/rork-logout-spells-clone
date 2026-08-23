@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    document.title = "New Password — Logout Spells";
+    document.title = "New Password | Logout Spells";
   }, []);
 
   // The recovery hash is processed by the client on load; wait a beat, then
@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
       .completePasswordReset(password)
       .then(() => setPhase("done"))
       .catch((err: unknown) => {
-        setError(err instanceof AccountError ? err.message : "Something drifted — try again.");
+        setError(err instanceof AccountError ? err.message : "Something drifted. Try again.");
       })
       .finally(() => setSaving(false));
   };
@@ -182,7 +182,7 @@ export default function ResetPasswordPage() {
                   The key is <span className="italic text-gold-gradient">reforged.</span>
                 </h1>
                 <p className="mx-auto mt-4 max-w-xs font-sans text-[13px] leading-relaxed text-cream/50">
-                  Password updated — and you're already inside. Welcome back.
+                  Password updated, and you're already inside. Welcome back.
                 </p>
                 <button
                   type="button"

@@ -46,7 +46,7 @@ interface SearchHit {
   group: "Sections" | "Spells";
 }
 
-/** A live "needs attention" row — real counts from the database, never seeded. */
+/** A live "needs attention" row - real counts from the database, never seeded. */
 interface AttentionRow {
   id: string;
   icon: LucideIcon;
@@ -72,10 +72,10 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
   const badges = useOpsBadges();
   const { spells } = useSpellStore();
   const { responses, inquiries } = useFormStore();
-  /* M12 — founder identity + contact fallback come from the central sources. */
+  /* M12 - founder identity + contact fallback come from the central sources. */
   const founder = useFounderProfile();
   const { contact } = useSiteSettings();
-  /* M12 — per-staff bell preferences filter what the bell surfaces. */
+  /* M12 - per-staff bell preferences filter what the bell surfaces. */
   const prefs = useStaffNotificationPrefs();
   /* Back arrow lives in this sticky bar, so it never scrolls away. On the
      console root it exits to the website; on sub-pages it falls back to Overview. */
@@ -90,7 +90,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
     [inquiries],
   );
 
-  /** Everything that genuinely needs the founder right now — live counts only,
+  /** Everything that genuinely needs the founder right now - live counts only,
       filtered by the M12 per-staff notification preferences. */
   const attention = useMemo<AttentionRow[]>(() => {
     const rows: AttentionRow[] = [];
@@ -141,7 +141,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
   }, [badges.data, newResponses, newInquiries, prefs]);
 
   const attentionTotal = attention.reduce((sum, row) => sum + row.count, 0);
-  /** How many bell alert types the staff member muted (waitlist is dormant — not counted). */
+  /** How many bell alert types the staff member muted (waitlist is dormant - not counted). */
   const mutedCount = [
     prefs.notifyBookings,
     prefs.notifyResponses,
@@ -176,7 +176,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  /** ⌘K hits — console sections plus the LIVE spell collection (drafts included). */
+  /** ⌘K hits - console sections plus the LIVE spell collection (drafts included). */
   const hits = useMemo<SearchHit[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -315,7 +315,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
 
         {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-1.5">
-          {/* Needs attention — live operational counts, no invented notifications */}
+          {/* Needs attention - live operational counts, no invented notifications */}
           <div className="relative">
             <button
               type="button"
@@ -360,7 +360,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
                     </div>
                   ) : attention.length === 0 ? (
                     <p className="px-4 py-7 text-center font-serif text-[14px] italic text-cream/40">
-                      All clear — nothing needs you right now <span className="text-gold/60">✦</span>
+                      All clear. Nothing needs you right now <span className="text-gold/60">✦</span>
                     </p>
                   ) : (
                     <ul className="max-h-[340px] overflow-y-auto">
@@ -420,7 +420,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
 
           <span aria-hidden className="mx-1 hidden h-5 w-px bg-cream/[0.08] sm:block" />
 
-          {/* Founder profile — real session identity */}
+          {/* Founder profile - real session identity */}
           <div className="relative">
             <button
               type="button"

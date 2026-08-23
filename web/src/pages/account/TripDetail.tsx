@@ -74,7 +74,7 @@ const STEP_META: Record<TimelineStepId, StepMeta> = {
           ? `Advance in · balance of ${formatINR(b.amountTotal - b.amountPaid)} due ${
               b.balanceDueDate !== undefined ? fmtDayYear(b.balanceDueDate) : "before departure"
             }`
-          : "Awaiting payment — the team confirms it personally",
+          : "Awaiting payment. The team confirms it personally",
   },
   host: {
     icon: UserCheck,
@@ -98,7 +98,7 @@ const STEP_META: Record<TimelineStepId, StepMeta> = {
   },
 };
 
-/** One booking, in full — status, payments, checklist, host and help. */
+/** One booking, in full - status, payments, checklist, host and help. */
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
   const { data, toggleChecklistItem, startChecklist, setTripRating, beginAlbum } = useAccount();
@@ -116,7 +116,7 @@ export default function TripDetail() {
   );
 
   useEffect(() => {
-    document.title = `${booking ? booking.spell.name : "Booking"} · My Trips — Logout Spells`;
+    document.title = `${booking ? booking.spell.name : "Booking"} · My Trips | Logout Spells`;
   }, [booking]);
 
   if (!data) return null;
@@ -127,7 +127,7 @@ export default function TripDetail() {
         <EmptyState
           symbol="☾"
           title="This booking has faded."
-          line="It may have been removed — your other trips are safe and sound."
+          line="It may have been removed. Your other trips are safe and sound."
           to="/account/trips"
           toLabel="Back to my trips"
         />
@@ -228,7 +228,7 @@ export default function TripDetail() {
               </div>
               <p className="mt-4 font-serif text-[15px] italic text-cream/40">
                 {booking.spell.location !== "" ? booking.spell.location : "The journey"} isn't going
-                anywhere — it will wait for you. ✦
+                anywhere. It will wait for you. ✦
               </p>
             </div>
           ) : (
@@ -298,7 +298,7 @@ export default function TripDetail() {
                 { label: "Duration", value: `${booking.durationDays} days` },
                 {
                   label: "Travellers",
-                  value: booking.guests.length > 0 ? `You + ${booking.guests.join(", ")}` : "Just you — as intended",
+                  value: booking.guests.length > 0 ? `You + ${booking.guests.join(", ")}` : "Just you, as intended",
                 },
               ].map((row) => (
                 <div key={row.label}>
@@ -314,7 +314,7 @@ export default function TripDetail() {
             )}
           </div>
 
-          {/* Packing ritual — not started yet */}
+          {/* Packing ritual - not started yet */}
           {booking.checklist.length === 0 && (status === "upcoming" || status === "ongoing") && (
             <div className="card-glass rounded-2xl p-6 md:p-7">
               <div className="flex items-end justify-between gap-4">
@@ -322,7 +322,7 @@ export default function TripDetail() {
                   <p className="eyebrow !text-[10px]">Packing ritual</p>
                   <h2 className="heading-serif mt-2 text-2xl text-cream">Begin when ready.</h2>
                   <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
-                    Six gentle essentials to start — tick them off as the departure nears.
+                    Six gentle essentials to start. Tick them off as the departure nears.
                   </p>
                 </div>
                 <span className="font-serif text-3xl text-gold/60" aria-hidden>✳</span>
@@ -333,7 +333,7 @@ export default function TripDetail() {
                   if (checklistBusy) return;
                   setChecklistBusy(true);
                   startChecklist(booking.id)
-                    .catch(() => toast.error("The list couldn't begin — try again"))
+                    .catch(() => toast.error("The list couldn't begin. Try again"))
                     .finally(() => setChecklistBusy(false));
                 }}
                 disabled={checklistBusy}
@@ -364,7 +364,7 @@ export default function TripDetail() {
                       type="button"
                       onClick={() =>
                         void toggleChecklistItem(booking.id, item.id).catch(() =>
-                          toast.error("That tick didn't save — try again"),
+                          toast.error("That tick didn't save. Try again"),
                         )
                       }
                       className={cn(
@@ -416,7 +416,7 @@ export default function TripDetail() {
             />
           )}
 
-          {/* Change requests — the polite lever on a live booking */}
+          {/* Change requests - the polite lever on a live booking */}
           {(status === "upcoming" || status === "ongoing") && booking.status !== "draft" && (
             <ChangeRequestsCard booking={booking} />
           )}
@@ -479,7 +479,7 @@ export default function TripDetail() {
                 type="button"
                 className="btn-gold mt-5 w-full !py-3 !text-[12.5px]"
                 disabled
-                title="Online payment opens soon — until then the team collects the balance personally"
+                title="Online payment opens soon. Until then the team collects the balance personally"
               >
                 Pay balance · online soon
               </button>
@@ -520,12 +520,12 @@ export default function TripDetail() {
               <p className="flex items-center gap-2.5">
                 <Phone size={14} className="shrink-0 text-gold/70" />
                 <span>
-                  Emergency contact — {data.profile.emergency.name} ({data.profile.emergency.relation}),{" "}
+                  Emergency contact: {data.profile.emergency.name} ({data.profile.emergency.relation}),{" "}
                   {data.profile.emergency.phone}
                 </span>
               </p>
               <p className="text-cream/40">
-                Every circle travels with a host who knows the terrain — and us, a call away.
+                Every circle travels with a host who knows the terrain, and us, a call away.
               </p>
             </div>
             <Link to="/account/support" className="btn-ghost-gold mt-5 w-full !py-3 !text-[12.5px]">
@@ -575,7 +575,7 @@ function StarPicker({
   );
 }
 
-/* ---------------------- After the trip — star + story ----------------------- */
+/* ---------------------- After the trip - star + story ----------------------- */
 
 const REVIEW_STATUS_META: Record<
   "pending" | "approved" | "rejected",
@@ -599,8 +599,8 @@ interface AfterTripCardProps {
 
 /**
  * The completed-trip corner: the memory album link, the PRIVATE star
- * (bookings.rating — server-guarded to finished trips) and the PUBLIC story
- * — a real review that lands 'pending' for staff moderation, once per
+ * (bookings.rating - server-guarded to finished trips) and the PUBLIC story
+ * - a real review that lands 'pending' for staff moderation, once per
  * booking, only when the spell's archive page exists.
  */
 function AfterTripCard({
@@ -672,7 +672,7 @@ function AfterTripCard({
       return;
     }
     if (body.trim().length < 20) {
-      setSendError("A few more words — at least 20 characters.");
+      setSendError("A few more words, at least 20 characters.");
       return;
     }
     setSendBusy(true);
@@ -713,7 +713,7 @@ function AfterTripCard({
           </h2>
           {memoryId === null && (
             <p className="mt-1 font-sans text-[11.5px] text-cream/40">
-              A small private album — a dozen keepsakes, a journal line, yours alone.
+              A small private album: a dozen keepsakes, a journal line, yours alone.
             </p>
           )}
         </div>
@@ -739,12 +739,12 @@ function AfterTripCard({
         <p className="mt-2 font-sans text-xs text-[#d98a7f]">{albumError}</p>
       )}
 
-      {/* Private star — bookings.rating, yours alone */}
+      {/* Private star - bookings.rating, yours alone */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cream/[0.08] bg-charcoal-deep/40 px-4 py-3.5">
         <div>
           <p className="font-sans text-[12.5px] text-cream/80">Your private star</p>
           <p className="font-sans text-[11px] text-cream/40">
-            Seen only by you and the team — adjust it any time.
+            Seen only by you and the team. Adjust it any time.
           </p>
         </div>
         <StarPicker value={booking.rating ?? 0} onPick={(n) => void rate(n)} disabled={rateBusy} />
@@ -753,7 +753,7 @@ function AfterTripCard({
         <p className="mt-2 font-sans text-xs text-[#d98a7f]">{rateError}</p>
       )}
 
-      {/* Public story — opens only when the archive page exists */}
+      {/* Public story - opens only when the archive page exists */}
       {target !== null && (
         <div className="mt-4 rounded-xl border border-gold/25 bg-gold/[0.04] px-4 py-4">
           {myReview !== null ? (
@@ -775,10 +775,10 @@ function AfterTripCard({
               </p>
               <p className="mt-2 font-sans text-[11px] text-cream/40">
                 {myReview.status === "pending"
-                  ? "A human reads every story before it joins the archive — no edits after sending, so it stays exactly yours."
+                  ? "A human reads every story before it joins the archive. No edits after sending, so it stays exactly yours."
                   : myReview.status === "approved"
                     ? "It now lives on the spell's archive page."
-                    : "The team kept this one off the public page — it still reached them."}
+                    : "The team kept this one off the public page. It still reached them."}
               </p>
               {myReview.status === "approved" && (
                 <Link
@@ -800,7 +800,7 @@ function AfterTripCard({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={80}
-                placeholder="A title — e.g. Six days that rearranged me"
+                placeholder="A title, e.g. Six days that rearranged me"
                 className="mt-3 w-full rounded-xl border border-cream/[0.12] bg-charcoal-deep/50 px-4 py-3 font-sans text-[14px] text-cream outline-none transition-all duration-300 placeholder:text-cream/30 focus:border-gold/60"
               />
               <textarea
@@ -833,8 +833,8 @@ function AfterTripCard({
                 <p className="mt-2 font-sans text-xs text-[#d98a7f]">{sendError}</p>
               )}
               <p className="mt-2.5 font-sans text-[10.5px] leading-relaxed text-cream/35">
-                Stories are moderated before publishing and can't be edited after sending —
-                one per trip, always in your name.
+                Stories are moderated before publishing and can't be edited after sending.
+                One per trip, always in your name.
               </p>
             </div>
           ) : (
@@ -890,7 +890,7 @@ const REQUEST_STATUS_META: Record<
 
 /**
  * The polite lever on a live booking: travellers never edit confirmed trips
- * directly — they file a REQUEST (seat change / cancellation / anything),
+ * directly - they file a REQUEST (seat change / cancellation / anything),
  * may withdraw it while it's still unread, and see the team's decision +
  * note. Execution always happens in the console's audited pipeline.
  */
@@ -913,7 +913,7 @@ function ChangeRequestsCard({ booking }: { booking: TripBooking }) {
 
   const file = async (): Promise<void> => {
     if (kind === "seat_change" && seatsTo === booking.seats) {
-      setError("Pick a different seat count — or choose another request type.");
+      setError("Pick a different seat count, or choose another request type.");
       return;
     }
     if (kind !== "seat_change" && message.trim().length < 5) {
@@ -958,7 +958,7 @@ function ChangeRequestsCard({ booking }: { booking: TripBooking }) {
       <p className="eyebrow !text-[10px]">Need a change?</p>
       <h2 className="heading-serif mt-2 text-2xl text-cream">Circles can flex, gently.</h2>
       <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
-        Confirmed bookings never shift silently — file a request and a human decides,
+        Confirmed bookings never shift silently. File a request and a human decides,
         usually within a day.
       </p>
 
@@ -1072,7 +1072,7 @@ function ChangeRequestsCard({ booking }: { booking: TripBooking }) {
                 ? "Anything the team should know (optional)"
                 : kind === "cancellation"
                   ? "What changed? Refunds are settled personally by the team."
-                  : "Tell us what you need — transfers, date questions, anything."
+                  : "Tell us what you need: transfers, date questions, anything."
             }
             className="mt-4 w-full resize-none rounded-xl border border-cream/[0.12] bg-charcoal-deep/50 px-4 py-3 font-sans text-[14px] leading-relaxed text-cream outline-none transition-all duration-300 placeholder:text-cream/30 focus:border-gold/60"
           />
@@ -1101,7 +1101,7 @@ function ChangeRequestsCard({ booking }: { booking: TripBooking }) {
         </div>
       ) : hasOpenRequest ? (
         <p className="mt-4 font-sans text-[11.5px] text-cream/40">
-          One request at a time — the team is reading yours.
+          One request at a time. The team is reading yours.
         </p>
       ) : (
         <button

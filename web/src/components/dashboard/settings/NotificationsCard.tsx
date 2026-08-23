@@ -45,14 +45,14 @@ const ROWS: PrefRowDef[] = [
   {
     key: "notifyWaitlist",
     label: "Waitlist activity",
-    line: "Saved for later — the bell doesn't watch the waitlist yet. Your choice applies the day it does.",
+    line: "Saved for later - the bell doesn't watch the waitlist yet. Your choice applies the day it does.",
     dormant: true,
   },
 ];
 
 /**
- * §5 — Per-staff bell preferences. Connected to the EXISTING "needs
- * attention" bell — no new notification machinery. Muting a type only
+ * §5 - Per-staff bell preferences. Connected to the EXISTING "needs
+ * attention" bell - no new notification machinery. Muting a type only
  * quiets the bell; every page keeps its own live counts.
  */
 export default function NotificationsCard() {
@@ -65,7 +65,7 @@ export default function NotificationsCard() {
       { ...prefs, [key]: next },
       {
         onSuccess: () => toast("Preference saved ✦"),
-        onError: () => toast("That didn't save — the toggle was put back."),
+        onError: () => toast("That didn't save - the toggle was put back."),
       },
     );
   };
@@ -74,7 +74,7 @@ export default function NotificationsCard() {
     <SettingsCard
       eyebrow="Whispers"
       title="Notification Preferences"
-      intro="What the console bell brings to your attention. Saved to your account — other staff tune their own."
+      intro="What the console bell brings to your attention. Saved to your account - other staff tune their own."
       delay={0.1}
     >
       {prefsQuery.isPending ? (
@@ -116,7 +116,7 @@ export default function NotificationsCard() {
           </div>
           <div className="mt-auto pt-5">
             <p className="border-t border-cream/[0.06] pt-4 font-sans text-[11px] leading-relaxed text-cream/30">
-              Muting only quiets the bell — bookings, responses and reviews keep their live
+              Muting only quiets the bell - bookings, responses and reviews keep their live
               counts on their own pages. Nothing is hidden from the console.
             </p>
           </div>

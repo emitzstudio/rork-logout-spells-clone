@@ -1,5 +1,5 @@
 /**
- * Shared display bits for the M13 review collection console — stars, consent
+ * Shared display bits for the M13 review collection console - stars, consent
  * and state chips, all matching the BookingBadges chip anatomy.
  */
 import { Star } from "lucide-react";
@@ -20,7 +20,7 @@ export function Stars({ rating, className }: { rating: number; className?: strin
 const CHIP_BASE =
   "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.14em]";
 
-/** The traveller's exact stored answer — always visible to staff. */
+/** The traveller's exact stored answer - always visible to staff. */
 export function ConsentChip({ consent, className }: { consent: boolean; className?: string }) {
   return (
     <span

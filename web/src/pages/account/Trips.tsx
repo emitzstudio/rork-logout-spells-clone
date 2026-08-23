@@ -30,13 +30,13 @@ const EMPTY_COPY: Record<TripStatus, { symbol: string; title: string; line: stri
   upcoming: {
     symbol: "☾",
     title: "The horizon is wide open.",
-    line: "Nothing booked yet — which is another way of saying anything is possible.",
+    line: "Nothing booked yet, which is another way of saying anything is possible.",
     cta: true,
   },
   ongoing: {
     symbol: "❋",
     title: "No spell in motion right now.",
-    line: "When you're mid-journey — phone away, world close — it will live here.",
+    line: "When you're mid-journey, phone away, world close, it will live here.",
   },
   completed: {
     symbol: "✦",
@@ -57,7 +57,7 @@ const EMPTY_COPY: Record<TripStatus, { symbol: string; title: string; line: stri
   },
 };
 
-/** My Trips — every booking, grouped the way travellers actually think. */
+/** My Trips - every booking, grouped the way travellers actually think. */
 export default function Trips() {
   const { data } = useAccount();
   const [params, setParams] = useSearchParams();
@@ -91,7 +91,7 @@ export default function Trips() {
         </Link>
       }
     >
-      {/* Waitlists — real queue entries, leave any time while waiting */}
+      {/* Waitlists - real queue entries, leave any time while waiting */}
       <WaitlistStrip />
 
       {/* Tabs */}
@@ -161,7 +161,7 @@ export default function Trips() {
 }
 
 /**
- * The circles a traveller queues for while they're full — own rows only
+ * The circles a traveller queues for while they're full - own rows only
  * (RLS hides everyone else's place). Waiting entries can be left any time;
  * offered seats are held by the team and released only through them.
  */
@@ -217,8 +217,8 @@ function WaitlistStrip() {
       await leaveWaitlist(id);
       await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
     } catch {
-      /* Waiting rows may leave any time — a failure here is a real error (M10). */
-      toast.error("Couldn't leave the waitlist — try again");
+      /* Waiting rows may leave any time - a failure here is a real error (M10). */
+      toast.error("Couldn't leave the waitlist. Try again");
     } finally {
       setBusyId(null);
     }
@@ -249,7 +249,7 @@ function WaitlistStrip() {
                   {dep !== null && dep.label !== "" ? `${dep.label} · ` : ""}
                   {entry.seats} seat{entry.seats > 1 ? "s" : ""} ·{" "}
                   {entry.status === "offered" ? (
-                    <span className="text-gold-light">seats held — check your email</span>
+                    <span className="text-gold-light">seats held · check your email</span>
                   ) : (
                     "in the queue"
                   )}

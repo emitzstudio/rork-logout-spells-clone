@@ -1,5 +1,5 @@
 /**
- * M11.6 — Excel export for form responses.
+ * M11.6 - Excel export for form responses.
  *
  * Columns are derived from the form's CURRENT switched-on questions (in form
  * order), then extended with any answered question the form no longer asks
@@ -9,7 +9,7 @@
  *
  * `buildResponsesTable` is pure and dependency-free (unit-tested); the
  * download step lazy-loads the xlsx writer so the console chunk stays lean.
- * Only submission-facing data is exported — never auth/user ids, RLS state
+ * Only submission-facing data is exported - never auth/user ids, RLS state
  * or internal status fields.
  */
 import type { Cell, Row } from "write-excel-file/browser";
@@ -19,11 +19,11 @@ import { visibleQuestions } from "./forms";
 import type { FormResponse, LogoutForm } from "./forms";
 
 export interface ExportColumn {
-  /** Header cell text — question titles for the dynamic columns. */
+  /** Header cell text - question titles for the dynamic columns. */
   header: string;
   /** Column width in characters (xlsx convention). */
   width: number;
-  /** Wrap cell text — keeps long-form answers readable in Excel. */
+  /** Wrap cell text - keeps long-form answers readable in Excel. */
   wrap: boolean;
 }
 
@@ -45,7 +45,7 @@ const fieldWidth = (meta: FieldMeta): number =>
   meta.wide ? 56 : Math.min(34, Math.max(16, meta.header.length + 6));
 
 /**
- * One submission per row, one form field per column — columns always follow
+ * One submission per row, one form field per column - columns always follow
  * the form definition, so a field added to the form later is exported
  * automatically. Responses keep the order they were given in (newest first).
  */
@@ -54,7 +54,7 @@ export const buildResponsesTable = (
   responses: FormResponse[],
 ): ResponsesTable => {
   /* Dynamic field columns: the questions this form currently asks, in form
-     order — switched-off questions are not active fields… */
+     order - switched-off questions are not active fields… */
   const activeQuestions = visibleQuestions(form.questions);
   const fieldIds: string[] = activeQuestions.map((question) => question.id);
   const fieldMeta = new Map<string, FieldMeta>();
@@ -65,8 +65,8 @@ export const buildResponsesTable = (
     });
   });
 
-  /* …then any answered question the form no longer asks — deleted or
-     switched off — so historical answers always stay in the export. */
+  /* …then any answered question the form no longer asks - deleted or
+     switched off - so historical answers always stay in the export. */
   for (const response of responses) {
     for (const answer of response.answers) {
       if (fieldMeta.has(answer.questionId)) continue;
@@ -121,7 +121,7 @@ export const buildResponsesTable = (
   return { columns, rows };
 };
 
-/** `logout-spells-[form-name]-responses.xlsx` — slug first, title as fallback. */
+/** `logout-spells-[form-name]-responses.xlsx` - slug first, title as fallback. */
 export const responsesExcelFileName = (form: Pick<LogoutForm, "slug" | "title">): string => {
   const base = form.slug !== "" ? form.slug : slugify(form.title);
   return `logout-spells-${base !== "" ? base : "form"}-responses.xlsx`;
@@ -135,7 +135,7 @@ export const downloadResponsesExcel = async (
   responses: FormResponse[],
 ): Promise<void> => {
   const { columns, rows } = buildResponsesTable(form, responses);
-  /* The package exports platform entries only — the browser build saves the file. */
+  /* The package exports platform entries only - the browser build saves the file. */
   const { default: writeXlsxFile } = await import("write-excel-file/browser");
 
   const headerRow: Row = columns.map((column) => ({

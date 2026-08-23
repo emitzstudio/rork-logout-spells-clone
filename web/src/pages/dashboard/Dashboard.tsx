@@ -31,7 +31,7 @@ const STORAGE_KEY = "ls-dash-collapsed";
 /**
  * Founder console shell: fixed collapsible sidebar, sticky topbar and animated
  * content outlet. Entirely separate from the public site shell (no portal,
- * no starfield, no custom cursor) — the foundation future phases plug into.
+ * no starfield, no custom cursor) - the foundation future phases plug into.
  */
 export default function Dashboard() {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -48,7 +48,7 @@ export default function Dashboard() {
     try {
       window.localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
     } catch {
-      /* storage unavailable — collapse state simply won't persist */
+      /* storage unavailable - collapse state simply won't persist */
     }
   }, [collapsed]);
 
@@ -59,47 +59,47 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (location.pathname === "/dashboard/spells/import") {
-      document.title = "Import Spell · Dashboard — Logout Spells";
+      document.title = "Import Spell · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/spells/")) {
-      document.title = "Spell Builder · Dashboard — Logout Spells";
+      document.title = "Spell Builder · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/forms/")) {
-      document.title = "Form Builder · Dashboard — Logout Spells";
+      document.title = "Form Builder · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname === "/dashboard/forms") {
-      document.title = "Forms · Dashboard — Logout Spells";
+      document.title = "Forms · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/responses/")) {
-      document.title = "Form Responses · Dashboard — Logout Spells";
+      document.title = "Form Responses · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/blog/")) {
-      document.title = "Blog Builder · Dashboard — Logout Spells";
+      document.title = "Blog Builder · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname === "/dashboard/blog") {
-      document.title = "Blog · Dashboard — Logout Spells";
+      document.title = "Blog · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/bookings")) {
-      document.title = "Bookings · Dashboard — Logout Spells";
+      document.title = "Bookings · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname === "/dashboard/testimonials") {
-      document.title = "Testimonials · Dashboard — Logout Spells";
+      document.title = "Testimonials · Dashboard | Logout Spells";
       return;
     }
     if (location.pathname.startsWith("/dashboard/reviews")) {
-      document.title = "Reviews · Dashboard — Logout Spells";
+      document.title = "Reviews · Dashboard | Logout Spells";
       return;
     }
     const section = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
-    document.title = `${section ? `${section.label} · ` : ""}Dashboard — Logout Spells`;
+    document.title = `${section ? `${section.label} · ` : ""}Dashboard | Logout Spells`;
   }, [location.pathname]);
 
   return (
@@ -138,22 +138,22 @@ export default function Dashboard() {
                 <Route path="forms" element={<Forms />} />
                 <Route path="forms/new" element={<FormBuilder />} />
                 <Route path="forms/:id/edit" element={<FormBuilder />} />
-                {/* M11.6 — response management: forms overview → per-form list → detail. */}
+                {/* M11.6 - response management: forms overview → per-form list → detail. */}
                 <Route path="responses" element={<Responses />} />
                 <Route path="responses/:formId" element={<FormResponses />} />
                 <Route path="blog" element={<Blogs />} />
                 <Route path="blog/new" element={<BlogBuilder />} />
                 <Route path="blog/:id/edit" element={<BlogBuilder />} />
-                {/* Booking operations — live over the M7A backend. */}
+                {/* Booking operations - live over the M7A backend. */}
                 <Route path="bookings" element={<Bookings tab="bookings" />} />
                 <Route path="bookings/waitlist" element={<Bookings tab="waitlist" />} />
                 <Route path="bookings/requests" element={<Bookings tab="requests" />} />
                 <Route path="bookings/:id" element={<BookingDetail />} />
                 <Route path="testimonials" element={<Testimonials />} />
-                {/* M13 — review collections: one-time links, one per traveller. */}
+                {/* M13 - review collections: one-time links, one per traveller. */}
                 <Route path="reviews" element={<Reviews />} />
                 <Route path="reviews/:id" element={<ReviewCollection />} />
-                {/* M12 — the control room. */}
+                {/* M12 - the control room. */}
                 <Route path="settings" element={<Settings />} />
                 {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings"].includes(section.slug)).map((section) => (
                   <Route key={section.slug} path={section.slug} element={<Section section={section} />} />

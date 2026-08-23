@@ -1,5 +1,5 @@
 /**
- * Spells management model — types, metadata and formatting helpers shared by
+ * Spells management model - types, metadata and formatting helpers shared by
  * the founder console and the public site. Live spell data flows through
  * `@/data/spellStore` (Supabase); no seed spells live here (M9).
  */
@@ -63,7 +63,7 @@ export interface SpellHost {
 export interface ManagedSpell {
   id: string;
   name: string;
-  /** URL identity on the public site — logoutspells.com/live/{slug}. */
+  /** URL identity on the public site - logoutspells.com/live/{slug}. */
   slug: string;
   /** Ritual family, e.g. "The Gathering Spell". */
   type: string;
@@ -187,7 +187,7 @@ export type SortId =
 export const SORT_OPTIONS: { id: SortId; label: string }[] = [
   { id: "newest", label: "Newest first" },
   { id: "oldest", label: "Oldest first" },
-  { id: "az", label: "Name A–Z" },
+  { id: "az", label: "Name A-Z" },
   { id: "price-high", label: "Price · high to low" },
   { id: "price-low", label: "Price · low to high" },
   { id: "seats", label: "Most seats filled" },

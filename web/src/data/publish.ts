@@ -1,5 +1,5 @@
 /**
- * Publish pipeline helpers — turns a builder draft into a spell record the
+ * Publish pipeline helpers - turns a builder draft into a spell record the
  * local CMS can carry and the public website can render.
  * Frontend-only: images become compact data URLs so pages survive a refresh.
  */
@@ -12,7 +12,7 @@ import type { ManagedSpell, ManagedStatus, SpellChange } from "./spells";
 
 /**
  * Every section that must be complete before a spell can go live.
- * "What's Not Included" is deliberately optional — some spells cover everything.
+ * "What's Not Included" is deliberately optional - some spells cover everything.
  */
 export const PUBLISH_REQUIRED_SECTIONS: BuilderSectionId[] = [
   "basic",
@@ -129,21 +129,21 @@ export interface BuildSpellArgs {
   draft: SpellDraft;
   slug: string;
   status: ManagedStatus;
-  /** The record being replaced — stats and history carry over on edits. */
+  /** The record being replaced - stats and history carry over on edits. */
   existing: ManagedSpell | null;
 }
 
 /**
  * Builds the dashboard/website record from a builder draft.
  * New spells start their history; edited spells keep bookings, views and
- * revenue — publishing again replaces the page, never duplicates the spell.
+ * revenue - publishing again replaces the page, never duplicates the spell.
  */
 export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs): ManagedSpell => {
   const now = new Date().toISOString();
   const id = existing?.id ?? `spl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   const category = draft.category ?? "wandering";
   const name = draft.name.trim() !== "" ? draft.name.trim() : "Untitled Spell";
-  /* Card thumbnail — cover by default; with “hero as cover” on, the hero powers the cards too. */
+  /* Card thumbnail - cover by default; with “hero as cover” on, the hero powers the cards too. */
   const cardSource = draft.heroAsCover === true ? draft.hero : draft.cover;
   const cardImage = cardSource?.url ?? draft.hero?.url ?? draft.mobileHero?.url ?? existing?.image ?? "";
   const inclusions = draft.included.map((item) => item.text.trim()).filter((text) => text !== "");
@@ -189,6 +189,6 @@ export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs
   };
 };
 
-/** Base slug for a draft — the founder's slug, else derived from the name. */
+/** Base slug for a draft - the founder's slug, else derived from the name. */
 export const draftSlugBase = (draft: SpellDraft): string =>
   draft.slug.trim() !== "" ? draft.slug.trim() : slugify(draft.name);

@@ -1,15 +1,15 @@
 /**
- * Traveller account service — the backend seam, now real (M6 + M7C).
+ * Traveller account service - the backend seam, now real (M6 + M7C).
  *
  * Every screen talks to this API shape and nothing else. Auth is native
  * Supabase (email + password, confirmation off per decision D1), profile and
  * settings live in the M1 tables, the wishlist in `saved_spells`, the inbox
- * in `notifications` — and, since M7C, bookings, participants and the
+ * in `notifications` - and, since M7C, bookings, participants and the
  * payments ledger come straight from the M7 tables. Since M8, memory albums
  * live in `memories` + `memory_photos` with keepsakes in the PRIVATE
  * `memories` bucket (signed URLs, never persisted; staff have no access).
  * RLS scopes every read to the signed-in traveller; the SERVER derives all
- * money — this file only renders what it stored (paise → rupees, nothing
+ * money - this file only renders what it stored (paise → rupees, nothing
  * computed).
  *
  * Still device-local, deliberately forever: the recently-viewed trail.
@@ -77,28 +77,28 @@ const friendlyAuthError = (message: string, fallbackField: string | null = null)
   if (/invalid login credentials/i.test(message))
     return new AccountError("That email and password don't match our records.", "password");
   if (/already registered|already been registered/i.test(message))
-    return new AccountError("This email already belongs to the circle — log in instead.", "email");
+    return new AccountError("This email already belongs to the circle - log in instead.", "email");
   if (/email not confirmed/i.test(message))
-    return new AccountError("This email is still awaiting its confirmation — check your inbox.", "email");
+    return new AccountError("This email is still awaiting its confirmation - check your inbox.", "email");
   if (/password should be at least|weak_password/i.test(message))
     return new AccountError("Passwords need at least 8 characters.", "password");
   if (/different from the old password/i.test(message))
     return new AccountError("Your new password matches the old one.", "next");
   if (/security purposes|rate limit|too many requests/i.test(message))
-    return new AccountError("Too many attempts — give it a minute, then try again.", null);
-  return new AccountError("Something drifted — try again.", fallbackField);
+    return new AccountError("Too many attempts - give it a minute, then try again.", null);
+  return new AccountError("Something drifted - try again.", fallbackField);
 };
 
 /** OTP send/verify errors → the same warm, specific voice (M11.5). */
 const friendlyOtpError = (message: string): AccountError => {
   if (/expired|invalid/i.test(message))
     return new AccountError(
-      "That code isn't right or has expired — check the newest email, or send a fresh one.",
+      "That code isn't right or has expired - check the newest email, or send a fresh one.",
       "code",
     );
   if (/security purposes|rate limit|too many|after \d+ seconds/i.test(message))
-    return new AccountError("The courier just flew — give it a minute before asking again.", null);
-  return new AccountError("The verification email couldn't fly — try again shortly.", null);
+    return new AccountError("The courier just flew - give it a minute before asking again.", null);
+  return new AccountError("The verification email couldn't fly - try again shortly.", null);
 };
 
 /* ------------------------------ Avatar fallback ----------------------------- */
@@ -118,7 +118,7 @@ export const avatarFallbackFor = (name: string): string => {
 /** Fallback portraits are generated, never uploaded or written to the row. */
 const isFallbackAvatar = (url: string): boolean => url.startsWith("data:image/svg+xml");
 
-/** Session chip straight from the auth user — the bundle refines it later. */
+/** Session chip straight from the auth user - the bundle refines it later. */
 export const travellerSessionFrom = (user: User): TravellerSession => {
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
   const firstName = typeof meta.first_name === "string" ? meta.first_name.trim() : "";
@@ -178,7 +178,7 @@ const mapPrefs = (row: SettingsRow): TravellerPrefs => ({
   showMemories: row.show_memories,
 });
 
-/** Exported for the realtime inbox (M8) — one row → one rendered whisper. */
+/** Exported for the realtime inbox (M8) - one row → one rendered whisper. */
 export const mapNotification = (row: NotificationRow): AppNotification => ({
   id: row.id,
   kind: row.kind,
@@ -186,7 +186,7 @@ export const mapNotification = (row: NotificationRow): AppNotification => ({
   body: row.body,
   time: row.created_at,
   read: row.read_at !== null,
-  /* Only internal paths are navigable — anything else would strand the traveller (M10). */
+  /* Only internal paths are navigable - anything else would strand the traveller (M10). */
   link: row.link !== "" && row.link.startsWith("/") ? row.link : undefined,
 });
 
@@ -205,7 +205,7 @@ const BOOKING_STATUS: Record<BookingRow["status"], TripStatus> = {
   cancelled: "cancelled",
 };
 
-/** The packing ritual seeded when a booking arrives without one — the same
+/** The packing ritual seeded when a booking arrives without one - the same
  *  six items the console's booking pipeline writes. */
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
   { id: "c1", label: "Broken-in walking shoes", done: false },
@@ -400,7 +400,7 @@ const mapPaymentTx = (row: PaymentRow, bookings: TripBooking[]): WalletTransacti
 /**
  * Per-user, this-device-only state: just the recently-viewed trail now.
  * Bookings left this store in M7C; memory albums left in M8. The trail is
- * deliberately never a table — it's a browsing habit, not data to keep.
+ * deliberately never a table - it's a browsing habit, not data to keep.
  */
 interface DeviceStore {
   recentlyViewed: string[];
@@ -408,7 +408,7 @@ interface DeviceStore {
 
 const DEVICE_KEY_PREFIX = "ls-traveller-device-v1:";
 
-/** The retired demo account's keys — cleared once, per decision D2. */
+/** The retired demo account's keys - cleared once, per decision D2. */
 const LEGACY_KEYS = ["ls-traveller-session-v1", "ls-traveller-account-v2"];
 
 const emptyDevice = (): DeviceStore => ({ recentlyViewed: [] });
@@ -441,10 +441,10 @@ const writeDevice = (userId: string, store: DeviceStore): void => {
 /* ---------------------------------- Service --------------------------------- */
 
 class TravellerAccountService {
-  /** In-memory bundle — every mutation returns a fresh copy of it. */
+  /** In-memory bundle - every mutation returns a fresh copy of it. */
   private db: AccountData | null = null;
   private userId: string | null = null;
-  /** photoId → private storage path — for cleanup only; URLs never persist. */
+  /** photoId → private storage path - for cleanup only; URLs never persist. */
   private photoPaths = new Map<string, string>();
 
   constructor() {
@@ -461,7 +461,7 @@ class TravellerAccountService {
 
   private expectLoaded(): { db: AccountData; userId: string } {
     if (!this.db || this.userId === null)
-      throw new AccountError("Your space is still opening — try again in a moment.", null);
+      throw new AccountError("Your space is still opening - try again in a moment.", null);
     return { db: this.db, userId: this.userId };
   }
 
@@ -484,11 +484,11 @@ class TravellerAccountService {
       password,
     });
     if (error || !data.user) {
-      /* M11.5 — an unverified email isn't a wrong password; the AuthPage
+      /* M11.5 - an unverified email isn't a wrong password; the AuthPage
          intercepts this field and re-opens the verification ceremony. */
       if (/email not confirmed/i.test(error?.message ?? ""))
         throw new AccountError(
-          "This email hasn't been verified yet — check your inbox for the verification email.",
+          "This email hasn't been verified yet - check your inbox for the verification email.",
           "email_unverified",
         );
       throw friendlyAuthError(error?.message ?? "", "password");
@@ -517,19 +517,19 @@ class TravellerAccountService {
       },
     });
     if (error) throw friendlyAuthError(error.message, "email");
-    if (!data.user) throw new AccountError("Something drifted — try again.", null);
+    if (!data.user) throw new AccountError("Something drifted - try again.", null);
     // M11.5 (supersedes D1): email confirmations are ON. Supabase obfuscates
-    // an already-registered email as a ghost user with no identities —
+    // an already-registered email as a ghost user with no identities -
     // surface it honestly instead of dead-ending at a verify step.
     if ((data.user.identities?.length ?? 0) === 0)
-      throw new AccountError("This email already belongs to a traveller — log in instead.", "email");
-    // No session yet by design — the traveller proves their inbox first.
+      throw new AccountError("This email already belongs to a traveller - log in instead.", "email");
+    // No session yet by design - the traveller proves their inbox first.
     return data.user;
   }
 
   /**
    * Re-sends the signup verification email (M11.5). Supabase Auth owns the
-   * send — the mail carries a confirmation link and, once the project's
+   * send - the mail carries a confirmation link and, once the project's
    * email template renders the token, the visible 6-digit code too.
    * `type: "signup"` only works for unconfirmed accounts, so this can
    * never mint users or spam verified travellers.
@@ -539,7 +539,7 @@ class TravellerAccountService {
     const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
     if (error) {
       if (/already confirmed/i.test(error.message))
-        throw new AccountError("This email is already verified — log in instead.", null);
+        throw new AccountError("This email is already verified - log in instead.", null);
       throw friendlyOtpError(error.message);
     }
   }
@@ -582,7 +582,7 @@ class TravellerAccountService {
       throw new AccountError("Your new password matches the old one.", "next");
     const { data: userData } = await supabase.auth.getUser();
     const email = userData.user?.email ?? "";
-    if (email === "") throw new AccountError("Your session drifted — log in again.", null);
+    if (email === "") throw new AccountError("Your session drifted - log in again.", null);
     const { error: verifyError } = await supabase.auth.signInWithPassword({
       email,
       password: current,
@@ -624,7 +624,7 @@ class TravellerAccountService {
           .eq("user_id", userId)
           .in("status", ["captured", "refunded"])
           .order("created_at", { ascending: false }),
-        // Albums are own-only for EVERYONE — staff have no read path at all.
+        // Albums are own-only for EVERYONE - staff have no read path at all.
         supabase
           .from("memories")
           .select("*")
@@ -635,7 +635,7 @@ class TravellerAccountService {
           .order("added_at", { ascending: true }),
       ]);
     if (profileRes.error || !profileRes.data)
-      throw new AccountError("Your space couldn't be reached — try again in a moment.", null);
+      throw new AccountError("Your space couldn't be reached - try again in a moment.", null);
 
     // The signup trigger creates the settings row; self-heal if it's ever missing.
     let settings: SettingsRow | null = settingsRes.data ?? null;
@@ -742,8 +742,8 @@ class TravellerAccountService {
       .select()
       .single();
     if (error || !data)
-      throw new AccountError("Your profile couldn't be saved — try again.", null);
-    // Repointed first, removed second — a broken portrait is worse than an orphan.
+      throw new AccountError("Your profile couldn't be saved - try again.", null);
+    // Repointed first, removed second - a broken portrait is worse than an orphan.
     const orphans = [replacedAvatar, replacedCover].filter((u): u is string => u !== null);
     if (orphans.length > 0) void deleteStorageUrls(orphans);
     return this.commit({ ...db, profile: mapProfile(data) });
@@ -768,7 +768,7 @@ class TravellerAccountService {
       .select()
       .single();
     if (error || !data)
-      throw new AccountError("That preference couldn't be saved — try again.", null);
+      throw new AccountError("That preference couldn't be saved - try again.", null);
     return this.commit({ ...db, prefs: mapPrefs(data) });
   }
 
@@ -779,7 +779,7 @@ class TravellerAccountService {
     const kept = db.wishlist.includes(spellId);
     if (kept) {
       const { error } = await supabase.from("saved_spells").delete().eq("spell_id", spellId);
-      if (error) throw new AccountError("That couldn't be removed — try again.", null);
+      if (error) throw new AccountError("That couldn't be removed - try again.", null);
       const wishlist = db.wishlist.filter((id) => id !== spellId);
       return this.commit({
         ...db,
@@ -790,7 +790,7 @@ class TravellerAccountService {
     if (!isUuid(spellId))
       throw new AccountError("This spell can't be kept just yet.", null);
     const { error } = await supabase.from("saved_spells").insert({ spell_id: spellId });
-    if (error) throw new AccountError("Only live spells can be kept — try again.", null);
+    if (error) throw new AccountError("Only live spells can be kept - try again.", null);
     return this.commit({
       ...db,
       wishlist: [spellId, ...db.wishlist],
@@ -808,7 +808,7 @@ class TravellerAccountService {
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("id", id);
-    if (error) throw new AccountError("That couldn't be marked read — try again.", null);
+    if (error) throw new AccountError("That couldn't be marked read - try again.", null);
     return this.commit({
       ...db,
       notifications: db.notifications.map(
@@ -824,7 +824,7 @@ class TravellerAccountService {
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .is("read_at", null);
-    if (error) throw new AccountError("That couldn't be marked read — try again.", null);
+    if (error) throw new AccountError("That couldn't be marked read - try again.", null);
     return this.commit({
       ...db,
       notifications: db.notifications.map((n): AppNotification => ({ ...n, read: true })),
@@ -835,7 +835,7 @@ class TravellerAccountService {
 
   /**
    * The ONLY two traveller-writable booking columns are `checklist` and
-   * `rating` — the server guard rejects everything else, so this helper is
+   * `rating` - the server guard rejects everything else, so this helper is
    * deliberately incapable of sending more.
    */
   private async writeBookingPatch(
@@ -872,7 +872,7 @@ class TravellerAccountService {
     return this.writeBookingPatch(
       bookingId,
       { checklist: next as unknown as Json },
-      "That couldn't be ticked — try again.",
+      "That couldn't be ticked - try again.",
     );
   }
 
@@ -885,22 +885,22 @@ class TravellerAccountService {
     return this.writeBookingPatch(
       bookingId,
       { checklist: DEFAULT_CHECKLIST as unknown as Json },
-      "The ritual couldn't begin — try again.",
+      "The ritual couldn't begin - try again.",
     );
   }
 
-  /** The private post-trip star — the server allows it only once the trip is over. */
+  /** The private post-trip star - the server allows it only once the trip is over. */
   async setTripRating(bookingId: string, rating: number): Promise<AccountData> {
     return this.writeBookingPatch(
       bookingId,
       { rating },
-      "Your star couldn't be kept — the trip may not be over yet.",
+      "Your star couldn't be kept - the trip may not be over yet.",
     );
   }
 
   /* --------------------------- Memories (M8, live) --------------------------- */
 
-  /** The server's album guards speak user-ready copy — pass it through. */
+  /** The server's album guards speak user-ready copy - pass it through. */
   private memoryError(
     error: { code?: string; message?: string } | null,
     fallback: string,
@@ -920,7 +920,7 @@ class TravellerAccountService {
 
   /**
    * The ONLY traveller-writable album columns are title, note, highlights and
-   * the cover — the column grants reject everything else, so this helper is
+   * the cover - the column grants reject everything else, so this helper is
    * deliberately incapable of sending more.
    */
   private async patchMemory(
@@ -981,7 +981,7 @@ class TravellerAccountService {
         throw new AccountError("The album opens once the trip is over.", null);
       if (error?.code === "23505")
         throw new AccountError("This trip already keeps an album.", null);
-      throw this.memoryError(error, "The album couldn't begin — try again.");
+      throw this.memoryError(error, "The album couldn't begin - try again.");
     }
     const memory = mapMemory(data as MemoryRow, [], db.bookings, new Map<string, string>());
     const next = this.commit({ ...db, memories: [memory, ...db.memories] });
@@ -990,7 +990,7 @@ class TravellerAccountService {
 
   /**
    * Upload → row → sign, one keepsake at a time. If a row is refused (quota,
-   * path law), the just-uploaded object is removed — an orphan is a cost
+   * path law), the just-uploaded object is removed - an orphan is a cost
    * nuisance, a dangling row would be a broken image.
    */
   async addMemoryPhotos(
@@ -1003,7 +1003,7 @@ class TravellerAccountService {
     const room = memory.photoLimit - memory.photos.length;
     if (room <= 0)
       throw new AccountError(
-        `This album keeps ${memory.photoLimit} keepsakes — remove one to add another.`,
+        `This album keeps ${memory.photoLimit} keepsakes - remove one to add another.`,
         null,
       );
     const attempted = sources.slice(0, room);
@@ -1014,7 +1014,7 @@ class TravellerAccountService {
       try {
         path = await uploadMemoryPhoto(userId, memoryId, src);
       } catch {
-        failure = new AccountError("That keepsake couldn't be uploaded — try again.", null);
+        failure = new AccountError("That keepsake couldn't be uploaded - try again.", null);
         break;
       }
       const { data, error } = await supabase
@@ -1024,7 +1024,7 @@ class TravellerAccountService {
         .single();
       if (error || !data) {
         void deleteMemoryPaths([path]);
-        failure = this.memoryError(error, "Those photos couldn't be added — try again.");
+        failure = this.memoryError(error, "Those photos couldn't be added - try again.");
         break;
       }
       const signed = await signMemoryPaths([path]);
@@ -1039,7 +1039,7 @@ class TravellerAccountService {
     if (added.length === 0 && failure !== null) throw failure;
     const fresh: TripMemory = { ...memory, photos: [...memory.photos, ...added] };
     fresh.cover = coverFor(fresh, db.bookings);
-    /* Partial batches report honestly — the UI must never over-count (M10). */
+    /* Partial batches report honestly - the UI must never over-count (M10). */
     return {
       data: this.swapMemory(db, fresh),
       added: added.length,
@@ -1047,13 +1047,13 @@ class TravellerAccountService {
     };
   }
 
-  /** Row first, object second — the order never reverses. */
+  /** Row first, object second - the order never reverses. */
   async removeMemoryPhoto(memoryId: string, photoId: string): Promise<AccountData> {
     const { db } = this.expectLoaded();
     const memory = db.memories.find((m) => m.id === memoryId);
     if (!memory) throw new AccountError("This memory has faded.", null);
     const { error } = await supabase.from("memory_photos").delete().eq("id", photoId);
-    if (error) throw new AccountError("That keepsake couldn't be removed — try again.", null);
+    if (error) throw new AccountError("That keepsake couldn't be removed - try again.", null);
     const path = this.photoPaths.get(photoId);
     if (path !== undefined) {
       void deleteMemoryPaths([path]);
@@ -1073,7 +1073,7 @@ class TravellerAccountService {
     return this.patchMemory(
       memoryId,
       { note: note.slice(0, 2000) },
-      "Your note couldn't be kept — try again.",
+      "Your note couldn't be kept - try again.",
     );
   }
 
@@ -1086,7 +1086,7 @@ class TravellerAccountService {
     return this.patchMemory(
       memoryId,
       { highlights: cleaned },
-      "Those little moments couldn't be kept — try again.",
+      "Those little moments couldn't be kept - try again.",
     );
   }
 
@@ -1095,7 +1095,7 @@ class TravellerAccountService {
     return this.patchMemory(
       memoryId,
       { cover_photo_id: photoId },
-      "The cover couldn't be changed — try again.",
+      "The cover couldn't be changed - try again.",
     );
   }
 
@@ -1108,7 +1108,7 @@ class TravellerAccountService {
       .map((p) => this.photoPaths.get(p.id))
       .filter((p): p is string => p !== undefined);
     const { error } = await supabase.from("memories").delete().eq("id", memoryId);
-    if (error) throw new AccountError("This album couldn't be let go — try again.", null);
+    if (error) throw new AccountError("This album couldn't be let go - try again.", null);
     void deleteMemoryPaths(paths);
     for (const p of memory.photos) this.photoPaths.delete(p.id);
     return this.commit({ ...db, memories: db.memories.filter((m) => m.id !== memoryId) });

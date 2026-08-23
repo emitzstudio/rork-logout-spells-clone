@@ -24,7 +24,7 @@ const FILTERS: { id: Filter; label: string; symbol: string }[] = [
 ];
 
 /**
- * The public Live Spells page — rendered straight from the local CMS.
+ * The public Live Spells page - rendered straight from the local CMS.
  * The moment a spell is published (or sold out / unpublished) in the founder
  * console, this page reflects it: same-tab via shared state, other tabs via
  * the store's cross-tab sync.
@@ -120,7 +120,7 @@ export default function Live() {
                     spell.gradient,
                   )}
                 >
-                  {/* Cover photo — the card image set in the Spell Builder. Gradient + symbol remain the no-photo fallback. */}
+                  {/* Cover photo - the card image set in the Spell Builder. Gradient + symbol remain the no-photo fallback. */}
                   {spell.image !== "" && (
                     <>
                       <img
@@ -201,7 +201,7 @@ export default function Live() {
         </div>
       </section>
 
-      {/* After every live circle — the ones that already happened. */}
+      {/* After every live circle - the ones that already happened. */}
       <PreviousSpellsSection eyebrow="Where the live spells lead" className="bg-charcoal-deep/30" />
     </Page>
   );

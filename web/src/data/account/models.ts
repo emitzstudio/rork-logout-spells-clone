@@ -2,7 +2,7 @@
  * Traveller account domain model.
  *
  * Everything the logged-in experience renders is typed here. The live service
- * (service.ts) fills these shapes from Supabase — auth, profiles, bookings,
+ * (service.ts) fills these shapes from Supabase - auth, profiles, bookings,
  * the payments ledger, memories, notifications. Nothing here is seeded or
  * invented: a brand-new traveller renders a genuinely empty account.
  */
@@ -39,9 +39,9 @@ export interface TravellerProfile {
   birthday: string;
   languages: string[];
   dietary: string;
-  /** Little identity chips — "Slow mornings", "Journal keeper"… */
+  /** Little identity chips - "Slow mornings", "Journal keeper"… */
   travelStyles: string[];
-  /** Ritual families the traveller leans toward — drives recommendations. */
+  /** Ritual families the traveller leans toward - drives recommendations. */
   interests: SpellCategoryId[];
   instagram: string;
   emergency: EmergencyContact;
@@ -65,7 +65,7 @@ export type TripStatus = "upcoming" | "ongoing" | "completed" | "cancelled" | "d
 
 export type PaymentState = "paid" | "deposit" | "pending" | "refunded";
 
-/** Ordered booking journey — index in TIMELINE_ORDER marks progress. */
+/** Ordered booking journey - index in TIMELINE_ORDER marks progress. */
 export type TimelineStepId =
   | "booked"
   | "payment"
@@ -111,7 +111,7 @@ export interface SpellSnapshot {
 
 export interface TripBooking {
   id: string;
-  /** Human booking reference — printed on invoices. */
+  /** Human booking reference - printed on invoices. */
   ref: string;
   spell: SpellSnapshot;
   status: TripStatus;
@@ -125,7 +125,7 @@ export interface TripBooking {
   amountPaid: number;
   payment: PaymentState;
   paymentMethod: string;
-  /** Server-set 70% due date — absent when paid in full at booking. */
+  /** Server-set 70% due date - absent when paid in full at booking. */
   balanceDueDate?: string;
   bookedAt: string;
   timelineStep: TimelineStepId;
@@ -149,7 +149,7 @@ export interface TripBooking {
 
 export interface MemoryPhoto {
   id: string;
-  /** A short-lived SIGNED url (M8) — private bucket, never persisted. */
+  /** A short-lived SIGNED url (M8) - private bucket, never persisted. */
   src: string;
   addedAt: string;
   /** True when the traveller added it themselves (vs. a future circle drop). */
@@ -166,7 +166,7 @@ export interface TripMemory {
   cover: string;
   start: string;
   end: string;
-  /** Per-trip storage quota — keeps every album curated (and storage honest). */
+  /** Per-trip storage quota - keeps every album curated (and storage honest). */
   photoLimit: number;
   photos: MemoryPhoto[];
   note: string;
@@ -204,11 +204,11 @@ export interface Referral {
   name: string;
   status: ReferralStatus;
   invitedAt: string;
-  /** Set when status is `booked` — the spell that unlocked the reward. */
+  /** Set when status is `booked` - the spell that unlocked the reward. */
   bookedSpell?: string;
   /** When the reward credit landed in the wallet. */
   rewardedAt?: string;
-  /** Credit earned in INR — only after the friend books. */
+  /** Credit earned in INR - only after the friend books. */
   reward: number;
 }
 
@@ -251,7 +251,7 @@ export interface JourneyState {
   nextTitle: string | null;
   levelFloor: number;
   nextAt: number | null;
-  /** 0–1 progress within the current level band. */
+  /** 0-1 progress within the current level band. */
   progress: number;
   events: XpEvent[];
 }
@@ -262,7 +262,7 @@ export interface TravelBadge {
   line: string;
   symbol: string;
   unlocked: boolean;
-  /** Shown on locked badges — how to earn it. */
+  /** Shown on locked badges - how to earn it. */
   hint: string;
 }
 
@@ -301,16 +301,16 @@ export interface AccountData {
   profile: TravellerProfile;
   prefs: TravellerPrefs;
   bookings: TripBooking[];
-  /** The real payments ledger (M7C) — advances, balances, refunds. */
+  /** The real payments ledger (M7C) - advances, balances, refunds. */
   transactions: WalletTransaction[];
   memories: TripMemory[];
   notifications: AppNotification[];
   referrals: Referral[];
   /** Spell ids saved to the wishlist. */
   wishlist: string[];
-  /** When the newest wishlist save happened — real timestamp, null when empty. */
+  /** When the newest wishlist save happened - real timestamp, null when empty. */
   wishlistLatestAt: string | null;
-  /** Spell slugs recently opened on the public site — newest first. */
+  /** Spell slugs recently opened on the public site - newest first. */
   recentlyViewed: string[];
   friendsMade: number;
 }
