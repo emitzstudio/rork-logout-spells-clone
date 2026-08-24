@@ -25,6 +25,7 @@ import type { ConsoleInquiry, FormResponseRow } from "@/integrations/supabase/ma
 import type { Json } from "@/integrations/supabase/types";
 
 import { slugify } from "./builder";
+import type { Attribution } from "./crm";
 import type { FormResponse, LogoutForm, ResponseAnswer } from "./forms";
 
 export type { ConsoleInquiry } from "@/integrations/supabase/mappers";
@@ -65,6 +66,11 @@ export interface AddResponseInput {
   spellId: string | null;
   spellName: string | null;
   answers: ResponseAnswer[];
+  /**
+   * CRM V1 - source attribution parsed from the share link (null = unknown).
+   * Written once at submission; the database freezes it afterwards.
+   */
+  attribution?: Attribution | null;
 }
 
 interface FormStoreValue {
@@ -215,6 +221,7 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
     async (input: AddResponseInput): Promise<void> => {
       const findValue = (predicate: (answer: ResponseAnswer) => boolean): string =>
         input.answers.find((answer) => predicate(answer) && answer.value.trim() !== "")?.value ?? "";
+      const attribution = input.attribution ?? null;
       const { error } = await supabase.from("form_responses").insert({
         form_id: input.form.id,
         spell_id: input.spellId !== null && isUuid(input.spellId) ? input.spellId : null,
@@ -222,6 +229,9 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
         respondent_name: findValue((a) => a.type === "short_text") || "Anonymous",
         respondent_phone: findValue((a) => a.type === "phone"),
         answers: { version: 1, answers: input.answers } as unknown as Json,
+        ...(attribution !== null
+          ? { source: attribution.source, source_creator: attribution.creator }
+          : {}),
       });
       if (error) {
         console.error("[formStore] Response submit failed:", error.message);

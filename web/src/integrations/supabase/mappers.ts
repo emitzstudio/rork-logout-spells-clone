@@ -7,6 +7,7 @@
  * column whitelists exist in exactly one place.
  */
 import type { BlogBlock, BlogCategoryId } from "@/data/blog";
+import type { CrmLead } from "@/data/crm";
 import type { ManagedBlogPost } from "@/data/blogStore";
 import { CATEGORY_FAMILY, createEmptyDraft } from "@/data/builder";
 import type { DraftImage, SpellDraft } from "@/data/builder";
@@ -389,6 +390,7 @@ export const mapForm = (row: FormRow): LogoutForm => {
     description: row.description,
     style: row.style,
     status: row.status,
+    isEnquiry: row.is_enquiry === true,
     // Forms saved before the visibility toggle lack `enabled` - default to ON
     // so existing forms keep asking exactly what they always asked.
     questions: questions.map((question) => ({ ...question, enabled: question.enabled !== false })),
@@ -400,13 +402,14 @@ export const mapForm = (row: FormRow): LogoutForm => {
   };
 };
 
-/** The 9-column forms write payload (exactly the granted whitelist). */
+/** The 10-column forms write payload (exactly the granted whitelist). */
 export const formWritePayload = (form: LogoutForm): Tables["forms"]["Insert"] => ({
   slug: form.slug,
   title: form.title,
   description: form.description,
   style: form.style,
   status: form.status,
+  is_enquiry: form.isEnquiry,
   questions: { version: 1, questions: form.questions } as unknown as Json,
   success_message: form.successMessage,
   redirect_url: form.redirectUrl,
@@ -426,6 +429,31 @@ export const mapFormResponse = (row: FormResponseRow): FormResponse => {
     submittedAt: row.created_at,
     status: row.status,
     answers: Array.isArray(doc?.answers) ? doc.answers : [],
+  };
+};
+
+/* ----------------------------------- CRM ----------------------------------- */
+
+export type CrmLeadRow = Tables["form_responses"]["Row"];
+
+/** One enquiry-form submission as a CRM lead - answers stay verbatim. */
+export const mapCrmLead = (row: CrmLeadRow): CrmLead => {
+  const doc = row.answers as { version?: number; answers?: ResponseAnswer[] } | null;
+  return {
+    id: row.id,
+    formId: row.form_id,
+    respondentName: row.respondent_name,
+    respondentPhone: row.respondent_phone,
+    submittedAt: row.created_at,
+    answers: Array.isArray(doc?.answers) ? doc.answers : [],
+    source: row.source,
+    sourceCreator: row.source_creator,
+    latestResponse: row.latest_response,
+    leadType: row.lead_type,
+    handledBy: row.handled_by,
+    handledByName: row.handled_by_name,
+    callDate: row.call_date,
+    crmTouchedAt: row.crm_touched_at,
   };
 };
 

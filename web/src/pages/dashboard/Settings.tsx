@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 
 import ContactCard from "@/components/dashboard/settings/ContactCard";
+import CrmAccessCard from "@/components/dashboard/settings/CrmAccessCard";
 import FounderCard from "@/components/dashboard/settings/FounderCard";
 import LaunchCard from "@/components/dashboard/settings/LaunchCard";
 import NotificationsCard from "@/components/dashboard/settings/NotificationsCard";
@@ -77,6 +78,8 @@ export default function Settings() {
           <FounderCard />
           <NotificationsCard />
           <LaunchCard settings={query.data} />
+          {/* CRM V1 - admin-only; hides itself for everyone else. */}
+          <CrmAccessCard />
         </div>
       )}
     </motion.div>

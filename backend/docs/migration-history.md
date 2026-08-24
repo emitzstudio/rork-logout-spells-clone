@@ -1671,6 +1671,85 @@ now dash-free everywhere the site reads.
 
 ---
 
+## CRM V1 — enquiry forms & the sales sheet — 0029 + 0030 (2026-08-24)
+
+- **0029_crm_v1.sql** ("crm-v1-enquiry-forms") — the whole CRM lives ON the
+  existing forms pipeline; no second response system:
+  · `app_role` + **'sales'** — CRM-only users; never passes `is_staff()`, so
+    every existing staff policy and the founder console stay closed to them.
+  · Enums `crm_source` (logout_spells · creator) and `crm_lead_type`
+    (bingo/hot/warm/mild/inactive/dead/**dead_budget** — budget-dead stays a
+    distinct value so repriced trips can win those prospects back).
+  · `forms.is_enquiry` — the Form Builder toggle; normal forms untouched.
+  · 8 CRM columns on `form_responses` (source, source_creator,
+    latest_response, lead_type, handled_by, handled_by_name, call_date,
+    crm_touched_at) + pairing CHECK (creator slug exactly when source =
+    creator) + `(form_id, lead_type)` index.
+  · `is_crm()` (admin | staff | sales; `role::text` comparison because the
+    'sales' enum value is added in the same transaction).
+  · 3 additive policies: sales SELECT enquiry forms · SELECT enquiry
+    responses · UPDATE enquiry responses. Travellers/anon read nothing.
+  · Grants: anon INSERT gains exactly (source, source_creator);
+    authenticated UPDATE is exactly (status, latest_response, lead_type,
+    handled_by). handled_by_name / call_date / crm_touched_at hold ZERO
+    client grants — trigger-owned.
+  · `crm_response_guard()` BEFORE UPDATE — attribution frozen forever;
+    checking Handled stamps `auth.uid()` + profile-name snapshot + IST
+    call_date no matter what uuid the client sent; FIRST handler wins;
+    unchecking clears the stamp; `crm_touched_at` moves only when
+    lead_type moves (the deterministic "parked at the bottom" spine).
+  · `form_responses` joined the `supabase_realtime` publication (0009
+    pattern) — postgres_changes is RLS-filtered per subscriber.
+  · §10 self-asserts passed: columns, policies, trigger, EXACT grant
+    lists, publication membership.
+- **0030_crm_v1_verify.sql** ("crm-v1-verify-and-erase") — role-switched
+  behavior probes (0016 pattern), all passed, then erased in-transaction:
+  · ANON: both tracked links insert with correct attribution; a forged
+    client id → 42501 (protected by omission — a first probe draft hit
+    this live and it is now asserted explicitly); creator-without-slug and
+    malformed slug → check_violation; reads back ZERO rows; no UPDATE
+    right at all (42501).
+  · Random traveller: `is_crm()` false, sees 0 enquiry rows, updates touch
+    0 rows.
+  · Founder (admin ⊂ crm): sees both probes; lead_type=hot stamps
+    crm_touched_at; direct `source` update → 42501; handled_by sent as a
+    bogus uuid → stamped as the FOUNDER + name + today (IST); a second
+    claim cannot reassign; a note-only update moves neither stamp nor
+    spine; unchecking clears everything; dead_budget + creator attribution
+    round-trips intact.
+  · Probe form + responses erased; forms/responses baselines asserted
+    unchanged — net-zero data change, no mock rows anywhere.
+- Live anon REST probes after applying: form_responses reads `[]` (even
+  `latest_response` alone), PATCH on latest_response/lead_type → 42501,
+  user_roles reads `[]`, published forms still readable with the new
+  `is_enquiry` flag.
+- Client (web console): Form Builder toggle + two tracked links (Logout
+  Spells · per-creator, minted in Share/Builder); public form passes
+  `?source=…` through (tampered links degrade to null — honestly Unknown,
+  never fabricated); CRM overview (real counts per enquiry form) + trip
+  sheet (Inquiries/Confirmed/Dead tabs, spreadsheet table with dynamic
+  question columns, inline note editor, lead-type select, guarded Handled
+  checkbox `.is(handled_by, null)`, lead-type/source/creator filters — NO
+  handled filter by design); realtime channels invalidate on every
+  postgres_changes event (M8 notifications pattern); Excel export mirrors
+  the visible sheet (tab + filters + order); sales-only users get a
+  dedicated CRM shell (no sidebar/founder surfaces) via the two-tier gate
+  (`is_staff` + `is_crm`); admins grant/revoke the sales role from
+  Settings → CRM Access. Tests 82/82 (29 new CRM contract tests), tsc /
+  lint / build green.
+- Honest limit: the two-browser live socket fanout cannot be exercised
+  from this sandbox; the client uses the production-proven notifications
+  realtime pattern and the publication + RLS sides are asserted. First
+  real two-laptop session will confirm visually.
+
+### Baseline after 0030
+
+Row counts identical to 0028 (probes net-zero). Schema grew by: 1 enum
+value, 2 enums, 1 forms column, 8 form_responses columns, 1 CHECK, 1
+index, `is_crm()`, 3 policies, 1 trigger, realtime membership.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

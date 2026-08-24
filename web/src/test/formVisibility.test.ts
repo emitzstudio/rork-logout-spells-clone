@@ -72,6 +72,7 @@ describe("mapForm backward compatibility", () => {
       created_by: null,
       description: "",
       id: "11111111-1111-4111-a111-111111111111",
+      is_enquiry: false,
       questions: { version: 1, questions: [legacyQuestion, switchedOff] } as unknown as Json,
       redirect_url: "",
       slug: "legacy-form",

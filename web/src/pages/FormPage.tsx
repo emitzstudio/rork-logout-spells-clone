@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { ArrowRight, CircleDashed } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
 import LoadError from "@/components/site/LoadError";
+import { parseAttribution } from "@/data/crm";
 import { useFormStore } from "@/data/formStore";
 import { useSiteSettings } from "@/data/siteSettingsStore";
 
@@ -19,6 +20,9 @@ export default function FormPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
+  /* CRM V1 - the share link carries the source; a tampered link degrades to
+     null (honestly unknown) and never blocks the submission. */
+  const attribution = useMemo(() => parseAttribution(searchParams), [searchParams]);
   const { getFormBySlug, addResponse, ready, failed, retry } = useFormStore();
   /* M12 - the public-forms switch. Fail-open: forms stay on unless the
      founder explicitly turned them off. */
@@ -101,7 +105,8 @@ export default function FormPage() {
                 onSubmit={
                   isPreview
                     ? undefined
-                    : (answers) => addResponse({ form, spellId: null, spellName: null, answers })
+                    : (answers) =>
+                        addResponse({ form, spellId: null, spellName: null, answers, attribution })
                 }
               />
             </div>

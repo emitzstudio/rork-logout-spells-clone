@@ -78,6 +78,8 @@ export interface LogoutForm {
   description: string;
   style: FormStyle;
   status: FormStatus;
+  /** CRM V1 - enquiry forms feed the sales CRM; normal forms are untouched. */
+  isEnquiry: boolean;
   questions: FormQuestion[];
   successMessage: string;
   /** Optional - offered as a "Continue" step after submission. */
@@ -308,6 +310,7 @@ export const createEmptyForm = (): LogoutForm => {
     description: "",
     style: "conversational",
     status: "draft",
+    isEnquiry: false,
     questions: createDefaultQuestions(),
     successMessage: "Your words have reached us - we'll write back within a day ✦",
     redirectUrl: "",

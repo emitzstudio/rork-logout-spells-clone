@@ -2,16 +2,19 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
+import CrmConsole from "@/components/dashboard/crm/CrmConsole";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
 import { DASH_SECTIONS } from "@/data/dashboard";
-import { StaffGate } from "@/integrations/supabase/staffAuth";
+import { StaffGate, useStaffAuth } from "@/integrations/supabase/staffAuth";
 import { cn } from "@/lib/utils";
 
 import BlogBuilder from "./BlogBuilder";
 import BookingDetail from "./BookingDetail";
 import Bookings from "./Bookings";
 import Blogs from "./Blogs";
+import Crm from "./Crm";
+import CrmTrip from "./CrmTrip";
 import FormBuilder from "./FormBuilder";
 import FormResponses from "./FormResponses";
 import Forms from "./Forms";
@@ -29,11 +32,32 @@ import Testimonials from "./Testimonials";
 const STORAGE_KEY = "ls-dash-collapsed";
 
 /**
+ * The console entry: one gate, two shells. Staff (admin/staff roles) get the
+ * full founder console; sales users pass the same gate but render the
+ * CRM-only shell - the CRM V1 permission boundary. RLS enforces the same
+ * split server-side regardless of what renders here.
+ */
+export default function Dashboard() {
+  return (
+    <StaffGate>
+      <GatedConsole />
+    </StaffGate>
+  );
+}
+
+function GatedConsole() {
+  const access = useStaffAuth();
+  /* Sales-only users: the CRM is their whole console. */
+  if (access !== null && !access.isStaff) return <CrmConsole />;
+  return <FounderConsole />;
+}
+
+/**
  * Founder console shell: fixed collapsible sidebar, sticky topbar and animated
  * content outlet. Entirely separate from the public site shell (no portal,
  * no starfield, no custom cursor) - the foundation future phases plug into.
  */
-export default function Dashboard() {
+function FounderConsole() {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem(STORAGE_KEY) === "1";
@@ -58,6 +82,10 @@ export default function Dashboard() {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (location.pathname.startsWith("/dashboard/crm")) {
+      // CRM pages own their titles (the sheet name changes per trip).
+      return;
+    }
     if (location.pathname === "/dashboard/spells/import") {
       document.title = "Import Spell · Dashboard | Logout Spells";
       return;
@@ -103,7 +131,6 @@ export default function Dashboard() {
   }, [location.pathname]);
 
   return (
-    <StaffGate>
     <div className="min-h-screen bg-charcoal text-cream">
       {/* Quiet ambience: faint dot grid + two golden glows (no heavy 3D here) */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
@@ -141,6 +168,9 @@ export default function Dashboard() {
                 {/* M11.6 - response management: forms overview → per-form list → detail. */}
                 <Route path="responses" element={<Responses />} />
                 <Route path="responses/:formId" element={<FormResponses />} />
+                {/* CRM V1 - one live sheet per enquiry form. */}
+                <Route path="crm" element={<Crm />} />
+                <Route path="crm/:formId" element={<CrmTrip />} />
                 <Route path="blog" element={<Blogs />} />
                 <Route path="blog/new" element={<BlogBuilder />} />
                 <Route path="blog/:id/edit" element={<BlogBuilder />} />
@@ -165,6 +195,5 @@ export default function Dashboard() {
         </main>
       </div>
     </div>
-    </StaffGate>
   );
 }

@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AUTO-GENERATED - DO NOT EDIT
+// AUTO-GENERATED — DO NOT EDIT
 // Run migrations to regenerate.
 
 export type Json =
@@ -655,11 +655,19 @@ export type Database = {
       form_responses: {
         Row: {
           answers: Json
+          call_date: string | null
           created_at: string
+          crm_touched_at: string | null
           form_id: string
+          handled_by: string | null
+          handled_by_name: string
           id: string
+          latest_response: string
+          lead_type: Database["public"]["Enums"]["crm_lead_type"] | null
           respondent_name: string
           respondent_phone: string
+          source: Database["public"]["Enums"]["crm_source"] | null
+          source_creator: string
           spell_id: string | null
           spell_name: string
           status: Database["public"]["Enums"]["response_status"]
@@ -668,11 +676,19 @@ export type Database = {
         }
         Insert: {
           answers?: Json
+          call_date?: string | null
           created_at?: string
+          crm_touched_at?: string | null
           form_id: string
+          handled_by?: string | null
+          handled_by_name?: string
           id?: string
+          latest_response?: string
+          lead_type?: Database["public"]["Enums"]["crm_lead_type"] | null
           respondent_name?: string
           respondent_phone?: string
+          source?: Database["public"]["Enums"]["crm_source"] | null
+          source_creator?: string
           spell_id?: string | null
           spell_name?: string
           status?: Database["public"]["Enums"]["response_status"]
@@ -681,11 +697,19 @@ export type Database = {
         }
         Update: {
           answers?: Json
+          call_date?: string | null
           created_at?: string
+          crm_touched_at?: string | null
           form_id?: string
+          handled_by?: string | null
+          handled_by_name?: string
           id?: string
+          latest_response?: string
+          lead_type?: Database["public"]["Enums"]["crm_lead_type"] | null
           respondent_name?: string
           respondent_phone?: string
+          source?: Database["public"]["Enums"]["crm_source"] | null
+          source_creator?: string
           spell_id?: string | null
           spell_name?: string
           status?: Database["public"]["Enums"]["response_status"]
@@ -698,6 +722,13 @@ export type Database = {
             columns: ["form_id"]
             isOneToOne: false
             referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_responses_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -722,6 +753,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
+          is_enquiry: boolean
           questions: Json
           redirect_url: string
           slug: string
@@ -737,6 +769,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          is_enquiry?: boolean
           questions?: Json
           redirect_url?: string
           slug: string
@@ -752,6 +785,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          is_enquiry?: boolean
           questions?: Json
           redirect_url?: string
           slug?: string
@@ -2238,6 +2272,7 @@ export type Database = {
         Returns: boolean
       }
       increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
+      is_crm: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
       record_manual_payment: {
@@ -2297,7 +2332,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff"
+      app_role: "admin" | "staff" | "sales"
       blog_category:
         | "travel-guides"
         | "community-stories"
@@ -2330,6 +2365,15 @@ export type Database = {
         | "rejected"
         | "completed"
         | "withdrawn"
+      crm_lead_type:
+        | "bingo"
+        | "hot"
+        | "warm"
+        | "mild"
+        | "inactive"
+        | "dead"
+        | "dead_budget"
+      crm_source: "logout_spells" | "creator"
       departure_status: "scheduled" | "closed" | "cancelled"
       event_actor: "traveller" | "staff" | "system" | "provider"
       form_status: "draft" | "published"
@@ -2511,7 +2555,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      app_role: ["admin", "staff", "sales"],
       blog_category: [
         "travel-guides",
         "community-stories",
@@ -2548,6 +2592,16 @@ export const Constants = {
         "completed",
         "withdrawn",
       ],
+      crm_lead_type: [
+        "bingo",
+        "hot",
+        "warm",
+        "mild",
+        "inactive",
+        "dead",
+        "dead_budget",
+      ],
+      crm_source: ["logout_spells", "creator"],
       departure_status: ["scheduled", "closed", "cancelled"],
       event_actor: ["traveller", "staff", "system", "provider"],
       form_status: ["draft", "published"],

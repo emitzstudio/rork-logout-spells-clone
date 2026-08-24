@@ -17,6 +17,7 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 
 import { TextAreaField, TextField } from "@/components/dashboard/builder/Fields";
 import AddQuestionDialog from "@/components/dashboard/forms/AddQuestionDialog";
+import EnquiryShareLinks from "@/components/dashboard/forms/EnquiryShareLinks";
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
 import QuestionCard from "@/components/dashboard/forms/QuestionCard";
 import { SpellStatusBadge } from "@/components/dashboard/spells/SpellBadges";
@@ -450,7 +451,7 @@ export default function FormBuilder() {
             open={open.settings}
             onToggle={() => toggle("settings")}
             complete
-            summary={`“${form.submitLabel.trim() !== "" ? form.submitLabel : "Submit"}” button · success note set`}
+            summary={`“${form.submitLabel.trim() !== "" ? form.submitLabel : "Submit"}” button · ${form.isEnquiry ? "CRM enquiry form" : "success note set"}`}
           >
             <div className="space-y-6">
               <TextField
@@ -480,12 +481,46 @@ export default function FormBuilder() {
                 mono
               />
 
+              {/* Enquiry form toggle (CRM V1) */}
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-cream/[0.09] bg-cream/[0.02] p-4">
+                <div className="min-w-0">
+                  <span className="block font-sans text-[12.5px] font-medium text-cream">
+                    This is an enquiry form
+                  </span>
+                  <p className="mt-1 font-sans text-[11.5px] leading-snug text-cream/45">
+                    Feeds the Sales CRM: two tracked share links, and every submission
+                    becomes a lead the team works in real time. Normal forms are untouched.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={form.isEnquiry}
+                  aria-label="Enquiry form"
+                  onClick={() => patch({ isEnquiry: !form.isEnquiry })}
+                  className={cn(
+                    "relative h-6 w-11 shrink-0 rounded-full border transition-colors duration-200",
+                    form.isEnquiry ? "border-gold/60 bg-gold/80" : "border-cream/20 bg-cream/[0.06]",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full transition-all duration-200",
+                      form.isEnquiry ? "left-[22px] bg-charcoal-deep" : "left-1 bg-cream/60",
+                    )}
+                  />
+                </button>
+              </div>
+
               {/* Share link */}
               <div>
                 <span className="mb-2 block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-cream/50">
                   Shareable link
                 </span>
                 {form.slug !== "" ? (
+                  form.isEnquiry ? (
+                    <EnquiryShareLinks slug={form.slug} />
+                  ) : (
                   <div className="flex items-center gap-2.5 rounded-lg border border-cream/10 bg-charcoal-deep/50 py-2.5 pl-3.5 pr-2">
                     <Link2 className="h-3.5 w-3.5 shrink-0 text-gold/60" />
                     <span className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-cream/70">
@@ -500,6 +535,7 @@ export default function FormBuilder() {
                       {linkCopied ? "Copied" : "Copy"}
                     </button>
                   </div>
+                  )
                 ) : (
                   <p className="rounded-lg border border-dashed border-cream/12 px-4 py-3 font-sans text-[12px] italic text-cream/35">
                     The public link appears after the first save - it follows the form title.

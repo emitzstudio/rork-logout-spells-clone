@@ -24,6 +24,10 @@ import { supabase } from "./client";
 interface StaffAuthValue {
   email: string;
   signOut: () => Promise<void>;
+  /** Full console access (admin or staff role). */
+  isStaff: boolean;
+  /** CRM access (admin, staff or sales role) - sales users get ONLY the CRM. */
+  isCrm: boolean;
 }
 
 const StaffAuthContext = createContext<StaffAuthValue | null>(null);
@@ -212,6 +216,18 @@ export function StaffGate({ children }: { children: ReactNode }) {
     enabled: userId !== null,
     staleTime: 5 * 60_000,
   });
+  /* CRM V1 - the second ward: sales users pass this one only, and the
+     console then renders the CRM-only shell instead of the founder console. */
+  const crmQuery = useQuery({
+    queryKey: ["is-crm", userId ?? "anon"],
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase.rpc("is_crm");
+      if (error) throw error;
+      return data === true;
+    },
+    enabled: userId !== null,
+    staleTime: 5 * 60_000,
+  });
 
   const value = useMemo<StaffAuthValue>(
     () => ({
@@ -219,15 +235,17 @@ export function StaffGate({ children }: { children: ReactNode }) {
       signOut: async () => {
         await supabase.auth.signOut();
       },
+      isStaff: staffQuery.data === true,
+      isCrm: crmQuery.data === true,
     }),
-    [session?.user.email],
+    [session?.user.email, staffQuery.data, crmQuery.data],
   );
 
   if (!sessionReady) return <ConsoleWait label="Opening console" />;
   if (session === null) return <StaffSignIn />;
-  if (staffQuery.isPending) return <ConsoleWait label="Checking the wards" />;
+  if (staffQuery.isPending || crmQuery.isPending) return <ConsoleWait label="Checking the wards" />;
   /* A FAILED ward check is not "not staff" - real staff get a retry, never a wall (M10). */
-  if (staffQuery.isError) {
+  if (staffQuery.isError || crmQuery.isError) {
     return (
       <div className="grid min-h-screen place-items-center bg-charcoal px-5">
         <div role="alert" className="max-w-[400px] text-center">
@@ -241,7 +259,10 @@ export function StaffGate({ children }: { children: ReactNode }) {
           <div className="mt-6 flex items-center justify-center gap-2.5">
             <button
               type="button"
-              onClick={() => void staffQuery.refetch()}
+              onClick={() => {
+                void staffQuery.refetch();
+                void crmQuery.refetch();
+              }}
               className="h-10 rounded-lg bg-gold px-5 font-sans text-[12px] font-semibold text-charcoal-deep transition-all hover:bg-gold-light active:scale-[0.98]"
             >
               Try again
@@ -258,7 +279,7 @@ export function StaffGate({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (staffQuery.data !== true) {
+  if (staffQuery.data !== true && crmQuery.data !== true) {
     return <NotStaff email={value.email} onSignOut={() => void value.signOut()} />;
   }
   return <StaffAuthContext.Provider value={value}>{children}</StaffAuthContext.Provider>;

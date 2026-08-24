@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Check, Copy, ExternalLink, QrCode, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import EnquiryShareLinks from "@/components/dashboard/forms/EnquiryShareLinks";
+import { logoutSpellsLink } from "@/data/crm";
 import type { LogoutForm } from "@/data/forms";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -14,7 +16,11 @@ interface ShareFormDialogProps {
 /** Share sheet for a form - copy the public link, open it, QR on the way. */
 export default function ShareFormDialog({ form, onClose }: ShareFormDialogProps) {
   const [copied, setCopied] = useState<boolean>(false);
-  const url = `${window.location.origin}/forms/${form.slug}`;
+  /* Enquiry forms share the TRACKED Logout Spells link by default - the bare
+     URL would land in the CRM as source Unknown. */
+  const url = form.isEnquiry
+    ? logoutSpellsLink(window.location.origin, form.slug)
+    : `${window.location.origin}/forms/${form.slug}`;
   const isLive = form.status === "published";
 
   useEffect(() => {
@@ -72,22 +78,30 @@ export default function ShareFormDialog({ form, onClose }: ShareFormDialogProps)
           {form.title.trim() !== "" ? form.title : "Untitled Form"}
         </h3>
         <p className="mt-1.5 font-sans text-[12.5px] text-cream/45">
-          Anyone with this link can fill the form - no spell required.
+          {form.isEnquiry
+            ? "Two tracked links, one form. Every submission lands in the CRM with its source attached."
+            : "Anyone with this link can fill the form - no spell required."}
         </p>
 
-        {/* Link */}
-        <div className="mt-5 flex items-center gap-2 rounded-xl border border-cream/10 bg-charcoal-deep/60 py-2.5 pl-4 pr-2">
-          <span
-            aria-hidden
-            className={`relative flex h-2 w-2 shrink-0 ${isLive ? "" : "opacity-40"}`}
-          >
-            {isLive && <span className="absolute inset-0 animate-ping rounded-full bg-gold/50" />}
-            <span className={`relative h-2 w-2 rounded-full ${isLive ? "bg-gold" : "bg-cream/30"}`} />
-          </span>
-          <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-cream/75">
-            logoutspells.com/forms/{form.slug}
-          </span>
-        </div>
+        {/* Link(s) */}
+        {form.isEnquiry ? (
+          <div className="mt-5">
+            <EnquiryShareLinks slug={form.slug} />
+          </div>
+        ) : (
+          <div className="mt-5 flex items-center gap-2 rounded-xl border border-cream/10 bg-charcoal-deep/60 py-2.5 pl-4 pr-2">
+            <span
+              aria-hidden
+              className={`relative flex h-2 w-2 shrink-0 ${isLive ? "" : "opacity-40"}`}
+            >
+              {isLive && <span className="absolute inset-0 animate-ping rounded-full bg-gold/50" />}
+              <span className={`relative h-2 w-2 rounded-full ${isLive ? "bg-gold" : "bg-cream/30"}`} />
+            </span>
+            <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-cream/75">
+              logoutspells.com/forms/{form.slug}
+            </span>
+          </div>
+        )}
 
         {!isLive && (
           <p className="mt-2.5 flex items-start gap-1.5 font-sans text-[11.5px] leading-snug text-amber-300/80">
@@ -99,7 +113,7 @@ export default function ShareFormDialog({ form, onClose }: ShareFormDialogProps)
         <div className="mt-5 grid grid-cols-2 gap-2.5">
           <button type="button" onClick={copy} className="btn-gold !px-4 !py-3 !text-[12.5px]">
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copied ✦" : "Copy Link"}
+            {copied ? "Copied ✦" : form.isEnquiry ? "Copy LS Link" : "Copy Link"}
           </button>
           <a
             href={url}
