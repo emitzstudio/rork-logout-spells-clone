@@ -1,0 +1,129 @@
+{
+  "name": "The Bir Spell",
+  "hook": "Monasteries, tea gardens and a potter's wheel, all inside one long weekend.",
+  "location": "Bir, Himachal Pradesh",
+  "days": 5,
+  "nights": 4,
+  "category": "wandering",
+  "quickInfo": {
+    "duration": "5 days · 2 nights in Bir, 2 on the road",
+    "location": "Bir, Himachal Pradesh",
+    "highlight": "Pottery in the artist village of Andretta",
+    "vibe": "Prayer flags, cafe corners & pyjama parties",
+    "perfectFor": "Solo travellers & one-leave escape artists"
+  },
+  "about": {
+    "heading": "A long weekend, cast properly",
+    "body": "Board a bus in Delhi on Thursday night and wake up where the Dhauladhar range begins. **Bir does not rush anyone.**\n\nOne day belongs to the town: an ice-breaking circle, the quiet of Chokling Monastery and an unhurried cafe trail. One day belongs to your hands: morning light at Wah Tea Estate, an afternoon at the potter's wheel in Andretta and a pyjama party waiting back at the property. Then a slow Sunday: the market, the ancient Baijnath Temple and the night road home.\n\n- Two nights in Bir, two on the overnight bus\n- Expected back in Delhi by 6:00 AM on Monday\n- The plan flexes with weather, traffic and operational conditions",
+    "quote": "Take Friday off. The mountains handle the rest.",
+    "layout": "right"
+  },
+  "itinerary": [
+    {
+      "title": "The Night Bus North",
+      "location": "Delhi to Bir",
+      "subtitle": "The city fades behind us",
+      "description": "Meet your circle at the pickup point and claim a window seat. We roll out of Delhi between **8:30 and 9:00 PM** and let the highway do its quiet work: snacks, playlists, first conversations, then sleep as the plains turn into hills.",
+      "highlights": [
+        { "emoji": "🌙", "text": "Pickup from Delhi between 8:30 and 9:00 PM" },
+        { "emoji": "✨", "text": "First hellos on the overnight drive" }
+      ]
+    },
+    {
+      "title": "Waking Up in Bir",
+      "location": "Bir",
+      "subtitle": "Strangers become a circle",
+      "description": "Arrive with the morning light and settle in slowly. An **ice-breaking session** turns co-passengers into a circle, Chokling Monastery slows everyone down, and the afternoon disappears into Bir's cafe trail. Dinner is together, back at the property.",
+      "highlights": [
+        { "emoji": "🤝", "text": "Ice-breaking circle" },
+        { "emoji": "🪔", "text": "The quiet of Chokling Monastery" },
+        { "emoji": "☕", "text": "Cafe hopping through Bir" }
+      ]
+    },
+    {
+      "title": "Tea Gardens & the Potter's Wheel",
+      "location": "Wah Estate & Andretta",
+      "subtitle": "A day made by hand",
+      "description": "A morning walk through the bushes of **Wah Tea Estate**, then on to Andretta, the little artist village, for your turn at the potter's wheel. Lunch at Her Cafe, and the night belongs to the **pyjama party** at the property.",
+      "highlights": [
+        { "emoji": "🍵", "text": "Walking Wah Tea Estate" },
+        { "emoji": "🎨", "text": "Pottery session in Andretta" },
+        { "emoji": "🎉", "text": "Pyjama party at the property" }
+      ]
+    },
+    {
+      "title": "Baijnath & the Road Home",
+      "location": "Bir & Baijnath",
+      "subtitle": "One last slow morning",
+      "description": "The morning is yours: drift through the market and pick up what the mountains should send home with you. We visit the ancient **Baijnath Temple**, then board for the overnight drive back to Delhi.",
+      "highlights": [
+        { "emoji": "🌿", "text": "Free morning in the market" },
+        { "emoji": "🛕", "text": "Baijnath Temple" },
+        { "emoji": "🌙", "text": "Overnight return journey" }
+      ]
+    },
+    {
+      "title": "Back Before the City Wakes",
+      "location": "Delhi",
+      "subtitle": "The spell holds",
+      "description": "Expected drop in Delhi around **6:00 AM**, early enough for breakfast, a shower and your nine o'clock like nothing happened. Except everything did.",
+      "highlights": [
+        { "emoji": "🌅", "text": "Expected drop in Delhi around 6:00 AM" }
+      ]
+    }
+  ],
+  "audience": [
+    {
+      "title": "The One-Leave Escapist",
+      "description": "You get exactly one Friday off. Spend it on monasteries, tea gardens and clay instead of laundry."
+    },
+    {
+      "title": "The Solo First-Timer",
+      "description": "You arrive alone. The ice-breaking circle makes sure you do not stay that way past breakfast."
+    },
+    {
+      "title": "The Slow-Craft Romantic",
+      "description": "Potter's wheels, tea bushes and cafe corners: your kind of adrenaline."
+    }
+  ],
+  "tripHighlights": [
+    {
+      "emoji": "🎨",
+      "title": "A potter's wheel in Andretta",
+      "description": "An afternoon of clay in Himachal's little artist village.",
+      "accent": true
+    },
+    {
+      "emoji": "🍵",
+      "title": "Wah Tea Estate",
+      "description": "A working tea garden at the foot of the Dhauladhars, walked slowly.",
+      "accent": false
+    },
+    {
+      "emoji": "🪔",
+      "title": "Chokling & the cafe trail",
+      "description": "Monastery quiet in the morning, Bir's famous cafes after.",
+      "accent": false
+    },
+    {
+      "emoji": "🎉",
+      "title": "The pyjama party",
+      "description": "Saturday night, mountain edition: comfortable clothes, good people, zero agenda.",
+      "accent": false
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How much leave do I need?",
+      "answer": "One day. Pickup is on Thursday between 8:30 and 9:00 PM, and the expected drop back in Delhi is around 6:00 AM on Monday, before the workday begins."
+    },
+    {
+      "question": "Where exactly do we board in Delhi?",
+      "answer": "Pickup is from Delhi between 8:30 and 9:00 PM on Thursday. The exact boarding point is shared once your seat is confirmed."
+    },
+    {
+      "question": "Can the itinerary change?",
+      "answer": "The itinerary is subject to weather, traffic and operational conditions. Sightseeing may be adjusted to ensure the best travel experience."
+    }
+  ]
+}
