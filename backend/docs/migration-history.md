@@ -1882,6 +1882,45 @@ bir_seed_window_insert policy gone.
 
 ---
 
+## 0036 — the Journal opens with four letters (2026-08-27)
+
+- **0036_launch_journal.sql** ("launch-journal") — data-only: four editorial
+  launch posts written in the team's voice per the founder's brief (warm,
+  human, no em/en dashes anywhere, no invented people or events, each one
+  signed exactly "-by Logout Spells Team"). Author snapshot on all four:
+  Logout Spells Team / Editorial — no fake profiles, monogram "L" fallback.
+  · `a6bf6e21…` **why-we-started-logging-out** — founder-letters, FEATURED
+    (the Journal's big panel), 14 Jul, 4 min. Origin letter: always online
+    and still missing everything, why they are called spells, what the
+    company is and is not.
+  · `5c0de50d…` **somewhere-between-leaving-and-arriving** —
+    community-stories, 29 Jul, 3 min. Transit essay: trains, mountain
+    roads, unplanned conversations, the good group silence.
+  · `1f3cdb1c…` **you-dont-need-a-perfect-trip** — travel-tips, 12 Aug,
+    4 min. Imperfect trips: mishaps are load-bearing; list block + "The
+    only rule we pack" highlight.
+  · `7ae23021…` **for-the-people-who-need-a-break** — community-stories,
+    23 Aug, 3 min. Letter to tired people: a trip interrupts the loop;
+    "Permission slip" highlight.
+- Blocks use only renderer-safe kinds (paragraph · heading · quote · list
+  · divider · highlight). Heroes hotlink Unsplash — the same pattern
+  Discover's mood imagery already uses — and every image was downloaded and
+  eyeballed before shipping (campfire circle · empty mountain road ·
+  umbrella in warm rain · misty sunrise).
+- Self-verify: 4 published rows with past publish moments, em/en-dash scan
+  via unicode-escape regex, block-kind whitelist, lead-paragraph + exact
+  sign-off shape, and an anon-lens count (`set local role anon`) proving
+  the public Journal sees all four through RLS.
+- Zero client changes: listing, article pages, categories, tags, search
+  and related-stories all render through the existing blogStore flow.
+
+### Baseline after 0036
+
+blog_posts 4 published (1 featured founder letter) · no schema changes ·
+the Journal now runs on real data end to end.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
