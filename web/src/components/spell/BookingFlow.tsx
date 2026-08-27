@@ -962,7 +962,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       </span>
                     </div>
                     <p className="mt-2.5 font-sans text-[11px] leading-relaxed text-cream/40">
-                      Fixed departure. The whole circle travels together on dates set by your host.
+                      {dates.label === "Dates TBC"
+                        ? "Exact dates are being finalised. Reserve now and the team confirms the dates with you personally before anything is due."
+                        : "Fixed departure. The whole circle travels together on dates set by your host."}
                     </p>
 
                     <div className="mt-5">

@@ -1,8 +1,15 @@
 -- 0039 · The Udaipur Spell goes live
 --
--- ⛔ STAGED, DO NOT APPLY YET: the founder has not confirmed departure dates.
---    Fill {{UDAIPUR_DATE_LABEL}}, {{UDAIPUR_START_DATE}}, {{UDAIPUR_END_DATE}}
---    below, then apply. The tokens make this file invalid SQL on purpose.
+-- APPLIED 2026-08-27 via runMigration ('udaipur-live-spell'). Published in the
+-- catalogue's honest 'Dates TBC' state (the 0002 seed precedent): the founder
+-- wanted the spell visible before departure dates are confirmed. The departure
+-- carries date_label 'Dates TBC' with null start/end, which means:
+--   · cards, the page and the booking sheet all show 'Dates TBC' verbatim
+--   · the reserve-request door stays open (inquiries pipeline, no date math)
+--   · converting into a REAL booking stays refused server side until dates
+--     land (0007b decision-D gate + create-booking 409 DATES_TBC_NOT_BOOKABLE)
+-- When the founder confirms dates, a small follow-up migration fills in the
+-- departure's label + start + end and the gates lift by themselves.
 --
 -- Turns the founder's Udaipur brochure (5 page PDF) into a real published
 -- spell at /live/the-udaipur-spell, same live page format as Bir (0035).
@@ -270,16 +277,16 @@ $page$::jsonb,
 )
 on conflict (id) do nothing;
 
--- §2 · The departure ({{UDAIPUR_DATE_LABEL}}, 15 seats) ---------------------------------
+-- §2 · The departure (Dates TBC for now, 15 seats) -------------------------------------
 
 insert into public.spell_departures (
   id, spell_id, date_label, start_date, end_date, seats_total, seats_booked, status
 ) values (
   'dc753201-d070-4404-9b10-038d9746ad8a',
   'dc753201-d070-4404-9b10-038d9746ad89',
-  '{{UDAIPUR_DATE_LABEL}}',
-  '{{UDAIPUR_START_DATE}}',
-  '{{UDAIPUR_END_DATE}}',
+  'Dates TBC',
+  null,
+  null,
   15,
   0,
   'scheduled'
@@ -294,7 +301,7 @@ values (
   'dc753201-d070-4404-9b10-038d9746ad89',
   'published',
   'Published to site',
-  'Live at /live/the-udaipur-spell'
+  'Live at /live/the-udaipur-spell. Departure dates announced soon.'
 )
 on conflict (id) do nothing;
 
@@ -329,11 +336,11 @@ begin
   select count(*) into v_cnt from public.spell_departures
   where id = 'dc753201-d070-4404-9b10-038d9746ad8a'
     and spell_id = 'dc753201-d070-4404-9b10-038d9746ad89'
-    and status = 'scheduled' and seats_total = 15
-    and start_date is not null and end_date is not null
-    and date_label <> '' and date_label <> 'Dates TBC';
+    and status = 'scheduled' and seats_total = 15 and seats_booked = 0
+    and start_date is null and end_date is null
+    and date_label = 'Dates TBC';
   if v_cnt <> 1 then
-    raise exception 'udaipur departure missing, malformed or still TBC';
+    raise exception 'udaipur departure missing or not in the honest TBC state';
   end if;
 
   select count(*) into v_cnt from storage.objects
@@ -349,7 +356,7 @@ begin
     raise exception 'udaipur publish change entry missing';
   end if;
 
-  raise notice 'udaipur spell live: /live/the-udaipur-spell · 3 days · 15 seats · 7 images · copy clean';
+  raise notice 'udaipur spell live: /live/the-udaipur-spell · 3 days · 15 seats · Dates TBC · 7 images · copy clean';
 end $$;
 
 -- §5 · Anon lens: the public site can actually see it ------------------------------------
