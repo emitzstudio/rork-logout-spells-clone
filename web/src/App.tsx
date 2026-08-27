@@ -15,6 +15,7 @@ import { BlogStoreProvider } from "@/data/blogStore";
 import { BucketListProvider } from "@/data/bucketList";
 import { FormStoreProvider } from "@/data/formStore";
 import { SpellStoreProvider } from "@/data/spellStore";
+import { hasSeenIntro, markIntroSeen } from "@/lib/introGate";
 
 import Blog from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
@@ -165,10 +166,15 @@ const AnimatedRoutes = () => {
 /**
  * The ritual portal + starfield wrap the public site only - the founder
  * console at /dashboard bypasses both and renders immediately.
+ * The portal itself plays once per browser, ever: after it completes we
+ * persist the flag (localStorage), and every refresh, navigation or later
+ * session opens the site directly.
  */
 const AppShell = () => {
-  const [entered, setEntered] = useState<boolean>(false);
-  const [portalDone, setPortalDone] = useState<boolean>(false);
+  /* Lazy initializers read the flag synchronously before first paint - a
+     returning visitor never sees a frame of the portal, no flash. */
+  const [entered, setEntered] = useState<boolean>(hasSeenIntro);
+  const [portalDone, setPortalDone] = useState<boolean>(hasSeenIntro);
   const location = useLocation();
   const isDashboard = location.pathname.startsWith("/dashboard");
   /* Shared form links skip the ritual portal - respondents land straight on the questions. */
@@ -194,7 +200,14 @@ const AppShell = () => {
           {(entered || isDashboard || skipPortal) && <AnimatedRoutes />}
           {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) - no global fixed button. */}
           {!isDashboard && !skipPortal && !portalDone && (
-            <PortalEntry onIgnite={() => setEntered(true)} onDone={() => setPortalDone(true)} />
+            <PortalEntry
+              onIgnite={() => setEntered(true)}
+              onDone={() => {
+                /* The animation finished - remember forever, skip from now on. */
+                markIntroSeen();
+                setPortalDone(true);
+              }}
+            />
           )}
         </>
       )}
