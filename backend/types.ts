@@ -813,6 +813,7 @@ export type Database = {
           id: string
           name: string
           note: string
+          phone: string
           ref: string
           spell_id: string | null
           spell_name: string
@@ -827,6 +828,7 @@ export type Database = {
           id?: string
           name?: string
           note?: string
+          phone?: string
           ref: string
           spell_id?: string | null
           spell_name?: string
@@ -841,6 +843,7 @@ export type Database = {
           id?: string
           name?: string
           note?: string
+          phone?: string
           ref?: string
           spell_id?: string | null
           spell_name?: string
@@ -2324,6 +2327,7 @@ export type Database = {
           _email: string
           _name: string
           _note: string
+          _phone: string
           _spell_id: string
           _spell_name: string
           _spell_slug: string

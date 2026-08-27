@@ -10,13 +10,12 @@
  * payment architecture is decided (provider + taxes/fees rulings open): the
  * journey ends with an honest RESERVE REQUEST filed through the same live
  * pipeline - a real intent the team confirms personally and converts through
- * the console's offline-sale workflow. No money moves online, no taxes or
- * fees are invented, no fake success is celebrated. When the gateway ruling
- * lands, the payment step slots back in HERE with no changes to the
- * surrounding journey.
- *
- * The old mock checkout (fake UPI/card fields, 5% invented tax, ₹5,000/seat
- * advance) is RETIRED, not migrated - those numbers contradicted the server.
+ * the console's offline-sale workflow. No money moves online yet and no fake
+ * success is celebrated. Pricing follows the founder-ruled arithmetic
+ * (2026-08-27): published price + 5% GST = total; the advance that confirms
+ * seats is 30% of that total - collected personally by the team. When the
+ * gateway ruling lands, the payment step slots back in HERE with no changes
+ * to the surrounding journey.
  */
 import { fmtRange, parseSpellDates } from "@/data/account/derive";
 import type { DepartureInfo } from "@/data/account/selfService";
@@ -41,15 +40,22 @@ export interface TravellerDetails {
 }
 
 /**
- * Published-price arithmetic ONLY: per-seat price × seats. Advances, taxes,
- * fees and every other rupee are the SERVER's to derive - nothing here
- * invents them (payment rules are pending until the payment architecture is
- * finalised).
+ * Founder-ruled arithmetic (2026-08-27): the published price × seats is the
+ * trip amount, 5% GST sits on top for the TOTAL, and the "to pay now" advance
+ * is 30% of that total. Nothing is charged online - the team collects the
+ * advance personally once seats are confirmed.
  */
 export interface PriceInfo {
   seats: number;
   pricePerSeat: number;
+  /** The trip amount: per-seat price × seats, before GST. */
+  subtotal: number;
+  /** 5% GST on the trip amount, rounded to the rupee. */
+  gst: number;
+  /** The trip total: subtotal + GST. */
   total: number;
+  /** The advance that confirms seats: 30% of the total, rounded to the rupee. */
+  advance: number;
 }
 
 /* -------------------------------- Helpers --------------------------------- */
@@ -60,7 +66,9 @@ const DAY = 86_400_000;
 const sendInquiry = async (input: {
   spell: ManagedSpell;
   name: string;
-  email: string;
+  /** Optional since 0032 - the phone is the contact channel of record. */
+  email?: string;
+  phone: string;
   note: string;
 }): Promise<string> => {
   const { data, error } = await supabase.rpc("submit_inquiry", {
@@ -68,7 +76,8 @@ const sendInquiry = async (input: {
     _spell_slug: input.spell.slug,
     _spell_name: input.spell.name,
     _name: input.name.trim(),
-    _email: input.email.trim(),
+    _email: (input.email ?? "").trim(),
+    _phone: input.phone.trim(),
     _note: input.note,
   });
   if (error || typeof data !== "string" || data === "") {
@@ -82,8 +91,12 @@ const sendInquiry = async (input: {
 
 export interface SubmitInquiryInput {
   spell: ManagedSpell;
+  /** Optional since 0032 - the server accepts an empty name. */
   name: string;
-  email: string;
+  /** Optional since 0032 - the phone is the contact channel of record. */
+  email?: string;
+  /** REQUIRED by the server since 0032 - the contact channel of record. */
+  phone: string;
   note: string;
 }
 
@@ -122,9 +135,13 @@ export const bookingService = {
     };
   },
 
-  /** Published arithmetic only - see PriceInfo. */
+  /** Founder-ruled arithmetic - see PriceInfo. */
   price(spell: ManagedSpell, seats: number): PriceInfo {
-    return { seats, pricePerSeat: spell.price, total: spell.price * seats };
+    const subtotal = spell.price * seats;
+    const gst = Math.round(subtotal * 0.05);
+    const total = subtotal + gst;
+    const advance = Math.round(total * 0.3);
+    return { seats, pricePerSeat: spell.price, subtotal, gst, total, advance };
   },
 
   /** Door 1 - the enquiry. Returns the server-generated IQ ref. */
@@ -140,20 +157,24 @@ export const bookingService = {
   async submitReserveRequest(input: ReserveRequestInput): Promise<string> {
     const { spell, departure, dates, seats, lead, companions, note } = input;
     const names = companions.map((c) => c.trim()).filter((c) => c !== "");
+    const p = bookingService.price(spell, seats);
     const lines: string[] = [
       "[BOOKING REQUEST - reserve seats]",
       `Departure: ${dates.label}${departure !== null ? ` · departure ${departure.id}` : ""}`,
       `Seats: ${seats}`,
       `Lead: ${lead.fullName.trim()} · ${lead.phone.trim()}`,
       `Companions: ${names.length > 0 ? names.join(", ") : "·"}`,
-      `Published price: ${formatINR(spell.price)} × ${seats} = ${formatINR(spell.price * seats)}`,
-      "Payment: none taken online - advance policy shown as text; team to confirm and collect personally.",
+      `Trip amount: ${formatINR(spell.price)} × ${seats} = ${formatINR(p.subtotal)}`,
+      `GST (5%): ${formatINR(p.gst)} · Total: ${formatINR(p.total)}`,
+      `Advance to collect (30% of total): ${formatINR(p.advance)}`,
+      "Payment: none taken online - the team confirms seats and collects the advance personally.",
     ];
     if (note.trim() !== "") lines.push(`Traveller note: ${note.trim()}`);
     return sendInquiry({
       spell,
       name: lead.fullName,
       email: lead.email,
+      phone: lead.phone,
       note: lines.join("\n"),
     });
   },

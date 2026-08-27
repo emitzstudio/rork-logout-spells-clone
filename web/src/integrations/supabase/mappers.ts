@@ -467,6 +467,8 @@ export interface ConsoleInquiry {
   spellName: string;
   name: string;
   email: string;
+  /** Primary contact since 0032 - the team works leads by phone. */
+  phone: string;
   note: string;
   status: InquiryRow["status"];
   createdAt: string;
@@ -479,6 +481,7 @@ export const mapInquiry = (row: InquiryRow): ConsoleInquiry => ({
   spellName: row.spell_name,
   name: row.name,
   email: row.email,
+  phone: row.phone,
   note: row.note,
   status: row.status,
   createdAt: row.created_at,

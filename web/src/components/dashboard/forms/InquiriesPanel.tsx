@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Inbox, Mail, Sparkles } from "lucide-react";
+import { Inbox, Mail, Phone, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useFormStore } from "@/data/formStore";
@@ -135,13 +135,23 @@ export default function InquiriesPanel() {
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <p className="font-sans text-[14px] text-cream">{inquiry.name}</p>
+                  <p className="font-sans text-[14px] text-cream">
+                    {inquiry.name !== "" ? inquiry.name : "Name not given"}
+                  </p>
                   <a
-                    href={`mailto:${inquiry.email}`}
-                    className="flex items-center gap-1.5 font-sans text-[12px] text-cream/55 transition-colors hover:text-gold-light"
+                    href={`tel:${inquiry.phone}`}
+                    className="flex items-center gap-1.5 font-sans text-[12px] font-medium text-gold-light transition-colors hover:text-cream"
                   >
-                    <Mail className="h-3 w-3" /> {inquiry.email}
+                    <Phone className="h-3 w-3" /> {inquiry.phone}
                   </a>
+                  {inquiry.email !== "" && (
+                    <a
+                      href={`mailto:${inquiry.email}`}
+                      className="flex items-center gap-1.5 font-sans text-[12px] text-cream/55 transition-colors hover:text-gold-light"
+                    >
+                      <Mail className="h-3 w-3" /> {inquiry.email}
+                    </a>
+                  )}
                 </div>
 
                 {inquiry.note !== "" && (

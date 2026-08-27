@@ -233,20 +233,17 @@ function SeatStepper({
 }
 
 /**
- * The honest arithmetic of the manual era, shown as WORDS: the 30% advance
- * policy is stated, never computed - advances, taxes and every payable rupee
- * are confirmed personally by the team until online payment opens.
+ * The single founder-ruled line (2026-08-27): a 30% advance confirms seats,
+ * the balance is settled 7 days before departure. Nothing else - the actual
+ * numbers live in the price summary right above.
  */
 function PaymentPolicyNote() {
   return (
-    <div className="mt-3.5 space-y-2 rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-4">
+    <div className="mt-3.5 rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-4">
       <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">How payment works</p>
-      <ul className="space-y-1.5 font-sans text-[12px] leading-relaxed text-cream/60">
-        <li>· Nothing is paid online today. Online payment opens soon.</li>
-        <li>· A 30% advance confirms your seats; the balance is settled before departure.</li>
-        <li>· Departures under 30 days away are confirmed with full payment.</li>
-        <li>· Our team confirms the exact payable amount with you personally.</li>
-      </ul>
+      <p className="mt-2 font-sans text-[12px] leading-relaxed text-cream/60">
+        A 30% advance confirms your seats; the balance is settled 7 days before departure.
+      </p>
     </div>
   );
 }
@@ -285,7 +282,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
 
   /* Inquire */
   const [inqName, setInqName] = useState<string>("");
-  const [inqEmail, setInqEmail] = useState<string>("");
+  const [inqPhone, setInqPhone] = useState<string>("");
   const [inqNote, setInqNote] = useState<string>("");
   const [inqRef, setInqRef] = useState<string>("");
   const [inqSending, setInqSending] = useState<boolean>(false);
@@ -360,11 +357,11 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     if (data) {
       const fullName = `${data.profile.firstName} ${data.profile.lastName}`.trim();
       setInqName(fullName);
-      setInqEmail(data.profile.email);
+      setInqPhone(data.profile.phone);
       setLead({ fullName, email: data.profile.email, phone: data.profile.phone });
     } else {
       setInqName("");
-      setInqEmail("");
+      setInqPhone("");
       setLead({ fullName: "", email: "", phone: "" });
     }
   }, [open, data]);
@@ -393,8 +390,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
 
   const submitInquiry = useCallback(async () => {
     const next: FieldErrs = {};
-    if (inqName.trim().length < 2) next.inqName = "Please tell us your name.";
-    if (!EMAIL_RE.test(inqEmail.trim())) next.inqEmail = "That email doesn't look right.";
+    if (inqPhone.replace(/\D/g, "").length < 8) next.inqPhone = "A reachable phone number, please.";
     setErrs(next);
     if (Object.values(next).some(Boolean)) return;
     setInqSending(true);
@@ -402,18 +398,18 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
       const ref = await bookingService.submitInquiry({
         spell,
         name: inqName,
-        email: inqEmail,
+        phone: inqPhone,
         note: inqNote,
       });
       setInqRef(ref);
       setStep("inquire-sent");
     } catch {
-      /* A network failure is not an email problem - it gets its own line (M10). */
+      /* A network failure is not a phone problem - it gets its own line (M10). */
       setErrs({ inqGeneral: "The message couldn't be sent just now. Please try again." });
     } finally {
       setInqSending(false);
     }
-  }, [inqName, inqEmail, inqNote, spell]);
+  }, [inqName, inqPhone, inqNote, spell]);
 
   const validateDetails = useCallback((): boolean => {
     const next: FieldErrs = {};
@@ -682,7 +678,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
 
                     <div className="mt-6 space-y-5">
                       <div>
-                        <label htmlFor="inq-name" className={LABEL}>Your name</label>
+                        <label htmlFor="inq-name" className={LABEL}>Your name <span className="text-cream/30">(optional)</span></label>
                         <input
                           id="inq-name"
                           type="text"
@@ -695,28 +691,29 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         {errs.inqName && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.inqName}</p>}
                       </div>
                       <div>
-                        <label htmlFor="inq-email" className={LABEL}>Email</label>
+                        <label htmlFor="inq-phone" className={LABEL}>Phone number</label>
                         <input
-                          id="inq-email"
-                          type="email"
-                          inputMode="email"
-                          value={inqEmail}
-                          onChange={(e) => setInqEmail(e.target.value)}
-                          placeholder="you@example.com"
-                          className={cn(INPUT, errs.inqEmail && "border-[#c65f52]/70")}
-                          aria-invalid={Boolean(errs.inqEmail)}
+                          id="inq-phone"
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          value={inqPhone}
+                          onChange={(e) => setInqPhone(e.target.value)}
+                          placeholder="+91 98765 43210"
+                          className={cn(INPUT, errs.inqPhone && "border-[#c65f52]/70")}
+                          aria-invalid={Boolean(errs.inqPhone)}
                         />
-                        {errs.inqEmail && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.inqEmail}</p>}
+                        {errs.inqPhone && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.inqPhone}</p>}
                       </div>
                       <div>
-                        <label htmlFor="inq-note" className={LABEL}>Your question <span className="text-cream/30">(optional)</span></label>
+                        <label htmlFor="inq-note" className={LABEL}>Why do you want to logout with us <span className="text-cream/30">(optional)</span></label>
                         <textarea
                           id="inq-note"
                           value={inqNote}
                           onChange={(e) => setInqNote(e.target.value)}
                           rows={3}
                           maxLength={500}
-                          placeholder={`e.g. Is the ${spell.name} beginner-friendly?`}
+                          placeholder="Tell us in a line or two…"
                           className={cn(INPUT, "resize-none leading-relaxed")}
                         />
                       </div>
@@ -969,12 +966,20 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       </div>
                       <dl className="mt-4 space-y-2.5 font-sans text-[13.5px]">
                         <div className="flex justify-between text-cream/60">
-                          <dt>{formatINR(price.pricePerSeat)} × {seats}</dt>
-                          <dd>{formatINR(price.total)}</dd>
+                          <dt>Trip amount · {formatINR(price.pricePerSeat)} × {seats}</dt>
+                          <dd>{formatINR(price.subtotal)}</dd>
+                        </div>
+                        <div className="flex justify-between text-cream/60">
+                          <dt>GST (5%)</dt>
+                          <dd>{formatINR(price.gst)}</dd>
                         </div>
                         <div className="flex items-baseline justify-between border-t border-cream/[0.08] pt-3.5">
-                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-cream/50">Trip total (published)</dt>
+                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-cream/50">Total</dt>
                           <dd className="font-serif text-2xl text-cream">{formatINR(price.total)}</dd>
+                        </div>
+                        <div className="flex items-baseline justify-between rounded-lg border border-gold/25 bg-gold/[0.07] px-3.5 py-2.5">
+                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-gold-light">To pay now · 30%</dt>
+                          <dd className="font-serif text-xl text-gold-light">{formatINR(price.advance)}</dd>
                         </div>
                       </dl>
                     </div>
@@ -1106,9 +1111,21 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           <dd className="text-right text-cream/85">{companionNames.join(", ")}</dd>
                         </div>
                       )}
+                      <div className="flex justify-between gap-4 text-cream/55">
+                        <dt>Trip amount</dt>
+                        <dd className="text-cream/85">{formatINR(price.subtotal)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4 text-cream/55">
+                        <dt>GST (5%)</dt>
+                        <dd className="text-cream/85">{formatINR(price.gst)}</dd>
+                      </div>
                       <div className="flex justify-between gap-4 border-t border-cream/[0.08] pt-2.5 text-cream/55">
-                        <dt>Trip total (published)</dt>
+                        <dt>Total</dt>
                         <dd className="font-serif text-lg text-cream">{formatINR(price.total)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4 text-cream/55">
+                        <dt className="text-gold-light">To pay now · 30%</dt>
+                        <dd className="font-serif text-lg text-gold-light">{formatINR(price.advance)}</dd>
                       </div>
                     </dl>
 

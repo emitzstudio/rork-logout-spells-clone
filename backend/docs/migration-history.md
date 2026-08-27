@@ -1781,6 +1781,36 @@ schema unchanged from 0030.
 
 ---
 
+## 0032 — inquiry door rewired: phone required (2026-08-27)
+
+- **0032_inquiry_phone_required.sql** ("inquiry-phone-required") — founder
+  rule: the public Inquire form asks for name (optional), phone (REQUIRED —
+  the team works leads personally) and "why do you want to logout with us"
+  (optional). M5's `submit_inquiry` hard-required name + email; 0032 relaxes
+  exactly that:
+  · `inquiries.phone` text not null default '' (pre-0032 rows keep '').
+  · `submit_inquiry` recreated with a 7th `_phone` arg; phone validated
+    in-function (≥8 digits after stripping non-digits); name/email optional.
+  · Old 6-arg signature revoked + dropped; grants + comment pinned to the
+    7-arg one; self-verify asserts exactly one signature and the column.
+- Client (web): inquiry form swapped email → phone (required), name now
+  optional, note relabelled to the founder's question; `SubmitInquiryInput`
+  email optional; console inbox shows phone as the primary contact (tel:
+  link) with email only when present. Book Now (Door 2) untouched — still
+  collects name/email/phone, files through the same RPC with phone filled.
+- Founder pricing rule applied client-side (2026-08-27): trip amount + 5% GST
+  = total; advance "to pay now" = 30% of that total, shown on the summary and
+  review steps and echoed in the reserve note. Still NOTHING charged online —
+  display arithmetic only; decision C's gate status unchanged.
+- Applied via runMigration; types regenerated; web static + build green.
+
+### Baseline after 0032
+
+inquiries gained `phone` · submit_inquiry 7-arg (phone required) · rows 0 ·
+no other schema or count changes from 0031.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
