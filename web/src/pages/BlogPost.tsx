@@ -1,6 +1,6 @@
 import { motion, useScroll, useSpring } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Clock, Link2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -23,12 +23,22 @@ function Article({ post }: { post: ManagedBlogPost }) {
   const { publicPosts } = useBlogStore();
   const related = useMemo(() => relatedTo(publicPosts, post, 3), [publicPosts, post]);
 
+  /* Keep the "Copied" reset timer cancellable - never update state after unmount. */
+  const copiedTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
+
   const copyLink = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       toast.success("Link copied", { description: "Share the story with your circle ✦" });
-      window.setTimeout(() => setCopied(false), 2400);
+      if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
+      copiedTimer.current = window.setTimeout(() => setCopied(false), 2400);
     } catch {
       toast.error("Couldn't copy the link. Your browser said no.");
     }
@@ -122,7 +132,7 @@ function Article({ post }: { post: ManagedBlogPost }) {
           <Reveal className="mt-10">
             <div className="card-glass flex items-center gap-5 rounded-[16px] p-6 md:p-7">
               {post.author.avatar !== "" ? (
-                <img src={post.author.avatar} alt="" className="h-16 w-16 shrink-0 rounded-full border-2 border-gold/40 object-cover" />
+                <img src={post.author.avatar} alt="" loading="lazy" decoding="async" className="h-16 w-16 shrink-0 rounded-full border-2 border-gold/40 object-cover" />
               ) : (
                 <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full border-2 border-gold/40 bg-gold/[0.08] font-serif text-2xl italic text-gold">
                   {post.author.initial}

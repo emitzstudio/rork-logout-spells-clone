@@ -141,7 +141,7 @@ function ReviewCard({ review }: { review: SpellReview }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3.5">
           {review.avatar !== "" ? (
-            <img src={review.avatar} alt="" className="h-11 w-11 rounded-full border border-gold/30 object-cover" />
+            <img src={review.avatar} alt="" loading="lazy" decoding="async" className="h-11 w-11 rounded-full border border-gold/30 object-cover" />
           ) : (
             <span className="grid h-11 w-11 place-items-center rounded-full border border-gold/30 bg-gold/[0.08] font-serif text-lg italic text-gold">
               {review.author.charAt(0)}
@@ -489,7 +489,7 @@ export default function PreviousSpellPage() {
             <div className="mt-8 space-y-6">
               {past.story.map((paragraph, i) => (
                 <p
-                  key={paragraph.slice(0, 24)}
+                  key={`${i}-${paragraph.slice(0, 24)}`}
                   className={cn(
                     "leading-relaxed",
                     i === 0
@@ -518,7 +518,7 @@ export default function PreviousSpellPage() {
           />
           <div className="mt-10 flex flex-wrap gap-3">
             {past.highlights.map((h, i) => (
-              <Reveal key={h} delay={0.05 + i * 0.06}>
+              <Reveal key={`${i}-${h}`} delay={0.05 + i * 0.06}>
                 <span className="inline-flex items-center gap-2.5 rounded-full border border-gold/25 bg-gold/[0.05] px-5 py-3 font-serif text-lg italic text-cream/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/50">
                   <span className="text-gold/70" aria-hidden>✦</span>
                   {h}

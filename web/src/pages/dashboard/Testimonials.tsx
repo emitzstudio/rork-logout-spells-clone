@@ -20,6 +20,7 @@ import {
   type ReviewStatus,
   type ReviewWithJourney,
 } from "@/data/bookingOps";
+import { inviteErrorCode, inviteErrorCopy } from "@/data/reviewInvites";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -88,7 +89,11 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
   const act = (status: ReviewStatus, message: string): void => {
     moderate.mutate({ id: review.id, status }, {
       onSuccess: () => toast.success(message),
-      onError: (error) => toast.error(error.message),
+      onError: (error) => {
+        /* Consent locks and friends arrive as DB codes - show the mapped copy. */
+        const code = inviteErrorCode(error.message);
+        toast.error(code === "unknown" ? error.message : inviteErrorCopy(code));
+      },
     });
   };
 
@@ -127,7 +132,14 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
               type="button"
               disabled={moderate.isPending || consentLocked}
               title={consentLocked ? "This traveller did not consent to sharing their story publicly" : undefined}
-              onClick={() => act("approved", "Published - it now shows on the journey page")}
+              onClick={() =>
+                act(
+                  "approved",
+                  review.previous_spell_id !== null
+                    ? "Published - it now shows on the journey page"
+                    : "Approved - it appears once this spell's archive page is published",
+                )
+              }
               className={cn(buttonClass, "border-gold/40 bg-gold/10 text-gold-light hover:bg-gold/20")}
             >
               <BadgeCheck className="h-3.5 w-3.5" /> {review.status === "rejected" ? "Publish anyway" : "Approve"}

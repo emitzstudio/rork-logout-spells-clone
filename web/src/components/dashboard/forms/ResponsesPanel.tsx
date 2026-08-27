@@ -290,7 +290,8 @@ export default function ResponsesPanel() {
         .map(esc)
         .join(","),
     );
-    const csv = [header.map(esc).join(","), ...rows].join("\n");
+    /* UTF-8 BOM so Excel renders Hindi names and ✦ marks correctly. */
+    const csv = "\uFEFF" + [header.map(esc).join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");

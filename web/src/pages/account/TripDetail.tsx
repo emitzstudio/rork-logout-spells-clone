@@ -36,7 +36,7 @@ import {
 } from "@/components/account/bits";
 import InvoiceDialog from "@/components/account/InvoiceDialog";
 import { useAccount } from "@/data/account/AccountProvider";
-import { daysUntil, effectiveStatus, fmtDayYear, fmtRange } from "@/data/account/derive";
+import { daysUntil, effectiveStatus, fmtDayYear, fmtRange, parseDateOnly } from "@/data/account/derive";
 import { TIMELINE_ORDER } from "@/data/account/models";
 import type { TimelineStepId, TripBooking } from "@/data/account/models";
 import {
@@ -693,7 +693,7 @@ function AfterTripCard({
         rating: stars,
         title,
         body,
-        travelledOn: new Date(booking.end).toLocaleDateString("en-IN", {
+        travelledOn: new Date(parseDateOnly(booking.end)).toLocaleDateString("en-IN", {
           month: "long",
           year: "numeric",
         }),

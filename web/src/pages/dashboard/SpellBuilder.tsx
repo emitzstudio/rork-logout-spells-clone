@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, Check, Eye, Save, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import BuilderSection from "@/components/dashboard/builder/BuilderSection";
 import RemoveDaysDialog from "@/components/dashboard/builder/RemoveDaysDialog";
@@ -98,12 +98,41 @@ interface PublishState {
   recordId: string | null;
 }
 
+/** Quiet gate while the spell store resolves a deep link. */
+function BuilderOpening({ label }: { label: string }) {
+  return (
+    <div className="grid min-h-[60vh] place-items-center" aria-busy="true">
+      <div className="flex flex-col items-center gap-4">
+        <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        <p className="font-sans text-[11px] uppercase tracking-[0.32em] text-gold/70">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Deep links (new tab, refresh) can arrive before the spell store resolves.
+ * Gate the stateful editor: an existing spell must never open as an empty
+ * "New Spell" - saving that would INSERT a duplicate record.
+ */
+export default function SpellBuilder() {
+  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
+  const { getById, ready, failed } = useSpellStore();
+  const routeState = location.state as { spell?: ManagedSpell } | null;
+  const known =
+    id === undefined || getById(id) !== undefined || routeState?.spell !== undefined;
+  if (!known && !ready && !failed) return <BuilderOpening label="Opening the spell" />;
+  if (!known) return <Navigate to="/dashboard/spells" replace />;
+  return <SpellBuilderEditor key={id ?? "new"} />;
+}
+
 /**
  * The Spell Builder - every section of the public Spell page, editable from
  * one place: split editor (left) + sticky live preview (right). Local state
  * only; publishing and persistence arrive with the backend phase.
  */
-export default function SpellBuilder() {
+function SpellBuilderEditor() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();

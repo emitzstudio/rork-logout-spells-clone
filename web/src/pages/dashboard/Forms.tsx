@@ -40,7 +40,17 @@ export default function Forms() {
   const { forms, ready, failed, retry, saveForm, deleteForm, uniqueFormSlug, responses, inquiries } = useFormStore();
   const { spells, detachFormFromSpells } = useSpellStore();
 
-  const [tab, setTab] = useState<TabId>("forms");
+  /* The bell's "new responses / enquiries" rows deep-link straight to their tab. */
+  const tabFromSearch = (search: string): TabId | null => {
+    const value = new URLSearchParams(search).get("tab");
+    return value === "forms" || value === "responses" || value === "enquiries" ? value : null;
+  };
+  const [tab, setTab] = useState<TabId>(() => tabFromSearch(location.search) ?? "forms");
+
+  useEffect(() => {
+    const next = tabFromSearch(location.search);
+    if (next !== null) setTab(next);
+  }, [location.search]);
   const [shareId, setShareId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [freshId, setFreshId] = useState<string | null>(null);

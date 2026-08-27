@@ -40,6 +40,12 @@ interface BucketListSnapshot {
   interests: string[];
   /** True once the traveller has performed the reveal ritual. */
   brewed?: boolean;
+  /**
+   * Which account this snapshot mirrors (null = truly anonymous dreams).
+   * The first-login merge only lifts OWNERLESS snapshots - a list mirrored
+   * from user A's account must never merge into user B on a shared browser.
+   */
+  ownerId?: string | null;
   updatedAt: string;
 }
 
@@ -63,6 +69,7 @@ const BucketListContext = createContext<BucketListValue | null>(null);
 interface LoadedState {
   interests: string[];
   brewed: boolean;
+  ownerId: string | null;
 }
 
 /** What the signed-in provider reads from Supabase. */
@@ -74,26 +81,32 @@ interface CloudBucket {
 const load = (): LoadedState => {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { interests: [], brewed: false };
+    if (!raw) return { interests: [], brewed: false, ownerId: null };
     const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return { interests: [], brewed: false };
+    if (typeof parsed !== "object" || parsed === null)
+      return { interests: [], brewed: false, ownerId: null };
     const record = parsed as Partial<BucketListSnapshot>;
-    if (!Array.isArray(record.interests)) return { interests: [], brewed: false };
+    if (!Array.isArray(record.interests)) return { interests: [], brewed: false, ownerId: null };
     const interests = record.interests.filter(
       (id): id is string => typeof id === "string" && isKnownInterest(id),
     );
-    return { interests, brewed: record.brewed === true && interests.length >= MIN_BREW };
+    return {
+      interests,
+      brewed: record.brewed === true && interests.length >= MIN_BREW,
+      ownerId: typeof record.ownerId === "string" && record.ownerId !== "" ? record.ownerId : null,
+    };
   } catch {
-    return { interests: [], brewed: false };
+    return { interests: [], brewed: false, ownerId: null };
   }
 };
 
-const persist = (interests: string[], brewed: boolean): void => {
+const persist = (interests: string[], brewed: boolean, ownerId: string | null): void => {
   try {
     const snapshot: BucketListSnapshot = {
       version: 1,
       interests,
       brewed,
+      ownerId,
       updatedAt: new Date().toISOString(),
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
@@ -126,10 +139,12 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
   const [initial] = useState<LoadedState>(load);
   const [localInterests, setLocalInterests] = useState<string[]>(initial.interests);
   const [localBrewed, setLocalBrewed] = useState<boolean>(initial.brewed);
+  /** Whose account the local snapshot mirrors - null while it is genuinely anonymous. */
+  const ownerRef = useRef<string | null>(initial.ownerId);
   const mergingRef = useRef<boolean>(false);
 
   useEffect(() => {
-    persist(localInterests, localBrewed);
+    persist(localInterests, localBrewed, ownerRef.current);
   }, [localInterests, localBrewed]);
 
   // Cross-tab sync - the same dream never needs choosing twice.
@@ -143,6 +158,8 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
         const next = record.interests.filter(
           (id): id is string => typeof id === "string" && isKnownInterest(id),
         );
+        ownerRef.current =
+          typeof record.ownerId === "string" && record.ownerId !== "" ? record.ownerId : null;
         setLocalInterests(next);
         setLocalBrewed(record.brewed === true && next.length >= MIN_BREW);
       } catch {
@@ -169,6 +186,9 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
         supabase.from("user_settings").select("brewed_at").maybeSingle(),
       ]);
       if (rowsRes.error) throw rowsRes.error;
+      /* A failed settings read must fail the query - resolving brewed:false here
+         would later mirror over a traveller's real reveal flag. */
+      if (settingsRes.error) throw settingsRes.error;
       return {
         ids: rowsRes.data.map((row) => row.interest_id),
         brewed: (settingsRes.data?.brewed_at ?? null) !== null,
@@ -186,8 +206,16 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
     mergingRef.current = true;
     const cloud = cloudQuery.data;
     const local = load();
+    /* A snapshot mirrored from a DIFFERENT account never merges - on a shared
+       browser, user A's dreams must not become user B's. Only ownerless
+       (anonymous) snapshots, or this user's own mirror, count as "this device's". */
+    const foreign = local.ownerId !== null && local.ownerId !== userId;
     void (async () => {
       try {
+        if (foreign) {
+          setMerged(userId);
+          return;
+        }
         const missing = local.interests.filter((id) => !cloud.ids.includes(id));
         if (missing.length > 0) {
           // Only dreams that still exist (and are active) in the catalogue sync up.
@@ -204,10 +232,13 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
           }
         }
         if (local.brewed && !cloud.brewed) {
-          await supabase
+          const { error } = await supabase
             .from("user_settings")
             .update({ brewed_at: new Date().toISOString() })
             .eq("user_id", userId);
+          /* PostgREST reports failures in `error` - only a confirmed write may
+             mark the merge done, otherwise the reveal flag would be lost. */
+          if (error) throw error;
         }
         setMerged(userId);
         await queryClient.invalidateQueries({ queryKey: ["bucket-list", userId] });
@@ -224,6 +255,9 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (userId === null || !cloudQuery.data) return;
     if (!hasMerged(userId)) return;
+    /* Stamp the mirror with its owner BEFORE persisting - this is what keeps a
+       shared browser from ever merging one traveller's dreams into another. */
+    ownerRef.current = userId;
     setLocalInterests(cloudQuery.data.ids);
     setLocalBrewed(cloudQuery.data.brewed);
   }, [userId, cloudQuery.data]);
@@ -323,6 +357,9 @@ export function BucketListProvider({ children }: { children: ReactNode }) {
   }, [userId, setCloud, refetchCloud]);
 
   const clear = useCallback(() => {
+    /* An emptied cauldron restarts provenance: the signed-in owner's (empty)
+       mirror, or nobody's when anonymous. */
+    ownerRef.current = userId;
     setLocalInterests([]);
     setLocalBrewed(false);
     if (userId === null) return;

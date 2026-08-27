@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, Check, Eye, Save, Sparkles, Star, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import BlogBlocksEditor, {
@@ -112,12 +112,37 @@ interface PublishState {
   recordId: string | null;
 }
 
+/** Quiet gate while the blog store resolves a deep link. */
+function BuilderOpening({ label }: { label: string }) {
+  return (
+    <div className="grid min-h-[60vh] place-items-center" aria-busy="true">
+      <div className="flex flex-col items-center gap-4">
+        <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        <p className="font-sans text-[11px] uppercase tracking-[0.32em] text-gold/70">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Deep links can arrive before the blog store resolves - an existing story
+ * must never open as an empty draft (saving that would insert a duplicate).
+ */
+export default function BlogBuilder() {
+  const { id } = useParams<{ id: string }>();
+  const { getById, ready, failed } = useBlogStore();
+  const known = id === undefined || getById(id) !== undefined;
+  if (!known && !ready && !failed) return <BuilderOpening label="Opening the story" />;
+  if (!known) return <Navigate to="/dashboard/blog" replace />;
+  return <BlogBuilderEditor key={id ?? "new"} />;
+}
+
 /**
  * The Blog Builder - a premium editorial desk: split editor (left) + sticky
  * live preview (right), block-based content, drafts and the publish ritual.
  * Mirrors the Spell Builder's workflow exactly.
  */
-export default function BlogBuilder() {
+function BlogBuilderEditor() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { getById, savePost, uniqueSlug } = useBlogStore();

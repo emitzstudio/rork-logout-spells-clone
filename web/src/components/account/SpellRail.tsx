@@ -1,10 +1,11 @@
 import { Heart } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import { SectionTitle } from "@/components/account/bits";
 import { useAccount } from "@/data/account/AccountProvider";
-import { formatINR } from "@/data/spells";
+import { priceDisplay } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,8 @@ export function RailCard({ spell, reason }: RailItem) {
   const { data, toggleWishlist } = useAccount();
   const saved = data?.wishlist.includes(spell.id) ?? false;
   const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
+  /* One flight at a time - a fast double-tap must not race two writes. */
+  const [saving, setSaving] = useState<boolean>(false);
 
   return (
     <Link
@@ -72,9 +75,16 @@ export function RailCard({ spell, reason }: RailItem) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            void toggleWishlist(spell.id).then(() => {
-              toast(saved ? "Removed from your wishlist" : "Kept on your wishlist ✦");
-            });
+            if (saving) return;
+            setSaving(true);
+            toggleWishlist(spell.id)
+              .then(() => {
+                toast(saved ? "Removed from your wishlist" : "Kept on your wishlist ✦");
+              })
+              .catch(() => {
+                toast.error("Your wishlist couldn't be updated. Try again.");
+              })
+              .finally(() => setSaving(false));
           }}
           className={cn(
             "absolute right-2.5 top-2.5 grid h-8 w-8 place-items-center rounded-full border backdrop-blur-md transition-all duration-300 active:scale-90",
@@ -98,10 +108,12 @@ export function RailCard({ spell, reason }: RailItem) {
           <p className="mt-1 truncate font-serif text-[13px] italic text-gold/60">{reason}</p>
         )}
         <div className="mt-2.5 flex items-center justify-between font-sans text-[11.5px] text-cream/50">
-          <span className="truncate">{spell.location} · {spell.dates}</span>
+          <span className="truncate">
+            {[spell.location, spell.dates].filter((part) => part.trim() !== "").join(" · ")}
+          </span>
         </div>
         <div className="mt-1.5 flex items-center justify-between font-sans text-[11.5px]">
-          <span className="text-cream/75">{formatINR(spell.price)}</span>
+          <span className="text-cream/75">{priceDisplay(spell.price)}</span>
           {seatsLeft > 0 && seatsLeft <= 4 && spell.status !== "soldout" && (
             <span className="text-amber-300/80">{seatsLeft} seats left</span>
           )}

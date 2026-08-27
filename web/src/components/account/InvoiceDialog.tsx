@@ -159,12 +159,20 @@ export default function InvoiceDialog({ booking, profile, onClose }: InvoiceDial
   );
 }
 
+/** Minimal HTML escaping - names, cities and spell titles are people-authored. */
+const esc = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
 /** Opens a standalone, print-ready invoice window. */
 const printInvoice = (booking: TripBooking, profile: TravellerProfile): void => {
   const refunded = booking.payment === "refunded";
   const rows = [
     ["Subtotal (all-inclusive)", formatINR(booking.amountTotal)],
-    [`Amount received · ${booking.paymentMethod}`, formatINR(booking.amountPaid)],
+    [`Amount received · ${esc(booking.paymentMethod)}`, formatINR(booking.amountPaid)],
     ...(booking.payment === "deposit"
       ? [["Balance due before departure", formatINR(booking.amountTotal - booking.amountPaid)]]
       : []),
@@ -176,7 +184,7 @@ const printInvoice = (booking: TripBooking, profile: TravellerProfile): void => 
     )
     .join("");
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${booking.ref} | Logout Spells</title>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(booking.ref)} | Logout Spells</title>
 <style>body{font-family:Georgia,'Times New Roman',serif;color:#1c1c1a;max-width:640px;margin:48px auto;padding:0 24px}
 .mono{font-family:Inter,-apple-system,sans-serif}
 h1{font-size:15px;letter-spacing:.42em;margin:0}
@@ -186,11 +194,11 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 </style></head><body>
 <div class="stamp">${refunded ? "Refunded" : booking.payment === "deposit" ? "Deposit" : "Paid"}</div>
 <h1 class="mono">LOGOUT <em style="letter-spacing:0;text-transform:none;font-family:Georgia,serif">Spells</em></h1>
-<p class="mono" style="font-size:10px;letter-spacing:.28em;color:#888;text-transform:uppercase">Booking invoice · ${booking.ref}</p>
+<p class="mono" style="font-size:10px;letter-spacing:.28em;color:#888;text-transform:uppercase">Booking invoice · ${esc(booking.ref)}</p>
 <hr style="border:none;border-top:1px solid #e5e0d5;margin:20px 0">
-<p class="mono" style="font-size:12px;color:#555">Billed to<br><strong style="color:#1c1c1a">${profile.firstName} ${profile.lastName}</strong><br>${profile.email}<br>${profile.city}</p>
-<h2 style="font-size:22px;margin:26px 0 2px">${booking.spell.name}</h2>
-<p class="mono" style="font-size:12px;color:#777;margin:0 0 18px">${booking.spell.location} · ${fmtRange(booking.start, booking.end)} · ${booking.seats} seat${booking.seats > 1 ? "s" : ""} × ${formatINR(booking.pricePerSeat)}</p>
+<p class="mono" style="font-size:12px;color:#555">Billed to<br><strong style="color:#1c1c1a">${esc(profile.firstName)} ${esc(profile.lastName)}</strong><br>${esc(profile.email)}<br>${esc(profile.city)}</p>
+<h2 style="font-size:22px;margin:26px 0 2px">${esc(booking.spell.name)}</h2>
+<p class="mono" style="font-size:12px;color:#777;margin:0 0 18px">${esc(booking.spell.location)} · ${fmtRange(booking.start, booking.end)} · ${booking.seats} seat${booking.seats > 1 ? "s" : ""} × ${formatINR(booking.pricePerSeat)}</p>
 <table class="mono">${rows}<tr class="total"><td><em style="font-family:Georgia,serif">Total</em></td><td style="text-align:right;font-weight:600">${formatINR(booking.amountTotal)}</td></tr></table>
 <p class="mono" style="font-size:10px;color:#999;margin-top:32px">Booked ${fmtDayYear(booking.bookedAt)} · A record of your booking and payments, formal tax invoice available on request · Logout Spells ✦</p>
 <script>window.onload=function(){window.print()}</script></body></html>`;

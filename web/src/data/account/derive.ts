@@ -24,16 +24,31 @@ import type {
 
 const DAY = 86_400_000;
 
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Date-only strings (YYYY-MM-DD) parse as UTC midnight, which renders a day
+ * early anywhere west of UTC and flips statuses at 05:30 IST. Anchoring them
+ * to LOCAL midnight keeps every trip date truthful in the viewer's timezone.
+ * Full ISO timestamps pass through untouched.
+ */
+export const parseDateOnly = (isoDate: string): number =>
+  Date.parse(DATE_ONLY.test(isoDate) ? `${isoDate}T00:00:00` : isoDate);
+
+/** The last millisecond of a date-only day - trips end at night, not at breakfast. */
+const endOfDay = (isoDate: string): number =>
+  DATE_ONLY.test(isoDate) ? parseDateOnly(isoDate) + DAY - 1 : Date.parse(isoDate);
+
 export const fmtDay = (isoDate: string): string =>
-  new Date(isoDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  new Date(parseDateOnly(isoDate)).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
 export const fmtDayYear = (isoDate: string): string =>
-  new Date(isoDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  new Date(parseDateOnly(isoDate)).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 /** "2-6 Aug 2026" · "30 Aug - 4 Sep 2026" */
 export const fmtRange = (startIso: string, endIso: string): string => {
-  const s = new Date(startIso);
-  const e = new Date(endIso);
+  const s = new Date(parseDateOnly(startIso));
+  const e = new Date(parseDateOnly(endIso));
   const year = e.toLocaleDateString("en-IN", { year: "numeric" });
   if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
     return `${s.getDate()}-${e.getDate()} ${e.toLocaleDateString("en-IN", { month: "short" })} ${year}`;
@@ -42,7 +57,7 @@ export const fmtRange = (startIso: string, endIso: string): string => {
 };
 
 export const daysUntil = (isoDate: string): number =>
-  Math.ceil((Date.parse(isoDate) - Date.now()) / DAY);
+  Math.ceil((parseDateOnly(isoDate) - Date.now()) / DAY);
 
 export const timeAgo = (isoDate: string): string => {
   const diff = Date.now() - Date.parse(isoDate);
@@ -68,8 +83,10 @@ export const timeAgo = (isoDate: string): string => {
 export const effectiveStatus = (booking: TripBooking): TripStatus => {
   if (booking.status !== "upcoming") return booking.status;
   const now = Date.now();
-  if (now > Date.parse(booking.end)) return "completed";
-  if (now >= Date.parse(booking.start)) return "ongoing";
+  /* A trip is ongoing THROUGH its final day - it completes at local midnight,
+     never at breakfast on the last morning. */
+  if (now > endOfDay(booking.end)) return "completed";
+  if (now >= parseDateOnly(booking.start)) return "ongoing";
   return "upcoming";
 };
 

@@ -5,9 +5,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { AccountPage } from "@/components/account/bits";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useAccount } from "@/data/account/AccountProvider";
-import { buildCalendarEvents, fmtRange } from "@/data/account/derive";
+import { buildCalendarEvents, fmtRange, parseDateOnly } from "@/data/account/derive";
 import type { CalendarEvent, CalendarEventKind } from "@/data/account/models";
-import { formatINR } from "@/data/spells";
+import { priceDisplay } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
@@ -44,8 +44,10 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const atMidnight = (d: Date): number => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 
 const coversDay = (event: CalendarEvent, day: Date): boolean => {
+  /* parseDateOnly anchors date-only strings to LOCAL midnight - the grid must
+     never place a trip a day early for viewers west of UTC. */
   const t = atMidnight(day);
-  return t >= atMidnight(new Date(event.start)) && t <= atMidnight(new Date(event.end));
+  return t >= parseDateOnly(event.start) && t <= parseDateOnly(event.end);
 };
 
 const eventHref = (e: CalendarEvent): string =>
@@ -80,11 +82,9 @@ export default function CalendarPage() {
   const monthEvents = useMemo(
     () =>
       events.filter((e) => {
-        const s = new Date(e.start);
-        const en = new Date(e.end);
         const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1).getTime();
         const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59).getTime();
-        return s.getTime() <= monthEnd && en.getTime() >= monthStart;
+        return parseDateOnly(e.start) <= monthEnd && parseDateOnly(e.end) >= monthStart;
       }),
     [events, cursor],
   );
@@ -222,7 +222,7 @@ export default function CalendarPage() {
                           </p>
                           {e.kind === "available" && e.price !== undefined && (
                             <p className="mt-1.5 font-sans text-[11.5px] text-cream/70">
-                              {formatINR(e.price)}
+                              {priceDisplay(e.price)}
                               {e.seatsLeft !== undefined && e.seatsLeft > 0 && (
                                 <span className="text-amber-300/80"> · {e.seatsLeft} seats open</span>
                               )}

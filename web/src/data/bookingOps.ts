@@ -627,7 +627,7 @@ export function useSaveOperations(): UseMutationResult<void, Error, OperationsIn
   const invalidate = useInvalidateOps();
   return useMutation({
     mutationFn: async (input: OperationsInput): Promise<void> => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("bookings")
         .update({
           stay_note: input.stayNote,
@@ -635,8 +635,11 @@ export function useSaveOperations(): UseMutationResult<void, Error, OperationsIn
           host_note: input.hostNote,
           timeline_step: input.timelineStep,
         })
-        .eq("id", input.bookingId);
+        .eq("id", input.bookingId)
+        .select("id");
       if (error) throw new Error(error.message);
+      /* An RLS-filtered write affects 0 rows without erroring - never toast "Saved" for it. */
+      if ((data ?? []).length !== 1) throw new Error("The booking couldn't be written - refresh and try again.");
     },
     onSuccess: invalidate,
   });
@@ -674,8 +677,13 @@ export function useUpdateWaitlistEntry(): UseMutationResult<void, Error, Waitlis
       if (input.expiresAt !== undefined) patch.expires_at = input.expiresAt;
       if (input.note !== undefined) patch.note = input.note;
       if (input.seatsRequested !== undefined) patch.seats_requested = input.seatsRequested;
-      const { error } = await supabase.from("booking_waitlist").update(patch).eq("id", input.id);
+      const { data, error } = await supabase
+        .from("booking_waitlist")
+        .update(patch)
+        .eq("id", input.id)
+        .select("id");
       if (error) throw new Error(error.message);
+      if ((data ?? []).length !== 1) throw new Error("The entry couldn't be written - refresh and try again.");
     },
     onSuccess: invalidate,
   });
@@ -727,8 +735,13 @@ export function useDecideRequest(): UseMutationResult<void, Error, DecideRequest
     mutationFn: async (input: DecideRequestInput): Promise<void> => {
       const patch: Tables["booking_change_requests"]["Update"] = { status: input.status };
       if (input.staffNote !== undefined) patch.staff_note = input.staffNote;
-      const { error } = await supabase.from("booking_change_requests").update(patch).eq("id", input.id);
+      const { data, error } = await supabase
+        .from("booking_change_requests")
+        .update(patch)
+        .eq("id", input.id)
+        .select("id");
       if (error) throw new Error(error.message);
+      if ((data ?? []).length !== 1) throw new Error("The request couldn't be written - refresh and try again.");
     },
     onSuccess: invalidate,
   });
@@ -738,8 +751,13 @@ export function useModerateReview(): UseMutationResult<void, Error, { id: string
   const invalidate = useInvalidateOps();
   return useMutation({
     mutationFn: async (input: { id: string; status: ReviewStatus }): Promise<void> => {
-      const { error } = await supabase.from("reviews").update({ status: input.status }).eq("id", input.id);
+      const { data, error } = await supabase
+        .from("reviews")
+        .update({ status: input.status })
+        .eq("id", input.id)
+        .select("id");
       if (error) throw new Error(error.message);
+      if ((data ?? []).length !== 1) throw new Error("The review couldn't be written - refresh and try again.");
     },
     onSuccess: invalidate,
   });

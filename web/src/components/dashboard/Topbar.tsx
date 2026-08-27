@@ -127,7 +127,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
         icon: Inbox,
         count: newResponses,
         label: `new form response${newResponses === 1 ? "" : "s"}`,
-        to: "/dashboard/forms",
+        to: "/dashboard/forms?tab=responses",
       });
     if (prefs.notifyEnquiries && newInquiries > 0)
       rows.push({
@@ -135,7 +135,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
         icon: Mail,
         count: newInquiries,
         label: `new enquir${newInquiries === 1 ? "y" : "ies"}`,
-        to: "/dashboard/forms",
+        to: "/dashboard/forms?tab=enquiries",
       });
     return rows;
   }, [badges.data, newResponses, newInquiries, prefs]);

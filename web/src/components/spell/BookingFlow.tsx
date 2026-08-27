@@ -14,7 +14,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useAccount } from "@/data/account/AccountProvider";
@@ -432,7 +432,12 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     return !Object.values(next).some(Boolean);
   }, [lead]);
 
+  /* Single-flight guard - the review step's exit animation keeps the button
+     mounted briefly, so a double-click must never file two requests. */
+  const reservingRef = useRef<boolean>(false);
   const submitReserve = useCallback(async () => {
+    if (reservingRef.current) return;
+    reservingRef.current = true;
     setStep("sending");
     try {
       const ref = await bookingService.submitReserveRequest({
@@ -449,6 +454,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     } catch {
       setErrs({ reserve: "Your request couldn't be sent just now. Please try again." });
       setStep("review");
+    } finally {
+      reservingRef.current = false;
     }
   }, [spell, departure, dates, seats, lead, companions, requestNote]);
 
@@ -650,7 +657,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                               payment opens soon.
                             </span>
                           </span>
-                          {seatsLeft <= 4 && (
+                          {!seatsTba && seatsLeft <= 4 && (
                             <span className="absolute right-4 top-4 rounded-full border border-gold/40 bg-charcoal-deep/60 px-2.5 py-1 font-sans text-[9px] uppercase tracking-[0.16em] text-gold-light">
                               {seatsLeft} left
                             </span>

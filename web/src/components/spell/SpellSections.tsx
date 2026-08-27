@@ -137,7 +137,7 @@ export function SpellAbout({ draft }: { draft: SpellDraft }) {
             sideBySide ? "aspect-[4/5]" : "aspect-[16/9]",
           )}
         >
-          <img src={image.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={image.url} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         </div>
       </Reveal>
     ) : null;
@@ -250,7 +250,7 @@ export function SpellHost({ draft }: { draft: SpellDraft }) {
             {/* Front - portrait + title */}
             <div className="absolute inset-0 overflow-hidden rounded-2xl border border-cream/[0.1] [backface-visibility:hidden]">
               {host.image ? (
-                <img src={host.image.url} alt={name} className="absolute inset-0 h-full w-full object-cover" />
+                <img src={host.image.url} alt={name} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
               ) : (
                 <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#2b2113] via-[#1a1510] to-[#0a0806]">
                   <span
@@ -407,7 +407,7 @@ function JourneyDay({ day, index }: { day: ItineraryDay; index: number }) {
     <Reveal className="grid items-center gap-8 md:grid-cols-2 md:gap-16">
       <div className={cn(imageLeft ? "md:order-1" : "md:order-2")}>
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-cream/[0.08] md:aspect-[4/5]">
-          <img src={image.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={image.url} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         </div>
       </div>
       <div className={cn(imageLeft ? "md:order-2" : "md:order-1")}>{textBox}</div>
@@ -430,7 +430,7 @@ export function SpellGallery({ draft }: { draft: SpellDraft }) {
             key={image.id}
             className="relative h-64 w-[78vw] max-w-[460px] shrink-0 snap-start overflow-hidden rounded-2xl border border-cream/[0.08] md:h-80"
           >
-            <img src={image.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={image.url} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
           </div>
         ))}
       </div>
@@ -504,7 +504,7 @@ export function SpellStay({ draft }: { draft: SpellDraft }) {
         <div className="overflow-hidden rounded-2xl border border-cream/[0.08] bg-cream/[0.02]">
           {lead !== undefined && (
             <div className="relative aspect-[16/9] overflow-hidden md:aspect-[21/10]">
-              <img src={lead.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={lead.url} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
               {stay.rating > 0 && (
                 <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-charcoal-deep/75 px-3 py-1.5 backdrop-blur-sm">
                   {Array.from({ length: stay.rating }, (_, i) => (
@@ -518,7 +518,7 @@ export function SpellStay({ draft }: { draft: SpellDraft }) {
             <div className="grid grid-cols-3 gap-px bg-cream/[0.05]">
               {rest.slice(0, 3).map((image) => (
                 <div key={image.id} className="relative aspect-[4/3] overflow-hidden">
-                  <img src={image.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <img src={image.url} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 </div>
               ))}
             </div>

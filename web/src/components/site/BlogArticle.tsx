@@ -53,8 +53,15 @@ export function BlogBlockView({ block, isLead = false }: BlockProps) {
     case "image":
       return (
         <figure className="!my-10">
-          <div className="overflow-hidden rounded-[16px] border border-cream/[0.07]">
-            <img src={block.src} alt={block.caption ?? ""} loading="lazy" className="w-full object-cover" />
+          {/* Fixed ratio reserves the space up front - the article never jumps mid-read while a photo loads. */}
+          <div className="relative aspect-[16/10] overflow-hidden rounded-[16px] border border-cream/[0.07]">
+            <img
+              src={block.src}
+              alt={block.caption ?? ""}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           </div>
           {block.caption !== undefined && block.caption !== "" && (
             <figcaption className="mt-3 text-center font-serif text-sm italic text-cream/45">

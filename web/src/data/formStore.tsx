@@ -148,11 +148,14 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
     async (record: LogoutForm): Promise<LogoutForm> => {
       const exists = forms.some((f) => f.id === record.id) && isUuid(record.id);
       if (exists) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("forms")
           .update(formWritePayload(record))
-          .eq("id", record.id);
+          .eq("id", record.id)
+          .select("id");
         if (error) throw new Error(`Form save failed: ${error.message}`);
+        /* An RLS-filtered write affects 0 rows without erroring - surface it. */
+        if ((data ?? []).length !== 1) throw new Error("Form save failed: the record couldn't be written.");
         await queryClient.invalidateQueries({ queryKey: FORMS_KEY });
         return record;
       }
@@ -176,8 +179,16 @@ export function FormStoreProvider({ children }: { children: ReactNode }) {
         if (target) await saveForm({ ...target, status: "draft" });
         return "retired";
       }
-      const { error } = await supabase.from("forms").delete().eq("id", id);
+      const { data, error } = await supabase.from("forms").delete().eq("id", id).select("id");
       if (error) throw new Error(`Delete failed: ${error.message}`);
+      if ((data ?? []).length === 0) {
+        /* A response landed after our cache was read - the DB kept the form.
+           Fall back to retiring it so the UI never claims a false delete. */
+        const target = forms.find((f) => f.id === id);
+        if (target) await saveForm({ ...target, status: "draft" });
+        await queryClient.invalidateQueries({ queryKey: RESPONSES_KEY });
+        return "retired";
+      }
       await queryClient.invalidateQueries({ queryKey: FORMS_KEY });
       return "deleted";
     },

@@ -50,7 +50,7 @@ function MatchRailCard({ match }: { match: SpellMatch }) {
  */
 export default function BucketListSection() {
   const { interests, brewed } = useBucketList();
-  const { publicSpells } = useSpellStore();
+  const { publicSpells, ready: spellsReady, failed: spellsFailed } = useSpellStore();
   const {
     interests: catalogue,
     isLoading: catalogueLoading,
@@ -63,8 +63,9 @@ export default function BucketListSection() {
     [brewed, interests, publicSpells, catalogue],
   );
 
-  /* Brewed travellers: stay quiet while the catalogue loads; honest retry on failure. */
-  if (brewed && catalogueLoading) return null;
+  /* Brewed travellers: stay quiet while the catalogue OR the spells load -
+     never flash the "build your list" invitation at someone who already brewed. */
+  if (brewed && (catalogueLoading || (!spellsReady && !spellsFailed))) return null;
   if (brewed && catalogueError) {
     return (
       <section aria-labelledby="bucket-heading" className="px-5 py-16 md:px-10">

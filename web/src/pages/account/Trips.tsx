@@ -190,8 +190,9 @@ function WaitlistStrip() {
     staleTime: 60_000,
   });
 
-  /* A failed check says so instead of silently hiding the strip (M10). */
-  if (entriesQuery.isError) {
+  /* A failed check says so instead of silently hiding the strip (M10) -
+     including the departure lookup that names each circle. */
+  if (entriesQuery.isError || departuresQuery.isError) {
     return (
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-cream/15 bg-charcoal-deep/40 p-4 md:px-5" role="alert">
         <p className="font-sans text-[12.5px] text-cream/55">
@@ -199,7 +200,10 @@ function WaitlistStrip() {
         </p>
         <button
           type="button"
-          onClick={() => void entriesQuery.refetch()}
+          onClick={() => {
+            void entriesQuery.refetch();
+            if (departuresQuery.isError) void departuresQuery.refetch();
+          }}
           className="font-sans text-[11px] uppercase tracking-[0.18em] text-gold transition-colors hover:text-gold-light"
         >
           Try again

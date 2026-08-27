@@ -761,7 +761,9 @@ function CodeBoxes({ value, onChange, disabled, invalid }: CodeBoxesProps) {
  * (a couple of threads per hour) until the branded-email milestone.
  */
 function ResendLine({ email }: { email: string }) {
-  const [cooldown, setCooldown] = useState<number>(0);
+  /* This line only renders right after a thread went out - start counting from
+     that send, so an immediate second email can't be requested. */
+  const [cooldown, setCooldown] = useState<number>(60);
   const [sending, setSending] = useState<boolean>(false);
   const [note, setNote] = useState<string>("");
 

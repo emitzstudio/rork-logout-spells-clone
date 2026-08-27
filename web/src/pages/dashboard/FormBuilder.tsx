@@ -107,12 +107,40 @@ function Panel({ index, title, description, open, onToggle, complete, summary, c
 
 /* ------------------------------- Form Builder ------------------------------ */
 
+/** Quiet gate while the form store resolves a deep link. */
+function BuilderOpening({ label }: { label: string }) {
+  return (
+    <div className="grid min-h-[60vh] place-items-center" aria-busy="true">
+      <div className="flex flex-col items-center gap-4">
+        <span aria-hidden className="h-9 w-9 animate-spin rounded-full border-2 border-gold/20 border-t-gold" />
+        <p className="font-sans text-[11px] uppercase tracking-[0.32em] text-gold/70">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Deep links can arrive before the form store resolves - never bounce a real
+ * form's edit URL back to the list (and never open it as an empty new form).
+ */
+export default function FormBuilder() {
+  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
+  const { getFormById, ready } = useFormStore();
+  const routeState = location.state as { form?: LogoutForm } | null;
+  const known =
+    id === undefined || getFormById(id) !== undefined || routeState?.form !== undefined;
+  if (!known && !ready) return <BuilderOpening label="Opening the form" />;
+  if (!known) return <Navigate to="/dashboard/forms" replace />;
+  return <FormBuilderEditor key={id ?? "new"} />;
+}
+
 /**
  * The Form Builder - form details, the question stack (six core questions +
  * unlimited custom ones) and settings on the left; the real form, rendered
  * live by the exact component visitors use, on the right.
  */
-export default function FormBuilder() {
+function FormBuilderEditor() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -197,7 +225,9 @@ export default function FormBuilder() {
     const record: LogoutForm = {
       ...form,
       status: "draft",
-      slug: uniqueFormSlug(slugBase(form), form.id),
+      /* Unpublishing PAUSES a form - it must never silently change the slug a
+         shared link points at. Only never-published drafts follow the title. */
+      slug: wasLive && form.slug !== "" ? form.slug : uniqueFormSlug(slugBase(form), form.id),
       updatedAt: new Date().toISOString(),
     };
     setSaving(true);

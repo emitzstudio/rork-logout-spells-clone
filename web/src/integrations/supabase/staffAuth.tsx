@@ -197,10 +197,14 @@ export function StaffGate({ children }: { children: ReactNode }) {
       setSession(data.session);
       setSessionReady(true);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
-      // Auth flips what RLS reveals - every cached read must refetch.
-      void queryClient.invalidateQueries();
+      // Auth flips what RLS reveals - refetch when the IDENTITY changes.
+      // Routine events (INITIAL_SESSION on mount, hourly TOKEN_REFRESHED) keep
+      // the same identity; invalidating on them would refetch the whole console.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        void queryClient.invalidateQueries();
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, [queryClient]);

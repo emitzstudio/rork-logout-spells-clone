@@ -932,6 +932,14 @@ export default function Discover() {
             variant="compact"
           />
         </div>
+      ) : !spellsReady || catalogueLoading ? (
+        /* Still consulting the cauldron - never flash "no matches" while spells load. */
+        <div className="mt-12 flex justify-center" aria-busy="true">
+          <span
+            aria-hidden
+            className="h-8 w-8 animate-spin rounded-full border-2 border-gold/20 border-t-gold"
+          />
+        </div>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

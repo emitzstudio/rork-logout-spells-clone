@@ -66,7 +66,8 @@ export const fetchActiveDeparture = async (spellId: string): Promise<DepartureIn
 /** Every visible spell's active departure - for resolving waitlist entries. */
 export const fetchActiveDepartures = async (): Promise<DepartureInfo[]> => {
   const { data, error } = await supabase.from("spell_active_departures").select("*");
-  if (error) return [];
+  /* Errors THROW (M10) - nameless waitlist rows must not pose as loaded data. */
+  if (error) throw new Error("Live availability couldn't be checked - try again.");
   return (data ?? []).map(mapDeparture).filter((d): d is DepartureInfo => d !== null);
 };
 

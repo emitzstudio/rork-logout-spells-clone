@@ -15,6 +15,7 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { parseDateOnly } from "@/data/account/derive";
 import type { NotificationKind, PaymentState, TripStatus } from "@/data/account/models";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -230,7 +231,8 @@ export interface CountdownParts {
 }
 
 const partsFor = (target: string): CountdownParts => {
-  const diff = Date.parse(target) - Date.now();
+  /* Date-only targets count down to LOCAL midnight, not UTC (05:30 IST). */
+  const diff = parseDateOnly(target) - Date.now();
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, done: true };
   return {
     days: Math.floor(diff / 86_400_000),

@@ -164,7 +164,7 @@ export default function Live() {
                     <h2 className="heading-serif mt-2 text-3xl text-cream md:text-4xl">{spell.name}</h2>
                     <p className="mt-2 flex items-center gap-1.5 font-sans text-sm text-cream/55">
                       <MapPin size={14} className="text-gold/70" />
-                      {spell.location} · {spell.dates}
+                      {[spell.location, spell.dates].filter((part) => part.trim() !== "").join(" · ")}
                     </p>
                     {spell.hook.trim() !== "" && (
                       <p className="mt-3 font-serif text-lg italic text-cream/65">{spell.hook}</p>

@@ -23,6 +23,7 @@ import {
   deriveStats,
   effectiveStatus,
   fmtRange,
+  parseDateOnly,
   resolveRecentlyViewed,
   tripsByStatus,
 } from "@/data/account/derive";
@@ -50,15 +51,12 @@ export default function Overview() {
     const hero = buckets.ongoing[0] ?? buckets.upcoming[0] ?? null;
     const events = buildCalendarEvents(data, publicSpells);
     const now = new Date();
+    /* Overlap test - a trip spanning the whole month counts too, not only ones
+       that start or end inside it. */
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
     const monthEvents = events
-      .filter((e) => {
-        const s = new Date(e.start);
-        const en = new Date(e.end);
-        return (
-          (s.getMonth() === now.getMonth() && s.getFullYear() === now.getFullYear()) ||
-          (en.getMonth() === now.getMonth() && en.getFullYear() === now.getFullYear())
-        );
-      })
+      .filter((e) => parseDateOnly(e.start) <= monthEnd && parseDateOnly(e.end) >= monthStart)
       .slice(0, 4);
     return {
       buckets,

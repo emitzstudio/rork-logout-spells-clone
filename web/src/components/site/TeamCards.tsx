@@ -39,11 +39,12 @@ function DepartmentChip({ department }: { department: TeamDepartment }) {
 
 /** The socials row - identical treatment on spotlight and card backs. */
 function SocialLinks({ member, tabbable }: { member: TeamMember; tabbable: boolean }) {
+  /* Only render links that actually exist - an empty href would open the page itself in a new tab. */
   const socials = [
     { label: "Instagram", href: member.socials.instagram, Icon: Instagram },
     { label: "LinkedIn", href: member.socials.linkedin, Icon: Linkedin },
     { label: "YouTube", href: member.socials.youtube, Icon: Youtube },
-  ];
+  ].filter(({ href }) => href.trim() !== "");
   return (
     <>
       {socials.map(({ label, href, Icon }) => (
