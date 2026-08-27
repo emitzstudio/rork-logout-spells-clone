@@ -107,6 +107,12 @@ export const fetchMyWaitlist = async (userId: string): Promise<MyWaitlistEntry[]
   return (data ?? []).map(mapWaitlist);
 };
 
+/**
+ * Joins the queue - WITH or WITHOUT an account (0033). The server RPC binds
+ * user_id for signed-in callers and dedupes anonymous callers by phone;
+ * returns the new entry's id (anon callers can't SELECT the table, so the id
+ * is the only handle they get - and the only one they need to leave).
+ */
 export const joinWaitlist = async (input: {
   departureId: string;
   seats: number;
@@ -114,26 +120,26 @@ export const joinWaitlist = async (input: {
   email: string;
   phone: string;
   note: string;
-}): Promise<MyWaitlistEntry> => {
-  const { data, error } = await supabase
-    .from("booking_waitlist")
-    .insert({
-      departure_id: input.departureId,
-      seats_requested: Math.max(1, input.seats),
-      name: input.name.trim(),
-      email: input.email.trim(),
-      phone: input.phone.trim(),
-      note: input.note.trim(),
-    })
-    .select()
-    .single();
-  if (error || !data) throw new Error("The queue couldn't take you just now - try again.");
-  return mapWaitlist(data);
+}): Promise<string> => {
+  const { data, error } = await supabase.rpc("join_waitlist_public", {
+    _departure_id: input.departureId,
+    _seats: Math.max(1, input.seats),
+    _name: input.name.trim(),
+    _email: input.email.trim(),
+    _phone: input.phone.trim(),
+    _note: input.note.trim(),
+  });
+  if (error || typeof data !== "string" || data === "")
+    throw new Error("The queue couldn't take you just now - try again.");
+  return data;
 };
 
-/** Leaving is the traveller's right - while still 'waiting' (policy-pinned). */
+/**
+ * Leaving is the traveller's right - while still 'waiting'. Works for anon
+ * entries too via the 0033 RPC (the entry id is the caller's handle).
+ */
 export const leaveWaitlist = async (id: string): Promise<void> => {
-  const { error } = await supabase.from("booking_waitlist").delete().eq("id", id);
+  const { error } = await supabase.rpc("leave_waitlist_public", { _entry_id: id });
   if (error) throw new Error("That couldn't be done - offered seats are held by the team.");
 };
 

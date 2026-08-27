@@ -1811,6 +1811,39 @@ no other schema or count changes from 0031.
 
 ---
 
+## 0033 — the waitlist opens to everyone (2026-08-27)
+
+- **0033_waitlist_no_account.sql** ("waitlist-no-account") — founder rule:
+  no one should need a Logout Spells account to book, inquire, or queue.
+  Book/Inquire already worked logged-out; the ONE wall was the waitlist
+  (M7 RLS bound inserts to user_id, authenticated-only). Two SECURITY
+  DEFINER RPCs open it:
+  · `join_waitlist_public(departure, seats, name, email, phone, note) → uuid`
+    — phone required (0032 rule), name/email optional, status always
+    'waiting' (allocation stays manual, decision G); signed-in callers bind
+    user_id via auth.uid() (unchanged behavior, existing unique index
+    applies); anon callers dedupe by phone per departure (the partial unique
+    index only covers user_id rows).
+  · `leave_waitlist_public(entry_id)` — deletes a still-waiting entry the
+    caller owns or created anonymously (ids are unguessable UUIDs); offered
+    holds stay staff-only.
+  · Grants to anon + authenticated; self-verify via pg_proc +
+    has_function_privilege (NOTE: information_schema.role_function_grants
+    does NOT exist in this Postgres — the first apply attempt failed on it;
+    statements before it had committed and the retry was idempotent).
+- Client (web): waitlist step rebuilt — no login wall; anon callers get
+  name (optional) + phone (required) fields, and the returned entry id is
+  their leave handle; signed-in flow unchanged. Inquire/Book Now untouched
+  (they never required an account).
+- Applied via runMigration; types regenerated; web static + build green.
+
+### Baseline after 0033
+
+booking_waitlist joins/leaves work without an account · rows 0 · no schema
+changes beyond the two RPC functions.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

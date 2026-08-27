@@ -2277,6 +2277,18 @@ export type Database = {
       increment_spell_views: { Args: { _spell_id: string }; Returns: undefined }
       is_crm: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      join_waitlist_public: {
+        Args: {
+          _departure_id: string
+          _email: string
+          _name: string
+          _note: string
+          _phone: string
+          _seats: number
+        }
+        Returns: string
+      }
+      leave_waitlist_public: { Args: { _entry_id: string }; Returns: undefined }
       next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
       record_manual_payment: {
         Args: {

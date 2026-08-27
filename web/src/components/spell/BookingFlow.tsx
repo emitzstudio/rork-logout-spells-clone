@@ -299,6 +299,11 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   const [waitSeats, setWaitSeats] = useState<number>(1);
   const [waitNote, setWaitNote] = useState<string>("");
   const [waitBusy, setWaitBusy] = useState<boolean>(false);
+  /* Anonymous queueing (0033): no account needed - name/phone collected here. */
+  const [waitName, setWaitName] = useState<string>("");
+  const [waitPhone, setWaitPhone] = useState<string>("");
+  /** The entry id returned by the server - an anon traveller's only handle. */
+  const [waitJoinedId, setWaitJoinedId] = useState<string>("");
 
   const liveSpell = isUuid(spell.id);
 
@@ -353,6 +358,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     setRequestRef("");
     setWaitSeats(1);
     setWaitNote("");
+    setWaitName("");
+    setWaitPhone("");
+    setWaitJoinedId("");
     /* Signed-in travellers arrive pre-filled. */
     if (data) {
       const fullName = `${data.profile.firstName} ${data.profile.lastName}`.trim();
@@ -441,38 +449,45 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   }, [spell, departure, dates, seats, lead, companions, requestNote]);
 
   const joinQueue = useCallback(async () => {
-    if (!departure || !data) return;
+    if (!departure) return;
+    const phone = data !== null ? data.profile.phone : waitPhone;
+    const next: FieldErrs = {};
+    if (phone.replace(/\D/g, "").length < 8) next.waitPhone = "A reachable phone number, please.";
+    setErrs(next);
+    if (Object.values(next).some(Boolean)) return;
     setWaitBusy(true);
-    setErrs({});
     try {
-      await joinWaitlist({
+      const entryId = await joinWaitlist({
         departureId: departure.id,
         seats: waitSeats,
-        name: `${data.profile.firstName} ${data.profile.lastName}`.trim(),
-        email: data.profile.email,
-        phone: data.profile.phone,
+        name: data !== null ? `${data.profile.firstName} ${data.profile.lastName}`.trim() : waitName,
+        email: data !== null ? data.profile.email : "",
+        phone,
         note: waitNote,
       });
+      setWaitJoinedId(entryId);
       await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
     } catch (error) {
       setErrs({ waitlist: error instanceof Error ? error.message : "The queue couldn't take you just now." });
     } finally {
       setWaitBusy(false);
     }
-  }, [departure, data, waitSeats, waitNote, queryClient]);
+  }, [departure, data, waitSeats, waitName, waitPhone, waitNote, queryClient]);
 
   const leaveQueue = useCallback(async () => {
-    if (!myEntry) return;
+    const id = myEntry !== null ? myEntry.id : waitJoinedId !== "" ? waitJoinedId : null;
+    if (id === null) return;
     setWaitBusy(true);
     try {
-      await leaveWaitlist(myEntry.id);
+      await leaveWaitlist(id);
+      setWaitJoinedId("");
       await queryClient.invalidateQueries({ queryKey: ["my-waitlist"] });
     } catch (error) {
       setErrs({ waitlist: error instanceof Error ? error.message : "That couldn't be done." });
     } finally {
       setWaitBusy(false);
     }
-  }, [myEntry, queryClient]);
+  }, [myEntry, waitJoinedId, queryClient]);
 
   const back = useCallback(() => {
     setErrs({});
@@ -766,26 +781,16 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                     <h3 className="mt-2 font-serif text-3xl font-medium leading-tight text-cream">
                       Full, but circles <span className="italic text-gold-gradient">shift.</span>
                     </h3>
+                    <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
+                      No account needed. We reach out on your phone the moment seats open.
+                    </p>
 
-                    {!session ? (
-                      <>
-                        <p className="mt-4 font-sans text-[13.5px] leading-relaxed text-cream/55">
-                          The queue is tied to your account, so we always know how to reach you,
-                          and you can leave it any time.
-                        </p>
-                        <Link to="/login" className="btn-gold mt-6 w-full !py-4" onClick={onClose}>
-                          Sign in to join the waitlist <ArrowRight size={15} />
-                        </Link>
-                        <p className="mt-3 text-center font-sans text-[11px] text-cream/35">
-                          New here? The same door creates your space.
-                        </p>
-                      </>
-                    ) : !departure ? (
+                    {!departure ? (
                       <p className="mt-4 rounded-xl border border-cream/[0.1] bg-cream/[0.02] px-4 py-3.5 font-sans text-[12.5px] leading-relaxed text-cream/55">
                         This circle's departure isn't taking a queue right now. Send an inquiry
                         instead and we'll find you a way in.
                       </p>
-                    ) : waitlistQuery.isError ? (
+                    ) : session && waitlistQuery.isError ? (
                       /* An unknown queue position must not re-offer the Join form (M10). */
                       <div
                         role="alert"
@@ -802,7 +807,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           Try again
                         </button>
                       </div>
-                    ) : myEntry ? (
+                    ) : session && myEntry !== null ? (
                       <div className="mt-5">
                         <div className="relative flex flex-col items-center rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-7 text-center">
                           <SuccessBurst />
@@ -832,6 +837,34 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           <p className="mt-2 text-center font-sans text-xs text-[#d98a7f]">{errs.waitlist}</p>
                         )}
                       </div>
+                    ) : waitJoinedId !== "" ? (
+                      /* The anonymous confirmation - the entry id is the only handle. */
+                      <div className="mt-5">
+                        <div className="relative flex flex-col items-center rounded-xl border border-gold/30 bg-gold/[0.05] px-5 py-7 text-center">
+                          <SuccessBurst />
+                          <span className="grid h-12 w-12 place-items-center rounded-full border border-gold/40 text-gold">
+                            <Hourglass size={20} aria-hidden />
+                          </span>
+                          <p className="mt-4 font-serif text-2xl italic text-cream">
+                            You're in the <span className="not-italic text-gold-gradient">queue.</span>
+                          </p>
+                          <p className="mt-2 max-w-sm font-sans text-[12.5px] leading-relaxed text-cream/55">
+                            {waitSeats} seat{waitSeats > 1 ? "s" : ""} requested · we reach out personally
+                            the moment seats open.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void leaveQueue()}
+                          disabled={waitBusy}
+                          className="btn-ghost-gold mt-4 w-full !py-3 disabled:opacity-60"
+                        >
+                          {waitBusy ? "Leaving…" : "Leave the waitlist"}
+                        </button>
+                        {errs.waitlist && (
+                          <p className="mt-2 text-center font-sans text-xs text-[#d98a7f]">{errs.waitlist}</p>
+                        )}
+                      </div>
                     ) : (
                       <div className="mt-5 space-y-4">
                         <SeatStepper
@@ -840,6 +873,39 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           onChange={setWaitSeats}
                           hint="Seats you'd take if they open"
                         />
+                        {!session && (
+                          <>
+                            <div>
+                              <label htmlFor="wait-name" className={LABEL}>
+                                Your name <span className="text-cream/30">(optional)</span>
+                              </label>
+                              <input
+                                id="wait-name"
+                                type="text"
+                                autoComplete="name"
+                                value={waitName}
+                                onChange={(e) => setWaitName(e.target.value)}
+                                placeholder="What should we call you?"
+                                className={INPUT}
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="wait-phone" className={LABEL}>Phone number</label>
+                              <input
+                                id="wait-phone"
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                value={waitPhone}
+                                onChange={(e) => setWaitPhone(e.target.value)}
+                                placeholder="+91 98765 43210"
+                                className={cn(INPUT, errs.waitPhone && "border-[#c65f52]/70")}
+                                aria-invalid={Boolean(errs.waitPhone)}
+                              />
+                              {errs.waitPhone && <p className="mt-1.5 font-sans text-xs text-[#d98a7f]">{errs.waitPhone}</p>}
+                            </div>
+                          </>
+                        )}
                         <div>
                           <label htmlFor="wait-note" className={LABEL}>
                             Anything we should know <span className="text-cream/30">(optional)</span>
