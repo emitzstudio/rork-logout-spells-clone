@@ -12,6 +12,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { BLOG_CATEGORIES, fmtBlogDate, relatedTo } from "@/data/blog";
 import { useBlogStore } from "@/data/blogStore";
 import type { ManagedBlogPost } from "@/data/blogStore";
+import { articleJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 /* --------------------------------- Article --------------------------------- */
 
@@ -22,6 +23,8 @@ function Article({ post }: { post: ManagedBlogPost }) {
   const category = BLOG_CATEGORIES[post.category];
   const { publicPosts } = useBlogStore();
   const related = useMemo(() => relatedTo(publicPosts, post, 3), [publicPosts, post]);
+  /* The founder's own SEO fields win; the deck stands in otherwise. */
+  const seoDescription = post.seoDescription !== "" ? post.seoDescription : post.deck;
 
   /* Keep the "Copied" reset timer cancellable - never update state after unmount. */
   const copiedTimer = useRef<number | null>(null);
@@ -47,6 +50,25 @@ function Article({ post }: { post: ManagedBlogPost }) {
   return (
     <Page
       title={post.seoTitle !== "" ? post.seoTitle : post.title}
+      description={seoDescription}
+      image={post.hero !== "" ? post.hero : undefined}
+      canonicalPath={`/blog/${post.slug}`}
+      ogType="article"
+      jsonLd={[
+        articleJsonLd({
+          title: post.title,
+          description: seoDescription,
+          path: `/blog/${post.slug}`,
+          image: post.hero !== "" ? post.hero : undefined,
+          publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
+          authorName: post.author.name,
+        }),
+        breadcrumbJsonLd([
+          { name: "The Journal", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ]),
+      ]}
       back={{ container: "max-w-[840px]", gutters: "px-5 md:px-8" }}
     >
       {/* Reading progress - a gold thread across the top. */}
@@ -58,9 +80,9 @@ function Article({ post }: { post: ManagedBlogPost }) {
 
       {/* Hero */}
       <section className="relative flex min-h-[64svh] items-end overflow-hidden">
-        <div aria-hidden className="absolute inset-0">
-          <img src={post.hero} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0806] via-[#0a0806]/50 to-[#0a0806]/25" />
+        <div className="absolute inset-0">
+          <img src={post.hero} alt={post.title} fetchPriority="high" className="h-full w-full object-cover" />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a0806] via-[#0a0806]/50 to-[#0a0806]/25" />
         </div>
         <div className="relative mx-auto w-full max-w-[840px] px-5 pb-14 pt-40 md:px-8 md:pb-16">
           <p className="hero-rise eyebrow" style={{ animationDelay: "0.1s" }}>
@@ -216,7 +238,7 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <Page title="Story Not Found">
+      <Page title="Story Not Found" noindex>
         <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
           <div
             aria-hidden

@@ -17,6 +17,7 @@ import LoadError from "@/components/site/LoadError";
 import { MagicDust } from "@/components/site/MagicDust";
 import { Reveal } from "@/components/site/Reveal";
 import { MIN_BREW, TARGET_BREW, useBucketList } from "@/data/bucketList";
+import { CATEGORIES } from "@/data/discover";
 import { matchSpellsToInterests, useInterests } from "@/data/interests";
 import type { Interest, SpellMatch } from "@/data/interests";
 import { priceDisplay } from "@/data/spells";
@@ -986,7 +987,11 @@ export default function Discover() {
   /* --------------------------------- Render -------------------------------- */
 
   return (
-    <Page title="Discover Your Spell" back={{ container: "max-w-6xl", gutters: "px-5" }}>
+    <Page
+      title="Discover Your Spell: Trips by Mood"
+      description="Find your kind of trip by mood: art, culinary, yoga, culture, offbeat and girls-only circles across India. Tell the cauldron what you dream of and see which spells match."
+      back={{ container: "max-w-6xl", gutters: "px-5" }}
+    >
       <section className="relative overflow-hidden px-0 pb-24 pt-32 md:pt-40">
         <div
           aria-hidden
@@ -1253,6 +1258,23 @@ export default function Discover() {
           >
             See every live spell <ArrowRight size={13} />
           </Link>
+
+          {/* Every mood board is one tap (and one crawlable link) away. */}
+          <p className="mt-10 font-serif text-lg italic text-cream/40">
+            Or wander into a mood<span className="text-gold/60"> ✦ </span>
+          </p>
+          <div className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2.5">
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/discover/${cat.slug}`}
+                className="rounded-full border border-cream/15 px-4 py-2 font-sans text-[11px] uppercase tracking-[0.18em] text-cream/55 transition-all duration-300 hover:border-gold/50 hover:text-gold-light"
+              >
+                <span aria-hidden className="mr-1.5">{cat.symbol}</span>
+                {cat.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
     </Page>

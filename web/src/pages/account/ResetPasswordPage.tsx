@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AccountError } from "@/data/account/models";
 import { accountService } from "@/data/account/service";
 import { supabase } from "@/integrations/supabase/client";
+import { useNoIndex } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -18,6 +19,9 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 type Phase = "checking" | "ready" | "invalid" | "done";
 
 export default function ResetPasswordPage() {
+  /* Recovery-token landing - never indexed. */
+  useNoIndex();
+
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("checking");
   const [password, setPassword] = useState<string>("");

@@ -2,6 +2,7 @@ import { AnimatePresence } from "framer-motion";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import AccountShell from "@/components/account/AccountShell";
+import { useNoIndex } from "@/lib/seo";
 
 import CalendarPage from "./CalendarPage";
 import JourneyPage from "./JourneyPage";
@@ -22,6 +23,9 @@ import WishlistPage from "./WishlistPage";
  * ribbon nav, chrome) persists across sub-pages; only the content animates.
  */
 export default function Account() {
+  /* The traveller space is private - never indexed. */
+  useNoIndex();
+
   const location = useLocation();
 
   return (

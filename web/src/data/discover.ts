@@ -53,7 +53,7 @@ const img = (id: string, w = 1100): string =>
 /* Mood curation (brand config). curatedSlugs/pastSlugs are picked from the
    LIVE catalogue/archive by slug - empty until real spells exist (M11). */
 
-const CATEGORIES: DiscoverCategory[] = [
+export const CATEGORIES: DiscoverCategory[] = [
   {
     id: "art",
     slug: "art",

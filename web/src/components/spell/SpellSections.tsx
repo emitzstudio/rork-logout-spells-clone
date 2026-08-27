@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, Instagram, MapPin, RefreshCw, Star, X } from "lucide-react";
 import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 import { RichBody } from "@/components/dashboard/builder/RichText";
 import { MagicDust } from "@/components/site/MagicDust";
@@ -61,9 +62,16 @@ function Section({ children, id, className }: SectionProps) {
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title?: string }) {
   return (
     <Reveal>
-      <p className="eyebrow">{eyebrow}</p>
-      {title !== undefined && (
-        <h2 className="heading-serif mt-3 text-[30px] text-cream sm:text-[36px] md:text-[42px]">{title}</h2>
+      {title !== undefined ? (
+        <>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 className="heading-serif mt-3 text-[30px] text-cream sm:text-[36px] md:text-[42px]">{title}</h2>
+        </>
+      ) : (
+        /* Sections without a display title still need a real heading for the
+           document outline - the eyebrow IS the heading, styled identically
+           (the preflight resets h2 to inherited size and weight). */
+        <h2 className="eyebrow">{eyebrow}</h2>
       )}
       <span aria-hidden className="gold-line mt-5 block" />
     </Reveal>
@@ -764,6 +772,21 @@ export function SpellFinalCta({ onBook }: { onBook: () => void }) {
             <button type="button" onClick={onBook} className="btn-gold !rounded-full !px-10">
               {FINAL_CTA.button} <ArrowRight size={16} />
             </button>
+          </div>
+          {/* Quiet doors onward - spell pages must never be dead ends. */}
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            <Link
+              to="/live"
+              className="font-sans text-[11px] uppercase tracking-[0.24em] text-gold transition-colors duration-300 hover:text-gold-light"
+            >
+              Explore all live spells
+            </Link>
+            <Link
+              to="/discover"
+              className="font-sans text-[11px] uppercase tracking-[0.24em] text-gold transition-colors duration-300 hover:text-gold-light"
+            >
+              Discover by mood
+            </Link>
           </div>
           <p className="mt-12 font-serif text-[15px] italic text-cream/30">
             Logout Spells · Disappear for a while <span className="text-gold/50">✦</span>

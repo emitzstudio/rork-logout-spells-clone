@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { useSiteSettings } from "@/data/siteSettingsStore";
+import { useNoIndex } from "@/lib/seo";
 
 /**
  * M12 - shown on every public route while the founder has the website set to
@@ -9,6 +10,9 @@ import { useSiteSettings } from "@/data/siteSettingsStore";
  */
 export default function MaintenanceScreen() {
   const { site, contact } = useSiteSettings();
+
+  /* The rest note must never be indexed in place of the real homepage. */
+  useNoIndex();
 
   useEffect(() => {
     document.title = `${site.siteName} | Back Soon`;

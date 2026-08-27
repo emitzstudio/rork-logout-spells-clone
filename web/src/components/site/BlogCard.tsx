@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Clock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { BLOG_CATEGORIES, fmtBlogDate } from "@/data/blog";
 import type { BlogPost } from "@/data/blog";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
+
+/** Real anchor + motion - crawlable href, same hover choreography. */
+const MotionLink = motion.create(Link);
 
 /** Small author identity - avatar (or monogram) + name. */
 export function AuthorChip({ post }: { post: BlogPost }) {
@@ -32,13 +35,12 @@ export function AuthorChip({ post }: { post: BlogPost }) {
  * and byline. Clicking opens the article.
  */
 export default function BlogCard({ post }: { post: BlogPost }) {
-  const navigate = useNavigate();
   const category = BLOG_CATEGORIES[post.category];
 
   return (
-    <motion.button
-      type="button"
-      onClick={() => navigate(`/blog/${post.slug}`)}
+    <MotionLink
+      to={`/blog/${post.slug}`}
+      draggable={false}
       whileHover={{ y: -8 }}
       whileTap={{ scale: 0.985 }}
       transition={{ duration: 0.4, ease: EASE }}
@@ -80,6 +82,6 @@ export default function BlogCard({ post }: { post: BlogPost }) {
           </span>
         </div>
       </div>
-    </motion.button>
+    </MotionLink>
   );
 }

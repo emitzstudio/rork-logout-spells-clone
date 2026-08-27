@@ -39,7 +39,10 @@ export default function Live() {
   );
 
   return (
-    <Page title="Live Spells">
+    <Page
+      title="Live Spells: Upcoming Group Trips"
+      description="Every spell that is live right now: upcoming small-group trips across India with real dates, seats and prices. Find your circle and reserve your place."
+    >
       <section className="relative overflow-hidden px-5 pb-24 pt-32 md:px-10 md:pt-44">
         <div
           aria-hidden

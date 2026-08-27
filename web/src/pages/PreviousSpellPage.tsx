@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ import {
 } from "@/data/reviews";
 import type { SpellReview } from "@/data/reviews";
 import { CATEGORY_META } from "@/data/spells";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -40,13 +41,14 @@ function MemoryHero({ past }: { past: PreviousSpell }) {
 
   return (
     <section className="relative flex min-h-[86svh] items-end overflow-hidden">
-      <div aria-hidden className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden">
         <img
           src={past.hero}
-          alt=""
+          alt={`${past.title} in ${past.location}`}
+          fetchPriority="high"
           className="animate-kenburns h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0806] via-[#0a0806]/45 to-[#0a0806]/30" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a0806] via-[#0a0806]/45 to-[#0a0806]/30" />
         <div
           className="absolute inset-0"
           style={{
@@ -466,12 +468,29 @@ export default function PreviousSpellPage() {
   const { slug } = useParams<{ slug: string }>();
   const { spell: past, isLoading, isError, refetch } = usePreviousSpell(slug);
 
+  /* The transient states render outside the Page shell - keep the tab honest. */
+  useEffect(() => {
+    if (isLoading || isError) document.title = "Previous Spells | Logout Spells";
+  }, [isLoading, isError]);
+
   if (isLoading) return <MemoryLoading />;
   if (isError) return <MemoryError onRetry={refetch} />;
   if (!past) return <MemoryNotFound />;
 
   return (
-    <Page title={`${past.title} · Previous Spell`} back={{ container: "max-w-[1100px]" }}>
+    <Page
+      title={`${past.title} · ${past.location}`}
+      description={`${past.title}: a completed Logout Spells journey in ${past.location} (${past.season}). ${past.caption}`}
+      image={past.hero}
+      canonicalPath={`/live-spells/previous/${past.slug}`}
+      jsonLd={[
+        breadcrumbJsonLd([
+          { name: "Previous Spells", path: "/live-spells/previous" },
+          { name: past.title, path: `/live-spells/previous/${past.slug}` },
+        ]),
+      ]}
+      back={{ container: "max-w-[1100px]" }}
+    >
       <MemoryHero past={past} />
 
       {/* The story */}
@@ -698,7 +717,7 @@ export default function PreviousSpellPage() {
 
 function MemoryNotFound() {
   return (
-    <Page title="Memory Not Found">
+    <Page title="Memory Not Found" noindex>
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
         <div
           aria-hidden

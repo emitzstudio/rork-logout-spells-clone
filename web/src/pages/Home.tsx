@@ -141,7 +141,9 @@ function SpellsSection() {
         </Reveal>
         <Reveal delay={0.08}>
           <h2 id="spells-heading" className="heading-serif mt-3 text-6xl italic text-cream md:text-8xl">
-            Spell
+            {/* The eyebrow completes the phrase visually; screen readers and
+               search engines get the full heading. */}
+            <span className="sr-only">Choose your </span>Spell
           </h2>
         </Reveal>
 
@@ -263,7 +265,11 @@ function FinalCta() {
 
 export default function Home() {
   return (
-    <Page title="Belong Somewhere Real">
+    <Page
+      title="Belong Somewhere Real"
+      fullTitle="Logout Spells | Creator-Led Group Trips in India"
+      description="Belong somewhere real. Logout Spells turns online communities into intimate small-group trips across India: art, culinary, yoga, culture and offbeat journeys led by creators."
+    >
       <Hero />
       <Marquee />
       {/* Signed-in travellers get their next trip + picks right up front. */}

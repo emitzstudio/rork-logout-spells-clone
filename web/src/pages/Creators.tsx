@@ -635,7 +635,11 @@ function CreatorFinalCta() {
  */
 export default function Creators() {
   return (
-    <Page title="Become a Spellcaster" back={{ container: "max-w-6xl" }}>
+    <Page
+      title="Become a Spellcaster"
+      description="Host your own spell. Logout Spells partners with creators to design, fill and run intimate group trips across India. You bring the people, we build the magic."
+      back={{ container: "max-w-6xl" }}
+    >
       <CreatorHero />
       <WhySection />
       <WhoSection />

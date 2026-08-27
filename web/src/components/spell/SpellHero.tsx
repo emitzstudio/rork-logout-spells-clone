@@ -85,17 +85,23 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
     <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden bg-charcoal-deep">
       {/* Imagery - imperceptibly slow Ken Burns drift */}
       {heroUrl !== null ? (
-        <div className="animate-kenburns absolute inset-0" aria-hidden>
+        <div className="animate-kenburns absolute inset-0">
+          {/* The page's defining image - named for image search, prioritised as the LCP. */}
           <img
             src={heroUrl}
-            alt=""
+            alt={draft.location.trim() !== "" ? `${spellName} in ${draft.location}` : spellName}
+            fetchPriority="high"
             className={cn(
               "absolute inset-0 h-full w-full object-cover",
               hasDistinctMobile && "hidden md:block",
             )}
           />
           {hasDistinctMobile && mobileUrl !== null && (
-            <img src={mobileUrl} alt="" className="absolute inset-0 h-full w-full object-cover md:hidden" />
+            <img
+              src={mobileUrl}
+              alt={draft.location.trim() !== "" ? `${spellName} in ${draft.location}` : spellName}
+              className="absolute inset-0 h-full w-full object-cover md:hidden"
+            />
           )}
         </div>
       ) : (

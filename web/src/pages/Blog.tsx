@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Clock, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import BlogCard, { AuthorChip } from "@/components/site/BlogCard";
 import Page from "@/components/site/Layout";
@@ -14,16 +14,18 @@ import { cn } from "@/lib/utils";
 
 type CategoryFilter = "all" | BlogCategoryId;
 
+/** Real anchor + motion - crawlable href, same hover choreography. */
+const MotionLink = motion.create(Link);
+
 /** The big split-panel feature at the top of the Journal. */
 function FeaturedArticle({ post }: { post: BlogPost }) {
-  const navigate = useNavigate();
   const category = BLOG_CATEGORIES[post.category];
 
   return (
     <Reveal delay={0.12}>
-      <motion.button
-        type="button"
-        onClick={() => navigate(`/blog/${post.slug}`)}
+      <MotionLink
+        to={`/blog/${post.slug}`}
+        draggable={false}
         whileHover={{ y: -6 }}
         whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -71,7 +73,7 @@ function FeaturedArticle({ post }: { post: BlogPost }) {
             Read the story <ArrowRight size={14} />
           </span>
         </div>
-      </motion.button>
+      </MotionLink>
     </Reveal>
   );
 }
@@ -108,7 +110,10 @@ export default function Blog() {
   const gridPosts = filtering ? visible : visible.filter((p) => p.id !== featured?.id);
 
   return (
-    <Page title="The Journal">
+    <Page
+      title="The Journal: Travel Stories & Guides"
+      description="Field notes from the other side of the screen: travel guides, spell recaps, host interviews and honest letters from the Logout Spells circle."
+    >
       <section className="relative overflow-hidden px-5 pb-24 pt-32 md:px-10 md:pt-44">
         <div
           aria-hidden

@@ -197,7 +197,15 @@ const AppShell = () => {
         <MaintenanceScreen />
       ) : (
         <>
-          {(entered || isDashboard || skipPortal) && <AnimatedRoutes />}
+          {/* SEO-critical: routes stay mounted even before the portal is
+             crossed - crawlers arrive with no localStorage flag and must see
+             real page content, not an empty shell behind the portal. `inert`
+             keeps the covered content untabbable until ignition, and the key
+             remount replays each page's entrance the moment the ritual ends,
+             so first-visit choreography is preserved exactly. */}
+          <div inert={!entered && !isDashboard && !skipPortal}>
+            <AnimatedRoutes key={entered || isDashboard || skipPortal ? "site" : "pre-portal"} />
+          </div>
           {/* M11.5: the back orb now lives inside each page's own layout (PageBack via the Page shell) - no global fixed button. */}
           {!isDashboard && !skipPortal && !portalDone && (
             <PortalEntry

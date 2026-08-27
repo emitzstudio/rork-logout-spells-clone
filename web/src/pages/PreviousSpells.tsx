@@ -38,7 +38,10 @@ export default function PreviousSpells() {
   );
 
   return (
-    <Page title="Previous Spells">
+    <Page
+      title="Previous Spells"
+      description="The archive of completed Logout Spells journeys: photographs, day-by-day recaps and words from the travellers who were there."
+    >
       <section className="relative overflow-hidden px-5 pb-24 pt-32 md:px-10 md:pt-44">
         <div
           aria-hidden
@@ -134,7 +137,7 @@ export default function PreviousSpells() {
                       exit={{ opacity: 0, scale: 0.96 }}
                       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      <PastSpellCard past={past} />
+                      <PastSpellCard past={past} headingLevel="h2" />
                     </motion.div>
                   ))}
                 </AnimatePresence>

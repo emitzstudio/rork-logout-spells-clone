@@ -7,6 +7,7 @@ import { useAccount } from "@/data/account/AccountProvider";
 import { AccountError } from "@/data/account/models";
 import { accountService } from "@/data/account/service";
 import { useSiteSettings } from "@/data/siteSettingsStore";
+import { useNoIndex } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -57,6 +58,9 @@ const QUOTES: Record<AuthMode, { big: ReactNode; hand: string }> = {
 
 /** Auth screens - real Supabase flows behind the same three doors (M6). */
 export default function AuthPage({ mode }: { mode: AuthMode }) {
+  /* Auth screens stay out of search results. */
+  useNoIndex();
+
   const { session, signIn, signUp } = useAccount();
   const navigate = useNavigate();
   const location = useLocation();

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin } from "lucide-react";
 import { useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { RatingStars } from "@/components/site/RatingStars";
 import { Reveal } from "@/components/site/Reveal";
@@ -13,19 +13,30 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** Real anchor + motion - crawlable href, same hover choreography. */
+const MotionLink = motion.create(Link);
+
 /**
  * A completed journey, kept like a postcard - image, season, one line and
  * its rating. Clicking opens the memory page (not a booking page).
+ * `headingLevel` keeps the archive grid's hierarchy honest (h2 under the
+ * page h1) while carousels beneath an h2 keep the default h3.
  */
-export function PastSpellCard({ past }: { past: PreviousSpell }) {
-  const navigate = useNavigate();
+export function PastSpellCard({
+  past,
+  headingLevel = "h3",
+}: {
+  past: PreviousSpell;
+  headingLevel?: "h2" | "h3";
+}) {
   const reviews = useSpellReviews(past.id);
   const summary = useMemo(() => ratingSummary(reviews), [reviews]);
+  const Heading = headingLevel;
 
   return (
-    <motion.button
-      type="button"
-      onClick={() => navigate(`/live-spells/previous/${past.slug}`)}
+    <MotionLink
+      to={`/live-spells/previous/${past.slug}`}
+      draggable={false}
       whileHover={{ y: -8 }}
       whileTap={{ scale: 0.985 }}
       transition={{ duration: 0.4, ease: EASE }}
@@ -65,7 +76,7 @@ export function PastSpellCard({ past }: { past: PreviousSpell }) {
           <MapPin size={12} className="text-gold/70" aria-hidden />
           {past.location} · {past.durationDays} days
         </p>
-        <h3 className="heading-serif mt-2.5 text-3xl text-cream md:text-4xl">{past.title}</h3>
+        <Heading className="heading-serif mt-2.5 text-3xl text-cream md:text-4xl">{past.title}</Heading>
         <p className="mt-3 font-serif text-lg italic leading-snug text-cream/60">{past.caption}</p>
         {summary.count > 0 && (
           <p className="mt-4 flex items-center gap-2.5">
@@ -79,7 +90,7 @@ export function PastSpellCard({ past }: { past: PreviousSpell }) {
           Relive this journey <ArrowRight size={14} />
         </span>
       </div>
-    </motion.button>
+    </MotionLink>
   );
 }
 

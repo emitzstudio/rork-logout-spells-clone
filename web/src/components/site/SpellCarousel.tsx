@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import ShowcaseCarousel from "@/components/site/ShowcaseCarousel";
 import type { ManagedSpell } from "@/data/spells";
@@ -9,18 +9,19 @@ import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** Real anchor + motion - crawlable href, same hover choreography. */
+const MotionLink = motion.create(Link);
+
 /**
  * The homepage spell card - identical design to the original grid card
  * (gradient, cover photo, hover lift, gold sweep). Only its presentation
  * around it changed, not the card itself.
  */
 function SpellCard({ spell }: { spell: ManagedSpell }) {
-  const navigate = useNavigate();
-
   return (
-    <motion.button
-      type="button"
-      onClick={() => navigate(`/live/${spell.slug}`)}
+    <MotionLink
+      to={`/live/${spell.slug}`}
+      draggable={false}
       whileHover={{ y: -8 }}
       whileTap={{ scale: 0.985 }}
       transition={{ duration: 0.4, ease: EASE }}
@@ -69,7 +70,7 @@ function SpellCard({ spell }: { spell: ManagedSpell }) {
           Open the Spell <ArrowRight size={14} />
         </span>
       </div>
-    </motion.button>
+    </MotionLink>
   );
 }
 

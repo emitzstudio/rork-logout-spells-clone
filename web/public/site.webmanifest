@@ -1,0 +1,13 @@
+{
+  "name": "Logout Spells",
+  "short_name": "Logout Spells",
+  "description": "Creator-led group trips and real-world experiences across India. Belong somewhere real.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#1C1C1A",
+  "theme_color": "#1C1C1A",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

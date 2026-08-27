@@ -26,6 +26,7 @@ import {
   type ReviewDraft,
 } from "@/data/reviewInvites";
 import { useInviteLookup, useSubmitInviteReview } from "@/data/reviewInvitesStore";
+import { useNoIndex } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -225,6 +226,9 @@ function ReceivedScreen({ spellName }: { spellName: string }) {
 /* ----------------------------------- Page ----------------------------------- */
 
 export default function ReviewInvitePage() {
+  /* One-time private tokens - never indexed, never crawled. */
+  useNoIndex();
+
   const { token: rawToken } = useParams<{ token: string }>();
   const raw = rawToken ?? "";
   /* Obviously malformed tokens don't need a round trip - the server stays the

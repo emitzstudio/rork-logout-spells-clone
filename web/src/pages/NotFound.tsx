@@ -11,7 +11,11 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <Page title="Page Not Found">
+    <Page
+      title="Page Not Found"
+      noindex
+      description="This page does not exist. Return to Logout Spells and find a journey that does."
+    >
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
         <div
           aria-hidden

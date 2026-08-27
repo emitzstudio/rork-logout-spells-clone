@@ -5,26 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1C1C1A" />
     <meta name="color-scheme" content="dark" />
-    <title>Logout Spells | Belong Somewhere Real</title>
+    <!-- Per-route titles, descriptions, canonicals and JSON-LD are applied at
+         runtime (src/lib/seo.ts). These are the static fallbacks crawlers see
+         before JavaScript runs. %SITE_URL% is replaced at build time from
+         VITE_SITE_URL (see vite.config.ts). -->
+    <title>Logout Spells | Creator-Led Group Trips in India</title>
     <meta
       name="description"
-      content="Logout Spells is a creator-led travel community. We turn digital followers into real-world community. Choose your spell and belong somewhere real."
+      content="Logout Spells is a creator-led travel community. Intimate small-group trips and real-world experiences across India. Belong somewhere real."
     />
 
-    <meta property="og:title" content="Logout Spells | Belong Somewhere Real" />
+    <meta property="og:site_name" content="Logout Spells" />
+    <meta property="og:title" content="Logout Spells | Creator-Led Group Trips in India" />
     <meta
       property="og:description"
-      content="A creator-led community platform. We design intimate experiences around identity. You don't just go somewhere. You belong somewhere."
+      content="Logout Spells is a creator-led travel community. Intimate small-group trips and real-world experiences across India. Belong somewhere real."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://z57wkqd89o09lsi6kc7v1-web.rork.live/icon.png" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/icon.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Logout Spells" />
     <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Logout Spells | Creator-Led Group Trips in India" />
+    <meta
+      name="twitter:description"
+      content="Logout Spells is a creator-led travel community. Intimate small-group trips and real-world experiences across India. Belong somewhere real."
+    />
+    <meta name="twitter:image" content="%SITE_URL%/icon.png" />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Logout Spells",
+        "url": "%SITE_URL%/",
+        "logo": "%SITE_URL%/icon.png",
+        "sameAs": [
+          "https://www.linkedin.com/in/vidushiverma2409/",
+          "https://www.instagram.com/veedoshe",
+          "https://www.youtube.com/@TalkETM"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Logout Spells",
+        "url": "%SITE_URL%/"
+      }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Spell imagery and data live on Supabase; category boards on Unsplash. -->
+    <link rel="preconnect" href="%SUPABASE_ORIGIN%" />
+    <link rel="preconnect" href="%SUPABASE_ORIGIN%" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
     <!-- Only the weights the design actually uses: fewer font files, faster paint.
          Caveat powers the handwritten travel-journal notes on the Our Story page. -->
     <link

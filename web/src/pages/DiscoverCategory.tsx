@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import Page from "@/components/site/Layout";
 import LoadError from "@/components/site/LoadError";
@@ -12,18 +12,20 @@ import { usePreviousSpells } from "@/data/previousSpells";
 import { formatINR } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** Real anchor + motion - crawlable href, same hover choreography. */
+const MotionLink = motion.create(Link);
+
 /** A curated live spell - discovery framing, booking stays on the spell page. */
 function CuratedSpellCard({ spell }: { spell: ManagedSpell }) {
-  const navigate = useNavigate();
-
   return (
-    <motion.button
-      type="button"
-      onClick={() => navigate(`/live/${spell.slug}`)}
+    <MotionLink
+      to={`/live/${spell.slug}`}
+      draggable={false}
       whileHover={{ y: -6 }}
       whileTap={{ scale: 0.985 }}
       transition={{ duration: 0.4, ease: EASE }}
@@ -74,7 +76,7 @@ function CuratedSpellCard({ spell }: { spell: ManagedSpell }) {
           </span>
         </div>
       </div>
-    </motion.button>
+    </MotionLink>
   );
 }
 
@@ -103,7 +105,7 @@ export default function DiscoverCategoryPage() {
 
   if (!category) {
     return (
-      <Page title="Discover">
+      <Page title="Discover" noindex>
         <section className="relative flex min-h-[100svh] flex-col items-center justify-center px-5 text-center">
           <span className="animate-float-slow font-serif text-6xl text-gold/60" aria-hidden>✺</span>
           <h1 className="heading-serif mt-6 text-5xl text-cream md:text-7xl">
@@ -119,12 +121,29 @@ export default function DiscoverCategoryPage() {
 
   return (
     /* The hero carries its own "All moods" back link - no second orb (M11.5). */
-    <Page title={`${category.name} · Discover`} back={false}>
+    <Page
+      title={`${category.name} Trips & Experiences`}
+      description={category.description}
+      image={category.image}
+      canonicalPath={`/discover/${category.slug}`}
+      jsonLd={[
+        breadcrumbJsonLd([
+          { name: "Discover", path: "/discover" },
+          { name: category.name, path: `/discover/${category.slug}` },
+        ]),
+      ]}
+      back={false}
+    >
       {/* Hero */}
       <section className="relative flex min-h-[74svh] items-end overflow-hidden">
-        <div aria-hidden className="absolute inset-0 overflow-hidden">
-          <img src={category.image} alt="" className="animate-kenburns h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0806] via-[#0a0806]/45 to-[#0a0806]/25" />
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={category.image}
+            alt={`${category.name} journeys with Logout Spells`}
+            fetchPriority="high"
+            className="animate-kenburns h-full w-full object-cover"
+          />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a0806] via-[#0a0806]/45 to-[#0a0806]/25" />
         </div>
         <div className="relative mx-auto w-full max-w-[1100px] px-5 pb-16 pt-40 md:px-10 md:pb-20">
           <Link

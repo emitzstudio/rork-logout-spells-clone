@@ -640,7 +640,10 @@ function ChapterFinale() {
  */
 export default function OurStory() {
   return (
-    <Page title="Our Story">
+    <Page
+      title="Our Story"
+      description="Why Logout Spells exists: a quiet rebellion against endless scrolling. How a small thought became creator-led circles that turn digital followers into real-world community."
+    >
       <AmbientBackdrop />
       <div className="relative z-[1]">
         <StoryHero />

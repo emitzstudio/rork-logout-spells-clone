@@ -8,6 +8,7 @@ import LoadError from "@/components/site/LoadError";
 import { parseAttribution } from "@/data/crm";
 import { useFormStore } from "@/data/formStore";
 import { useSiteSettings } from "@/data/siteSettingsStore";
+import { useNoIndex } from "@/lib/seo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -27,6 +28,10 @@ export default function FormPage() {
   /* M12 - the public-forms switch. Fail-open: forms stay on unless the
      founder explicitly turned them off. */
   const { launch } = useSiteSettings();
+
+  /* Share-link utility pages: thin by design, so they stay out of search -
+     the content that should rank lives on the spell pages. */
+  useNoIndex();
 
   const form = slug ? getFormBySlug(slug) : undefined;
   const visible = form !== undefined && (form.status === "published" || isPreview);

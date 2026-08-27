@@ -7,6 +7,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
 import { DASH_SECTIONS } from "@/data/dashboard";
 import { StaffGate, useStaffAuth } from "@/integrations/supabase/staffAuth";
+import { useNoIndex } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 import BlogBuilder from "./BlogBuilder";
@@ -38,6 +39,9 @@ const STORAGE_KEY = "ls-dash-collapsed";
  * split server-side regardless of what renders here.
  */
 export default function Dashboard() {
+  /* The founder console must never appear in search results. */
+  useNoIndex();
+
   return (
     <StaffGate>
       <GatedConsole />

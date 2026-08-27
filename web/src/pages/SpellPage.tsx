@@ -27,6 +27,7 @@ import type { SpellDraft } from "@/data/builder";
 import { useFormStore } from "@/data/formStore";
 import { isPublic, useSpellStore } from "@/data/spellStore";
 import { isUuid, supabase } from "@/integrations/supabase/client";
+import { breadcrumbJsonLd, tripJsonLd } from "@/lib/seo";
 
 /**
  * The public Spell page - rendered dynamically from the local CMS at full,
@@ -91,6 +92,12 @@ export default function SpellPage() {
   }
   if (!spell || !visible || !draft) return <SpellNotFound />;
 
+  /* Search snippet + structured data built from the spell's real fields only. */
+  const days = spell.durationDays > 0 ? `${spell.durationDays}-day ` : "";
+  const where = spell.location.trim() !== "" ? ` in ${spell.location}` : "";
+  const seoDescription = `${spell.name} is a ${days}creator-led small-group trip${where}. ${spell.hook}`.trim();
+  const heroImage = draft.hero?.url ?? draft.mobileHero?.url ?? (spell.image !== "" ? spell.image : null);
+
   // A spell with an attached (and published) form routes its Inquire door
   // through THAT form - submissions land in the founder's response inbox.
   const attachedForm = spell.formId ? getFormById(spell.formId) : undefined;
@@ -102,7 +109,29 @@ export default function SpellPage() {
 
   return (
     /* SpellHero carries the back orb inside its badge row - no second orb (M11.5). */
-    <Page title={spell.name} back={false}>
+    <Page
+      title={spell.location.trim() !== "" ? `${spell.name} · ${spell.location}` : spell.name}
+      description={seoDescription}
+      image={heroImage ?? undefined}
+      canonicalPath={`/live/${spell.slug}`}
+      jsonLd={[
+        tripJsonLd({
+          name: spell.name,
+          description: spell.hook.trim() !== "" ? spell.hook : seoDescription,
+          path: `/live/${spell.slug}`,
+          image: heroImage,
+          location: spell.location,
+          priceInr: spell.price,
+          seatsTotal: spell.seatsTotal,
+          soldOut: spell.status === "soldout",
+        }),
+        breadcrumbJsonLd([
+          { name: "Live Spells", path: "/live" },
+          { name: spell.name, path: `/live/${spell.slug}` },
+        ]),
+      ]}
+      back={false}
+    >
       <SpellHero draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <BookingStrip draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <SpellAbout draft={draft} />
@@ -148,7 +177,7 @@ export default function SpellPage() {
 /** Shown when the slug is unknown - or the spell is a draft / archived. */
 function SpellNotFound() {
   return (
-    <Page title="Spell Not Found">
+    <Page title="Spell Not Found" noindex>
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
         <div
           aria-hidden
