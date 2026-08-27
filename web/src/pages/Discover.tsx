@@ -19,7 +19,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { MIN_BREW, TARGET_BREW, useBucketList } from "@/data/bucketList";
 import { matchSpellsToInterests, useInterests } from "@/data/interests";
 import type { Interest, SpellMatch } from "@/data/interests";
-import { formatINR } from "@/data/spells";
+import { priceDisplay } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
@@ -400,7 +400,7 @@ function MatchCard({ match }: { match: SpellMatch }) {
           </div>
         )}
         <div className="mt-auto flex items-center justify-between pt-3.5">
-          <span className="font-sans text-[12px] text-cream/75">{formatINR(spell.price)}</span>
+          <span className="font-sans text-[12px] text-cream/75">{priceDisplay(spell.price)}</span>
           <span className="inline-flex items-center gap-1.5 font-sans text-[9.5px] uppercase tracking-[0.18em] text-gold transition-all duration-300 group-hover:gap-2.5 group-hover:text-gold-light">
             Open <ArrowRight size={12} />
           </span>

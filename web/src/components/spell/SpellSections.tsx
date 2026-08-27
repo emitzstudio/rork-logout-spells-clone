@@ -92,10 +92,17 @@ export function BookingStrip({ draft, seatsLeft, onBook }: BookingStripProps) {
       <div className="mx-auto flex w-full max-w-[1140px] flex-wrap items-center justify-between gap-x-8 gap-y-4 px-5 py-4 sm:px-8 md:py-5">
         <div className="min-w-0">
           <p className="font-sans text-[12px] text-cream/50">{bits.join(" · ")}</p>
-          <p className="mt-1.5 font-serif text-[24px] leading-none text-gold-light md:text-[27px]">
-            {priceNumber > 0 ? formatINR(priceNumber) : "₹ TBA"}{" "}
-            <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">per seat</span>
-          </p>
+          {priceNumber > 0 ? (
+            <p className="mt-1.5 font-serif text-[24px] leading-none text-gold-light md:text-[27px]">
+              {formatINR(priceNumber)}{" "}
+              <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">per seat</span>
+            </p>
+          ) : (
+            <p className="mt-1.5 font-serif text-[21px] italic leading-none text-gold-light md:text-[24px]">
+              Price on request{" "}
+              <span className="font-sans text-[10px] not-italic uppercase tracking-[0.2em] text-cream/40">announced soon</span>
+            </p>
+          )}
         </div>
         <button
           type="button"

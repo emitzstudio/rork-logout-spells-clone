@@ -1,20 +1,26 @@
--- 0040 · The Ziro Spell goes live (Ziro Music Festival 2026)
+-- 0043 · The Ziro Spell goes live (Ziro Music Festival 2026)
 --
--- ⛔ STAGED, DO NOT APPLY YET: the founder has not confirmed pricing or seats.
---    Fill {{ZIRO_PRICE_MINOR}} (paise, e.g. ₹18,999 = 1899900) and
---    {{ZIRO_SEATS}} below, then apply. The tokens make this file invalid SQL
---    on purpose.
+-- Founder instruction (2026-08-27): publish now. The price and circle size
+-- are still the founder's to announce, so this row ships in the catalogue's
+-- honest "on request" state instead of inventing money:
+--   price_minor 0  → every public surface renders "Price on request";
+--                    the booking sheet swaps the arithmetic for an honest
+--                    note; create-booking refuses conversion with
+--                    409 PRICE_TBC_NOT_BOOKABLE (D2 gate).
+--   seats_total 0  → "an intimate circle" instead of a fake seat count;
+--                    no sold-out state, no waitlist door, stepper capped at 6;
+--                    create-booking refuses with 409 SEATS_TBC_NOT_BOOKABLE.
+-- Inquiries and reserve requests stay fully open - they are the intake the
+-- team quotes personally. One small follow-up migration fills the real
+-- price + seats when the founder confirms them and every gate lifts.
 --
--- Turns the founder's Ziro Music Festival 2026 program (23 to 28 September,
--- back in Guwahati on the 29th) into a published spell at /live/the-ziro-spell,
--- same live page format as Bir (0035) and Udaipur (0039). Hostless.
+-- Dates are REAL (the founder's program): 23 to 28 September 2026, back in
+-- Guwahati on the 29th. Same live page format as Bir (0035) and Udaipur
+-- (0039). Hostless.
 --
--- Imagery: hotlinked Unsplash (the discover.ts and journal precedent), each
--- image downloaded and visually verified before shipping: green valley
--- terraces (hero), festival crowd at night, campfire jam with a guitar,
--- a glowing tent under the stars, blue tents under the milky way (stay).
--- These are illustrative stock shots, offered to the founder to swap for
--- real Ziro photography whenever they have it.
+-- Imagery: generated HD photography (founder-approved AI generation,
+-- 2026-08-27), seeded through the 0041 window into this spell's hd/ folder
+-- and verified below - no more hotlinked stock.
 --
 -- Fixed ids (deterministic + reviewable, the 0002 seed convention):
 --   spell     83331c33-cdcb-420e-aec2-1d3c5fc5b7b2
@@ -41,11 +47,11 @@ insert into public.spells (
   'Ziro Valley, Arunachal Pradesh',
   6,
   4,
-  {{ZIRO_PRICE_MINOR}},
+  0,
   'INR',
   '',
   '',
-  'https://images.unsplash.com/photo-1773393879048-c186ff7dd7c4?q=80&w=1600&auto=format&fit=crop',
+  'https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/83331c33-cdcb-420e-aec2-1d3c5fc5b7b2/hd/hero-ziro-valley.jpg',
   '',
   '',
   true,
@@ -100,7 +106,7 @@ insert into public.spells (
       "body": "Arrive at Naharlagun around **7:00 AM** and wind up into the hills: the drive to Ziro takes about three hours, and every bend is greener than the last.\n\nCheck in at the campsite, rest, freshen up and have **breakfast with panoramic views**. Then it begins: head out to the **Ziro Music Festival** for your first evening of music in the valley.",
       "image": {
         "id": "img-ziro-day2",
-        "url": "https://images.unsplash.com/photo-1778847195159-874f36cf4e3b?q=80&w=1400&auto=format&fit=crop",
+        "url": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/83331c33-cdcb-420e-aec2-1d3c5fc5b7b2/hd/festival-crowd.jpg",
         "name": "First festival evening"
       },
       "highlights": [
@@ -119,7 +125,7 @@ insert into public.spells (
       "body": "A day with no agenda beyond the music. Relax into the peaceful surroundings, try the **local cuisine and traditional rice beer**, and let the festival performances carry the afternoon into the evening.\n\nBack at camp, an **evening jamming session with local musicians** picks up where the stages left off, and the night ends the way valley nights should: **stargazing** until your eyes give up before the sky does.",
       "image": {
         "id": "img-ziro-day3",
-        "url": "https://images.unsplash.com/photo-1758705023495-b64dfe01f970?q=80&w=1400&auto=format&fit=crop",
+        "url": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/83331c33-cdcb-420e-aec2-1d3c5fc5b7b2/hd/stargazing.jpg",
         "name": "Stargazing over the campsite"
       },
       "highlights": [
@@ -153,7 +159,7 @@ insert into public.spells (
       "body": "The morning is for whatever calls you: a **trek to the woods** or music activities back at camp. By **1:00 PM** the festival pulls everyone in for the last full day.\n\nEnjoy the performances, party into the night, and come back for the **final night celebrations** at the campsite, the kind of last evening people are still talking about on the train home.",
       "image": {
         "id": "img-ziro-day5",
-        "url": "https://images.unsplash.com/photo-1758272960011-3586efc17bbf?q=80&w=1400&auto=format&fit=crop",
+        "url": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/83331c33-cdcb-420e-aec2-1d3c5fc5b7b2/hd/campfire-jam.jpg",
         "name": "Campfire jams at the campsite"
       },
       "highlights": [
@@ -199,7 +205,7 @@ insert into public.spells (
     "images": [
       {
         "id": "img-ziro-stay",
-        "url": "https://images.unsplash.com/photo-1760042400885-fa713ee4bc6b?q=80&w=1400&auto=format&fit=crop",
+        "url": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/83331c33-cdcb-420e-aec2-1d3c5fc5b7b2/hd/stay-tents.jpg",
         "name": "Tents under the valley sky"
       }
     ]
@@ -276,6 +282,11 @@ insert into public.spells (
   ],
   "faqs": [
     {
+      "id": "faq-ziro-price",
+      "question": "How much does it cost?",
+      "answer": "The price for this circle is being finalised and will be announced shortly. Send an inquiry or a reserve request and the team shares it with you personally the moment it is set. Nothing is ever collected online before you have the full picture."
+    },
+    {
       "id": "faq-ziro-1",
       "question": "What is the Inner Line Permit and is it handled?",
       "answer": "Arunachal Pradesh requires an Inner Line Permit for visitors, and it is included. We arrange it for you: all we need is a scanned government authorised ID and a passport size photograph. PAN cards are not accepted for the permit."
@@ -312,7 +323,7 @@ $page$::jsonb,
 )
 on conflict (id) do nothing;
 
--- §2 · The departure (Sep 23-28, seats pending founder) ----------------------------------
+-- §2 · The departure (real dates · circle size announced soon) ----------------------------
 
 insert into public.spell_departures (
   id, spell_id, date_label, start_date, end_date, seats_total, seats_booked, status
@@ -322,7 +333,7 @@ insert into public.spell_departures (
   'Sep 23-28',
   '2026-09-23',
   '2026-09-28',
-  {{ZIRO_SEATS}},
+  0,
   0,
   'scheduled'
 )
@@ -336,7 +347,7 @@ values (
   '83331c33-cdcb-420e-aec2-1d3c5fc5b7b2',
   'published',
   'Published to site',
-  'Live at /live/the-ziro-spell'
+  'Live at /live/the-ziro-spell. Price and circle size announced soon.'
 )
 on conflict (id) do nothing;
 
@@ -346,13 +357,15 @@ do $$
 declare
   v_cnt int;
 begin
+  -- The deliberate on-request state: price 0, hostless, full page document.
   select count(*) into v_cnt from public.spells
   where id = '83331c33-cdcb-420e-aec2-1d3c5fc5b7b2'
     and status = 'published'
     and host_name = '' and host_role = ''
-    and price_minor > 0
+    and price_minor = 0
+    and hero_url like '%/hd/hero-ziro-valley.jpg'
     and jsonb_array_length(page->'itinerary') = 6
-    and jsonb_array_length(page->'faqs') = 6
+    and jsonb_array_length(page->'faqs') = 7
     and coalesce(page->'host'->>'name', '') = ''
     and coalesce(page->'stay'->>'name', '') <> '';
   if v_cnt <> 1 then
@@ -367,14 +380,23 @@ begin
     raise exception 'ziro spell copy contains em/en dashes';
   end if;
 
+  -- Real dates, deliberate zero seats (circle size announced soon).
   select count(*) into v_cnt from public.spell_departures
   where id = '83331c33-cdcb-420e-aec2-1d3c5fc5b7b3'
     and spell_id = '83331c33-cdcb-420e-aec2-1d3c5fc5b7b2'
-    and status = 'scheduled' and seats_total > 0
+    and status = 'scheduled' and seats_total = 0 and seats_booked = 0
     and date_label = 'Sep 23-28'
     and start_date = '2026-09-23' and end_date = '2026-09-28';
   if v_cnt <> 1 then
     raise exception 'ziro departure missing or malformed';
+  end if;
+
+  -- The 5 HD images this page references actually exist in storage.
+  select count(*) into v_cnt from storage.objects
+  where bucket_id = 'spell-media'
+    and name like 'spells/83331c33-cdcb-420e-aec2-1d3c5fc5b7b2/hd/%';
+  if v_cnt <> 5 then
+    raise exception 'ziro hd imagery: expected 5 objects, found %', v_cnt;
   end if;
 
   select count(*) into v_cnt from public.spell_changes
@@ -383,7 +405,7 @@ begin
     raise exception 'ziro publish change entry missing';
   end if;
 
-  raise notice 'ziro spell live: /live/the-ziro-spell · 6 days · Sep 23-28 · copy clean';
+  raise notice 'ziro spell live: /live/the-ziro-spell · Sep 23-28 · price on request · copy clean';
 end $$;
 
 -- §5 · Anon lens: the public site can actually see it ------------------------------------

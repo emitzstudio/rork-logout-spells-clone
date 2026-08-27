@@ -1992,6 +1992,70 @@ Udaipur TBC (15 seats, 0 booked) · spell-media seed folders: Bir 6 + Udaipur
 
 ---
 
+## 0041-0043 — HD imagery everywhere + The Ziro Spell LIVE with price on request (2026-08-27)
+
+- Founder instructions: "Where's the zero valley spell?? publish that as
+  well" + "make the images clear … even if you've generated the images, the
+  quality should be HD". Ziro's price + seats are still founder-only facts,
+  so the spell ships in a NEW honest catalogue state instead of invented
+  money: **price on request** (price_minor 0) + **circle size TBA**
+  (seats_total 0).
+- Web renders that state everywhere money/seats show: Discover tile +
+  category cards, the bucket-list rail, wishlist cards, the spell page's
+  booking strip ("Price on request / announced soon"), and the booking sheet
+  (footer line · a "Price on request" panel replacing the arithmetic on the
+  summary step · an "On request, shared personally" row on review · seat
+  stepper capped at 6 with a "circle size is finalised" hint · sold-out state
+  and the waitlist door suppressed while seats are TBA). Reserve-request
+  notes tell staff to QUOTE PERSONALLY instead of computing ₹0 arithmetic
+  (web/src/data/booking.ts). Wishlist "Sold out"/"0 seats left" misfires
+  guarded behind seatsTotal > 0.
+- **create-booking redeployed** with D2 gates right after the dates gate:
+  409 PRICE_TBC_NOT_BOOKABLE / 409 SEATS_TBC_NOT_BOOKABLE. The dashboard's
+  New booking dialog labels such departures "price/seats TBC (not bookable)"
+  (bookingOps bookable now also requires price > 0 and seats_total > 0).
+- **0041_hd_imagery_seed_window — APPLIED**: anon INSERT window over the hd/
+  subfolders of the three spell folders (exact 0034 pattern).
+- Uploads through the window (all 200, public reads verified): 12 generated
+  HD photographs (founder-approved AI generation, 1536x1024) + the founder's
+  Bir stay photo at original resolution. Udaipur hd/{hero-udaipur-cover,
+  day-1-jagdish,day-2-saheliyon,day-3-chittorgarh,boat-island,
+  old-city-market,lakeside-dinner}.jpg · Ziro hd/{hero-ziro-valley,
+  festival-crowd,stargazing,campfire-jam,stay-tents}.jpg · Bir
+  hd/stay-qudrat.jpg (2048x1368).
+- **0042_hd_imagery_swap_and_close — APPLIED** (third attempt; the first two
+  rolled back safely on the Bir check): Udaipur hero_url + 6 page URLs moved
+  to hd/ (the low-res brochure crops retired), Bir stay swapped to the
+  full-res founder photo, window dropped, zero anon INSERT policies remain,
+  anon lens green. Discoveries en route: the live Bir stay image was no
+  longer the seeded page/stay-qudrat.jpg — a dashboard builder upload had
+  replaced it with a DOWNSCALED 1440x962 copy (page/img-1787852127693-…), so
+  the swap targeted that live URL; and the image's json id keeps the img-…
+  prefix, so the negative check must name the full old filename. Old low-res
+  objects remain in storage unreferenced (migrations never delete storage
+  rows).
+- **0043_ziro_live_spell — APPLIED** (staged 0040 deleted, superseded): live
+  at /live/the-ziro-spell — real dates Sep 23-28 2026 (Guwahati return the
+  29th), celebration, ♫, hostless, campsite stay block, 7 FAQs (a "How much
+  does it cost?" price-on-request FAQ leads), the founder's full program as
+  itinerary, HD storage imagery. Self-verify pins the deliberate state
+  (price_minor = 0, seats_total = 0, 5 hd objects, dash-free copy) + anon
+  lens.
+- Post-apply verification over live REST as anon: 3 published spells (Bir ·
+  Udaipur · Ziro), Ziro's active departure visible (Sep 23-28, seats 0,
+  scheduled), Udaipur hero on hd/, Bir stay on hd/, storage reads 200.
+- Open founder numbers (each lifts its gates via one tiny follow-up
+  migration): Udaipur departure dates · Ziro price per person + seat count.
+
+### Baseline after 0043
+
+spells 3 published (Bir dated + priced · Udaipur priced, Dates TBC · Ziro
+dated, price on request + seats TBA) · no anon INSERT windows open ·
+create-booking gates: C (pricing config), F (gateway), D (dates), D2
+(price/seats) · no staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

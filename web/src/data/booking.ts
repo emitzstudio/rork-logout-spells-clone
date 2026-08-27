@@ -157,18 +157,27 @@ export const bookingService = {
   async submitReserveRequest(input: ReserveRequestInput): Promise<string> {
     const { spell, departure, dates, seats, lead, companions, note } = input;
     const names = companions.map((c) => c.trim()).filter((c) => c !== "");
-    const p = bookingService.price(spell, seats);
     const lines: string[] = [
       "[BOOKING REQUEST - reserve seats]",
       `Departure: ${dates.label}${departure !== null ? ` · departure ${departure.id}` : ""}`,
       `Seats: ${seats}`,
       `Lead: ${lead.fullName.trim()} · ${lead.phone.trim()}`,
       `Companions: ${names.length > 0 ? names.join(", ") : "·"}`,
-      `Trip amount: ${formatINR(spell.price)} × ${seats} = ${formatINR(p.subtotal)}`,
-      `GST (5%): ${formatINR(p.gst)} · Total: ${formatINR(p.total)}`,
-      `Advance to collect (30% of total): ${formatINR(p.advance)}`,
-      "Payment: none taken online - the team confirms seats and collects the advance personally.",
     ];
+    if (spell.price > 0) {
+      const p = bookingService.price(spell, seats);
+      lines.push(
+        `Trip amount: ${formatINR(spell.price)} × ${seats} = ${formatINR(p.subtotal)}`,
+        `GST (5%): ${formatINR(p.gst)} · Total: ${formatINR(p.total)}`,
+        `Advance to collect (30% of total): ${formatINR(p.advance)}`,
+        "Payment: none taken online - the team confirms seats and collects the advance personally.",
+      );
+    } else {
+      lines.push(
+        "Price: ON REQUEST - not yet published. Quote the traveller personally before collecting anything.",
+        "Payment: none taken online.",
+      );
+    }
     if (note.trim() !== "") lines.push(`Traveller note: ${note.trim()}`);
     return sendInquiry({
       spell,

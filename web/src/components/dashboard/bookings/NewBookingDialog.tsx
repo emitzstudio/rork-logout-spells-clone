@@ -174,7 +174,9 @@ export default function NewBookingDialog({ prefill, onClose }: NewBookingDialogP
                       ? " · closed"
                       : !option.spellPublished
                         ? " · unpublished"
-                        : ` · ${option.free} free${option.holds > 0 ? ` (${option.holds} on hold)` : ""}`}
+                        : !option.bookable
+                          ? " · price/seats TBC (not bookable)"
+                          : ` · ${option.free} free${option.holds > 0 ? ` (${option.holds} on hold)` : ""}`}
                 </option>
               ))}
             </select>

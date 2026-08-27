@@ -6,7 +6,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { useBucketList } from "@/data/bucketList";
 import { dreamLine, matchSpellsToInterests, useInterests } from "@/data/interests";
 import type { SpellMatch } from "@/data/interests";
-import { formatINR } from "@/data/spells";
+import { priceDisplay } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +36,7 @@ function MatchRailCard({ match }: { match: SpellMatch }) {
         <p className="mt-1 truncate font-serif text-[13px] italic text-gold/60">{dreamLine(matched)}</p>
         <div className="mt-2.5 flex items-center justify-between font-sans text-[11.5px] text-cream/50">
           <span className="truncate">{spell.location}</span>
-          <span className="shrink-0 text-cream/75">{formatINR(spell.price)}</span>
+          <span className="shrink-0 text-cream/75">{priceDisplay(spell.price)}</span>
         </div>
       </div>
     </Link>

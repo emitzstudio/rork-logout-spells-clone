@@ -198,6 +198,13 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
 
 export const formatINR = (value: number): string => `₹${value.toLocaleString("en-IN")}`;
 
+/**
+ * "₹10,999" for priced spells; the honest label while the founder finalises
+ * a price (price_minor 0 is the deliberate "price on request" state).
+ */
+export const priceDisplay = (value: number): string =>
+  value > 0 ? formatINR(value) : "Price on request";
+
 export const formatCompactINR = (value: number): string => {
   if (value >= 10_000_000) return `₹${(value / 10_000_000).toFixed(2).replace(/\.?0+$/, "")}Cr`;
   if (value >= 100_000) return `₹${(value / 100_000).toFixed(2).replace(/\.?0+$/, "")}L`;

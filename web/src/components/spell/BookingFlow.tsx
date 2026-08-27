@@ -342,7 +342,11 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   }, [departure, fallbackDates]);
 
   const seatsLeft = dates.seatsLeft;
-  const maxSeats = Math.max(1, Math.min(seatsLeft, 6));
+  /* The founder may publish before price/circle size are fixed (price on
+     request): the doors stay open, the arithmetic waits, nothing is invented. */
+  const priceTbc = spell.price <= 0;
+  const seatsTba = (departure ? departure.seatsTotal : spell.seatsTotal) <= 0;
+  const maxSeats = Math.max(1, Math.min(seatsTba ? 6 : seatsLeft, 6));
   const price = useMemo<PriceInfo>(() => bookingService.price(spell, seats), [spell, seats]);
 
   /* Reset the journey every time the doors open. */
@@ -499,7 +503,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
     }
   }, [step]);
 
-  const soldOut = seatsLeft === 0;
+  const soldOut = !seatsTba && seatsLeft === 0;
   const showBack = step === "inquire" || step === "waitlist" || BOOK_STEPS.includes(step);
   const dismissable = step !== "sending";
   const companionNames = companions.map((c) => c.trim()).filter((c) => c !== "");
@@ -675,7 +679,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                     )}
 
                     <p className="mt-5 text-center font-serif text-[13px] italic text-cream/40">
-                      {dates.label} · {formatINR(spell.price)} per seat · circles of {spell.seatsTotal} ✦
+                      {dates.label} · {priceTbc ? "price on request" : `${formatINR(spell.price)} per seat`} ·{" "}
+                      {seatsTba ? "an intimate circle ✦" : `circles of ${spell.seatsTotal} ✦`}
                     </p>
                   </StepShell>
                 )}
@@ -972,7 +977,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                         seats={seats}
                         maxSeats={maxSeats}
                         onChange={setSeats}
-                        hint={`Up to ${maxSeats} for this trip`}
+                        hint={seatsTba ? "Up to 6 while the circle size is finalised" : `Up to ${maxSeats} for this trip`}
                       />
                     </div>
 
@@ -1032,24 +1037,34 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           {seats} seat{seats > 1 ? "s" : ""}
                         </span>
                       </div>
-                      <dl className="mt-4 space-y-2.5 font-sans text-[13.5px]">
-                        <div className="flex justify-between text-cream/60">
-                          <dt>Trip amount · {formatINR(price.pricePerSeat)} × {seats}</dt>
-                          <dd>{formatINR(price.subtotal)}</dd>
+                      {priceTbc ? (
+                        <div className="mt-4 rounded-lg border border-gold/25 bg-gold/[0.07] px-4 py-3.5">
+                          <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">Price on request</p>
+                          <p className="mt-1.5 font-sans text-[12.5px] leading-relaxed text-cream/60">
+                            The exact price for this spell is being finalised. The team shares it
+                            with you personally before anything is due, and nothing is collected online.
+                          </p>
                         </div>
-                        <div className="flex justify-between text-cream/60">
-                          <dt>GST (5%)</dt>
-                          <dd>{formatINR(price.gst)}</dd>
-                        </div>
-                        <div className="flex items-baseline justify-between border-t border-cream/[0.08] pt-3.5">
-                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-cream/50">Total</dt>
-                          <dd className="font-serif text-2xl text-cream">{formatINR(price.total)}</dd>
-                        </div>
-                        <div className="flex items-baseline justify-between rounded-lg border border-gold/25 bg-gold/[0.07] px-3.5 py-2.5">
-                          <dt className="font-sans text-xs uppercase tracking-[0.2em] text-gold-light">To pay now · 30%</dt>
-                          <dd className="font-serif text-xl text-gold-light">{formatINR(price.advance)}</dd>
-                        </div>
-                      </dl>
+                      ) : (
+                        <dl className="mt-4 space-y-2.5 font-sans text-[13.5px]">
+                          <div className="flex justify-between text-cream/60">
+                            <dt>Trip amount · {formatINR(price.pricePerSeat)} × {seats}</dt>
+                            <dd>{formatINR(price.subtotal)}</dd>
+                          </div>
+                          <div className="flex justify-between text-cream/60">
+                            <dt>GST (5%)</dt>
+                            <dd>{formatINR(price.gst)}</dd>
+                          </div>
+                          <div className="flex items-baseline justify-between border-t border-cream/[0.08] pt-3.5">
+                            <dt className="font-sans text-xs uppercase tracking-[0.2em] text-cream/50">Total</dt>
+                            <dd className="font-serif text-2xl text-cream">{formatINR(price.total)}</dd>
+                          </div>
+                          <div className="flex items-baseline justify-between rounded-lg border border-gold/25 bg-gold/[0.07] px-3.5 py-2.5">
+                            <dt className="font-sans text-xs uppercase tracking-[0.2em] text-gold-light">To pay now · 30%</dt>
+                            <dd className="font-serif text-xl text-gold-light">{formatINR(price.advance)}</dd>
+                          </div>
+                        </dl>
+                      )}
                     </div>
 
                     <PaymentPolicyNote />
@@ -1179,22 +1194,31 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           <dd className="text-right text-cream/85">{companionNames.join(", ")}</dd>
                         </div>
                       )}
-                      <div className="flex justify-between gap-4 text-cream/55">
-                        <dt>Trip amount</dt>
-                        <dd className="text-cream/85">{formatINR(price.subtotal)}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4 text-cream/55">
-                        <dt>GST (5%)</dt>
-                        <dd className="text-cream/85">{formatINR(price.gst)}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4 border-t border-cream/[0.08] pt-2.5 text-cream/55">
-                        <dt>Total</dt>
-                        <dd className="font-serif text-lg text-cream">{formatINR(price.total)}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4 text-cream/55">
-                        <dt className="text-gold-light">To pay now · 30%</dt>
-                        <dd className="font-serif text-lg text-gold-light">{formatINR(price.advance)}</dd>
-                      </div>
+                      {priceTbc ? (
+                        <div className="flex justify-between gap-4 border-t border-cream/[0.08] pt-2.5 text-cream/55">
+                          <dt>Price</dt>
+                          <dd className="text-right text-gold-light">On request · shared personally</dd>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between gap-4 text-cream/55">
+                            <dt>Trip amount</dt>
+                            <dd className="text-cream/85">{formatINR(price.subtotal)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4 text-cream/55">
+                            <dt>GST (5%)</dt>
+                            <dd className="text-cream/85">{formatINR(price.gst)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4 border-t border-cream/[0.08] pt-2.5 text-cream/55">
+                            <dt>Total</dt>
+                            <dd className="font-serif text-lg text-cream">{formatINR(price.total)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4 text-cream/55">
+                            <dt className="text-gold-light">To pay now · 30%</dt>
+                            <dd className="font-serif text-lg text-gold-light">{formatINR(price.advance)}</dd>
+                          </div>
+                        </>
+                      )}
                     </dl>
 
                     <p className="mt-3 flex items-start gap-2 rounded-lg border border-gold/25 bg-gold/[0.05] px-3.5 py-2.5 font-sans text-[11.5px] leading-relaxed text-cream/65">

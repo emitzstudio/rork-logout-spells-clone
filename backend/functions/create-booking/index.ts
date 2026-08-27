@@ -25,6 +25,9 @@
  *      The old 5%-tax/₹0-fee draft values were NOT confirmed by the business —
  *      they are not assumed.
  *   D  "Dates TBC" departures → 409 DATES_TBC_NOT_BOOKABLE (unresolved).
+ *   D2 "Price on request" spells (price_minor 0) → 409 PRICE_TBC_NOT_BOOKABLE;
+ *      seats_total 0 → 409 SEATS_TBC_NOT_BOOKABLE. Published-but-unpriced
+ *      spells convert only through the team, never online.
  *   F  No gateway adapter configured → 501 PAYMENT_PROVIDER_NOT_CONFIGURED.
  */
 import { adminClient, requireUser } from "../_shared/auth.ts";
@@ -221,9 +224,18 @@ Deno.serve(async (req) => {
     return fail(409, "DATES_TBC_NOT_BOOKABLE",
       "This departure's dates are still being fixed — enquire and we'll hold you a place in line.");
 
+  // ⛔ D2 gates — a spell published with "price on request" (price_minor 0)
+  // or an unannounced circle size (seats_total 0) never converts online.
+  const pricePerSeatMinor = Number(departure.price_minor ?? spell.price_minor);
+  if (!Number.isFinite(pricePerSeatMinor) || pricePerSeatMinor <= 0)
+    return fail(409, "PRICE_TBC_NOT_BOOKABLE",
+      "This spell's price is still being finalised. Enquire and the team will confirm it personally.");
+  if ((departure.seats_total ?? 0) <= 0)
+    return fail(409, "SEATS_TBC_NOT_BOOKABLE",
+      "This circle's size is still being fixed. Enquire and we'll hold you a place in line.");
+
   /* ------------------------------ Server money ----------------------------- */
 
-  const pricePerSeatMinor = Number(departure.price_minor ?? spell.price_minor);
   const subtotalMinor = pricePerSeatMinor * seats;
   const taxesMinor = Math.round(subtotalMinor * PRICING.taxRate);
   const totalMinor = subtotalMinor + PRICING.serviceFeeMinor + taxesMinor;

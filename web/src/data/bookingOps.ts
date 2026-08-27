@@ -239,6 +239,7 @@ export function useDepartureOptions(): UseQueryResult<DepartureOption[]> {
         const tbc = d.start_date === null || d.end_date === null;
         const scheduled = d.status === "scheduled";
         const published = spell?.status === "published";
+        const priceMinor = d.price_minor ?? spell?.price_minor ?? null;
         return {
           id: d.id,
           spellName: spell?.name ?? "Unknown spell",
@@ -246,14 +247,15 @@ export function useDepartureOptions(): UseQueryResult<DepartureOption[]> {
           dateLabel: d.date_label,
           startDate: d.start_date,
           endDate: d.end_date,
-          priceMinor: d.price_minor ?? spell?.price_minor ?? null,
+          priceMinor,
           seatsTotal: d.seats_total,
           seatsBooked: d.seats_booked,
           holds,
           free: Math.max(0, d.seats_total - d.seats_booked - holds),
           scheduled,
           tbc,
-          bookable: scheduled && !tbc && published === true,
+          /* Price-on-request and seats-TBA departures convert offline only. */
+          bookable: scheduled && !tbc && published === true && (priceMinor ?? 0) > 0 && d.seats_total > 0,
         };
       });
     },

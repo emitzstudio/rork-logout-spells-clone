@@ -72,7 +72,8 @@ export default function WishlistPage() {
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {items.map((spell) => {
             const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
-            const soldOut = spell.status === "soldout" || seatsLeft === 0;
+            /* seats_total 0 is the deliberate "circle size TBA" state, not a sold-out circle. */
+            const soldOut = spell.status === "soldout" || (spell.seatsTotal > 0 && seatsLeft === 0);
             return (
               <article
                 key={spell.id}
@@ -94,7 +95,7 @@ export default function WishlistPage() {
                       Sold out · waitlist open
                     </span>
                   ) : (
-                    seatsLeft <= 4 && (
+                    spell.seatsTotal > 0 && seatsLeft <= 4 && (
                       <span className="absolute left-3 top-3 rounded-full border border-amber-400/35 bg-charcoal-deep/80 px-2.5 py-1 font-sans text-[9.5px] uppercase tracking-[0.18em] text-amber-300 backdrop-blur-sm">
                         {seatsLeft} seats left
                       </span>
@@ -110,7 +111,7 @@ export default function WishlistPage() {
                   </p>
                   <div className="mt-3 flex items-center justify-between font-sans text-[12px] text-cream/50">
                     <span>{spell.location} · {spell.dates}</span>
-                    <span className="text-cream/80">{formatINR(spell.price)}</span>
+                    <span className="text-cream/80">{spell.price > 0 ? formatINR(spell.price) : "Price on request"}</span>
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 border-t border-cream/[0.07] pt-4">

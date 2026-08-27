@@ -66,7 +66,9 @@ function CuratedSpellCard({ spell }: { spell: ManagedSpell }) {
           </p>
         )}
         <div className="mt-4 flex items-center justify-between">
-          <span className="font-sans text-xs text-gold/80">{formatINR(spell.price)} per seat</span>
+          <span className="font-sans text-xs text-gold/80">
+            {spell.price > 0 ? `${formatINR(spell.price)} per seat` : "Price on request"}
+          </span>
           <span className="inline-flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.2em] text-gold transition-all duration-300 group-hover:gap-2.5 group-hover:text-gold-light">
             Open the Spell <ArrowRight size={12} />
           </span>
