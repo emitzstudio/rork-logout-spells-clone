@@ -220,21 +220,38 @@ export default function SpellDrawer({
               })}
             </motion.div>
 
-            {/* Host */}
+            {/* Host - optional since some trips run without a spell caster */}
             <motion.div {...sectionFade(0.14)}>
               <SectionLabel>Host</SectionLabel>
-              <div className="mt-2.5 flex items-center gap-3 rounded-xl border border-cream/[0.06] bg-cream/[0.02] p-3.5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-light to-gold font-serif text-[17px] text-charcoal-deep ring-1 ring-gold/40">
-                  {spell.host.initial}
-                </span>
-                <span className="min-w-0 flex-1 leading-tight">
-                  <span className="block truncate font-sans text-[13.5px] text-cream">{spell.host.name}</span>
-                  <span className="block font-sans text-[11px] text-cream/40">{spell.host.role}</span>
-                </span>
-                <span className="shrink-0 rounded-full border border-gold/25 bg-gold/[0.07] px-2.5 py-0.5 font-sans text-[9.5px] uppercase tracking-[0.18em] text-gold-light">
-                  Host
-                </span>
-              </div>
+              {spell.host.name.trim() !== "" ? (
+                <div className="mt-2.5 flex items-center gap-3 rounded-xl border border-cream/[0.06] bg-cream/[0.02] p-3.5">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-light to-gold font-serif text-[17px] text-charcoal-deep ring-1 ring-gold/40">
+                    {spell.host.initial}
+                  </span>
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block truncate font-sans text-[13.5px] text-cream">{spell.host.name}</span>
+                    <span className="block font-sans text-[11px] text-cream/40">{spell.host.role}</span>
+                  </span>
+                  <span className="shrink-0 rounded-full border border-gold/25 bg-gold/[0.07] px-2.5 py-0.5 font-sans text-[9.5px] uppercase tracking-[0.18em] text-gold-light">
+                    Host
+                  </span>
+                </div>
+              ) : (
+                <div className="mt-2.5 flex items-center gap-3 rounded-xl border border-cream/[0.06] bg-cream/[0.02] p-3.5">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-cream/10 bg-cream/[0.04] font-serif text-[17px] text-gold/60">
+                    ✦
+                  </span>
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block font-sans text-[13.5px] text-cream/80">No spell caster</span>
+                    <span className="block font-sans text-[11px] text-cream/40">
+                      Run by the Logout Spells team
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-full border border-cream/12 bg-cream/[0.04] px-2.5 py-0.5 font-sans text-[9.5px] uppercase tracking-[0.18em] text-cream/45">
+                    Team-led
+                  </span>
+                </div>
+              )}
             </motion.div>
 
             {/* Quick stats */}

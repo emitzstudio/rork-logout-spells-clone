@@ -184,9 +184,10 @@ export const mapSpell = (
     urgency: row.urgency,
     seatsBooked: dep?.seats_booked ?? 0,
     seatsTotal: dep?.seats_total ?? 0,
+    /* Hostless spells carry empty strings - consumers render their own fallback. */
     host: {
       name: row.host_name,
-      initial: (row.host_name || "V").charAt(0).toUpperCase(),
+      initial: row.host_name.trim().charAt(0).toUpperCase(),
       role: row.host_role,
     },
     image,

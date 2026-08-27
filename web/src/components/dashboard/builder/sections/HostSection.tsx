@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { RefreshCcw, X } from "lucide-react";
+import { RefreshCcw, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 
@@ -126,12 +126,23 @@ interface HostSectionProps {
   onClearImage: () => void;
 }
 
-/** Section 06 - the Spellcaster: portrait, story, socials and tags. */
+/** Section 06 - the Spellcaster: portrait, story, socials and tags. Optional. */
 export default function HostSection({ draft, patchHost, onPickImage, onClearImage }: HostSectionProps) {
   const { host } = draft;
 
   return (
     <div className="space-y-6">
+      {/* Optional-section note - some trips simply have no spell caster. */}
+      <div className="flex items-start gap-2.5 rounded-xl border border-gold/[0.18] bg-gold/[0.04] p-4">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold/70" aria-hidden />
+        <p className="font-sans text-[11.5px] leading-relaxed text-cream/55">
+          <span className="text-gold-light">This section is optional.</span> No spell caster on
+          this trip? Leave every field empty and the section simply won't appear on the spell
+          page. The moment you add anything, the name, title, story and portrait are required so
+          a half-built card never goes live.
+        </p>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <TextField
           label="Host name"

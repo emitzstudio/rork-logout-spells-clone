@@ -1844,6 +1844,44 @@ changes beyond the two RPC functions.
 
 ---
 
+## 0034 + 0035 — The Bir Spell goes live, hostless (2026-08-27)
+
+- **0034_bir_seed_window.sql** ("bir-seed-window") — TEMPORARY, narrowly
+  scoped anon INSERT policy on storage.objects: bucket spell-media, single
+  fixed folder `spells/d3309872-f0af-4733-aa2f-621f94e3e9a0/` only. Opened
+  so the six brochure images (from the founder's Bir PDF) could be uploaded
+  without a staff browser session; bucket caps (10 MB, images only) applied
+  throughout, update/delete stayed staff-only. Six uploads (hero, day 1-3,
+  stay, night gallery — resized ≤1440px JPEG, the builder pipeline spec)
+  all returned 200 and were closed over by 0035 in the same session.
+- **0035_bir_live_spell.sql** ("bir-live-spell") — drops the seed window,
+  then seeds the founder's Bir trip as a real published spell (data-only,
+  no schema change):
+  · spells row `d3309872-…e9a0` — slug `the-bir-spell`, wandering ☾,
+    early-bird, featured, 3 days / 2 nights, ₹12,000 (price_minor 1200000),
+    full v1 `page` doc (quick info, about, 3 itinerary days matching the
+    PDF: Arrive/Connect/Unwind · Clay/Tea/Slow Days · One Last Wander,
+    Qudrat stay, 9 inclusions, 7 exclusions, 3 audience cards,
+    4 highlights, 5 FAQs), Supabase-storage image URLs.
+  · **hostless by design**: host_name/host_role empty, page.host all-empty —
+    the public page skips "Meet your Spellcaster" (client made the builder
+    host section optional in the same change; empty = publishable,
+    half-filled = blocks).
+  · spell_departures row `…e9a1` — 'Sep 4-6' (2026-09-04 → 06), 15 seats,
+    scheduled. spell_changes row `…e9a2` — 'Published to site'.
+  · Idempotent (fixed uuids + on conflict do nothing). Self-verify:
+    window closed, row shapes, 6 storage objects, publish log; then an
+    anon-lens block (`set local role anon`) proves the public site can see
+    the spell and its active departure through RLS.
+
+### Baseline after 0035
+
+spells 1 published (the-bir-spell, hostless) · spell_departures 1 scheduled
+(Sep 4-6, 15 seats) · spell-media 6 seeded objects · no schema changes ·
+bir_seed_window_insert policy gone.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

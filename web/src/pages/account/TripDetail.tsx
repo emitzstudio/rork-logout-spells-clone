@@ -79,7 +79,10 @@ const STEP_META: Record<TimelineStepId, StepMeta> = {
   host: {
     icon: UserCheck,
     label: "Host confirmed",
-    line: (b) => `${b.spell.host.name} confirms your circle personally`,
+    line: (b) =>
+      b.spell.host.name.trim() !== ""
+        ? `${b.spell.host.name} confirms your circle personally`
+        : "The Logout Spells team confirms your circle personally",
   },
   documents: {
     icon: FileText,
@@ -493,16 +496,22 @@ export default function TripDetail() {
             </button>
           </div>
 
-          {/* Host */}
+          {/* Host - hostless spells are carried by the team, never a fake name. */}
           <div className="card-glass rounded-2xl p-6">
             <p className="eyebrow !text-[10px]">Your host</p>
             <div className="mt-4 flex items-center gap-3.5">
               <span className="grid h-12 w-12 place-items-center rounded-full border border-gold/35 bg-gold/10 font-serif text-xl text-gold-light">
-                {booking.spell.host.initial}
+                {booking.spell.host.initial !== "" ? booking.spell.host.initial : "✦"}
               </span>
               <div className="min-w-0">
-                <p className="font-serif text-[19px] text-cream">{booking.spell.host.name}</p>
-                <p className="font-sans text-[11.5px] text-cream/45">{booking.spell.host.role}</p>
+                <p className="font-serif text-[19px] text-cream">
+                  {booking.spell.host.name.trim() !== "" ? booking.spell.host.name : "Logout Spells"}
+                </p>
+                <p className="font-sans text-[11.5px] text-cream/45">
+                  {booking.spell.host.name.trim() !== ""
+                    ? booking.spell.host.role
+                    : "Your trip crew, end to end"}
+                </p>
               </div>
             </div>
             <Link

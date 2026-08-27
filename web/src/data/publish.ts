@@ -13,6 +13,8 @@ import type { ManagedSpell, ManagedStatus, SpellChange } from "./spells";
 /**
  * Every section that must be complete before a spell can go live.
  * "What's Not Included" is deliberately optional - some spells cover everything.
+ * "Meet Your Spellcaster" is optional too: an EMPTY host section publishes fine
+ * (the public page skips it); it only blocks while half-filled.
  */
 export const PUBLISH_REQUIRED_SECTIONS: BuilderSectionId[] = [
   "basic",
@@ -169,10 +171,11 @@ export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs
     urgency: draft.urgency,
     seatsBooked: existing?.seatsBooked ?? 0,
     seatsTotal: draft.maxSeats,
+    /* No invented fallbacks: a spell without a spell caster stays hostless. */
     host: {
-      name: draft.host.name.trim() !== "" ? draft.host.name.trim() : "Vidushi",
-      initial: (draft.host.name.trim() !== "" ? draft.host.name.trim() : "V").charAt(0).toUpperCase(),
-      role: draft.host.title.trim() !== "" ? draft.host.title.trim() : "Spellcaster",
+      name: draft.host.name.trim(),
+      initial: draft.host.name.trim().charAt(0).toUpperCase(),
+      role: draft.host.title.trim(),
     },
     image: cardImage,
     gradient: CATEGORY_GRADIENT[category] ?? FALLBACK_GRADIENT,

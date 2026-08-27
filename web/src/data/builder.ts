@@ -279,7 +279,8 @@ export const BUILDER_SECTION_META: Record<
   },
   host: {
     title: "Meet Your Spellcaster",
-    description: "The host - portrait, story, socials and the words they live by.",
+    description:
+      "The host - portrait, story, socials and the words they live by. Optional: leave it empty for trips without a spell caster.",
   },
   stay: {
     title: "Where We'll Stay",
@@ -630,13 +631,21 @@ const requiredState = (checks: boolean[]): SectionState => {
   return { complete: done === checks.length, summary: `${done} of ${checks.length} required` };
 };
 
-const hostState = (d: SpellDraft): SectionState =>
-  requiredState([
+/**
+ * The Spellcaster section is OPTIONAL - some trips run without a host.
+ * Empty = ready (the public page simply skips the section). Once anything is
+ * filled in, the four card essentials are required so a half-built host card
+ * never goes live.
+ */
+const hostState = (d: SpellDraft): SectionState => {
+  if (!hostHasContent(d)) return { complete: true, summary: "Optional - skipped when empty" };
+  return requiredState([
     d.host.name.trim() !== "",
     d.host.title.trim() !== "",
     d.host.about.trim() !== "",
     d.host.image !== null,
   ]);
+};
 
 const stayState = (d: SpellDraft): SectionState =>
   requiredState([d.stay.name.trim() !== "", d.stay.shortDescription.trim() !== ""]);
