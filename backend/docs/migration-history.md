@@ -1750,6 +1750,37 @@ index, `is_crm()`, 3 policies, 1 trigger, realtime membership.
 
 ---
 
+## 0031 — the Udaipur circle joins the archive (2026-08-27)
+
+- **0031_udaipur_spell_archive.sql** ("udaipur-spell-archive") — founder
+  request: the Udaipur spell with Anshika (22-24 August 2026) just happened;
+  add it to previous_spells "like the others". 0027's exact format:
+  · Content OCR'd from the founder's own brochure PDF (light polish, zero
+    em/en dashes — self-asserted in-migration per the 0028 rule).
+  · 'gathering' · Udaipur & Chittorgarh, Rajasthan · 3 days · host Anshika
+    ("Travel creator & storyteller") · sort_order 4 · published.
+  · travellers = 0 (not stated in the brochure; the UI hides the count at 0).
+  · spell_id null (pre-CMS circle, no review-eligibility link — the M13
+    adoption trigger correctly does nothing on insert).
+  · gallery / memory_notes / community honestly EMPTY — no invented photos,
+    people or quotes; the memory page hides empty sections. Hero is an
+    Unsplash Udaipur placeholder until real trip photographs arrive.
+  · Idempotency guard refuses a duplicate slug. Self-verify: exactly 4
+    archive rows, the new row published with 5 story paragraphs and 9
+    highlights, zero em/en dashes anywhere in the row.
+- Applied via the managed migration tool (runMigration). No schema change —
+  regenerated types byte-identical.
+- Live anon REST probe after applying: previous_spells returns 4 published
+  rows, 'udaipur-spell-with-anshika' at sort_order 4 with date_label
+  '22-24 August 2026'.
+
+### Baseline after 0031
+
+previous_spells = 4 REAL journeys (Bir ×2, Darjeeling, Udaipur) · reviews 0 ·
+schema unchanged from 0030.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
