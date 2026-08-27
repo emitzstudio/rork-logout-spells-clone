@@ -1921,6 +1921,64 @@ the Journal now runs on real data end to end.
 
 ---
 
+## 0037 + 0038 — Udaipur imagery seeded & window closed · 0039/0040 STAGED (2026-08-27)
+
+- Context: founder asked for two more live spells — **Udaipur** (from the
+  brochure PDF) and **Ziro Music Festival 2026** (from the pasted program).
+  Two facts are founder-only and still missing: Udaipur departure **dates**,
+  Ziro **price + seats**. A published TBC-dates spell would dead-end the Book
+  door (create-booking's 409 DATES_TBC_NOT_BOOKABLE surfaces as a generic
+  "try again" in BookingFlow), so both spell rows are **staged, not applied**;
+  everything date/price-independent shipped now.
+- **0037_udaipur_seed_window.sql** — TEMPORARY anon INSERT window scoped to
+  `spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/` (exact 0034
+  pattern; INSERT-only, one bucket, one folder).
+- Uploads through the window (anon REST, all 200, public reads verified):
+  `hero-udaipur-cover.jpg` (2010×1000 City Palace sunset with boat) ·
+  `page/day-1-jagdish.jpg` · `page/day-2-saheliyon.jpg` ·
+  `page/day-3-chittorgarh.jpg` · `gallery/boat-island.jpg` ·
+  `gallery/old-city-market.jpg` · `gallery/lakeside-dinner.jpg` — 7 objects
+  cropped from the founder's 5-page brochure (pages rendered, panels cropped,
+  lanczos-upscaled; every crop eyeballed, corner slivers re-cropped).
+- **0038_udaipur_seed_window_close.sql** — window dropped in the same work
+  session; verifies the 7 objects exist and **zero** anon INSERT slots remain
+  on storage.objects.
+- **STAGED, NOT applied — `0039_udaipur_live_spell.sql`**: complete hostless
+  spell (slug `the-udaipur-spell`, ☀, wandering, early-bird, ₹10,999 =
+  1099900 paise with ₹12,999 regular explained in FAQ, 15 seats, 3 days ·
+  2 nights, Delhi AC-traveller both ends, full brochure itinerary: City
+  Palace/Jagdish/Bagore Ki Haveli/ghats · Fateh Sagar/Saheliyon Ki
+  Bari/Spellbound island · Karni Mata/Chittorgarh sunset). Tokens
+  `{{UDAIPUR_DATE_LABEL/START_DATE/END_DATE}}` keep the file invalid SQL until
+  the founder's dates fill in; self-verify then enforces non-TBC dates,
+  7 images, dash-free copy and the anon lens. Stay section left empty —
+  brochure names no property.
+- **STAGED, NOT applied — `0040_ziro_live_spell.sql`**: complete hostless
+  spell (slug `the-ziro-spell`, ♫, celebration, 6 days Sep 23-28 2026 with
+  Guwahati return the 29th, 4 tent nights, full program itinerary incl. night
+  trains, Apatani village morning, jams, final-night celebrations; campsite
+  stay block; ILP/train/tents/food FAQs from the founder's notes). Tokens
+  `{{ZIRO_PRICE_MINOR}}`/`{{ZIRO_SEATS}}`. Imagery is hotlinked Unsplash
+  (journal/discover precedent), every shot downloaded and eyeballed (valley
+  terraces hero · festival crowd · campfire jam · starlit tents · tents under
+  the milky way for the stay); flagged to the founder as swappable for real
+  Ziro photography.
+- Copy rules held in both staged files: zero em/en dashes anywhere (script
+  scan + in-migration `U&'[\2014\2013]'` verifies), icons restricted to the
+  Bir-proven set, `$page$` JSON parses, no duplicate block ids.
+- Open founder questions blocking the two applies: Udaipur dates · Ziro price
+  + seats · note that the brochure's flat ₹4,000 booking amount differs from
+  the site-wide 30% advance line the online reserve flow shows (30% of
+  ₹10,999 ≈ ₹3,300); staged FAQ copy mirrors the 30% flow for truthfulness.
+
+### Baseline after 0038
+
+spells 1 published (Bir) · spell-media seed folders: Bir 6 + Udaipur 7
+objects · no anon INSERT windows open · 0039/0040 sitting staged in
+`backend/migrations/` awaiting two founder numbers.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
