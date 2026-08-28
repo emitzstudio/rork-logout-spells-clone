@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ReviewStatusBadge } from "@/components/dashboard/bookings/BookingBadges";
 import OpsDialog, { OpsNote } from "@/components/dashboard/bookings/OpsDialog";
 import { ConsentChip, Stars } from "@/components/dashboard/reviews/ReviewBits";
+import { customStoredAnswers } from "@/data/reviewForm";
 import { canPublishReview, inviteErrorCode, inviteErrorCopy } from "@/data/reviewInvites";
 import { usePublishReview, type ReviewRow } from "@/data/reviewInvitesStore";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,9 @@ interface Props {
 
 export default function ReviewDrawer({ review, spellName, travellerLabel, onClose }: Props) {
   const publish = usePublishReview();
+
+  /* Custom-question answers snapshotted at submission - form edits never touch them. */
+  const extraAnswers = customStoredAnswers(review.answers);
 
   const published = review.status === "approved";
   const publishable = canPublishReview({
@@ -66,23 +70,53 @@ export default function ReviewDrawer({ review, spellName, travellerLabel, onClos
     >
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-2.5">
-          <Stars rating={review.rating} />
+          {review.rating > 0 ? (
+            <Stars rating={review.rating} />
+          ) : (
+            <span className="font-sans text-[10.5px] uppercase tracking-[0.14em] text-cream/35">No rating asked</span>
+          )}
           <ReviewStatusBadge status={review.status} />
           <ConsentChip consent={review.consent_to_publish} />
         </div>
 
-        <div>
-          <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">One-line summary</p>
-          <p className="mt-1.5 font-serif text-[19px] italic leading-snug text-cream">“{review.title}”</p>
-        </div>
+        {review.title.trim() !== "" && (
+          <div>
+            <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">One-line summary</p>
+            <p className="mt-1.5 font-serif text-[19px] italic leading-snug text-cream">“{review.title}”</p>
+          </div>
+        )}
 
         <div>
           <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">Their experience</p>
           {/* The complete story - deliberately never truncated. */}
-          <p className="mt-1.5 whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-cream/75">
-            {review.body}
-          </p>
+          {review.body.trim() !== "" ? (
+            <p className="mt-1.5 whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-cream/75">
+              {review.body}
+            </p>
+          ) : (
+            <p className="mt-1.5 font-sans text-[12.5px] italic text-cream/40">
+              This question wasn't asked on this form.
+            </p>
+          )}
         </div>
+
+        {extraAnswers.length > 0 && (
+          <div>
+            <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">More answers</p>
+            <div className="mt-2 space-y-3.5">
+              {extraAnswers.map((answer) => (
+                <div key={answer.questionId}>
+                  <p className="font-sans text-[12px] font-medium leading-snug text-cream/70">
+                    {answer.questionTitle}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-cream/60">
+                    {answer.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-x-6 gap-y-1.5 border-t border-cream/[0.07] pt-4">
           <p className="font-sans text-[11.5px] text-cream/45">

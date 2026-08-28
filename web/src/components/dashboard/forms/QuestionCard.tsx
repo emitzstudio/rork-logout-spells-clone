@@ -17,6 +17,10 @@ interface QuestionCardProps {
   onPatch: (partial: Partial<FormQuestion>) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  /** Review builder: this question's answers are fixed - options list is read-only. */
+  lockOptions?: boolean;
+  /** Review builder: the core rating is always 5 gold stars - style is read-only. */
+  lockRatingStyle?: boolean;
 }
 
 /* ------------------------------ Type dropdown ------------------------------ */
@@ -222,6 +226,8 @@ export default function QuestionCard({
   onPatch,
   onDuplicate,
   onDelete,
+  lockOptions = false,
+  lockRatingStyle = false,
 }: QuestionCardProps) {
   const controls = useDragControls();
   const meta = QUESTION_TYPE_META[question.type];
@@ -408,11 +414,53 @@ export default function QuestionCard({
                 <TypePicker value={question.type} onChange={changeType} />
               )}
 
-              {meta.hasOptions && (
+              {meta.hasOptions && !lockOptions && (
                 <OptionsEditor options={question.options} onChange={(options) => onPatch({ options })} />
               )}
 
-              {question.type === "rating" && (
+              {meta.hasOptions && lockOptions && (
+                <div>
+                  <span className="mb-2 block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-cream/50">
+                    Options
+                  </span>
+                  <div className="space-y-1.5">
+                    {question.options.map((option, optionIndex) => (
+                      <div
+                        key={option.id}
+                        className="flex items-center gap-2 rounded-lg border border-cream/[0.07] bg-cream/[0.015] px-3 py-2"
+                      >
+                        <span
+                          aria-hidden
+                          className="grid h-6 w-6 shrink-0 place-items-center rounded border border-cream/12 bg-cream/[0.03] font-sans text-[10px] font-semibold text-cream/40"
+                        >
+                          {String.fromCharCode(65 + optionIndex)}
+                        </span>
+                        <span className="flex-1 font-sans text-[13px] text-cream/60">{option.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 flex items-center gap-1.5 font-sans text-[10.5px] text-cream/35">
+                    <Lock className="h-3 w-3" /> These answers are fixed - they carry the traveller's consent.
+                  </p>
+                </div>
+              )}
+
+              {question.type === "rating" && lockRatingStyle && (
+                <div>
+                  <span className="mb-2 block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-cream/50">
+                    Rating style
+                  </span>
+                  <div className="flex h-11 items-center gap-2.5 rounded-lg border border-cream/[0.07] bg-cream/[0.015] px-3.5">
+                    <Star className="h-4 w-4 fill-gold/60 text-gold/60" />
+                    <span className="flex-1 font-sans text-[13px] text-cream/60">5 Star · ★ ★ ★ ★ ★</span>
+                    <span className="flex items-center gap-1 font-sans text-[9.5px] uppercase tracking-[0.14em] text-cream/30">
+                      <Lock className="h-3 w-3" /> Fixed - ratings publish as 5 gold stars
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {question.type === "rating" && !lockRatingStyle && (
                 <div>
                   <span className="mb-2 block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-cream/50">
                     Rating style

@@ -1,14 +1,21 @@
 /**
- * "+ New Review Collection" - pick a REAL spell, choose how many one-time
- * links to mint, optionally set an expiry. Creation happens in one atomic
- * staff-only RPC; success is announced only after the database confirms.
+ * "+ New Review Section" - pick a REAL spell, say how many travellers were on
+ * it, optionally set an expiry. The server creates the section with ONE shared
+ * review link and an allowance of travellers + 1 - atomically, staff-only.
+ * Success is announced only after the database confirms.
  */
 import { MailPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import OpsDialog, { OpsField, OpsNote, OpsSubmit, opsInputClass, opsSelectClass } from "@/components/dashboard/bookings/OpsDialog";
-import { expiryFromDateInput, inviteErrorCode, inviteErrorCopy, validateLinkCount } from "@/data/reviewInvites";
+import {
+  expiryFromDateInput,
+  initialAllowance,
+  inviteErrorCode,
+  inviteErrorCopy,
+  validateTravellerCount,
+} from "@/data/reviewInvites";
 import { useCreateReviewCollection } from "@/data/reviewInvitesStore";
 import type { ManagedSpell } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
@@ -31,9 +38,9 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
   const mutation = useCreateReviewCollection();
 
   const [spellId, setSpellId] = useState<string>("");
-  const [links, setLinks] = useState<string>("");
+  const [travellers, setTravellers] = useState<string>("");
   const [expiry, setExpiry] = useState<string>("");
-  const [errors, setErrors] = useState<{ spell?: string; links?: string; expiry?: string }>({});
+  const [errors, setErrors] = useState<{ spell?: string; travellers?: string; expiry?: string }>({});
 
   const options = useMemo<ManagedSpell[]>(
     () =>
@@ -43,22 +50,26 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
     [spells],
   );
 
+  const preview = validateTravellerCount(travellers);
+
   const submit = (): void => {
     if (mutation.isPending) return;
     const nextErrors: typeof errors = {};
-    if (spellId === "") nextErrors.spell = "Please choose the spell this collection belongs to.";
-    const count = validateLinkCount(links);
-    if (!count.ok) nextErrors.links = count.error;
+    if (spellId === "") nextErrors.spell = "Please choose the spell this section belongs to.";
+    const count = validateTravellerCount(travellers);
+    if (!count.ok) nextErrors.travellers = count.error;
     const expiresAt = expiry.trim() === "" ? null : expiryFromDateInput(expiry);
     if (expiry.trim() !== "" && expiresAt === null) nextErrors.expiry = "Please pick a valid date.";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     mutation.mutate(
-      { spellId, linkCount: count.count, expiresAt },
+      { spellId, travellers: count.count, expiresAt },
       {
         onSuccess: (collectionId) => {
-          toast.success(`Review collection created - ${count.count} unique ${count.count === 1 ? "link" : "links"} ready`);
+          toast.success(
+            `Review section created - one shared link, ${initialAllowance(count.count)} review slots`,
+          );
           onCreated(collectionId);
         },
         onError: (error) => toast.error(inviteErrorCopy(inviteErrorCode(error.message))),
@@ -67,7 +78,7 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
   };
 
   return (
-    <OpsDialog title="New Review Collection" eyebrow="After the spell" icon={MailPlus} onClose={onClose}>
+    <OpsDialog title="New Review Section" eyebrow="After the spell" icon={MailPlus} onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={(e) => {
@@ -79,7 +90,7 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
           <OpsNote tone="warn">The spell list couldn't be reached - close this and try again.</OpsNote>
         ) : ready && options.length === 0 ? (
           <OpsNote tone="warn">
-            No spells exist yet. A review collection belongs to a real spell - create the spell first.
+            No spells exist yet. A review section belongs to a real spell - create the spell first.
           </OpsNote>
         ) : (
           <>
@@ -101,21 +112,29 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
               {errors.spell && <p className="mt-1.5 font-sans text-[11.5px] text-red-300">{errors.spell}</p>}
             </OpsField>
 
-            <OpsField label="Number of Review Links" hint="one per traveller">
+            <OpsField label="Number of travellers" hint="who was on this spell">
               <input
                 type="number"
                 inputMode="numeric"
                 min={1}
                 max={200}
-                value={links}
-                onChange={(e) => setLinks(e.target.value)}
-                placeholder="e.g. 8"
+                value={travellers}
+                onChange={(e) => setTravellers(e.target.value)}
+                placeholder="e.g. 10"
                 className={opsInputClass}
               />
-              {errors.links && <p className="mt-1.5 font-sans text-[11.5px] text-red-300">{errors.links}</p>}
+              {errors.travellers && (
+                <p className="mt-1.5 font-sans text-[11.5px] text-red-300">{errors.travellers}</p>
+              )}
+              {preview.ok && (
+                <p className="mt-1.5 font-sans text-[11.5px] text-gold-light/80">
+                  Reviews remaining will start at {initialAllowance(preview.count)} ({preview.count} travellers
+                  + 1 spare).
+                </p>
+              )}
             </OpsField>
 
-            <OpsField label="Expiry Date" hint="optional - links stop accepting stories after this date">
+            <OpsField label="Expiry Date" hint="optional - the link stops accepting stories after this date">
               <input
                 type="date"
                 value={expiry}
@@ -126,8 +145,9 @@ export default function NewCollectionDialog({ onClose, onCreated }: Props) {
             </OpsField>
 
             <OpsNote>
-              Each link is unique and works exactly once. Stories arrive privately - nothing appears on the
-              website without your approval.
+              ONE shared link is created for the whole circle - share it with everyone. It closes by itself
+              when the reviews remaining reach 0 or the expiry passes. Stories arrive privately - nothing
+              appears on the website without your approval.
             </OpsNote>
 
             <OpsSubmit label="Create" busyLabel="Creating…" busy={mutation.isPending} disabled={!ready || options.length === 0} />

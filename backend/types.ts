@@ -1475,7 +1475,10 @@ export type Database = {
           expires_at: string | null
           id: string
           link_count: number
+          questions: Json
+          reviews_remaining: number
           spell_id: string
+          token: string | null
           updated_at: string
         }
         Insert: {
@@ -1484,7 +1487,10 @@ export type Database = {
           expires_at?: string | null
           id?: string
           link_count: number
+          questions?: Json
+          reviews_remaining?: number
           spell_id: string
+          token?: string | null
           updated_at?: string
         }
         Update: {
@@ -1493,7 +1499,10 @@ export type Database = {
           expires_at?: string | null
           id?: string
           link_count?: number
+          questions?: Json
+          reviews_remaining?: number
           spell_id?: string
+          token?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1553,11 +1562,13 @@ export type Database = {
       }
       reviews: {
         Row: {
+          answers: Json | null
           author_avatar: string
           author_id: string | null
           author_name: string
           body: string
           booking_id: string | null
+          collection_id: string | null
           consent_to_publish: boolean
           created_at: string
           id: string
@@ -1572,11 +1583,13 @@ export type Database = {
           verified: boolean
         }
         Insert: {
+          answers?: Json | null
           author_avatar?: string
           author_id?: string | null
           author_name?: string
           body?: string
           booking_id?: string | null
+          collection_id?: string | null
           consent_to_publish?: boolean
           created_at?: string
           id?: string
@@ -1591,11 +1604,13 @@ export type Database = {
           verified?: boolean
         }
         Update: {
+          answers?: Json | null
           author_avatar?: string
           author_id?: string | null
           author_name?: string
           body?: string
           booking_id?: string | null
+          collection_id?: string | null
           consent_to_publish?: boolean
           created_at?: string
           id?: string
@@ -1629,6 +1644,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "review_collections"
             referencedColumns: ["id"]
           },
           {
@@ -2262,6 +2284,7 @@ export type Database = {
         }
         Returns: string
       }
+      default_review_questions: { Args: never; Returns: Json }
       departure_seats_on_hold: {
         Args: { _departure_id: string }
         Returns: number
@@ -2327,6 +2350,15 @@ export type Database = {
         }
         Returns: Json
       }
+      review_link_lookup: { Args: { p_token: string }; Returns: Json }
+      review_link_submit: {
+        Args: { p_answers: Json; p_token: string }
+        Returns: Json
+      }
+      set_review_allowance: {
+        Args: { p_collection_id: string; p_remaining: number }
+        Returns: number
+      }
       spell_wishlist_counts: {
         Args: never
         Returns: {
@@ -2345,6 +2377,10 @@ export type Database = {
           _spell_slug: string
         }
         Returns: string
+      }
+      update_review_collection_questions: {
+        Args: { p_collection_id: string; p_questions: Json }
+        Returns: undefined
       }
     }
     Enums: {

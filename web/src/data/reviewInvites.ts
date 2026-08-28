@@ -1,108 +1,30 @@
 /**
- * Review invitations domain - PURE rules for the M13 review collection system.
+ * Review links + submission allowance - PURE rules for the V2 review system.
  *
- * After a spell completes, staff generate N one-time links; each link submits
- * exactly one review. This module holds the client-side mirror of the server
- * rules (the database RPCs remain the authority): token shape, invitation
- * states, draft validation, consent-gated publishing, and error mapping.
+ * One collection = ONE shared review link. The link stays open while the
+ * server-side allowance (reviews_remaining) is above zero and the optional
+ * expiry hasn't passed; every successful submission consumes exactly one
+ * slot atomically. Legacy per-traveller links (pre-V2 collections) keep
+ * working and drain the same pool. This module holds the client-side mirror
+ * of the server laws (the database RPCs remain the authority): token shape,
+ * link states, allowance math, consent-gated publishing and error mapping.
  * No Supabase imports here - everything is unit-testable.
  */
-
-/* --------------------------------- Questions -------------------------------- */
-
-/** The five questions, verbatim - the public form and tests share one source. */
-export const REVIEW_QUESTIONS = {
-  credit: "Who should we credit this story to?",
-  rating: "How would you rate your spell?",
-  summary: "Sum up your spell in one line.",
-  experience: "Tell us about your experience on this spell.",
-  consent: "May we share your story with fellow travellers?",
-} as const;
-
-/** Server-enforced limits (mirrored in review_invite_submit). */
-export const REVIEW_LIMITS = {
-  name: 80,
-  summary: 120,
-  experience: 5000,
-  minLinks: 1,
-  maxLinks: 200,
-} as const;
-
-/* ---------------------------------- Drafts ---------------------------------- */
-
-export interface ReviewDraft {
-  name: string;
-  /** 0 = not chosen yet; valid answers are 1-5. */
-  rating: number;
-  summary: string;
-  experience: string;
-  /** null = the traveller has not answered the consent question yet. */
-  consent: boolean | null;
-}
-
-export const EMPTY_REVIEW_DRAFT: ReviewDraft = {
-  name: "",
-  rating: 0,
-  summary: "",
-  experience: "",
-  consent: null,
-};
-
-export type DraftField = keyof ReviewDraft;
-export type DraftErrors = Partial<Record<DraftField, string>>;
-
-export interface DraftValidation {
-  ok: boolean;
-  errors: DraftErrors;
-  /** Trimmed values, safe to send once ok. */
-  clean: { name: string; rating: number; summary: string; experience: string; consent: boolean };
-}
-
-/** Client-side mirror of the server validation - a courtesy, never the law. */
-export const validateReviewDraft = (draft: ReviewDraft): DraftValidation => {
-  const name = draft.name.trim();
-  const summary = draft.summary.trim();
-  const experience = draft.experience.trim();
-  const errors: DraftErrors = {};
-
-  if (name === "") errors.name = "Please tell us your name.";
-  else if (name.length > REVIEW_LIMITS.name) errors.name = `Please keep this under ${REVIEW_LIMITS.name} characters.`;
-
-  if (!Number.isInteger(draft.rating) || draft.rating < 1 || draft.rating > 5)
-    errors.rating = "Please choose a rating from 1 to 5 stars.";
-
-  if (summary === "") errors.summary = "Please sum up your spell in one line.";
-  else if (summary.length > REVIEW_LIMITS.summary)
-    errors.summary = `Please keep your one-liner under ${REVIEW_LIMITS.summary} characters.`;
-
-  if (experience === "") errors.experience = "Please tell us about your experience.";
-  else if (experience.length > REVIEW_LIMITS.experience)
-    errors.experience = `Please keep this under ${REVIEW_LIMITS.experience} characters.`;
-
-  if (draft.consent === null) errors.consent = "Please choose an answer - yes or no.";
-
-  return {
-    ok: Object.keys(errors).length === 0,
-    errors,
-    clean: { name, rating: draft.rating, summary, experience, consent: draft.consent === true },
-  };
-};
+import { parseReviewQuestions, type ReviewQuestion } from "./reviewForm";
 
 /* ---------------------------------- Tokens ---------------------------------- */
 
 const TOKEN_RE = /^[0-9a-f]{64}$/;
 
 /** Quick shape check for /review/:token - the server remains the authority. */
-export const looksLikeInviteToken = (token: string): boolean => TOKEN_RE.test(token);
+export const looksLikeReviewToken = (token: string): boolean => TOKEN_RE.test(token);
 
 export const reviewLinkPath = (token: string): string => `/review/${token}`;
 
 export const reviewLinkUrl = (origin: string, token: string): string =>
   `${origin.replace(/\/$/, "")}${reviewLinkPath(token)}`;
 
-/* ------------------------------ Invitation states ---------------------------- */
-
-export type InviteRowState = "pending" | "used" | "expired";
+/* ---------------------------------- Expiry ----------------------------------- */
 
 export const isExpired = (expiresAt: string | null, now: Date): boolean => {
   if (expiresAt === null || expiresAt === "") return false;
@@ -111,16 +33,98 @@ export const isExpired = (expiresAt: string | null, now: Date): boolean => {
 };
 
 /**
- * The state a single invitation shows in the console.
- * A USED link stays used forever - submitted stories outlive expiry.
+ * "Stop accepting submissions AFTER that date": a date input value becomes the
+ * end of that day in the founder's local timezone. Empty input = no expiry.
+ */
+export const expiryFromDateInput = (value: string): string | null => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const [, y, m, d] = match;
+  const end = new Date(Number(y), Number(m) - 1, Number(d), 23, 59, 59, 999);
+  return Number.isNaN(end.getTime()) ? null : end.toISOString();
+};
+
+/** "2026-09-30T…" → "30 Sep 2026" (empty for none). */
+export const formatExpiryLabel = (iso: string | null): string => {
+  if (iso === null || iso === "") return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+};
+
+/* ------------------------------- Allowance ----------------------------------- */
+
+/** Hard ceiling the server enforces on manual allowance edits. */
+export const ALLOWANCE_MAX = 500;
+
+/** Creating a section with N travellers opens N + 1 review slots. */
+export const initialAllowance = (travellers: number): number => travellers + 1;
+
+/** Steppers can never leave 0..ALLOWANCE_MAX, and never a fraction. */
+export const clampAllowance = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(ALLOWANCE_MAX, Math.max(0, Math.round(value)));
+};
+
+export const TRAVELLER_LIMITS = { min: 1, max: 200 } as const;
+
+export interface TravellerCountValidation {
+  ok: boolean;
+  count: number;
+  error: string;
+}
+
+/** "Number of travellers" - required positive integer within server bounds. */
+export const validateTravellerCount = (value: string): TravellerCountValidation => {
+  const trimmed = value.trim();
+  if (trimmed === "") return { ok: false, count: 0, error: "How many travellers were on this spell?" };
+  if (!/^\d+$/.test(trimmed)) return { ok: false, count: 0, error: "Please enter a whole number." };
+  const count = Number(trimmed);
+  if (count < TRAVELLER_LIMITS.min || count > TRAVELLER_LIMITS.max)
+    return {
+      ok: false,
+      count,
+      error: `Between ${TRAVELLER_LIMITS.min} and ${TRAVELLER_LIMITS.max} travellers per review section.`,
+    };
+  return { ok: true, count, error: "" };
+};
+
+/* ----------------------------- Collection phase ------------------------------- */
+
+export type CollectionPhase = "open" | "expired" | "complete";
+
+/**
+ * The section's honest state: complete = the allowance is fully used
+ * (every slot became a story or was closed by the team) · expired = the
+ * date passed with slots unused · open = still accepting stories.
+ */
+export const collectionPhase = (
+  reviewsRemaining: number,
+  expiresAt: string | null,
+  now: Date,
+): CollectionPhase => {
+  if (reviewsRemaining <= 0) return "complete";
+  if (isExpired(expiresAt, now)) return "expired";
+  return "open";
+};
+
+/* --------------------------- Legacy invitation rows --------------------------- */
+
+export type InviteRowState = "pending" | "used" | "expired";
+
+/**
+ * The state a single legacy invitation shows in the console. A USED link
+ * stays used forever - submitted stories outlive expiry. An unused one is
+ * expired once the date passes OR the shared allowance is exhausted.
  */
 export const inviteRowState = (
   status: "pending" | "used",
   expiresAt: string | null,
+  reviewsRemaining: number,
   now: Date,
 ): InviteRowState => {
   if (status === "used") return "used";
-  if (isExpired(expiresAt, now)) return "expired";
+  if (isExpired(expiresAt, now) || reviewsRemaining <= 0) return "expired";
   return "pending";
 };
 
@@ -134,20 +138,6 @@ export interface CollectionStats {
 export const collectionStats = (invites: { status: "pending" | "used" }[]): CollectionStats => {
   const submitted = invites.filter((i) => i.status === "used").length;
   return { total: invites.length, submitted, pending: invites.length - submitted };
-};
-
-export type CollectionPhase = "open" | "expired" | "complete";
-
-/** Complete = every story is in · expired = time ran out with links unused. */
-export const collectionPhase = (
-  invites: { status: "pending" | "used" }[],
-  expiresAt: string | null,
-  now: Date,
-): CollectionPhase => {
-  const { total, submitted } = collectionStats(invites);
-  if (total > 0 && submitted === total) return "complete";
-  if (isExpired(expiresAt, now)) return "expired";
-  return "open";
 };
 
 /* ------------------------------- Publishing gate ----------------------------- */
@@ -172,20 +162,25 @@ export const canPublishReview = (review: {
 
 /* --------------------------------- Lookup RPC -------------------------------- */
 
-export type InviteLookupState = "ok" | "used" | "expired" | "invalid";
+export type ReviewLinkState = "ok" | "used" | "expired" | "invalid";
+export type ReviewLinkMode = "shared" | "personal";
 
-export interface InviteLookup {
-  state: InviteLookupState;
+export interface ReviewLinkLookup {
+  state: ReviewLinkState;
+  /** shared = the one collection link · personal = a legacy traveller link. */
+  mode: ReviewLinkMode;
   spellName: string;
   spellLocation: string;
   expiresAt: string | null;
+  /** The enabled questions to ask, in the founder's order. */
+  questions: ReviewQuestion[];
 }
 
 /**
  * Narrow the lookup RPC's jsonb. A malformed payload THROWS - a broken
  * response must surface as an error with retry, never as a fake "invalid link".
  */
-export const parseInviteLookup = (json: unknown): InviteLookup => {
+export const parseReviewLinkLookup = (json: unknown): ReviewLinkLookup => {
   if (typeof json !== "object" || json === null) throw new Error("Unexpected lookup response");
   const record = json as Record<string, unknown>;
   const state = record.state;
@@ -193,9 +188,11 @@ export const parseInviteLookup = (json: unknown): InviteLookup => {
     throw new Error("Unexpected lookup state");
   return {
     state,
+    mode: record.mode === "personal" ? "personal" : "shared",
     spellName: typeof record.spellName === "string" ? record.spellName : "",
     spellLocation: typeof record.spellLocation === "string" ? record.spellLocation : "",
     expiresAt: typeof record.expiresAt === "string" ? record.expiresAt : null,
+    questions: parseReviewQuestions(record.questions),
   };
 };
 
@@ -207,9 +204,13 @@ export type InviteErrorCode =
   | "review_link_invalid"
   | "review_fields_invalid"
   | "review_consent_missing"
+  | "review_incomplete"
   | "review_staff_only"
   | "review_spell_missing"
   | "review_link_count_invalid"
+  | "review_questions_invalid"
+  | "review_allowance_invalid"
+  | "review_collection_missing"
   | "unknown";
 
 const KNOWN_CODES: InviteErrorCode[] = [
@@ -218,9 +219,13 @@ const KNOWN_CODES: InviteErrorCode[] = [
   "review_link_invalid",
   "review_fields_invalid",
   "review_consent_missing",
+  "review_incomplete",
   "review_staff_only",
   "review_spell_missing",
   "review_link_count_invalid",
+  "review_questions_invalid",
+  "review_allowance_invalid",
+  "review_collection_missing",
 ];
 
 /** Server errors carry a stable code prefix ("review_link_used: …"). */
@@ -241,58 +246,32 @@ export const inviteErrorCopy = (code: InviteErrorCode): string => {
       return "Please complete every question before sending.";
     case "review_consent_missing":
       return "This traveller did not consent to sharing their story publicly.";
+    case "review_incomplete":
+      return "This story is missing its name, rating or experience - it can't be published.";
     case "review_staff_only":
-      return "Only staff can create review collections.";
+      return "Only staff can manage review sections.";
     case "review_spell_missing":
       return "The selected spell no longer exists - refresh and try again.";
     case "review_link_count_invalid":
-      return `The number of review links must be between ${REVIEW_LIMITS.minLinks} and ${REVIEW_LIMITS.maxLinks}.`;
+      return `The number of travellers must be between ${TRAVELLER_LIMITS.min} and ${TRAVELLER_LIMITS.max}.`;
+    case "review_questions_invalid":
+      return "The form could not be saved - check the questions and try again.";
+    case "review_allowance_invalid":
+      return `Reviews remaining must be between 0 and ${ALLOWANCE_MAX}.`;
+    case "review_collection_missing":
+      return "This review section no longer exists - refresh and try again.";
     case "unknown":
       return "Something went wrong - nothing was saved. Please try again.";
   }
 };
 
-/* ---------------------------------- Expiry ----------------------------------- */
-
 /**
- * "Stop accepting submissions AFTER that date": a date input value becomes the
- * end of that day in the founder's local timezone. Empty input = no expiry.
+ * The specific sentence the server raised (text after the code prefix) -
+ * used where the server's detail beats the generic copy, e.g. form-save
+ * validation ("choice questions need at least 2 options").
  */
-export const expiryFromDateInput = (value: string): string | null => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
-  if (!match) return null;
-  const [, y, m, d] = match;
-  const end = new Date(Number(y), Number(m) - 1, Number(d), 23, 59, 59, 999);
-  return Number.isNaN(end.getTime()) ? null : end.toISOString();
-};
-
-/** "2026-09-30T…" → "30 Sep 2026" (empty for none). */
-export const formatExpiryLabel = (iso: string | null): string => {
-  if (iso === null || iso === "") return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-};
-
-/* -------------------------------- Link count --------------------------------- */
-
-export interface LinkCountValidation {
-  ok: boolean;
-  count: number;
-  error: string;
-}
-
-/** "Number of Review Links" - required positive integer within server bounds. */
-export const validateLinkCount = (value: string): LinkCountValidation => {
-  const trimmed = value.trim();
-  if (trimmed === "") return { ok: false, count: 0, error: "How many travellers were on this spell?" };
-  if (!/^\d+$/.test(trimmed)) return { ok: false, count: 0, error: "Please enter a whole number." };
-  const count = Number(trimmed);
-  if (count < REVIEW_LIMITS.minLinks || count > REVIEW_LIMITS.maxLinks)
-    return {
-      ok: false,
-      count,
-      error: `Between ${REVIEW_LIMITS.minLinks} and ${REVIEW_LIMITS.maxLinks} links per collection.`,
-    };
-  return { ok: true, count, error: "" };
+export const inviteErrorDetail = (message: string): string => {
+  const idx = message.indexOf(":");
+  if (idx < 0) return "";
+  return message.slice(idx + 1).trim();
 };

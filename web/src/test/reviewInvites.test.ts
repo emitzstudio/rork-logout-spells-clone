@@ -1,63 +1,45 @@
 /**
- * M13 review collection rules - the client-side mirror of the server laws.
- * (The server-side enforcement itself is probed live in migrations 0025/0026.)
+ * Review link + allowance rules (V2) - the client-side mirror of the server
+ * laws. The server-side enforcement itself lives in migration 0044 (atomic
+ * counter, expiry, token validity) - these tests pin the pure client logic.
  */
 import { describe, expect, it } from "vitest";
 
 import {
-  EMPTY_REVIEW_DRAFT,
-  REVIEW_LIMITS,
-  REVIEW_QUESTIONS,
+  ALLOWANCE_MAX,
   canPublishReview,
+  clampAllowance,
   collectionPhase,
   collectionStats,
   expiryFromDateInput,
   formatExpiryLabel,
+  initialAllowance,
   inviteErrorCode,
   inviteErrorCopy,
+  inviteErrorDetail,
   inviteRowState,
   isExpired,
-  looksLikeInviteToken,
-  parseInviteLookup,
+  looksLikeReviewToken,
+  parseReviewLinkLookup,
   reviewLinkPath,
   reviewLinkUrl,
-  validateLinkCount,
-  validateReviewDraft,
+  validateTravellerCount,
 } from "@/data/reviewInvites";
 
 const VALID_TOKEN = "a".repeat(32) + "0123456789abcdef0123456789abcdef";
 
-const validDraft = {
-  name: "Rahul Sharma",
-  rating: 5,
-  summary: "One of the most memorable journeys I've taken.",
-  experience: "From the first circle to the last goodbye, everything felt real.",
-  consent: true as boolean | null,
-};
-
-describe("review questions", () => {
-  it("keeps the five questions verbatim", () => {
-    expect(REVIEW_QUESTIONS.credit).toBe("Who should we credit this story to?");
-    expect(REVIEW_QUESTIONS.rating).toBe("How would you rate your spell?");
-    expect(REVIEW_QUESTIONS.summary).toBe("Sum up your spell in one line.");
-    expect(REVIEW_QUESTIONS.experience).toBe("Tell us about your experience on this spell.");
-    expect(REVIEW_QUESTIONS.consent).toBe("May we share your story with fellow travellers?");
-  });
-});
-
 describe("token validation", () => {
-  it("accepts a 64-char lowercase hex token", () => {
-    expect(looksLikeInviteToken(VALID_TOKEN)).toBe(true);
+  it("accepts a 64-char lowercase hex token (shared and legacy alike)", () => {
+    expect(looksLikeReviewToken(VALID_TOKEN)).toBe(true);
   });
 
-  it("rejects legacy/invalid shapes - short, uuid-with-dashes, non-hex, empty", () => {
-    expect(looksLikeInviteToken("")).toBe(false);
-    expect(looksLikeInviteToken("abc123")).toBe(false);
-    expect(looksLikeInviteToken("a".repeat(63))).toBe(false);
-    expect(looksLikeInviteToken("a".repeat(65))).toBe(false);
-    expect(looksLikeInviteToken("g".repeat(64))).toBe(false);
-    expect(looksLikeInviteToken("A".repeat(64))).toBe(false);
-    expect(looksLikeInviteToken("123e4567-e89b-42d3-a456-426614174000123e4567-e89b-42d3-a456-42661417")).toBe(false);
+  it("rejects invalid shapes - short, uuid-with-dashes, non-hex, empty", () => {
+    expect(looksLikeReviewToken("")).toBe(false);
+    expect(looksLikeReviewToken("abc123")).toBe(false);
+    expect(looksLikeReviewToken("a".repeat(63))).toBe(false);
+    expect(looksLikeReviewToken("a".repeat(65))).toBe(false);
+    expect(looksLikeReviewToken("g".repeat(64))).toBe(false);
+    expect(looksLikeReviewToken("A".repeat(64))).toBe(false);
   });
 
   it("builds the public link from the token only - no internal ids", () => {
@@ -68,95 +50,84 @@ describe("token validation", () => {
   });
 });
 
-describe("lookup parsing", () => {
-  it("narrows every legal state", () => {
-    expect(parseInviteLookup({ state: "ok", spellName: "Meghalaya Wander", spellLocation: "Meghalaya", expiresAt: null }).state).toBe("ok");
-    expect(parseInviteLookup({ state: "used", spellName: "X" }).state).toBe("used");
-    expect(parseInviteLookup({ state: "expired", spellName: "X" }).state).toBe("expired");
-    expect(parseInviteLookup({ state: "invalid" }).state).toBe("invalid");
+describe("allowance math", () => {
+  it("a section for N travellers opens N + 1 review slots", () => {
+    expect(initialAllowance(10)).toBe(11);
+    expect(initialAllowance(5)).toBe(6);
+    expect(initialAllowance(1)).toBe(2);
   });
 
-  it("THROWS on malformed payloads - a broken response is never a fake 'invalid link'", () => {
-    expect(() => parseInviteLookup(null)).toThrow();
-    expect(() => parseInviteLookup("nope")).toThrow();
-    expect(() => parseInviteLookup({ state: "weird" })).toThrow();
-  });
-});
-
-describe("draft validation (all five required)", () => {
-  it("passes a complete draft and trims values", () => {
-    const result = validateReviewDraft({ ...validDraft, name: "  Rahul Sharma  " });
-    expect(result.ok).toBe(true);
-    expect(result.clean.name).toBe("Rahul Sharma");
-    expect(result.clean.consent).toBe(true);
+  it("clamps stepper values to 0..ALLOWANCE_MAX whole numbers - never negative", () => {
+    expect(clampAllowance(-1)).toBe(0);
+    expect(clampAllowance(0)).toBe(0);
+    expect(clampAllowance(11.6)).toBe(12);
+    expect(clampAllowance(ALLOWANCE_MAX + 50)).toBe(ALLOWANCE_MAX);
+    expect(clampAllowance(Number.NaN)).toBe(0);
   });
 
-  it("requires every field", () => {
-    const result = validateReviewDraft(EMPTY_REVIEW_DRAFT);
-    expect(result.ok).toBe(false);
-    expect(result.errors.name).toBeTruthy();
-    expect(result.errors.rating).toBeTruthy();
-    expect(result.errors.summary).toBeTruthy();
-    expect(result.errors.experience).toBeTruthy();
-    expect(result.errors.consent).toBeTruthy();
-  });
-
-  it("bounds the rating to 1-5 whole stars", () => {
-    expect(validateReviewDraft({ ...validDraft, rating: 0 }).ok).toBe(false);
-    expect(validateReviewDraft({ ...validDraft, rating: 6 }).ok).toBe(false);
-    expect(validateReviewDraft({ ...validDraft, rating: 3.5 }).ok).toBe(false);
-    expect(validateReviewDraft({ ...validDraft, rating: 1 }).ok).toBe(true);
-    expect(validateReviewDraft({ ...validDraft, rating: 5 }).ok).toBe(true);
-  });
-
-  it("enforces the summary and experience limits", () => {
-    expect(validateReviewDraft({ ...validDraft, summary: "x".repeat(REVIEW_LIMITS.summary + 1) }).ok).toBe(false);
-    expect(validateReviewDraft({ ...validDraft, experience: "x".repeat(REVIEW_LIMITS.experience + 1) }).ok).toBe(false);
-    expect(validateReviewDraft({ ...validDraft, name: "x".repeat(REVIEW_LIMITS.name + 1) }).ok).toBe(false);
-  });
-
-  it("consent must be answered EXPLICITLY - null fails, false passes and is stored as false", () => {
-    expect(validateReviewDraft({ ...validDraft, consent: null }).ok).toBe(false);
-    const declined = validateReviewDraft({ ...validDraft, consent: false });
-    expect(declined.ok).toBe(true);
-    expect(declined.clean.consent).toBe(false);
+  it("requires a whole traveller count within server bounds", () => {
+    expect(validateTravellerCount("10")).toEqual({ ok: true, count: 10, error: "" });
+    expect(validateTravellerCount("1").ok).toBe(true);
+    expect(validateTravellerCount("200").ok).toBe(true);
+    expect(validateTravellerCount("").ok).toBe(false);
+    expect(validateTravellerCount("0").ok).toBe(false);
+    expect(validateTravellerCount("201").ok).toBe(false);
+    expect(validateTravellerCount("-3").ok).toBe(false);
+    expect(validateTravellerCount("3.5").ok).toBe(false);
+    expect(validateTravellerCount("ten").ok).toBe(false);
   });
 });
 
-describe("invitation states", () => {
+describe("collection phase (allowance + expiry)", () => {
   const now = new Date("2026-08-21T12:00:00Z");
   const past = "2026-08-20T00:00:00Z";
   const future = "2026-09-30T23:59:59Z";
 
-  it("pending stays pending without expiry", () => {
-    expect(inviteRowState("pending", null, now)).toBe("pending");
-    expect(inviteRowState("pending", future, now)).toBe("pending");
+  it("open while slots remain and the date has not passed", () => {
+    expect(collectionPhase(11, null, now)).toBe("open");
+    expect(collectionPhase(1, future, now)).toBe("open");
   });
 
-  it("expiry blocks pending links after the date", () => {
-    expect(inviteRowState("pending", past, now)).toBe("expired");
+  it("complete the moment the allowance reaches 0 - whichever came first", () => {
+    expect(collectionPhase(0, null, now)).toBe("complete");
+    expect(collectionPhase(0, future, now)).toBe("complete");
+    expect(collectionPhase(0, past, now)).toBe("complete");
+  });
+
+  it("expired when the date passes with slots unused", () => {
+    expect(collectionPhase(4, past, now)).toBe("expired");
+  });
+
+  it("expiry helper reads honestly", () => {
     expect(isExpired(past, now)).toBe(true);
     expect(isExpired(future, now)).toBe(false);
     expect(isExpired(null, now)).toBe(false);
   });
+});
 
-  it("a USED link stays used even past expiry - submitted stories survive", () => {
-    expect(inviteRowState("used", past, now)).toBe("used");
+describe("legacy invitation rows", () => {
+  const now = new Date("2026-08-21T12:00:00Z");
+  const past = "2026-08-20T00:00:00Z";
+  const future = "2026-09-30T23:59:59Z";
+
+  it("pending stays pending while the pool is open", () => {
+    expect(inviteRowState("pending", null, 3, now)).toBe("pending");
+    expect(inviteRowState("pending", future, 1, now)).toBe("pending");
+  });
+
+  it("an exhausted pool expires unused legacy links too", () => {
+    expect(inviteRowState("pending", null, 0, now)).toBe("expired");
+  });
+
+  it("the date expires unused links; USED links stay used forever", () => {
+    expect(inviteRowState("pending", past, 3, now)).toBe("expired");
+    expect(inviteRowState("used", past, 0, now)).toBe("used");
   });
 
   it("counts derive from the real invitation rows", () => {
     const invites = [{ status: "used" as const }, { status: "pending" as const }, { status: "pending" as const }];
     expect(collectionStats(invites)).toEqual({ total: 3, submitted: 1, pending: 2 });
     expect(collectionStats([])).toEqual({ total: 0, submitted: 0, pending: 0 });
-  });
-
-  it("derives the collection phase honestly", () => {
-    const used = { status: "used" as const };
-    const open = { status: "pending" as const };
-    expect(collectionPhase([used, used], null, now)).toBe("complete");
-    expect(collectionPhase([used, open], past, now)).toBe("expired");
-    expect(collectionPhase([used, open], future, now)).toBe("open");
-    expect(collectionPhase([], null, now)).toBe("open");
   });
 });
 
@@ -176,21 +147,66 @@ describe("publishing gate", () => {
     expect(canPublishReview({ ...stored, consentToPublish: false })).toBe(false);
   });
 
-  it("broken stored data cannot publish", () => {
+  it("broken or not-asked stored data cannot publish", () => {
     expect(canPublishReview({ ...stored, authorName: "  " })).toBe(false);
     expect(canPublishReview({ ...stored, body: "" })).toBe(false);
+    /* rating 0 = the rating question was switched off for that submission. */
     expect(canPublishReview({ ...stored, rating: 0 })).toBe(false);
     expect(canPublishReview({ ...stored, rating: 9 })).toBe(false);
   });
 });
 
+describe("lookup parsing", () => {
+  it("narrows every legal state and both link modes", () => {
+    const ok = parseReviewLinkLookup({
+      state: "ok",
+      mode: "shared",
+      spellName: "The Ziro Spell",
+      spellLocation: "Ziro Valley",
+      expiresAt: null,
+      questions: [
+        {
+          id: "q_credit",
+          kind: "credit",
+          type: "short_text",
+          title: "Who should we credit this story to?",
+          helper: "",
+          placeholder: "Your name",
+          required: true,
+          options: [],
+          ratingStyle: "star5",
+        },
+      ],
+    });
+    expect(ok.state).toBe("ok");
+    expect(ok.mode).toBe("shared");
+    expect(ok.questions).toHaveLength(1);
+    expect(ok.questions[0].kind).toBe("credit");
+
+    expect(parseReviewLinkLookup({ state: "used", spellName: "X" }).state).toBe("used");
+    expect(parseReviewLinkLookup({ state: "expired", spellName: "X" }).state).toBe("expired");
+    expect(parseReviewLinkLookup({ state: "invalid" }).state).toBe("invalid");
+    expect(parseReviewLinkLookup({ state: "ok", mode: "personal", questions: [] }).mode).toBe("personal");
+  });
+
+  it("THROWS on malformed payloads - a broken response is never a fake 'invalid link'", () => {
+    expect(() => parseReviewLinkLookup(null)).toThrow();
+    expect(() => parseReviewLinkLookup("nope")).toThrow();
+    expect(() => parseReviewLinkLookup({ state: "weird" })).toThrow();
+  });
+});
+
 describe("server error mapping", () => {
   it("maps every stable code from the message prefix", () => {
-    expect(inviteErrorCode("review_link_used: this review link has already been used")).toBe("review_link_used");
+    expect(inviteErrorCode("review_link_used: already told")).toBe("review_link_used");
     expect(inviteErrorCode("review_link_expired: …")).toBe("review_link_expired");
     expect(inviteErrorCode("review_link_invalid: …")).toBe("review_link_invalid");
     expect(inviteErrorCode("review_fields_invalid: …")).toBe("review_fields_invalid");
     expect(inviteErrorCode("review_consent_missing: …")).toBe("review_consent_missing");
+    expect(inviteErrorCode("review_incomplete: …")).toBe("review_incomplete");
+    expect(inviteErrorCode("review_questions_invalid: …")).toBe("review_questions_invalid");
+    expect(inviteErrorCode("review_allowance_invalid: …")).toBe("review_allowance_invalid");
+    expect(inviteErrorCode("review_collection_missing: …")).toBe("review_collection_missing");
     expect(inviteErrorCode("review_staff_only: …")).toBe("review_staff_only");
     expect(inviteErrorCode("network timeout")).toBe("unknown");
   });
@@ -200,21 +216,16 @@ describe("server error mapping", () => {
     expect(inviteErrorCopy("review_link_expired")).toBe("This review link has expired.");
     expect(inviteErrorCopy("review_link_invalid")).toBe("This review link is no longer available.");
   });
+
+  it("surfaces the server's specific sentence when it matters", () => {
+    expect(inviteErrorDetail("review_questions_invalid: choice questions need at least 2 options")).toBe(
+      "choice questions need at least 2 options",
+    );
+    expect(inviteErrorDetail("no prefix here")).toBe("");
+  });
 });
 
-describe("link count + expiry inputs", () => {
-  it("requires a positive whole number within server bounds", () => {
-    expect(validateLinkCount("8")).toEqual({ ok: true, count: 8, error: "" });
-    expect(validateLinkCount("1").ok).toBe(true);
-    expect(validateLinkCount("200").ok).toBe(true);
-    expect(validateLinkCount("").ok).toBe(false);
-    expect(validateLinkCount("0").ok).toBe(false);
-    expect(validateLinkCount("201").ok).toBe(false);
-    expect(validateLinkCount("-3").ok).toBe(false);
-    expect(validateLinkCount("3.5").ok).toBe(false);
-    expect(validateLinkCount("eight").ok).toBe(false);
-  });
-
+describe("expiry inputs", () => {
   it("expiry becomes the END of the chosen day (links stop AFTER that date)", () => {
     const iso = expiryFromDateInput("2026-09-30");
     expect(iso).not.toBeNull();
@@ -227,7 +238,7 @@ describe("link count + expiry inputs", () => {
     expect(expiryFromDateInput("30-09-2026")).toBeNull();
   });
 
-  it("labels expiry like the console - '30 Sept 2026' style day-month-year", () => {
+  it("labels expiry like the console - day-month-year", () => {
     expect(formatExpiryLabel(null)).toBe("");
     expect(formatExpiryLabel("")).toBe("");
     const label = formatExpiryLabel(new Date(2026, 8, 30, 12).toISOString());

@@ -22,6 +22,7 @@ import Forms from "./Forms";
 import Overview from "./Overview";
 import Responses from "./Responses";
 import ReviewCollection from "./ReviewCollection";
+import ReviewFormBuilder from "./ReviewFormBuilder";
 import Reviews from "./Reviews";
 import Section from "./Section";
 import Settings from "./Settings";
@@ -187,6 +188,7 @@ function FounderConsole() {
                 {/* M13 - review collections: one-time links, one per traveller. */}
                 <Route path="reviews" element={<Reviews />} />
                 <Route path="reviews/:id" element={<ReviewCollection />} />
+                <Route path="reviews/:id/form" element={<ReviewFormBuilder />} />
                 {/* M12 - the control room. */}
                 <Route path="settings" element={<Settings />} />
                 {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings"].includes(section.slug)).map((section) => (

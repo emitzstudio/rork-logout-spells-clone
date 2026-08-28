@@ -1,42 +1,40 @@
 /**
- * The one-time review invitation page - logoutspells.com/review/{token}.
+ * The review link page - logoutspells.com/review/{token}.
  *
- * Each token is a single traveller's private door: the server decides whether
- * it is valid, used or expired (the client never guesses), the five questions
- * are asked exactly as written, and success appears only after the database
- * confirms the story landed. A used link can never submit again.
+ * ONE shared link serves a whole circle: the server decides whether it is
+ * open, exhausted or expired (the client never guesses), the questions are
+ * whatever the founder's review form asks - rendered in order, switched-off
+ * ones never shown - and success appears only after the database confirms the
+ * story landed AND consumed exactly one review slot. Legacy per-traveller
+ * links open the same page in personal mode and drain the same allowance.
  */
 import { motion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import ReviewQuestionField from "@/components/dashboard/reviews/ReviewFormRenderer";
 import LoadError from "@/components/site/LoadError";
 import {
-  EMPTY_REVIEW_DRAFT,
-  REVIEW_LIMITS,
-  REVIEW_QUESTIONS,
+  validateReviewAnswers,
+  type ReviewAnswersDraft,
+  type ReviewAnswerValue,
+} from "@/data/reviewForm";
+import {
   formatExpiryLabel,
   inviteErrorCode,
   inviteErrorCopy,
-  looksLikeInviteToken,
-  validateReviewDraft,
-  type DraftErrors,
-  type InviteLookupState,
-  type ReviewDraft,
+  looksLikeReviewToken,
+  type ReviewLinkState,
 } from "@/data/reviewInvites";
-import { useInviteLookup, useSubmitInviteReview } from "@/data/reviewInvitesStore";
+import { useReviewLinkLookup, useSubmitReviewLink } from "@/data/reviewInvitesStore";
 import { useNoIndex } from "@/lib/seo";
-import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-const inputClass =
-  "w-full rounded-xl border border-cream/15 bg-cream/[0.03] px-4 py-3 font-sans text-[14px] text-cream outline-none transition-colors placeholder:text-cream/25 focus:border-gold/50";
-
 /* ------------------------------- Page states -------------------------------- */
 
-const STATE_COPY: Record<Exclude<InviteLookupState, "ok">, { glyph: string; title: string; subline: string }> = {
+const STATE_COPY: Record<Exclude<ReviewLinkState, "ok">, { glyph: string; title: string; subline: string }> = {
   used: {
     glyph: "✦",
     title: "This review link has already been used.",
@@ -45,7 +43,7 @@ const STATE_COPY: Record<Exclude<InviteLookupState, "ok">, { glyph: string; titl
   expired: {
     glyph: "☾",
     title: "This review link has expired.",
-    subline: "This collection has closed its doors. Thank you for being part of the spell.",
+    subline: "Thank you for sharing your spell with us.",
   },
   invalid: {
     glyph: "☾",
@@ -54,7 +52,7 @@ const STATE_COPY: Record<Exclude<InviteLookupState, "ok">, { glyph: string; titl
   },
 };
 
-function StateScreen({ state, spellName }: { state: Exclude<InviteLookupState, "ok">; spellName: string }) {
+function StateScreen({ state, spellName }: { state: Exclude<ReviewLinkState, "ok">; spellName: string }) {
   const copy = STATE_COPY[state];
   useEffect(() => {
     document.title = "Review Link | Logout Spells";
@@ -85,90 +83,6 @@ function StateScreen({ state, spellName }: { state: Exclude<InviteLookupState, "
         </div>
       </div>
     </section>
-  );
-}
-
-/* --------------------------------- The form --------------------------------- */
-
-function QuestionLabel({ index, text }: { index: number; text: string }) {
-  return (
-    <div className="flex items-baseline gap-3">
-      <span className="font-serif text-[15px] italic text-gold/70" aria-hidden>
-        {String(index).padStart(2, "0")}
-      </span>
-      <span className="font-sans text-[14px] font-medium leading-snug text-cream">{text}</span>
-    </div>
-  );
-}
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="mt-2 font-sans text-[12px] text-red-300">{message}</p>;
-}
-
-function StarPicker({ value, onChange }: { value: number; onChange: (rating: number) => void }) {
-  const [hover, setHover] = useState<number>(0);
-  const active = hover > 0 ? hover : value;
-  return (
-    <div role="radiogroup" aria-label={REVIEW_QUESTIONS.rating} className="flex items-center gap-1.5">
-      {[1, 2, 3, 4, 5].map((step) => (
-        <button
-          key={step}
-          type="button"
-          role="radio"
-          aria-checked={value === step}
-          aria-label={`${step} star${step === 1 ? "" : "s"}`}
-          onClick={() => onChange(step)}
-          onMouseEnter={() => setHover(step)}
-          onMouseLeave={() => setHover(0)}
-          className="group rounded-md p-1 transition-transform hover:scale-110 active:scale-95"
-        >
-          <Star
-            className={cn(
-              "h-8 w-8 transition-colors",
-              step <= active ? "fill-gold text-gold drop-shadow-[0_0_10px_rgba(184,150,62,0.35)]" : "text-cream/25",
-            )}
-          />
-        </button>
-      ))}
-      {value > 0 && (
-        <span className="ml-2 font-serif text-[15px] italic text-cream/50">{value}/5</span>
-      )}
-    </div>
-  );
-}
-
-function ConsentChoice({
-  value,
-  onChange,
-}: {
-  value: boolean | null;
-  onChange: (consent: boolean) => void;
-}) {
-  const option = (consent: boolean, label: string, sub: string) => (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={value === consent}
-      onClick={() => onChange(consent)}
-      className={cn(
-        "rounded-xl border px-4 py-3.5 text-left transition-all active:scale-[0.99]",
-        value === consent
-          ? "border-gold/60 bg-gold/10 shadow-[0_0_24px_rgba(184,150,62,0.15)]"
-          : "border-cream/12 bg-cream/[0.02] hover:border-cream/25",
-      )}
-    >
-      <p className={cn("font-sans text-[13.5px] font-medium", value === consent ? "text-gold-light" : "text-cream/80")}>
-        {label}
-      </p>
-      <p className="mt-0.5 font-sans text-[11.5px] leading-relaxed text-cream/40">{sub}</p>
-    </button>
-  );
-  return (
-    <div role="radiogroup" aria-label={REVIEW_QUESTIONS.consent} className="grid gap-2.5 sm:grid-cols-2">
-      {option(true, "Yes, share my story", "Your words may appear on the Logout Spells website.")}
-      {option(false, "No, keep it private", "Only the team will read it. Nothing is published.")}
-    </div>
   );
 }
 
@@ -226,24 +140,24 @@ function ReceivedScreen({ spellName }: { spellName: string }) {
 /* ----------------------------------- Page ----------------------------------- */
 
 export default function ReviewInvitePage() {
-  /* One-time private tokens - never indexed, never crawled. */
+  /* Private review tokens - never indexed, never crawled. */
   useNoIndex();
 
   const { token: rawToken } = useParams<{ token: string }>();
   const raw = rawToken ?? "";
   /* Obviously malformed tokens don't need a round trip - the server stays the
      authority for anything shaped like a real token. */
-  const token = looksLikeInviteToken(raw) ? raw : "";
-  const lookup = useInviteLookup(token);
-  const submit = useSubmitInviteReview();
+  const token = looksLikeReviewToken(raw) ? raw : "";
+  const lookup = useReviewLinkLookup(token);
+  const submit = useSubmitReviewLink();
 
-  const [draft, setDraft] = useState<ReviewDraft>(EMPTY_REVIEW_DRAFT);
+  const [draft, setDraft] = useState<ReviewAnswersDraft>({});
   const [attempted, setAttempted] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [received, setReceived] = useState<boolean>(false);
   /* When the SERVER rejects a submit as used/expired/invalid, the page flips
      to that honest state - the client never decides on its own. */
-  const [overrideState, setOverrideState] = useState<Exclude<InviteLookupState, "ok"> | null>(null);
+  const [overrideState, setOverrideState] = useState<Exclude<ReviewLinkState, "ok"> | null>(null);
 
   useEffect(() => {
     document.title = "Leave Your Story | Logout Spells";
@@ -273,17 +187,19 @@ export default function ReviewInvitePage() {
   if (pageState !== "ok") return <StateScreen state={pageState} spellName={info.spellName} />;
   if (received) return <ReceivedScreen spellName={info.spellName} />;
 
-  const errors: DraftErrors = attempted ? validateReviewDraft(draft).errors : {};
+  const questions = info.questions;
+  const validation = validateReviewAnswers(questions, draft);
+  const errors = attempted ? validation.errors : {};
   const expiryLabel = formatExpiryLabel(info.expiresAt);
 
   const handleSubmit = (): void => {
     if (submit.isPending) return;
     setAttempted(true);
-    const validation = validateReviewDraft(draft);
-    if (!validation.ok) return;
+    const check = validateReviewAnswers(questions, draft);
+    if (!check.ok) return;
     setServerError(null);
     submit.mutate(
-      { token, ...validation.clean },
+      { token, answers: check.payload },
       {
         onSuccess: () => setReceived(true),
         onError: (error) => {
@@ -345,84 +261,24 @@ export default function ReviewInvitePage() {
               }}
               noValidate
             >
-              {/* 01 - credit */}
-              <div>
-                <QuestionLabel index={1} text={REVIEW_QUESTIONS.credit} />
-                <div className="mt-3">
-                  <input
-                    type="text"
-                    value={draft.name}
-                    maxLength={REVIEW_LIMITS.name}
-                    onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                    placeholder="Your name"
-                    className={inputClass}
-                    aria-label={REVIEW_QUESTIONS.credit}
+              {questions.length === 0 ? (
+                <p className="py-6 text-center font-serif text-[16px] italic text-cream/40">
+                  This form has no questions right now - check back soon.
+                </p>
+              ) : (
+                questions.map((question, index) => (
+                  <ReviewQuestionField
+                    key={question.id}
+                    question={question}
+                    index={index + 1}
+                    value={draft[question.id]}
+                    error={errors[question.id]}
+                    onChange={(value: ReviewAnswerValue) =>
+                      setDraft((current) => ({ ...current, [question.id]: value }))
+                    }
                   />
-                  <FieldError message={errors.name} />
-                </div>
-              </div>
-
-              {/* 02 - rating */}
-              <div>
-                <QuestionLabel index={2} text={REVIEW_QUESTIONS.rating} />
-                <div className="mt-3">
-                  <StarPicker value={draft.rating} onChange={(rating) => setDraft((d) => ({ ...d, rating }))} />
-                  <FieldError message={errors.rating} />
-                </div>
-              </div>
-
-              {/* 03 - one line */}
-              <div>
-                <QuestionLabel index={3} text={REVIEW_QUESTIONS.summary} />
-                <div className="mt-3">
-                  <input
-                    type="text"
-                    value={draft.summary}
-                    maxLength={REVIEW_LIMITS.summary}
-                    onChange={(e) => setDraft((d) => ({ ...d, summary: e.target.value }))}
-                    placeholder="One line that holds it all"
-                    className={inputClass}
-                    aria-label={REVIEW_QUESTIONS.summary}
-                  />
-                  <div className="mt-1.5 flex items-center justify-between">
-                    <FieldError message={errors.summary} />
-                    <span className="ml-auto font-sans text-[10.5px] tabular-nums text-cream/30">
-                      {draft.summary.length}/{REVIEW_LIMITS.summary}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 04 - the experience */}
-              <div>
-                <QuestionLabel index={4} text={REVIEW_QUESTIONS.experience} />
-                <div className="mt-3">
-                  <textarea
-                    value={draft.experience}
-                    maxLength={REVIEW_LIMITS.experience}
-                    onChange={(e) => setDraft((d) => ({ ...d, experience: e.target.value }))}
-                    placeholder="The moments, the people, the feeling. Take your time"
-                    rows={7}
-                    className={cn(inputClass, "resize-y leading-relaxed")}
-                    aria-label={REVIEW_QUESTIONS.experience}
-                  />
-                  <div className="mt-1.5 flex items-center justify-between">
-                    <FieldError message={errors.experience} />
-                    <span className="ml-auto font-sans text-[10.5px] tabular-nums text-cream/30">
-                      {draft.experience.length}/{REVIEW_LIMITS.experience}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 05 - consent */}
-              <div>
-                <QuestionLabel index={5} text={REVIEW_QUESTIONS.consent} />
-                <div className="mt-3">
-                  <ConsentChoice value={draft.consent} onChange={(consent) => setDraft((d) => ({ ...d, consent }))} />
-                  <FieldError message={errors.consent} />
-                </div>
-              </div>
+                ))
+              )}
 
               {serverError !== null && (
                 <p role="alert" className="rounded-xl border border-red-400/25 bg-red-400/[0.06] px-4 py-3 font-sans text-[12.5px] leading-relaxed text-red-200">
@@ -432,7 +288,7 @@ export default function ReviewInvitePage() {
 
               <button
                 type="submit"
-                disabled={submit.isPending}
+                disabled={submit.isPending || questions.length === 0}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gold font-sans text-[12.5px] font-semibold uppercase tracking-[0.22em] text-charcoal-deep transition-all duration-200 hover:bg-gold-light hover:shadow-[0_0_36px_rgba(184,150,62,0.4)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submit.isPending && (
@@ -441,7 +297,9 @@ export default function ReviewInvitePage() {
                 {submit.isPending ? "Sending your story…" : "Send your story"}
               </button>
               <p className="text-center font-sans text-[11px] text-cream/30">
-                This link works exactly once. Your story sends when you press the button.
+                {info.mode === "personal"
+                  ? "This link works exactly once. Your story sends when you press the button."
+                  : "Each story sends once - the link stays open for the rest of your circle."}
               </p>
             </form>
           </div>

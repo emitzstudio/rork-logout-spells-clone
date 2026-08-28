@@ -82,9 +82,10 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
   const moderate = useModerateReview();
   const [removing, setRemoving] = useState<boolean>(false);
   const { review } = item;
-  /* M13: invitation reviews carry the traveller's explicit consent - without
-     it, publishing is locked here AND in the database. */
-  const consentLocked = review.invitation_id !== null && !review.consent_to_publish;
+  /* M13/V2: review-link stories carry the traveller's explicit consent -
+     without it, publishing is locked here AND in the database. */
+  const fromReviewLink = review.invitation_id !== null || review.collection_id !== null;
+  const consentLocked = fromReviewLink && !review.consent_to_publish;
 
   const act = (status: ReviewStatus, message: string): void => {
     moderate.mutate({ id: review.id, status }, {
@@ -116,7 +117,7 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
                 <BadgeCheck className="h-2.5 w-2.5" /> Verified
               </span>
             )}
-            {review.invitation_id !== null && <ConsentChip consent={review.consent_to_publish} />}
+            {fromReviewLink && <ConsentChip consent={review.consent_to_publish} />}
           </div>
           {review.title !== "" && <p className="mt-2 font-serif text-[17px] leading-snug text-cream">{review.title}</p>}
           <p className="mt-1 whitespace-pre-wrap font-sans text-[12.5px] leading-relaxed text-cream/65">{review.body}</p>

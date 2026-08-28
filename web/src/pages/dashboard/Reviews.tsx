@@ -1,8 +1,9 @@
 /**
- * Reviews - the M13 review collection console. One collection per completed
- * spell run: N unique one-time links, real submission counts, and a door into
- * each collection. No invented data anywhere: counts derive from the actual
- * invitation rows, and a failed read shows a retry - never a fake empty state.
+ * Reviews - the review section console. One section per completed spell run:
+ * ONE shared link for the whole circle, a live reviews-remaining allowance,
+ * and a door into each section. No invented data anywhere: counts come from
+ * the real story rows and the database counter, and a failed read shows a
+ * retry - never a fake empty state.
  */
 import { AnimatePresence, motion } from "framer-motion";
 import { MailPlus, MapPin, Plus } from "lucide-react";
@@ -12,16 +13,15 @@ import { useNavigate } from "react-router-dom";
 import NewCollectionDialog from "@/components/dashboard/reviews/NewCollectionDialog";
 import { PhaseChip } from "@/components/dashboard/reviews/ReviewBits";
 import { timeAgo } from "@/data/bookingOps";
-import { collectionPhase, collectionStats, formatExpiryLabel, isExpired } from "@/data/reviewInvites";
+import { collectionPhase, formatExpiryLabel, isExpired } from "@/data/reviewInvites";
 import { useReviewCollections, type CollectionBundle } from "@/data/reviewInvitesStore";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 function CollectionCard({ bundle, index, now }: { bundle: CollectionBundle; index: number; now: Date }) {
   const navigate = useNavigate();
-  const { collection, spellName, spellLocation, invites } = bundle;
-  const stats = collectionStats(invites.map(({ invite }) => invite));
-  const phase = collectionPhase(invites.map(({ invite }) => invite), collection.expires_at, now);
+  const { collection, spellName, spellLocation, reviews } = bundle;
+  const phase = collectionPhase(collection.reviews_remaining, collection.expires_at, now);
   const expiryLabel = formatExpiryLabel(collection.expires_at);
   const expired = isExpired(collection.expires_at, now);
 
@@ -55,12 +55,11 @@ function CollectionCard({ bundle, index, now }: { bundle: CollectionBundle; inde
 
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           <p className="font-sans text-[12.5px] text-cream/60">
-            {stats.total} review {stats.total === 1 ? "link" : "links"}
-          </p>
-          <p className="font-sans text-[12.5px] text-cream/60">
-            <span className="text-gold-light">{stats.submitted} submitted</span>
+            <span className="text-gold-light">
+              {reviews.length} {reviews.length === 1 ? "story" : "stories"} in
+            </span>
             <span className="text-cream/30"> · </span>
-            {stats.pending} pending
+            Reviews remaining: {collection.reviews_remaining}
           </p>
           {expiryLabel !== "" && (
             <p className={`font-sans text-[12.5px] ${expired ? "text-amber-300/80" : "text-cream/45"}`}>
@@ -86,7 +85,7 @@ export default function Reviews() {
           <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold/70">Story collection</p>
           <h1 className="mt-1 font-serif text-[30px] font-medium leading-tight text-cream">Reviews</h1>
           <p className="mt-1 font-sans text-[12.5px] text-cream/45">
-            After a spell completes, mint one-time links - one per traveller - and choose what reaches the site.
+            After a spell completes, create one shared review link for the circle - and choose what reaches the site.
           </p>
         </div>
         <button
@@ -94,7 +93,7 @@ export default function Reviews() {
           onClick={() => setCreating(true)}
           className="flex h-10 items-center gap-2 rounded-lg bg-gold px-4 font-sans text-[12px] font-semibold uppercase tracking-[0.16em] text-charcoal-deep transition-all duration-200 hover:bg-gold-light hover:shadow-[0_0_30px_rgba(184,150,62,0.4)] active:scale-[0.98]"
         >
-          <Plus className="h-4 w-4" /> New Review Collection
+          <Plus className="h-4 w-4" /> New Review Section
         </button>
       </div>
 
@@ -122,17 +121,17 @@ export default function Reviews() {
         ) : (query.data ?? []).length === 0 ? (
           <div className="rounded-xl border border-cream/[0.07] bg-charcoal-soft/75 px-6 py-16 text-center">
             <MailPlus className="mx-auto h-7 w-7 text-cream/25" />
-            <p className="mt-3 font-serif text-[20px] text-cream/85">No review collections yet.</p>
+            <p className="mt-3 font-serif text-[20px] text-cream/85">No review sections yet.</p>
             <p className="mx-auto mt-1.5 max-w-[460px] font-sans text-[12.5px] leading-relaxed text-cream/45">
-              When a spell completes, create a collection - each traveller receives their own one-time link,
-              and their stories land here for your approval.
+              When a spell completes, create a review section - the whole circle shares one link, and their
+              stories land here for your approval.
             </p>
             <button
               type="button"
               onClick={() => setCreating(true)}
               className="mx-auto mt-5 flex h-10 items-center gap-2 rounded-lg border border-gold/40 bg-gold/15 px-4 font-sans text-[12px] font-medium text-gold-light transition-all hover:bg-gold/25 active:scale-[0.98]"
             >
-              <Plus className="h-4 w-4" /> New Review Collection
+              <Plus className="h-4 w-4" /> New Review Section
             </button>
           </div>
         ) : (
