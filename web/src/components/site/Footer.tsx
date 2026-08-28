@@ -65,7 +65,7 @@ export default function Footer() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-12 sm:gap-20">
+          <div className="grid grid-cols-2 gap-12 sm:grid-cols-3 sm:gap-14 lg:gap-20">
             <div>
               <h4 className="eyebrow mb-5">Explore</h4>
               <ul className="space-y-3 font-sans text-sm text-cream/55">
@@ -116,6 +116,26 @@ export default function Footer() {
                     </a>
                   </li>
                 )}
+              </ul>
+            </div>
+            <div>
+              <h4 className="eyebrow mb-5">The Fine Print</h4>
+              <ul className="space-y-3 font-sans text-sm text-cream/55">
+                <li>
+                  <Link to="/refund-policy" className="transition-colors hover:text-gold-light">
+                    Refund &amp; Cancellation
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/terms" className="transition-colors hover:text-gold-light">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/privacy" className="transition-colors hover:text-gold-light">
+                    Privacy Policy
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>

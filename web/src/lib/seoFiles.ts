@@ -60,6 +60,9 @@ export const STATIC_SITEMAP_PATHS: string[] = [
   "/blog",
   "/our-story",
   "/creators",
+  "/refund-policy",
+  "/terms",
+  "/privacy",
 ];
 
 export interface SitemapEntry {

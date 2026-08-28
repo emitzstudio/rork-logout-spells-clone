@@ -107,6 +107,9 @@ describe("sitemap.xml", () => {
       "/our-story",
       "/creators",
       "/live-spells/previous",
+      "/refund-policy",
+      "/terms",
+      "/privacy",
     ]) {
       expect(STATIC_SITEMAP_PATHS).toContain(core);
     }

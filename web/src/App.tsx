@@ -29,8 +29,11 @@ import NotFound from "./pages/NotFound";
 import OurStory from "./pages/OurStory";
 import PreviousSpellPage from "./pages/PreviousSpellPage";
 import PreviousSpells from "./pages/PreviousSpells";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import RefundPolicy from "./pages/RefundPolicy";
 import ReviewInvitePage from "./pages/ReviewInvitePage";
 import SpellPage from "./pages/SpellPage";
+import TermsOfService from "./pages/TermsOfService";
 
 /** Founder console - lazy chunk so the public site bundle is unaffected. */
 const Dashboard = lazy(() => import("./pages/dashboard/Dashboard"));
@@ -85,6 +88,10 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/creators" element={<Creators />} />
         <Route path="/our-story" element={<OurStory />} />
+        {/* The fine print - official policy pages (public, indexable). */}
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         {/* The Journal - Experience grew up into the blog. */}
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
