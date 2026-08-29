@@ -1,5 +1,5 @@
 /**
- * Logout Spells - Bir Spell itinerary PDF (04-06 September 2026).
+ * Logout Spells - Bir Spell itinerary PDF (11-13 September 2026).
  * Standalone brochure generator: 6 A4 pages, charcoal + gold brand system.
  * Run: bun run index.ts  ->  Logout-Spells-Bir-Sept-2026.pdf
  */
@@ -32,7 +32,7 @@ const fbytes = (f: string) => readFileSync(FDIR + f);
 
 const doc = await PDFDocument.create();
 doc.registerFontkit(fontkit);
-doc.setTitle("Logout Spells · The Bir Spell · 04-06 September 2026");
+doc.setTitle("Logout Spells · The Bir Spell · 11-13 September 2026");
 doc.setAuthor("Logout Spells");
 doc.setSubject("Bir, Himachal Pradesh · trip itinerary and booking");
 
@@ -335,7 +335,7 @@ const coverImage = (page: PDFPage, img: PDFImage | null, yTop: number, h: number
 
   eyebrowRule(p, 349, 8, 30);
 
-  drawTracked(p, "04 - 06 SEPTEMBER 2026", { cx: W / 2, y: 322, font: sansSemi, size: 11, color: CREAM, tr: 3 });
+  drawTracked(p, "11 - 13 SEPTEMBER 2026", { cx: W / 2, y: 322, font: sansSemi, size: 11, color: CREAM, tr: 3 });
   drawTracked(p, "BIR · HIMACHAL PRADESH", { cx: W / 2, y: 305, font: sansMed, size: 8.5, color: MUTED, tr: 2.6 });
 
   const poem1 = "Three days. Mountain air. Good people.";
@@ -423,7 +423,7 @@ type DaySpec = {
 const days: DaySpec[] = [
   {
     img: imgDay1,
-    eyebrow: "DAY 01 · FRIDAY, 04 SEPTEMBER · BIR",
+    eyebrow: "DAY 01 · FRIDAY, 11 SEPTEMBER · BIR",
     titleA: "Arrive, Connect & ",
     titleB: "Unwind",
     intro: "The first day is about arriving, meeting the people you'll be sharing the spell with, and easing into Bir's slower rhythm.",
@@ -438,23 +438,24 @@ const days: DaySpec[] = [
   },
   {
     img: imgDay2,
-    eyebrow: "DAY 02 · SATURDAY, 05 SEPTEMBER · BIR",
-    titleA: "Clay, Tea & ",
-    titleB: "Slow Days",
-    intro: "A day to make, taste and unwind. From tea gardens to handmade pottery, spend the day discovering the quieter, more creative side of the mountains.",
+    eyebrow: "DAY 02 · SATURDAY, 12 SEPTEMBER · BIR",
+    titleA: "Lights, Clay & ",
+    titleB: "Action",
+    intro: "A day to make, taste and unwind, with one glittering plot twist: it is Bollywood day, and everyone starts the morning dressed as their favourite Bollywood character.",
     items: [
+      { title: "BOLLYWOOD DRESS-UP", body: "Today, Bir becomes a film set. Step into the day as your favourite Bollywood character and stay gloriously in character from first chai to final scene." },
       { title: "WAH TEA ESTATE", body: "Walk through lush tea gardens, breathe in the mountain air and take in the quieter side of Bir." },
       { title: "POTTERY AT ANDRETTA", body: "Get your hands on clay and create something of your own." },
       { title: "LUNCH AT HER CAFÉ", body: "Slow down over a delicious meal in a cosy mountain café." },
-      { title: "PYJAMA PARTY", body: "Comfy clothes, silly games, music and a night of doing absolutely nothing seriously." },
+      { title: "STYLING & BEDAZZLE NIGHT", body: "An evening styling session that melts into bedazzle night. Bedazzle stickers in hand, you design a little something we are keeping a surprise until the night itself." },
       { title: "DINNER", body: "Gather around the table for good food, stories and an easy mountain evening." },
     ],
-    chip: "TEA · CLAY · COMMUNITY",
+    chip: "LIGHTS · CLAY · ACTION",
     footer: "04 · DAY TWO",
   },
   {
     img: imgDay3,
-    eyebrow: "DAY 03 · SUNDAY, 06 SEPTEMBER · BAIJNATH",
+    eyebrow: "DAY 03 · SUNDAY, 13 SEPTEMBER · BAIJNATH",
     titleA: "One Last ",
     titleB: "Wander",
     intro: "No rush. Just one last day before the road takes us home.",
@@ -538,7 +539,7 @@ for (const day of days) {
 
   if (imgLogo) p.drawImage(imgLogo, { x: W / 2 - 16, y: H - 66, width: 32, height: 32 });
   mixedTitle(p, "Your Spell ", "Awaits", { cx: W / 2, y: 730, size: 44 });
-  drawTracked(p, "BIR · 04 - 06 SEPTEMBER 2026 · ONLY 15 SPOTS", { cx: W / 2, y: 704, font: sansSemi, size: 9, color: GOLD, tr: 2.6 });
+  drawTracked(p, "BIR · 11 - 13 SEPTEMBER 2026 · ONLY 15 SPOTS", { cx: W / 2, y: 704, font: sansSemi, size: 9, color: GOLD, tr: 2.6 });
 
   /* Price cards */
   const cardTop = 672;
