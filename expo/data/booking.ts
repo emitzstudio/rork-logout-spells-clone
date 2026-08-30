@@ -62,6 +62,8 @@ const sendInquiry = async (input: {
   spell: ManagedSpell;
   name: string;
   email: string;
+  /** REQUIRED by the server since 0032 — the contact channel of record. */
+  phone: string;
   note: string;
 }): Promise<string> => {
   // The RPC's uuid arg is NULLABLE in SQL; codegen can't express that, so
@@ -72,6 +74,7 @@ const sendInquiry = async (input: {
     _spell_name: input.spell.name,
     _name: input.name.trim(),
     _email: input.email.trim(),
+    _phone: input.phone.trim(),
     _note: input.note,
   });
   if (error || typeof data !== "string" || data === "") {
@@ -87,6 +90,8 @@ export interface SubmitInquiryInput {
   spell: ManagedSpell;
   name: string;
   email: string;
+  /** REQUIRED by the server since 0032 — at least 8 digits. */
+  phone: string;
   note: string;
 }
 
@@ -157,6 +162,7 @@ export const bookingService = {
       spell,
       name: lead.fullName,
       email: lead.email,
+      phone: lead.phone,
       note: lines.join("\n"),
     });
   },

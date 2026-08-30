@@ -5,8 +5,12 @@
 
 export const CONTACT_EMAIL = "vidushi@logoutspells.com";
 
-/** The live website — attached forms open there in the in-app browser (M6b). */
-export const SITE_URL = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
+/**
+ * The live website on the production domain. Auth emails (verification,
+ * password recovery) redirect here, and attached forms open here in the
+ * in-app browser (M6b).
+ */
+export const SITE_URL = "https://logoutspells.com";
 
 export const SOCIALS = {
   linkedin: "https://www.linkedin.com/in/vidushiverma2409/",

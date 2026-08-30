@@ -493,11 +493,14 @@ class TravellerAccountService {
           first_name: input.firstName.trim(),
           last_name: input.lastName.trim(),
         },
+        // M11.5: confirmations are ON — the email's link lands on the
+        // production website's /login, which finishes the verification.
+        emailRedirectTo: `${SITE_URL}/login`,
       },
     });
     if (error) throw friendlyAuthError(error.message, "email");
-    // With confirmation off (D1) a session arrives immediately. The guard
-    // below only fires if that project setting is ever flipped back on.
+    // M11.5 (supersedes D1): email confirmations are ON, so no session
+    // arrives here — the guard below walks the traveller to the inbox.
     if (!data.session || !data.user)
       throw new AccountError("Check your inbox to confirm your email, then log in.", null);
     return data.user;

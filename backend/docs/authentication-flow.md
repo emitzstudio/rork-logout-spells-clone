@@ -44,13 +44,20 @@ company-owned.
 The trigger is the **only** writer of `profiles` inserts — there is no client insert
 policy, so a profile can never exist without an auth user or vice versa.
 
-**Email confirmation (decision D1, 2026-08-09): OFF for now** — `mailer_autoconfirm`
-is enabled, so joining is instant and signup never depends on the unbranded,
-rate-limited default mailer. It flips back ON in the branded-email milestone
-(Resend). Password resets DO use the built-in mailer for now (gentle rate limit —
-the UI's resend cooldown says so honestly) with a redirect to `/reset-password`;
-`site_url` and the redirect allow-list point at the live site, and the server-side
+**Email confirmation (M11.5, supersedes D1): ON** — signup sends a verification
+email (confirmation link + 6-digit code) and no session exists until the inbox is
+proven. Password resets ride the same mailer (gentle rate limit — the UI's resend
+cooldown says so honestly) with a redirect to `/reset-password`; the server-side
 password minimum was raised 6 → 8 to match the UI rule.
+
+**URL configuration (2026-08-30, custom domain live):** production is
+`https://logoutspells.com`. In Supabase → Authentication → URL Configuration the
+**Site URL** must be `https://logoutspells.com`, and the redirect allow-list must
+carry `https://logoutspells.com/**` plus the Rork preview origin
+(`https://z57wkqd89o09lsi6kc7v1-web.rork.live/**`) so preview auth keeps working.
+Both clients also pass explicit redirects (`emailRedirectTo` → `/login` on
+signup/resend, `redirectTo` → `/reset-password` on recovery), so emailed links
+land on the origin the traveller started from instead of the default Site URL.
 
 ## Roles & least privilege
 

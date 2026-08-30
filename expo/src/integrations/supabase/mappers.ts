@@ -241,7 +241,7 @@ export const mapPreviousSpell = (row: PreviousSpellRow): PreviousSpell => ({
 
 export const mapReview = (row: ReviewRow): SpellReview => ({
   id: row.id,
-  spellId: row.previous_spell_id,
+  spellId: row.previous_spell_id ?? "",
   authorId: row.author_id ?? "seed",
   author: row.author_name,
   avatar: row.author_avatar,

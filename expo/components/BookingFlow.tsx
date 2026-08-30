@@ -231,6 +231,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
   /* Inquire */
   const [inqName, setInqName] = useState<string>("");
   const [inqEmail, setInqEmail] = useState<string>("");
+  const [inqPhone, setInqPhone] = useState<string>("");
   const [inqNote, setInqNote] = useState<string>("");
   const [inqRef, setInqRef] = useState<string>("");
   const [inqSending, setInqSending] = useState<boolean>(false);
@@ -358,6 +359,11 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
       setError("That email doesn't look right.");
       return;
     }
+    /* The server requires a reachable number since 0032 (≥8 digits). */
+    if (inqPhone.replace(/\D/g, "").length < 8) {
+      setError("A reachable phone number, please.");
+      return;
+    }
     setInqSending(true);
     setError(null);
     try {
@@ -365,6 +371,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
         spell,
         name: inqName,
         email: inqEmail,
+        phone: inqPhone,
         note: inqNote,
       });
       setInqRef(ref);
@@ -623,6 +630,14 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
         keyboardType="email-address"
         autoCapitalize="none"
         testID="inquire-email"
+      />
+      <Field
+        label="Phone / WhatsApp"
+        value={inqPhone}
+        onChangeText={setInqPhone}
+        placeholder="+91 98765 43210"
+        keyboardType="phone-pad"
+        testID="inquire-phone"
       />
       <Field
         label="Your question (optional)"

@@ -514,6 +514,11 @@ class TravellerAccountService {
           first_name: input.firstName.trim(),
           last_name: input.lastName.trim(),
         },
+        // The confirmation email's link must land back on the origin the
+        // traveller signed up from (production domain or preview) - never
+        // on the project's default Site URL. /login detects the fresh
+        // session from the URL hash and walks them into their space.
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     });
     if (error) throw friendlyAuthError(error.message, "email");
@@ -536,7 +541,11 @@ class TravellerAccountService {
    */
   async resendVerificationCode(email: string): Promise<void> {
     assertEmail(email);
-    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim() });
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/login` },
+    });
     if (error) {
       if (/already confirmed/i.test(error.message))
         throw new AccountError("This email is already verified - log in instead.", null);
@@ -558,7 +567,11 @@ class TravellerAccountService {
     return data.user;
   }
 
-  /** Sends the password-recovery email (link lands on /reset-password). */
+  /**
+   * Sends the password-recovery email. The link lands on /reset-password on
+   * the calling origin - production and preview each get their own target,
+   * so both origins must sit in the Supabase redirect allow-list.
+   */
   async requestPasswordReset(email: string): Promise<void> {
     assertEmail(email);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {

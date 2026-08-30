@@ -21,12 +21,12 @@ export const DISCOVER_MOOD_SLUGS: readonly string[] = [
 ];
 
 /**
- * The deployed origin used when VITE_SITE_URL is not configured.
- * When the real production domain is connected, set VITE_SITE_URL and every
- * canonical, Open Graph URL, JSON-LD id, sitemap and robots reference
- * follows it automatically - no code change needed.
+ * The production origin used when VITE_SITE_URL is not configured - the
+ * custom domain is live (2026-08-30), so every canonical, Open Graph URL,
+ * JSON-LD id, sitemap and robots reference points there by default.
+ * Preview or staging builds may override it via VITE_SITE_URL at build time.
  */
-export const FALLBACK_SITE_URL = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
+export const FALLBACK_SITE_URL = "https://logoutspells.com";
 
 /** Trims whitespace and trailing slashes; falls back to the deployed origin. */
 export const resolveSiteUrl = (raw?: string | null): string => {
