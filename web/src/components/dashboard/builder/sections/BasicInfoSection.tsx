@@ -3,6 +3,7 @@ import { Check, ChevronDown, CircleDashed, ClipboardList, Plus, Sparkles, Star }
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import DateRangeField from "@/components/dashboard/builder/DateRangeField";
 import {
   SegmentedField,
   StepperField,
@@ -225,12 +226,12 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
           placeholder="e.g. Rishikesh"
           helper="Town or region where the circle gathers."
         />
-        <TextField
+        <DateRangeField
           label="Trip dates"
           value={draft.dates}
           onChange={(dates) => patch({ dates })}
           placeholder="e.g. Jul 14-18"
-          helper="Shown exactly as written - “Dates TBC” works too."
+          helper="Pick from the calendar, or type freely - “Dates TBC” works too."
         />
       </div>
 

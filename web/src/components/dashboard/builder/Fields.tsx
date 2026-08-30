@@ -46,10 +46,10 @@ export function FieldShell({ label, helper, optional, counter, action, children 
   );
 }
 
-const inputBase =
+export const inputBase =
   "w-full bg-transparent font-sans text-[13.5px] text-cream outline-none placeholder:text-cream/25";
 
-const boxBase =
+export const boxBase =
   "rounded-lg border border-cream/10 bg-cream/[0.03] transition-colors duration-200 focus-within:border-gold/45 focus-within:bg-cream/[0.045]";
 
 /* -------------------------------- TextField ------------------------------- */
