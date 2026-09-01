@@ -1,7 +1,8 @@
 /**
- * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi.
+ * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro.
  * Same charcoal + gold brand system as the Bir Grimoire PDF, no stay page.
- * Run: bun run trips.ts  ->  Logout-Spells-Valley-of-Flowers.pdf, Logout-Spells-Jibhi.pdf
+ * Run: bun run trips.ts  ->  Logout-Spells-Valley-of-Flowers.pdf,
+ *                            Logout-Spells-Jibhi.pdf, Logout-Spells-Ziro.pdf
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees } from "pdf-lib";
@@ -888,7 +889,248 @@ const jibhi: TripSpec = {
   },
 };
 
+/* ================================= ZIRO ================================== */
+const ziro: TripSpec = {
+  fileName: "Logout-Spells-Ziro.pdf",
+  docTitle: "Logout Spells · The Ziro Spell · Ziro Music Festival 2026",
+  docSubject: "Ziro Valley, Arunachal Pradesh · trip itinerary and booking",
+  cover: {
+    img: "img2/final/zr-cover.jpg",
+    eyebrow: "A SPELL INTO THE VALLEY OF MUSIC",
+    titleLines: [{ text: "ZIRO", size: 150, tr: 14, y: 404 }],
+    sub: "Six days of music in the land of the Apatanis.",
+    subY: 372,
+    ruleY: 349,
+    dateLine: "23 TO 29 SEPTEMBER 2026 · GUWAHATI TO GUWAHATI",
+    dateY: 322,
+    locLine: "ZIRO VALLEY · ARUNACHAL PRADESH",
+    locY: 305,
+    poem1: "Six days. Four festival nights. One gentle valley.",
+    poem2: "Night trains. Rice fields. Songs that outlast the stages.",
+    poemY: 274,
+    para: "Every September the Ziro Valley becomes the gentlest festival ground in India: four days of independent music between rice fields, pine hills and Apatani villages, with the night train north as the opening act.",
+    paraY: 224,
+    ital1: "Some valleys you visit.",
+    ital2: "This one you sing along with.",
+    italY: 172,
+    pill: "TRAIN · CAMP · FESTIVAL",
+    pillY: 126,
+  },
+  days: [
+    {
+      img: "img2/final/zr-d0.jpg",
+      eyebrow: "DAY 00 · 23 SEPTEMBER · GUWAHATI",
+      titleA: "The Night ",
+      titleB: "Train",
+      intro: "The spell begins on rails. Reach Guwahati by afternoon, rest easy, and let the night train do the travelling while you sleep.",
+      items: [
+        {
+          title: "REACH GUWAHATI BY AFTERNOON",
+          body: "Arrive at your own pace. A rest house is arranged for freshening up and resting before the journey.",
+        },
+        {
+          title: "10:30 PM · ASSEMBLE AT THE STATION",
+          body: "The circle gathers at Guwahati railway station. Bags stowed, bunks claimed, introductions made.",
+        },
+        {
+          title: "11:30 PM · TRAIN TO NAHARLAGUN",
+          body: "The sleeper rolls north through the night, and the valley gets closer with every hour of sleep.",
+        },
+      ],
+      chip: "ARRIVE · ASSEMBLE · ROLL NORTH",
+      note: "the valley gets closer while you sleep",
+      footer: "02 · DAY ZERO",
+    },
+    {
+      img: "img2/final/zr-d1.jpg",
+      eyebrow: "DAY 01 · 24 SEPTEMBER · NAHARLAGUN TO ZIRO",
+      titleA: "Welcome to ",
+      titleB: "Ziro",
+      intro: "Wake up in Arunachal. A morning drive winds into the hills, and by evening you are standing at your first festival stage.",
+      items: [
+        {
+          title: "7 AM · ARRIVE NAHARLAGUN",
+          body: "Step off the train into the northeast morning. The drive up to Ziro takes about three hours, every bend greener than the last.",
+        },
+        {
+          title: "CHECK IN AT THE CAMPSITE",
+          body: "Settle into your tent, freshen up and have breakfast with panoramic views of the valley.",
+        },
+        {
+          title: "EVENING · FIRST FESTIVAL NOTES",
+          body: "Head to the Ziro Music Festival for your first evening of music between the rice fields.",
+        },
+      ],
+      chip: "CLIMB · CAMP · FIRST NOTES",
+      footer: "03 · DAY ONE",
+    },
+    {
+      img: "img2/final/zr-d2.jpg",
+      eyebrow: "DAY 02 · 25 SEPTEMBER · ZIRO MUSIC FESTIVAL",
+      titleA: "Sit Back and ",
+      titleB: "Listen",
+      intro: "A day with no agenda beyond the music. The valley sets the pace and the stages do the rest.",
+      items: [
+        {
+          title: "RICE BEER & LOCAL KITCHENS",
+          body: "Try the local cuisine and the traditional rice beer this valley is quietly famous for.",
+        },
+        {
+          title: "FESTIVAL ALL AFTERNOON",
+          body: "Independent music played out between rice fields and pine hills until the light turns gold.",
+        },
+        {
+          title: "EVENING JAM AT CAMP",
+          body: "Back at the campsite, local musicians pick up where the stages left off.",
+        },
+        {
+          title: "STARGAZING",
+          body: "Clear September skies over the quietest festival ground in India. Stay up until your eyes give up first.",
+        },
+      ],
+      chip: "RICE BEER · MUSIC · STARS",
+      footer: "04 · DAY TWO",
+    },
+    {
+      img: "img2/final/zr-d3.jpg",
+      eyebrow: "DAY 03 · 26 SEPTEMBER · APATANI COUNTRY",
+      titleA: "Meet the ",
+      titleB: "Locals",
+      intro: "The morning belongs to the Apatani way of life. The evening belongs, as always, to the music.",
+      items: [
+        {
+          title: "WALK THE VILLAGE",
+          body: "Wander the local surroundings and step inside a traditional Apatani house.",
+        },
+        {
+          title: "TEA WITH THE RESIDENTS",
+          body: "Share tea and snacks while the valley's people show you what September looks like from their side.",
+        },
+        {
+          title: "FESTIVAL AT YOUR OWN PACE",
+          body: "Head to the grounds whenever you are ready and enjoy the performances.",
+        },
+        {
+          title: "JAM WITH LOCAL SINGERS",
+          body: "The night closes with another session of songs around the campsite.",
+        },
+      ],
+      chip: "VILLAGE · TEA · MUSIC",
+      note: "the valley is a home before it is a venue",
+      footer: "05 · DAY THREE",
+    },
+    {
+      img: "img2/final/zr-d4.jpg",
+      eyebrow: "DAY 04 · 27 SEPTEMBER · THE FINAL FULL DAY",
+      titleA: "Eat, Sleep, ",
+      titleB: "Music, Repeat",
+      intro: "The last full day of the festival, and the valley makes sure you remember it.",
+      items: [
+        {
+          title: "MORNING · TREK TO THE WOODS",
+          body: "A walk into the pines, or music activities back at camp. Your morning, your call.",
+        },
+        {
+          title: "1 PM · INTO THE FESTIVAL",
+          body: "The final day pulls everyone in. Enjoy the performances and party into the night.",
+        },
+        {
+          title: "FINAL NIGHT CELEBRATIONS",
+          body: "Back at the campsite, the kind of last evening people are still talking about on the train home.",
+        },
+      ],
+      chip: "TREK · FESTIVAL · CELEBRATE",
+      footer: "06 · DAY FOUR",
+    },
+    {
+      img: "img2/final/zr-d5.jpg",
+      eyebrow: "DAY 05 · 28 SEPTEMBER · ZIRO TO GUWAHATI",
+      titleA: "The Long ",
+      titleB: "Goodbye",
+      intro: "One slow morning, one winding drive, one night train home with a camera roll full of the valley.",
+      items: [
+        {
+          title: "PHOTOGRAPHS & GOODBYES",
+          body: "Freshen up, have breakfast and spend the morning on farewells to fellow travellers.",
+        },
+        {
+          title: "9 AM · DRIVE TO THE STATION",
+          body: "The circle gathers outside the campsite and winds back down to the railhead.",
+        },
+        {
+          title: "OVERNIGHT TRAIN TO GUWAHATI",
+          body: "Arrive early on the morning of 29 September, in time for onward journeys home.",
+        },
+      ],
+      chip: "GOODBYES · TRAIN · HOME",
+      note: "the songs will follow you home",
+      footer: "07 · DAY FIVE",
+    },
+  ],
+  final: {
+    img: "img2/final/zr-night.jpg",
+    subline: "THE ZIRO SPELL · 23 TO 29 SEPTEMBER · GUWAHATI TO GUWAHATI",
+    cards: [
+      {
+        label: "DOUBLE SHARING CAMP",
+        price: rupee("30,499"),
+        booking: rupee("9,150"),
+        remaining: `remaining ${rupee("21,349")} before departure`,
+        highlight: true,
+      },
+      {
+        label: "TRIPLE SHARING CAMP",
+        price: rupee("32,499"),
+        booking: rupee("9,750"),
+        remaining: `remaining ${rupee("22,749")} before departure`,
+        highlight: false,
+      },
+    ],
+    cardNote: "Prices are per person, without Ziro Festival tickets. Want tickets included? We add them at the official ticket cost, nothing on top. Book with 30% now and pay the rest before departure.",
+    leftHeading: "GOOD TO KNOW",
+    leftRows: [
+      {
+        icon: "cross",
+        title: "FESTIVAL TICKETS NOT INCLUDED",
+        body: "Buy yours on the official portal, or ask us to add them at the official ticket cost.",
+      },
+      {
+        icon: "check",
+        title: "INNER LINE PERMIT HANDLED",
+        body: "We arrange your Arunachal ILP with a government ID scan and a passport photo. PAN cards not accepted.",
+      },
+      {
+        icon: "cross",
+        title: "AIRFARE & LUNCH NOT INCLUDED",
+        body: "Reach Guwahati your way. The festival ground's kitchens handle lunch.",
+      },
+    ],
+    rightHeading: "COME READY FOR",
+    rightRows: [
+      {
+        icon: "check",
+        title: "SLEEPER TRAIN NIGHTS",
+        body: "Guwahati to Naharlagun and back, bunks, chai and all. It is part of the story.",
+      },
+      {
+        icon: "check",
+        title: "FOUR NIGHTS UNDER CANVAS",
+        body: "2 or 3 person sharing tents with sleeping bags, mats and air pillows provided.",
+      },
+      {
+        icon: "check",
+        title: "CAMP LIFE, NOT HOTEL LIFE",
+        body: "Toilets, bathrooms, charging slots and 24 hour water at the campsite.",
+      },
+    ],
+    qrBody: "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
+    closeThanks: "Thank you for choosing to wander with us.",
+    closeHand: "six days. one valley that sings.",
+  },
+};
+
 /* -------------------------------- Build --------------------------------- */
 console.log("rupee glyph:", { serifHasRupee, sansHasRupee });
 await buildTrip(vof);
 await buildTrip(jibhi);
+await buildTrip(ziro);
