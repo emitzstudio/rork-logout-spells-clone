@@ -2056,6 +2056,58 @@ create-booking gates: C (pricing config), F (gateway), D (dates), D2
 
 ---
 
+## 0045-0047 — Valley of Flowers + Jibhi LIVE with brochure pricing, dates announced soon (2026-09-01)
+
+- Founder instruction (2026-09-01, in chat): "make the jibhi and Valley of
+  flowers spells live". Copy, program and imagery mirror the two approved
+  Grimoire brochures (Logout-Spells-Valley-of-Flowers.pdf ·
+  Logout-Spells-Jibhi.pdf); prices are the founder's real numbers
+  (2026-08-31). Dates and circle sizes are still hers to announce, so both
+  rows ship in the honest TBC state (the 0043 convention): departure with
+  null dates + 'Dates announced soon' label, seats_total 0 ("an intimate
+  circle", create-booking 409 SEATS_TBC_NOT_BOOKABLE), inquiries and
+  reserve requests fully open.
+- **0045_vof_jibhi_hd_seed_window — APPLIED**: anon INSERT window over the
+  two new spells' hd/ folders (exact 0041 pattern).
+- Uploads through the window (all 200, public reads verified): 13 brochure
+  photographs. VoF hd/{hero-valley-of-flowers,day-ghangaria-village,
+  day-valley-blooms,day-hemkund-sahib,day-badrinath-temple,stay-trail-towns,
+  night-sky-garhwal}.jpg (7) · Jibhi hd/{hero-jibhi-pines,day-jibhi-waterfall,
+  day-serolsar-lake,day-chhoie-waterfall,gallery-mini-thailand,
+  stay-bonfire-evenings}.jpg (6).
+- **0046_vof_live_spell — APPLIED**: live at /live/the-valley-of-flowers-spell
+  — movement, ✿, hostless, Day 0 to Day 6 Delhi to Delhi (6 days · 5 nights),
+  price_minor 2800000 (₹28,000 triple from-price; the price FAQ carries
+  ₹30,000 double and the 30% split ₹8,400/₹9,000), 7-entry itinerary from the
+  approved brochure, trail-stays block, 6 FAQs (dates-announced-soon FAQ
+  included). Self-verify pins the deliberate state (price, TBC departure,
+  7 hd objects, dash-free copy) + anon lens green.
+- **0047_jibhi_live_spell — APPLIED**: live at /live/the-jibhi-spell —
+  wandering, ❋, hostless, early-bird urgency (the 0035 Bir convention),
+  Day 0 to Day 4 Delhi to Delhi (4 days · 2 nights), price_minor 1200000
+  (₹12,000 early bird, a ₹2,000 saving; the price FAQ carries ₹14,000
+  regular and the 30% split ₹3,600/₹4,200), 4-entry itinerary, dorm-stay
+  block, 7 FAQs, mini-Thailand gallery shot. §1 closed the 0045 window;
+  verify pins 6 Jibhi + 7 VoF hd objects, dash-free copy, zero anon INSERT
+  policies remain + anon lens green.
+- Post-apply verification over live REST as anon: 5 published spells (Bir ·
+  Udaipur · Ziro · VoF · Jibhi), both new active departures visible ('Dates
+  announced soon', seats 0, scheduled), both heroes read 200, and an anon
+  upload probe now returns 400 (the window is really closed).
+- Open founder numbers (each lifts its gates via one tiny follow-up
+  migration): VoF dates + circle size · Jibhi dates + circle size · plus the
+  earlier open items (Udaipur dates · Ziro price + seats).
+
+### Baseline after 0047
+
+spells 5 published (Bir dated + priced · Udaipur priced, Dates TBC · Ziro
+dated, price on request + seats TBA · VoF priced, dates announced soon ·
+Jibhi priced early-bird, dates announced soon) · no anon INSERT windows
+open · create-booking gates unchanged: C (pricing config), F (gateway),
+D (dates), D2 (price/seats) · no staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
