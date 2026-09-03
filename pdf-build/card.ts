@@ -6,7 +6,9 @@
  * and verifies the QR code scans from the rendered PDF.
  *
  * Run from pdf-build:  bun run card.ts            -> Editorial design into web/public/cards
- *                      bun run card.ts --topo     -> Topographic design (gold contour lines)
+ *                      bun run card.ts --topo     -> Topographic design (gold contour lines); also writes
+ *                                                    a Canva import PDF (trim size, editable layers), the
+ *                                                    contour pattern as SVG and the gold logo mark as PNG
  *                      add --variants             -> design comparison sheet (_variants.png)
  */
 import * as fs from "fs";
@@ -33,6 +35,7 @@ import {
   appendBezierCurve,
   closePath,
   stroke,
+  setCharacterSpacing,
 } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { PNG } from "pngjs";
@@ -56,6 +59,7 @@ const OUT_DIR = path.resolve("../web/public/cards");
 const STYLE: "editorial" | "topo" = process.argv.includes("--topo") ? "topo" : "editorial";
 const BASE_ROOT = "Logout-Spells-Business-Card-Bhuvan-Verma";
 const BASE = STYLE === "topo" ? `${BASE_ROOT}-Topo` : BASE_ROOT;
+const LOGO_FILE = "Logout-Spells-Logo-Mark-Gold.png";
 
 /* ------------------------------------------------------------------ */
 /* Brand palette (matches logoutspells.com tokens)                      */
@@ -88,11 +92,12 @@ const MARK_DEEP = hexArr("#AD8B3A");
 const MARK_HI = hexArr("#EDDCA6");
 
 /* Topographic design: warm charcoal stock, one gold for everything (lines a shade deeper). */
+const T_HEX = { BG: "#161311", LINE: "#BB984D", GOLD: "#D6B064", SOFT: "#C7A868" };
 const T = {
-  BG: hex("#161311"),
-  LINE: hex("#BB984D"),
-  GOLD: hex("#D6B064"),
-  SOFT: hex("#C7A868"),
+  BG: hex(T_HEX.BG),
+  LINE: hex(T_HEX.LINE),
+  GOLD: hex(T_HEX.GOLD),
+  SOFT: hex(T_HEX.SOFT),
 };
 
 /* Brand copy as published on logoutspells.com (site name + tagline from the live settings). */
@@ -179,10 +184,22 @@ const trackW = (font: PDFFont, text: string, size: number, tr: number): number =
   return w + tr * Math.max(0, chars.length - 1);
 };
 
+/**
+ * Canva import mode: tracked text is emitted as one string with PDF character spacing (one editable
+ * text box per line instead of one per letter) and the contour pattern as a single stroked path.
+ */
+let canvaMode = false;
+
 const drawTracked = (page: PDFPage, text: string, o: TrackOpts): number => {
   const tr = o.tr ?? 0;
   const total = trackW(o.font, text, o.size, tr);
   let x = o.x ?? (o.cx !== undefined ? o.cx - total / 2 : (o.rx ?? 0) - total);
+  if (canvaMode) {
+    page.pushOperators(setCharacterSpacing(tr));
+    page.drawText(text, { x, y: o.y, size: o.size, font: o.font, color: o.color });
+    page.pushOperators(setCharacterSpacing(0));
+    return total;
+  }
   for (const ch of [...text]) {
     page.drawText(ch, { x, y: o.y, size: o.size, font: o.font, color: o.color });
     x += o.font.widthOfTextAtSize(ch, o.size) + tr;
@@ -609,16 +626,22 @@ const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets, d: Design) =
 /* ------------------------------------------------------------------ */
 /* Documents                                                            */
 /* ------------------------------------------------------------------ */
-const loadAssets = async (doc: PDFDocument, marks: Marks, qr: QrData, glow: boolean): Promise<Assets> => {
+/**
+ * cleanNames: name the sans faces "Inter-<Weight>" instead of pdf-lib's suffixed names so Canva can
+ * match its own Inter. Subsetting stays on: pdf-lib's whole-font embedding has no width or Unicode
+ * entry for glyphs that arrive through font substitutions (Inter swaps in a contextual "+").
+ */
+const loadAssets = async (doc: PDFDocument, marks: Marks, qr: QrData, glow: boolean, cleanNames = false): Promise<Assets> => {
   doc.registerFontkit(fontkit);
   const fb = (f: string) => fs.readFileSync(path.join("fonts", f));
+  const sans = (file: string, name: string) => doc.embedFont(fb(file), { subset: true, customName: cleanNames ? name : undefined });
   /* Cormorant glyph outlines break under pdf-lib subsetting: embed full fonts. */
   const fonts: Fonts = {
     serifSemi: await doc.embedFont(fb("cormorant-garamond-v21-latin_latin-ext-600.ttf"), { subset: false }),
     serifItal: await doc.embedFont(fb("cormorant-garamond-v21-latin_latin-ext-500italic.ttf"), { subset: false }),
-    sansMed: await doc.embedFont(fb("inter-v20-latin_latin-ext-500.ttf"), { subset: true }),
-    sansSemi: await doc.embedFont(fb("inter-v20-latin_latin-ext-600.ttf"), { subset: true }),
-    sansBold: await doc.embedFont(fb("inter-v20-latin_latin-ext-700.ttf"), { subset: true }),
+    sansMed: await sans("inter-v20-latin_latin-ext-500.ttf", "Inter-Medium"),
+    sansSemi: await sans("inter-v20-latin_latin-ext-600.ttf", "Inter-SemiBold"),
+    sansBold: await sans("inter-v20-latin_latin-ext-700.ttf", "Inter-Bold"),
   };
   const goldImage = await doc.embedPng(marks.gold.bytes);
   const ghostImage = await doc.embedPng(marks.ghost.bytes);
@@ -984,12 +1007,15 @@ const sdRoundRect = (p: Pt, c: RoundRect): number => {
   return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - c.r;
 };
 
-/** Cuts every path where it enters the clearance, so lines stop cleanly at its edge; leftover slivers shorter than minStub are dropped. */
-const trimPaths = (paths: TopoPath[], clear: RoundRect, minStub: number): TopoPath[] => {
+/**
+ * Splits paths along the zero level of a signed distance function and keeps the parts where it is
+ * >= 0, so lines stop cleanly at the boundary; leftover slivers shorter than minStub are dropped.
+ */
+const keepWhere = (paths: TopoPath[], sdf: (p: Pt) => number, minStub: number): TopoPath[] => {
   const out: TopoPath[] = [];
   for (const path of paths) {
     const pts = path.pts;
-    const sd = pts.map((p) => sdRoundRect(p, clear));
+    const sd = pts.map(sdf);
     if (sd.every((v) => v >= 0)) {
       out.push(path);
       continue;
@@ -1024,43 +1050,81 @@ const trimPaths = (paths: TopoPath[], clear: RoundRect, minStub: number): TopoPa
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
-/** Catmull-Rom spline through the points, emitted as cubic Beziers; (ox, oy) offsets page coordinates. */
-const pathOps = (path: TopoPath, ox: number, oy: number): PDFOperator[] => {
+type Cubic = { c1: Pt; c2: Pt; p: Pt };
+
+/** Catmull-Rom spline through the points as cubic Bezier segments starting at `start`. */
+const cubicSegments = (path: TopoPath): { start: Pt; segs: Cubic[] } => {
   const pts = path.closed ? path.pts.slice(0, -1) : path.pts;
   const n = pts.length;
-  if (n < 2) return [];
+  if (n < 2) return { start: pts[0] ?? { x: 0, y: 0 }, segs: [] };
   const at = (i: number): Pt => (path.closed ? pts[((i % n) + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]);
-  const ops: PDFOperator[] = [moveTo(r2(ox + pts[0].x), r2(oy + pts[0].y))];
+  const segs: Cubic[] = [];
   const count = path.closed ? n : n - 1;
   for (let i = 0; i < count; i++) {
     const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
-    ops.push(
-      appendBezierCurve(
-        r2(ox + p1.x + (p2.x - p0.x) / 6), r2(oy + p1.y + (p2.y - p0.y) / 6),
-        r2(ox + p2.x - (p3.x - p1.x) / 6), r2(oy + p2.y - (p3.y - p1.y) / 6),
-        r2(ox + p2.x), r2(oy + p2.y),
-      ),
-    );
+    segs.push({
+      c1: { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 },
+      c2: { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 },
+      p: p2,
+    });
   }
+  return { start: pts[0], segs };
+};
+
+/** PDF operators for one spline; (ox, oy) offsets page coordinates. strokeNow=false leaves the subpath open for a shared stroke. */
+const pathOps = (path: TopoPath, ox: number, oy: number, strokeNow: boolean): PDFOperator[] => {
+  const { start, segs } = cubicSegments(path);
+  if (segs.length === 0) return [];
+  const ops: PDFOperator[] = [moveTo(r2(ox + start.x), r2(oy + start.y))];
+  for (const s of segs) ops.push(appendBezierCurve(r2(ox + s.c1.x), r2(oy + s.c1.y), r2(ox + s.c2.x), r2(oy + s.c2.y), r2(ox + s.p.x), r2(oy + s.p.y)));
   if (path.closed) ops.push(closePath());
-  ops.push(stroke());
+  if (strokeNow) ops.push(stroke());
   return ops;
 };
 
 /** Strokes the contour set; paths are in bleed-page coordinates, so pass the page origin of the bleed box. */
 const drawTopo = (page: PDFPage, paths: TopoPath[], ox: number, oy: number, width: number) => {
   const ops: PDFOperator[] = [pushGraphicsState(), setStrokingColor(T.LINE), setLineWidth(width), setLineCap(LineCapStyle.Round), setLineJoin(LineJoinStyle.Round)];
-  for (const p of paths) ops.push(...pathOps(p, ox, oy));
+  /* Canva import: every contour in one path object so the pattern arrives as a single graphic. */
+  for (const p of paths) ops.push(...pathOps(p, ox, oy, !canvaMode));
+  if (canvaMode) ops.push(stroke());
   ops.push(popGraphicsState());
   for (let i = 0; i < ops.length; i += 4000) page.pushOperators(...ops.slice(i, i + 4000));
 };
 
-const drawTopoFront = (page: PDFPage, ox: number, oy: number, a: Assets, paths: TopoPath[]) => {
-  const { sansBold, sansMed } = a.fonts;
-  const cx = ox + TRIM_W / 2;
-  const cy = oy + TRIM_H / 2;
+/** Front contour pattern as a trim-size SVG (transparent background) for Canva uploads or any vector editor. */
+const topoPatternSvg = (paths: TopoPath[]): string => {
+  const trimBox: RoundRect = { x: BLEED, y: BLEED, w: TRIM_W, h: TRIM_H, r: 0 };
+  const X = (v: number) => r2(v - BLEED);
+  const Y = (v: number) => r2(TRIM_H + BLEED - v);
+  const data = keepWhere(paths, (p) => -sdRoundRect(p, trimBox), 0).flatMap((path) => {
+    const { start, segs } = cubicSegments(path);
+    if (segs.length === 0) return [];
+    let d = `M${X(start.x)} ${Y(start.y)}`;
+    for (const s of segs) d += ` C${X(s.c1.x)} ${Y(s.c1.y)} ${X(s.c2.x)} ${Y(s.c2.y)} ${X(s.p.x)} ${Y(s.p.y)}`;
+    return [path.closed ? `${d} Z` : d];
+  });
+  return [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${TRIM_W / IN}in" height="${TRIM_H / IN}in" viewBox="0 0 ${TRIM_W} ${TRIM_H}">`,
+    `  <title>Logout Spells business card: topographic contour pattern, 3.5 x 2 in, transparent background</title>`,
+    `  <g fill="none" stroke="${T_HEX.LINE}" stroke-width="${TOPO.width}" stroke-linecap="round" stroke-linejoin="round">`,
+    ...data.map((d) => `    <path d="${d}"/>`),
+    `  </g>`,
+    `</svg>`,
+    ``,
+  ].join("\n");
+};
 
-  /* Centred lockup: mark, bold tracked wordmark, tagline justified to the wordmark width. */
+type TopoFrontLayout = {
+  markH: number; markW: number; gapMark: number; wordSize: number; wordTr: number; gapTag: number; tagSize: number; tagTr: number; groupH: number;
+  /** Plain zone the contours keep clear of, in bleed-page coordinates. */
+  clear: RoundRect;
+};
+
+/** Centred lockup metrics for the Topographic front: mark, bold tracked wordmark, tagline justified to the wordmark width. */
+const topoFrontLayout = (a: Assets): TopoFrontLayout => {
+  const { sansBold, sansMed } = a.fonts;
   const markH = 26;
   const markW = markH * (a.marks.gold.w / a.marks.gold.h);
   const gapMark = 8;
@@ -1072,9 +1136,6 @@ const drawTopoFront = (page: PDFPage, ox: number, oy: number, a: Assets, paths: 
   const tagTr = justifyTracking(sansMed, BRAND.tagline, tagSize, wordW);
   const groupH = markH + gapMark + capH(sansBold, wordSize) + gapTag + capH(sansMed, tagSize);
   const groupW = Math.max(markW, wordW);
-  const top = cy + groupH / 2;
-
-  /* Contours stop at a plain rounded clearance around the lockup (path coordinates: bleed-page origin). */
   const clear: RoundRect = {
     x: BLEED + TRIM_W / 2 - groupW / 2 - CLEARANCE.padX,
     y: BLEED + TRIM_H / 2 - groupH / 2 - CLEARANCE.padY,
@@ -1082,12 +1143,27 @@ const drawTopoFront = (page: PDFPage, ox: number, oy: number, a: Assets, paths: 
     h: groupH + 2 * CLEARANCE.padY,
     r: CLEARANCE.radius,
   };
-  drawTopo(page, trimPaths(paths, clear, CLEARANCE.minStub), ox - BLEED, oy - BLEED, TOPO.width);
+  return { markH, markW, gapMark, wordSize, wordTr, gapTag, tagSize, tagTr, groupH, clear };
+};
 
-  page.drawImage(a.goldImage, { x: cx - markW / 2, y: top - markH, width: markW, height: markH });
-  const wordBase = top - markH - gapMark - capH(sansBold, wordSize);
-  drawTracked(page, BRAND.wordmark, { cx, y: wordBase, font: sansBold, size: wordSize, color: T.GOLD, tr: wordTr });
-  drawTracked(page, BRAND.tagline, { cx, y: wordBase - gapTag - capH(sansMed, tagSize), font: sansMed, size: tagSize, color: T.SOFT, tr: tagTr });
+/** Front contours with the lockup clearance cut out (bleed-page coordinates). */
+const topoFrontPaths = (paths: TopoPath[], a: Assets): TopoPath[] => {
+  const { clear } = topoFrontLayout(a);
+  return keepWhere(paths, (p) => sdRoundRect(p, clear), CLEARANCE.minStub);
+};
+
+const drawTopoFront = (page: PDFPage, ox: number, oy: number, a: Assets, paths: TopoPath[]) => {
+  const { sansBold, sansMed } = a.fonts;
+  const L = topoFrontLayout(a);
+  const cx = ox + TRIM_W / 2;
+  const cy = oy + TRIM_H / 2;
+  const top = cy + L.groupH / 2;
+
+  drawTopo(page, topoFrontPaths(paths, a), ox - BLEED, oy - BLEED, TOPO.width);
+  page.drawImage(a.goldImage, { x: cx - L.markW / 2, y: top - L.markH, width: L.markW, height: L.markH });
+  const wordBase = top - L.markH - L.gapMark - capH(sansBold, L.wordSize);
+  drawTracked(page, BRAND.wordmark, { cx, y: wordBase, font: sansBold, size: L.wordSize, color: T.GOLD, tr: L.wordTr });
+  drawTracked(page, BRAND.tagline, { cx, y: wordBase - L.gapTag - capH(sansMed, L.tagSize), font: sansMed, size: L.tagSize, color: T.SOFT, tr: L.tagTr });
 };
 
 const drawTopoBack = (page: PDFPage, ox: number, oy: number, a: Assets, d: TopoDesign) => {
@@ -1173,10 +1249,10 @@ const drawTopoBack = (page: PDFPage, ox: number, oy: number, a: Assets, d: TopoD
   if (leftTop > TRIM_H - SAFE - 8 || blockTop > TRIM_H - SAFE - 8) throw new Error("Topo back: content too close to the trim");
 };
 
-const setMeta = (doc: PDFDocument, variant: string) => {
+const setMeta = (doc: PDFDocument, variant: string, subject = "Two-sided business card, 3.5 x 2 in with 0.125 in bleed") => {
   doc.setTitle(`Logout Spells | Business Card | Bhuvan Verma | ${variant}`);
   doc.setAuthor("Logout Spells");
-  doc.setSubject("Two-sided business card, 3.5 x 2 in with 0.125 in bleed");
+  doc.setSubject(subject);
   doc.setKeywords(["Logout Spells", "business card", "Bhuvan Verma", "print"]);
   doc.setCreator("Logout Spells");
   doc.setProducer("Logout Spells card builder");
@@ -1266,6 +1342,30 @@ const buildProofPdf = async (marks: Marks, qr: QrData, card: Card): Promise<Uint
     }
     const slug = `LOGOUT SPELLS   |   BUSINESS CARD   |   ${card.variant.toUpperCase()}   |   BHUVAN VERMA   |   ${side.toUpperCase()}   |   TRIM 3.5 x 2 IN   |   BLEED 0.125 IN`;
     drawTracked(page, slug, { x: ox, y: M / 2 - 1.5, font: assets.fonts.sansMed, size: 4.2, color: C.SLUG, tr: 0.4 });
+  }
+  return doc.save({ useObjectStreams: false });
+};
+
+/**
+ * Canva import file: pages at trim size (Canva's 3.5 x 2 in business card format) with the bleed
+ * artwork overflowing the page edges, tracked text as whole strings, the contour pattern as one
+ * path and full fonts, so Canva converts each side into editable layers (text boxes, pattern,
+ * logo image, background shape) instead of hundreds of fragments.
+ */
+const buildCanvaPdf = async (marks: Marks, qr: QrData, card: Card): Promise<Uint8Array> => {
+  const doc = await PDFDocument.create();
+  setMeta(doc, `${card.variant} | Canva import`, "Two-sided business card, 3.5 x 2 in trim size, artwork extends 0.125 in past the page for bleed");
+  const assets = await loadAssets(doc, marks, qr, card.glow, true);
+  canvaMode = true;
+  try {
+    for (const side of ["front", "back"] as const) {
+      const page = doc.addPage([TRIM_W, TRIM_H]);
+      page.drawRectangle({ x: -BLEED, y: -BLEED, width: PAGE_W, height: PAGE_H, color: card.bg });
+      if (side === "front") card.front(page, 0, 0, assets);
+      else card.back(page, 0, 0, assets);
+    }
+  } finally {
+    canvaMode = false;
   }
   return doc.save({ useObjectStreams: false });
 };
@@ -1381,6 +1481,16 @@ const scanTest = (pdf: Uint8Array, expected: string) => {
   console.log(`Scan test on rendered back side: ${results.join(", ")}`);
 };
 
+/** Mean absolute RGB difference (0-255) between two renders of the same size. */
+const meanDiff = (a: PNG, b: PNG): number => {
+  if (a.width !== b.width || a.height !== b.height) throw new Error(`Render sizes differ: ${a.width}x${a.height} vs ${b.width}x${b.height}`);
+  let sum = 0;
+  for (let i = 0; i < a.data.length; i += 4) {
+    sum += Math.abs(a.data[i] - b.data[i]) + Math.abs(a.data[i + 1] - b.data[i + 1]) + Math.abs(a.data[i + 2] - b.data[i + 2]);
+  }
+  return sum / ((a.data.length / 4) * 3);
+};
+
 const trimRenders = (pdf: Uint8Array, scale: number): { front: PNG; back: PNG } => {
   const b = Math.round(BLEED * scale);
   const tw = Math.round(TRIM_W * scale);
@@ -1471,14 +1581,26 @@ const main = async () => {
   const corner = STYLE === "topo" ? TOPO_PREVIEW_CORNER : 0;
   fs.writeFileSync(path.join(OUT_DIR, `${BASE}-preview.png`), PNG.sync.write(mockupSheet([front, back], scale, 1, corner)));
 
+  const kb = (n: number) => `${(n / 1024).toFixed(0)} KB`;
+
   /* Optional back for the Topographic card: LinkedIn QR under the lockup (preview only, for the founder to choose). */
   if (STYLE === "topo") {
     const altPdf = await buildPrintPdf(marks, qr, topoCard({ qr: "left" }, topoPaths));
     scanTest(altPdf, qr.url);
     fs.writeFileSync(path.join(OUT_DIR, `${BASE}-back-option-qr.png`), PNG.sync.write(trimRenders(altPdf, scale).back));
+
+    /* Canva kit: import PDF (must render like the print file), pattern SVG, gold logo mark. */
+    const canvaPdf = await buildCanvaPdf(marks, qr, card);
+    const diffs = [meanDiff(renderPage(canvaPdf, 0, scale), front), meanDiff(renderPage(canvaPdf, 1, scale), back)];
+    if (Math.max(...diffs) > 0.05) throw new Error(`Canva import renders differ from the print file (mean diff ${diffs.map((d) => d.toFixed(2)).join(" / ")})`);
+    fs.writeFileSync(path.join(OUT_DIR, `${BASE}-CANVA-import.pdf`), canvaPdf);
+    const assets = await loadAssets(await PDFDocument.create(), marks, qr, false);
+    const svg = topoPatternSvg(topoFrontPaths(topoPaths, assets));
+    fs.writeFileSync(path.join(OUT_DIR, `${BASE}-pattern.svg`), svg);
+    fs.writeFileSync(path.join(OUT_DIR, LOGO_FILE), marks.gold.bytes);
+    console.log(`Canva kit: ${BASE}-CANVA-import.pdf (${kb(canvaPdf.length)}, renders match print, mean diff ${diffs.map((d) => d.toFixed(2)).join(" / ")}), ${BASE}-pattern.svg (${kb(svg.length)}), ${LOGO_FILE} (${marks.gold.w}x${marks.gold.h})`);
   }
 
-  const kb = (n: number) => `${(n / 1024).toFixed(0)} KB`;
   console.log(`Wrote ${BASE}-PRINT.pdf (${kb(printPdf.length)}), ${BASE}-PROOF-crop-marks.pdf (${kb(proofPdf.length)}), previews -> ${OUT_DIR}`);
   const extra = STYLE === "topo" ? `QR ${card.hasQr ? "included" : "omitted (as in the reference)"}` : `contact values ${lastValueSize}pt; QR -> ${qr.url}`;
   console.log(`Page: ${PAGE_W / IN} x ${PAGE_H / IN} in with bleed; trim ${TRIM_W / IN} x ${TRIM_H / IN} in; ${card.variant}; ${extra}`);
