@@ -21,6 +21,9 @@ import {
   rectangle,
   clip,
   endPath,
+  LineCapStyle,
+  LineJoinStyle,
+  setLineJoin,
 } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { PNG } from "pngjs";
@@ -73,14 +76,34 @@ const GHOST = hexArr("#28201A");
 const MARK_DEEP = hexArr("#AD8B3A");
 const MARK_HI = hexArr("#EDDCA6");
 
-const PERSON = {
+type IconName = "phone" | "mail" | "instagram" | "globe";
+type ContactRow = { icon: IconName; value: string };
+
+const PERSON: { name: { first: string; last: string }; title: string; rows: ContactRow[] } = {
   name: { first: "Bhuvan", last: "Verma" },
   title: "TECHNOLOGY LEAD",
   rows: [
-    { label: "PHONE", value: "+91 95606 72201" },
-    { label: "EMAIL", value: "vermabhuvan0310@gmail.com" },
-    { label: "INSTAGRAM", value: "@logoutspells" },
-    { label: "WEBSITE", value: "logoutspells.com" },
+    { icon: "phone", value: "+91 95606 72201" },
+    { icon: "mail", value: "vermabhuvan0310@gmail.com" },
+    { icon: "instagram", value: "@logoutspells" },
+    { icon: "globe", value: "logoutspells.com" },
+  ],
+};
+
+/* Line icons on a 24-unit grid, 2-unit stroke (Feather set), drawn as vector strokes. */
+const ICON_PATHS: Record<IconName, string[]> = {
+  phone: [
+    "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z",
+  ],
+  mail: ["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6L12 13L2 6"],
+  instagram: [
+    "M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5z",
+    "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z",
+  ],
+  globe: [
+    "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20z",
+    "M2 12h20",
+    "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z",
   ],
 };
 
@@ -89,10 +112,15 @@ const PERSON = {
 /* ------------------------------------------------------------------ */
 type Design = {
   frontGhost: "concentric" | "right" | "none";
-  backGhost: "right" | "none";
   glow: boolean;
+  /** QR caption: two-line "Connect on / LinkedIn" or a plain "LinkedIn". */
+  backLabel: "connect" | "plain";
+  /** Thin gold corner brackets framing the back. */
+  corners: boolean;
+  /** Small gold mark above the name, or no mark on the back. */
+  backMark: "above" | "none";
 };
-const FINAL: Design = { frontGhost: "concentric", backGhost: "none", glow: true };
+const FINAL: Design = { frontGhost: "concentric", glow: true, backLabel: "connect", corners: false, backMark: "above" };
 
 /* ------------------------------------------------------------------ */
 /* Text helpers                                                         */
@@ -170,7 +198,7 @@ const glowPng = (g: GlowSpec): MarkImage => {
 
 /* Glow centres are in page coordinates (bleed included) so print and proof pages match. */
 const GLOW_FRONT_SPEC: GlowSpec = { cx: BLEED + TRIM_W / 2, cy: BLEED + TRIM_H / 2 + 2, r: 120, inner: GLOW_FRONT, outer: BG_ARR, n: 1.25 };
-const GLOW_BACK_SPEC: GlowSpec = { cx: BLEED + 64, cy: BLEED + 104, r: 150, inner: GLOW_BACK, outer: BG_ARR, n: 1.2 };
+const GLOW_BACK_SPEC: GlowSpec = { cx: BLEED + 76, cy: BLEED + 92, r: 150, inner: GLOW_BACK, outer: BG_ARR, n: 1.2 };
 
 const roundedRect = (page: PDFPage, x: number, y: number, w: number, h: number, r: number, color: RGB) => {
   const d = [
@@ -186,6 +214,30 @@ const roundedRect = (page: PDFPage, x: number, y: number, w: number, h: number, 
     "Z",
   ].join(" ");
   page.drawSvgPath(d, { x, y: y + h, color, borderWidth: 0 });
+};
+
+/** Strokes a line icon with its top-left corner at (x, top); size is the icon box in points. */
+const drawIcon = (page: PDFPage, name: IconName, x: number, top: number, size: number, color: RGB) => {
+  const s = size / 24;
+  page.pushOperators(pushGraphicsState(), setLineJoin(LineJoinStyle.Round));
+  for (const d of ICON_PATHS[name]) {
+    page.drawSvgPath(d, { x, y: top, scale: s, borderColor: color, borderWidth: 2, borderLineCap: LineCapStyle.Round });
+  }
+  if (name === "instagram") page.drawCircle({ x: x + 17.5 * s, y: top - 6.5 * s, size: 1.2 * s, color });
+  page.pushOperators(popGraphicsState());
+};
+
+/** Four thin gold corner brackets, inset from the trim (well inside cut tolerance). */
+const drawCorners = (page: PDFPage, ox: number, oy: number) => {
+  const inset = 10.5;
+  const arm = 8;
+  for (const sx of [1, -1]) {
+    for (const sy of [1, -1]) {
+      const x = sx === 1 ? inset : TRIM_W - inset;
+      const y = sy === 1 ? inset : TRIM_H - inset;
+      page.drawSvgPath(`M ${sx * arm} 0 L 0 0 L 0 ${-sy * arm}`, { x: ox + x, y: oy + y, borderColor: C.GOLD_LIGHT, borderWidth: 0.45 });
+    }
+  }
 };
 
 /* ------------------------------------------------------------------ */
@@ -399,25 +451,44 @@ const drawFront = (page: PDFPage, ox: number, oy: number, a: Assets, d: Design) 
 };
 
 const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets, d: Design) => {
-  const { serifSemi, serifItal, sansMed, sansSemi } = a.fonts;
+  const { serifSemi, sansMed, sansSemi } = a.fonts;
   const L = 18;
   const R = TRIM_W - 18;
-  const B = 24;
-  const ROW = 12;
+  const MID = TRIM_W / 2;
 
   if (d.glow) drawGlow(page, a.glowBackImage, ox, oy);
-  if (d.backGhost === "right") drawGhostByRing(page, a, ox + TRIM_W + 10, oy + 26, 124);
+  if (d.corners) drawCorners(page, ox, oy);
 
-  /* Right column: QR tile (4-module quiet zone), LinkedIn label, small mark above. */
+  /* Vertical rhythm: header (name left, QR + caption right) / gold rule / two rows of contact pairs.
+     The whole block is centred on the card so top and bottom margins match. */
   const n = a.qr.n;
-  const moduleArea = 48;
+  const moduleArea = 47;
   const m = moduleArea / n;
   const quiet = 4 * m;
   const tile = moduleArea + 2 * quiet;
+  type Line = { text: string; size: number; font: PDFFont; color: RGB; tr: number };
+  const caption: Line[] =
+    d.backLabel === "connect"
+      ? [
+          { text: "CONNECT ON", size: 4.1, font: sansMed, color: C.TAN, tr: 0.95 },
+          { text: "LINKEDIN", size: 4.6, font: sansSemi, color: C.GOLD_LIGHT, tr: 1.45 },
+        ]
+      : [{ text: "LINKEDIN", size: 4.6, font: sansMed, color: C.TAN, tr: 1.45 }];
+  const captionGap = 7.4;
+  const captionLead = 6.4;
+  const ruleGap = 7;
+  const firstRowGap = 13.4;
+  const rowGap = 13.6;
+  const valueSize0 = 6.8;
+  const iconSize = 6.8;
+  const descender = 0.24 * valueSize0;
+  const blockH = tile + captionGap + captionLead * (caption.length - 1) + ruleGap + firstRowGap + rowGap + descender;
+  const tileTop = (TRIM_H + blockH) / 2;
+  const tileY = tileTop - tile;
   const tileX = R - tile;
-  const tileY = B + 9.5;
-  const tileTop = tileY + tile;
+  const tileCx = tileX + tile / 2;
 
+  /* QR tile with a 4-module quiet zone. */
   roundedRect(page, ox + tileX, oy + tileY, tile, tile, 2.2, C.TILE);
   const eps = 0.02;
   const qx0 = ox + tileX + quiet;
@@ -432,46 +503,58 @@ const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets, d: Design) =
       c += run;
     }
   }
-  const labelSize = 4.4;
-  drawTracked(page, "LINKEDIN", { rx: ox + R, y: oy + B, font: sansMed, size: labelSize, color: C.TAN, tr: 1.5 });
-
-  /* Left column: eyebrow, serif name with italic gold surname, short gold rule, contact ledger. */
-  const ruleY = tileTop;
-  const nameSize = 21;
-  const nameBase = ruleY + 8.5;
-  const eyebrowSize = 4.8;
-  const eyebrowBase = nameBase + capH(serifSemi, nameSize) + 7.5;
-  const topCap = eyebrowBase + capH(sansSemi, eyebrowSize);
-
-  drawTracked(page, PERSON.title, { x: ox + L, y: oy + eyebrowBase, font: sansSemi, size: eyebrowSize, color: C.GOLD_LIGHT, tr: eyebrowSize * 0.32 });
-  const firstW = serifSemi.widthOfTextAtSize(PERSON.name.first, nameSize);
-  page.drawText(PERSON.name.first, { x: ox + L, y: oy + nameBase, size: nameSize, font: serifSemi, color: C.CREAM });
-  page.drawText(PERSON.name.last, { x: ox + L + firstW + nameSize * 0.24, y: oy + nameBase, size: nameSize, font: serifItal, color: C.GOLD_LIGHT });
-  page.drawLine({ start: { x: ox + L, y: oy + ruleY }, end: { x: ox + L + 18, y: oy + ruleY }, thickness: 0.6, color: C.GOLD_LIGHT });
-
-  const markH = 13;
-  const markW = markH * (a.marks.gold.w / a.marks.gold.h);
-  page.drawImage(a.goldImage, { x: ox + R - markW, y: oy + topCap - markH, width: markW, height: markH });
-
-  const rowLabelSize = 4.4;
-  const rowTr = 1.2;
-  const labelW = Math.max(...PERSON.rows.map((r) => trackW(sansSemi, r.label, rowLabelSize, rowTr)));
-  const valueX = L + labelW + 9;
-  const limit = tileX - 10;
-  let valueSize = 7;
-  const widest = () => Math.max(...PERSON.rows.map((r) => sansMed.widthOfTextAtSize(r.value, valueSize)));
-  while (valueX + widest() > limit && valueSize > 6.2) valueSize -= 0.1;
-  if (valueX + widest() > limit) throw new Error(`Back layout collision: rows end at ${(valueX + widest()).toFixed(1)}pt, limit ${limit.toFixed(1)}pt`);
-
-  PERSON.rows.forEach((row, i) => {
-    const y = B + (PERSON.rows.length - 1 - i) * ROW;
-    drawTracked(page, row.label, { x: ox + L, y: oy + y, font: sansSemi, size: rowLabelSize, color: C.TAN, tr: rowTr });
-    page.drawText(row.value, { x: ox + valueX, y: oy + y, size: valueSize, font: sansMed, color: C.IVORY });
+  /* Caption centred under the tile. */
+  let captionBase = tileY - captionGap;
+  caption.forEach((line, i) => {
+    const y = tileY - captionGap - captionLead * i;
+    drawTracked(page, line.text, { cx: ox + tileCx, y: oy + y, font: line.font, size: line.size, color: line.color, tr: line.tr });
+    captionBase = y;
   });
 
-  const topRowCap = B + (PERSON.rows.length - 1) * ROW + capH(sansMed, valueSize);
-  if (topRowCap > ruleY - 6) throw new Error("Back layout: contact rows run into the rule");
-  if (topCap > TRIM_H - SAFE - 6) throw new Error("Back layout: header too close to the trim");
+  /* Header, left: small mark, tracked serif caps name, title; the stack is centred on the header band. */
+  const headerCy = (tileTop + captionBase) / 2;
+  const markH = d.backMark === "above" ? 12 : 0;
+  const gapMark = d.backMark === "above" ? 8 : 0;
+  const nameSize = 13.5;
+  const titleSize = 4.7;
+  const gapNT = 6.4;
+  const stackH = markH + gapMark + capH(serifSemi, nameSize) + gapNT + capH(sansSemi, titleSize);
+  const stackTop = headerCy + stackH / 2;
+  const nameBase = stackTop - markH - gapMark - capH(serifSemi, nameSize);
+  const titleBase = nameBase - gapNT - capH(sansSemi, titleSize);
+  if (markH > 0) {
+    const markW = markH * (a.marks.gold.w / a.marks.gold.h);
+    page.drawImage(a.goldImage, { x: ox + L, y: oy + stackTop - markH, width: markW, height: markH });
+  }
+  const fullName = `${PERSON.name.first} ${PERSON.name.last}`.toUpperCase();
+  const nameW = drawTracked(page, fullName, { x: ox + L, y: oy + nameBase, font: serifSemi, size: nameSize, color: C.CREAM, tr: nameSize * 0.2 });
+  drawTracked(page, PERSON.title, { x: ox + L, y: oy + titleBase, font: sansSemi, size: titleSize, color: C.GOLD_LIGHT, tr: titleSize * 0.34 });
+  if (L + nameW > tileX - 10) throw new Error(`Back layout: name (${nameW.toFixed(1)}pt) runs into the QR tile`);
+
+  /* Full-width gold rule between the header and the contact pairs. */
+  const ruleY = captionBase - ruleGap;
+  page.drawLine({ start: { x: ox + L, y: oy + ruleY }, end: { x: ox + R, y: oy + ruleY }, thickness: 0.5, color: C.GOLD_LIGHT });
+
+  /* Contact pairs: icon + value, two columns (left margin / card centre), two rows. */
+  const textDx = iconSize + 5.4;
+  const cols = [L, MID];
+  const limits = [MID - 10, R];
+  let valueSize = valueSize0;
+  const fits = () => PERSON.rows.every((row, i) => cols[i % 2] + textDx + sansMed.widthOfTextAtSize(row.value, valueSize) <= limits[i % 2]);
+  while (!fits() && valueSize > 6) valueSize -= 0.1;
+  if (!fits()) throw new Error("Back layout collision: contact values do not fit the grid");
+
+  PERSON.rows.forEach((row, i) => {
+    const x = cols[i % 2];
+    const y = ruleY - firstRowGap - rowGap * Math.floor(i / 2);
+    const iconTop = y + capH(sansMed, valueSize) / 2 + iconSize / 2;
+    drawIcon(page, row.icon, ox + x, oy + iconTop, iconSize, C.GOLD_LIGHT);
+    page.drawText(row.value, { x: ox + x + textDx, y: oy + y, size: valueSize, font: sansMed, color: C.IVORY });
+  });
+
+  const lastBase = ruleY - firstRowGap - rowGap * (Math.ceil(PERSON.rows.length / 2) - 1);
+  if (tileTop > TRIM_H - SAFE - 8) throw new Error("Back layout: QR tile too close to the trim");
+  if (lastBase - descender < SAFE + 8) throw new Error("Back layout: contact rows too close to the trim");
   return { valueSize: Number(valueSize.toFixed(1)) };
 };
 
@@ -680,16 +763,15 @@ const main = async () => {
 
   if (variantsMode) {
     const designs: Design[] = [
-      { frontGhost: "concentric", backGhost: "none", glow: true },
-      { frontGhost: "right", backGhost: "right", glow: true },
-      { frontGhost: "none", backGhost: "none", glow: true },
+      { ...FINAL, backMark: "above", corners: false },
+      { ...FINAL, backMark: "none", corners: false },
+      { ...FINAL, backMark: "above", corners: true },
     ];
     const scale = 3;
     const cards: PNG[] = [];
     for (const d of designs) {
       const pdf = await buildPrintPdf(marks, qr, d);
-      const r = trimRenders(pdf, scale);
-      cards.push(r.front, r.back);
+      cards.push(trimRenders(pdf, scale).back);
     }
     fs.writeFileSync("_variants.png", PNG.sync.write(mockupSheet(cards, scale)));
     console.log("Wrote _variants.png");
