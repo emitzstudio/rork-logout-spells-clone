@@ -543,12 +543,14 @@ for (const day of days) {
 
   /* Price cards */
   const cardTop = 672;
-  const cardH = 146;
+  const cardH = 160;
   const cardW = 224;
   const priceSize = serifHasRupee ? 29 : 24;
   const priceFont = serifHasRupee ? serifBold : sansSemi;
 
-  const priceCard = (x: number, label: string, price: string, booking: string, remaining: string, highlight: boolean) => {
+  const priceNotes = ["remaining amount you pay before departure", "5% GST is applicable on the total amount"];
+
+  const priceCard = (x: number, label: string, price: string, booking: string, highlight: boolean) => {
     roundRect(p, x, cardTop, cardW, cardH, 14, {
       fill: CHARCOAL,
       fillOpacity: 0.78,
@@ -563,16 +565,18 @@ for (const day of days) {
     hline(p, cx - 62, cx + 62, cardTop - 92, GOLD, 0.22);
     drawTracked(p, "BOOKING AMOUNT", { cx, y: cardTop - 106, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
     dt(p, booking, { x: cx - serifSemi.widthOfTextAtSize(booking, 17) / 2, y: cardTop - 124, font: serifSemi, size: 17, color: GOLD_HI });
-    const remW = sansReg.widthOfTextAtSize(remaining, 7.5);
-    dt(p, remaining, { x: cx - remW / 2, y: cardTop - 138, font: sansReg, size: 7.5, color: MUTED, opacity: 0.9 });
+    priceNotes.forEach((note, i) => {
+      const noteW = sansReg.widthOfTextAtSize(note, 7.5);
+      dt(p, note, { x: cx - noteW / 2, y: cardTop - 138 - i * 11, font: sansReg, size: 7.5, color: MUTED, opacity: 0.9 });
+    });
   };
 
-  priceCard(64, "6 BED DORM", rupee("14,000"), rupee("4,000"), `remaining ${rupee("10,000")} before departure`, true);
-  priceCard(307.28, "4 BED DORM", rupee("16,000"), rupee("4,000"), `remaining ${rupee("12,000")} before departure`, false);
+  priceCard(64, "6 BED DORM", rupee("14,000"), rupee("4,000"), true);
+  priceCard(307.28, "4 BED DORM", rupee("16,000"), rupee("4,000"), false);
 
-  para(p, `Stay in a shared dorm at Qudrat. Prices include GST. Book with ${rupee("4,000")} now and pay the rest before departure.`, {
+  para(p, `Stay in a shared dorm at Qudrat. Book with ${rupee("4,000")} now and pay the remaining amount before departure.`, {
     cx: W / 2,
-    y: 504,
+    y: 489,
     font: sansReg,
     size: 8,
     color: MUTED,
