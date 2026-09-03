@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, Download, Inbox, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import type { FormResponse, ResponseStatus } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
+import { downloadInboxExcel } from "@/data/responsesExport";
 import { timeAgo } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -215,11 +217,12 @@ function ResponseDrawer({ response, onClose }: { response: FormResponse; onClose
 
 /** The response inbox - searchable, filterable, exportable, all local. */
 export default function ResponsesPanel() {
-  const { responses, markResponseViewed } = useFormStore();
+  const { forms, responses, markResponseViewed } = useFormStore();
   const [query, setQuery] = useState<string>("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [formFilter, setFormFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<boolean>(false);
 
   const selected = selectedId ? (responses.find((r) => r.id === selectedId) ?? null) : null;
 
@@ -274,31 +277,24 @@ export default function ResponsesPanel() {
     });
   }, [responses, query, status, formFilter]);
 
-  const exportCsv = (): void => {
-    const esc = (value: string): string => `"${value.replace(/"/g, '""')}"`;
-    const header = ["Name", "Phone", "Spell", "Form", "Submitted", "Status", "Answers"];
-    const rows = filtered.map((response) =>
-      [
-        response.respondentName,
-        response.respondentPhone,
-        response.spellName ?? "Direct link",
-        response.formTitle,
-        new Date(response.submittedAt).toLocaleString("en-IN"),
-        response.status,
-        response.answers.map((answer) => `${answer.questionTitle}: ${answer.value}`).join(" | "),
-      ]
-        .map(esc)
-        .join(","),
-    );
-    /* UTF-8 BOM so Excel renders Hindi names and ✦ marks correctly. */
-    const csv = "\uFEFF" + [header.map(esc).join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `logout-responses-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+  /*
+   * Export exactly what the inbox shows (filters, newest first) as a real
+   * .xlsx: Name · Phone · Spell · Form · Submitted · Status, then one column
+   * per form question - one sheet per form when several forms are listed.
+   * Text cells keep phone numbers verbatim (no 9.17E+11, "+" preserved).
+   */
+  const exportExcel = async (): Promise<void> => {
+    if (filtered.length === 0 || exporting) return;
+    setExporting(true);
+    try {
+      await downloadInboxExcel(forms, filtered);
+      toast.success("Excel downloaded");
+    } catch (error) {
+      console.error("[responses] Excel export failed:", error);
+      toast.error("Couldn't build the Excel file - please try again");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const statusTabs: { id: StatusFilter; label: string }[] = [
@@ -361,12 +357,19 @@ export default function ResponsesPanel() {
 
         <button
           type="button"
-          onClick={exportCsv}
-          disabled={filtered.length === 0}
+          onClick={() => void exportExcel()}
+          disabled={filtered.length === 0 || exporting}
           className="btn-ghost-gold !px-4 !py-2.5 !text-[12px] disabled:pointer-events-none disabled:opacity-40"
         >
-          <Download className="h-3.5 w-3.5" />
-          Export CSV
+          {exporting ? (
+            <span
+              aria-hidden
+              className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gold/25 border-t-gold"
+            />
+          ) : (
+            <Download className="h-3.5 w-3.5" />
+          )}
+          {exporting ? "Preparing…" : "Export Excel"}
         </button>
       </div>
 
