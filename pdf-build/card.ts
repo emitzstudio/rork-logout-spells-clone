@@ -5,11 +5,23 @@
  * TrimBox/BleedBox embedded, fonts embedded), a crop-marked proof, PNG previews,
  * and verifies the QR code scans from the rendered PDF.
  *
- * Run from pdf-build:  bun run card.ts
+ * Run from pdf-build:  bun run card.ts            -> final files into web/public/cards
+ *                      bun run card.ts --variants -> design comparison sheet (_variants.png)
  */
 import * as fs from "fs";
 import * as path from "path";
-import { PDFDocument, type PDFPage, type PDFFont, rgb, type RGB } from "pdf-lib";
+import {
+  PDFDocument,
+  type PDFPage,
+  type PDFFont,
+  rgb,
+  type RGB,
+  pushGraphicsState,
+  popGraphicsState,
+  rectangle,
+  clip,
+  endPath,
+} from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
@@ -34,9 +46,14 @@ const BASE = "Logout-Spells-Business-Card-Bhuvan-Verma";
 /* ------------------------------------------------------------------ */
 /* Brand palette (matches logoutspells.com tokens)                      */
 /* ------------------------------------------------------------------ */
-const hex = (h: string): RGB => {
+type Rgb255 = [number, number, number];
+const hexArr = (h: string): Rgb255 => {
   const v = parseInt(h.slice(1), 16);
-  return rgb(((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+};
+const hex = (h: string): RGB => {
+  const [r, g, b] = hexArr(h);
+  return rgb(r / 255, g / 255, b / 255);
 };
 const C = {
   BG: hex("#0A0806"),
@@ -44,17 +61,20 @@ const C = {
   IVORY: hex("#E3DCCD"),
   TAN: hex("#8B7956"),
   GOLD_LIGHT: hex("#CFA85A"),
-  HAIR: hex("#3B3324"),
   TILE: hex("#EFE8D8"),
   INK: hex("#0A0806"),
   MARKS: rgb(0, 0, 0),
   SLUG: rgb(0.45, 0.45, 0.45),
 };
-const MARK_DEEP: [number, number, number] = [0xad, 0x8b, 0x3a];
-const MARK_HI: [number, number, number] = [0xed, 0xdc, 0xa6];
+const BG_ARR = hexArr("#0A0806");
+const GLOW_FRONT = hexArr("#1B140B");
+const GLOW_BACK = hexArr("#15100A");
+const GHOST = hexArr("#28201A");
+const MARK_DEEP = hexArr("#AD8B3A");
+const MARK_HI = hexArr("#EDDCA6");
 
 const PERSON = {
-  name: "Bhuvan Verma",
+  name: { first: "Bhuvan", last: "Verma" },
   title: "TECHNOLOGY LEAD",
   rows: [
     { label: "PHONE", value: "+91 95606 72201" },
@@ -63,6 +83,16 @@ const PERSON = {
     { label: "WEBSITE", value: "logoutspells.com" },
   ],
 };
+
+/* ------------------------------------------------------------------ */
+/* Design switches (kept for A/B sheets)                                */
+/* ------------------------------------------------------------------ */
+type Design = {
+  frontGhost: "concentric" | "right" | "none";
+  backGhost: "right" | "none";
+  glow: boolean;
+};
+const FINAL: Design = { frontGhost: "concentric", backGhost: "none", glow: true };
 
 /* ------------------------------------------------------------------ */
 /* Text helpers                                                         */
@@ -105,11 +135,65 @@ const drawTracked = (page: PDFPage, text: string, o: TrackOpts): number => {
 };
 
 /* ------------------------------------------------------------------ */
-/* Logo mark: crop to its bounds and map its gold to a champagne ramp   */
+/* Radial glow: a dithered raster wash covering the full bleed page.    */
+/* Raster (not a PDF shading) so every viewer and RIP renders it the    */
+/* same; triangular noise keeps the dark gradient from banding in print. */
 /* ------------------------------------------------------------------ */
 type MarkImage = { bytes: Buffer; w: number; h: number };
+type GlowSpec = { cx: number; cy: number; r: number; inner: Rgb255; outer: Rgb255; n: number };
+const GLOW_DPI = 200;
 
-const prepareMark = (): MarkImage => {
+const glowPng = (g: GlowSpec): MarkImage => {
+  const s = GLOW_DPI / 72;
+  const w = Math.round(PAGE_W * s);
+  const h = Math.round(PAGE_H * s);
+  const png = new PNG({ width: w, height: h });
+  let seed = 0x9e3779b9;
+  const rnd = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const px = (x + 0.5) / s;
+      const py = PAGE_H - (y + 0.5) / s;
+      const t = Math.pow(Math.min(1, Math.hypot(px - g.cx, py - g.cy) / g.r), g.n);
+      const dither = rnd() + rnd() - 1;
+      const o = (y * w + x) * 4;
+      for (let k = 0; k < 3; k++) png.data[o + k] = clamp(g.inner[k] + (g.outer[k] - g.inner[k]) * t + dither);
+      png.data[o + 3] = 255;
+    }
+  }
+  return { bytes: PNG.sync.write(png, { colorType: 2 }), w, h };
+};
+
+/* Glow centres are in page coordinates (bleed included) so print and proof pages match. */
+const GLOW_FRONT_SPEC: GlowSpec = { cx: BLEED + TRIM_W / 2, cy: BLEED + TRIM_H / 2 + 2, r: 120, inner: GLOW_FRONT, outer: BG_ARR, n: 1.25 };
+const GLOW_BACK_SPEC: GlowSpec = { cx: BLEED + 64, cy: BLEED + 104, r: 150, inner: GLOW_BACK, outer: BG_ARR, n: 1.2 };
+
+const roundedRect = (page: PDFPage, x: number, y: number, w: number, h: number, r: number, color: RGB) => {
+  const d = [
+    `M ${r} 0`,
+    `H ${w - r}`,
+    `A ${r} ${r} 0 0 1 ${w} ${r}`,
+    `V ${h - r}`,
+    `A ${r} ${r} 0 0 1 ${w - r} ${h}`,
+    `H ${r}`,
+    `A ${r} ${r} 0 0 1 0 ${h - r}`,
+    `V ${r}`,
+    `A ${r} ${r} 0 0 1 ${r} 0`,
+    "Z",
+  ].join(" ");
+  page.drawSvgPath(d, { x, y: y + h, color, borderWidth: 0 });
+};
+
+/* ------------------------------------------------------------------ */
+/* Logo mark: crop to bounds; gold ramp version + tone-on-tone ghost    */
+/* ------------------------------------------------------------------ */
+type Marks = { gold: MarkImage; ghost: MarkImage; glowFront: MarkImage; glowBack: MarkImage };
+
+const prepareMarks = (): Marks => {
   const src = PNG.sync.read(fs.readFileSync("logo-mark.png"));
   const { width: W, height: H, data } = src;
   let minX = W, minY = H, maxX = -1, maxY = -1, lo = 255, hi = 0;
@@ -132,25 +216,32 @@ const prepareMark = (): MarkImage => {
   }
   const bw = maxX - minX + 1;
   const bh = maxY - minY + 1;
-  const out = new PNG({ width: bw, height: bh });
+  const gold = new PNG({ width: bw, height: bh });
+  const ghost = new PNG({ width: bw, height: bh });
   for (let y = 0; y < bh; y++) {
     for (let x = 0; x < bw; x++) {
       const si = ((y + minY) * W + (x + minX)) * 4;
       const oi = (y * bw + x) * 4;
       const a = data[si + 3];
+      ghost.data[oi] = GHOST[0]; ghost.data[oi + 1] = GHOST[1]; ghost.data[oi + 2] = GHOST[2]; ghost.data[oi + 3] = a;
       if (a === 0) {
-        out.data[oi] = 0; out.data[oi + 1] = 0; out.data[oi + 2] = 0; out.data[oi + 3] = 0;
+        gold.data[oi] = 0; gold.data[oi + 1] = 0; gold.data[oi + 2] = 0; gold.data[oi + 3] = 0;
         continue;
       }
       const lum = 0.299 * data[si] + 0.587 * data[si + 1] + 0.114 * data[si + 2];
       const t = Math.min(1, Math.max(0, (lum - lo) / Math.max(1, hi - lo)));
-      out.data[oi] = Math.round(MARK_DEEP[0] + (MARK_HI[0] - MARK_DEEP[0]) * t);
-      out.data[oi + 1] = Math.round(MARK_DEEP[1] + (MARK_HI[1] - MARK_DEEP[1]) * t);
-      out.data[oi + 2] = Math.round(MARK_DEEP[2] + (MARK_HI[2] - MARK_DEEP[2]) * t);
-      out.data[oi + 3] = a;
+      gold.data[oi] = Math.round(MARK_DEEP[0] + (MARK_HI[0] - MARK_DEEP[0]) * t);
+      gold.data[oi + 1] = Math.round(MARK_DEEP[1] + (MARK_HI[1] - MARK_DEEP[1]) * t);
+      gold.data[oi + 2] = Math.round(MARK_DEEP[2] + (MARK_HI[2] - MARK_DEEP[2]) * t);
+      gold.data[oi + 3] = a;
     }
   }
-  return { bytes: PNG.sync.write(out), w: bw, h: bh };
+  return {
+    gold: { bytes: PNG.sync.write(gold), w: bw, h: bh },
+    ghost: { bytes: PNG.sync.write(ghost), w: bw, h: bh },
+    glowFront: glowPng(GLOW_FRONT_SPEC),
+    glowBack: glowPng(GLOW_BACK_SPEC),
+  };
 };
 
 /* ------------------------------------------------------------------ */
@@ -267,34 +358,57 @@ const buildQr = (): QrData => {
 /* ------------------------------------------------------------------ */
 /* Sides                                                                */
 /* ------------------------------------------------------------------ */
-type Assets = { fonts: Fonts; mark: MarkImage; markImage: Awaited<ReturnType<PDFDocument["embedPng"]>>; qr: QrData };
+type Embedded = Awaited<ReturnType<PDFDocument["embedPng"]>>;
+type Assets = { fonts: Fonts; marks: Marks; goldImage: Embedded; ghostImage: Embedded; glowFrontImage: Embedded; glowBackImage: Embedded; qr: QrData };
 
-const drawFront = (page: PDFPage, ox: number, oy: number, a: Assets) => {
-  const { sansSemi, serifItal } = a.fonts;
-  const markH = 50;
-  const markW = markH * (a.mark.w / a.mark.h);
-  const gapMark = 12;
-  const gapLines = 10;
-  const logoutSize = 7;
-  const spellsSize = 10.5;
-  const groupH = markH + gapMark + capH(sansSemi, logoutSize) + gapLines + 0.25 * spellsSize;
-  const top = TRIM_H / 2 + 2 + groupH / 2;
-
-  page.drawImage(a.markImage, { x: ox + TRIM_W / 2 - markW / 2, y: oy + top - markH, width: markW, height: markH });
-
-  const logoutBase = top - markH - gapMark - capH(sansSemi, logoutSize);
-  drawTracked(page, "LOGOUT", { cx: ox + TRIM_W / 2, y: oy + logoutBase, font: sansSemi, size: logoutSize, color: C.CREAM, tr: logoutSize * 0.42 });
-  drawTracked(page, "Spells", { cx: ox + TRIM_W / 2, y: oy + logoutBase - gapLines, font: serifItal, size: spellsSize, color: C.GOLD_LIGHT, tr: 0.15 });
+/** Draws a full-bleed glow wash; (ox, oy) is the trim origin on the page. */
+const drawGlow = (page: PDFPage, image: Embedded, ox: number, oy: number) => {
+  page.drawImage(image, { x: ox - BLEED, y: oy - BLEED, width: PAGE_W, height: PAGE_H });
 };
 
-const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets) => {
+/** Places the ghost mark so that its power ring is centred on (cx, cy) with diameter d. */
+const drawGhostByRing = (page: PDFPage, a: Assets, cx: number, cy: number, d: number) => {
+  const { w, h } = a.marks.ghost;
+  const height = d * (h / w);
+  page.drawImage(a.ghostImage, { x: cx - d / 2, y: cy - d / 2, width: d, height });
+};
+
+const drawFront = (page: PDFPage, ox: number, oy: number, a: Assets, d: Design) => {
+  const { sansSemi, serifItal } = a.fonts;
+  const cx = ox + TRIM_W / 2;
+  const cy = oy + TRIM_H / 2;
+
+  if (d.glow) drawGlow(page, a.glowFrontImage, ox, oy);
+  /* Ring centred on the lockup; the shaft exits cleanly through the top trim, wings stay inside. */
+  if (d.frontGhost === "concentric") drawGhostByRing(page, a, cx, cy + 1, 118);
+  if (d.frontGhost === "right") drawGhostByRing(page, a, ox + TRIM_W - 4, oy + 60, 132);
+
+  const markH = 44;
+  const markW = markH * (a.marks.gold.w / a.marks.gold.h);
+  const gapMark = 9.5;
+  const gapLines = 7.5;
+  const logoutSize = 6;
+  const spellsSize = 9.5;
+  const groupH = markH + gapMark + capH(sansSemi, logoutSize) + gapLines + capH(serifItal, spellsSize);
+  const top = cy + groupH / 2 + 1;
+
+  page.drawImage(a.goldImage, { x: cx - markW / 2, y: top - markH, width: markW, height: markH });
+  const logoutBase = top - markH - gapMark - capH(sansSemi, logoutSize);
+  drawTracked(page, "LOGOUT", { cx, y: logoutBase, font: sansSemi, size: logoutSize, color: C.CREAM, tr: logoutSize * 0.45 });
+  drawTracked(page, "Spells", { cx, y: logoutBase - gapLines - capH(serifItal, spellsSize), font: serifItal, size: spellsSize, color: C.GOLD_LIGHT, tr: 0.15 });
+};
+
+const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets, d: Design) => {
   const { serifSemi, serifItal, sansMed, sansSemi } = a.fonts;
   const L = 18;
   const R = TRIM_W - 18;
-  const B = 30;
-  const ROW = 11.5;
+  const B = 24;
+  const ROW = 12;
 
-  /* Right column: QR tile with a full 4-module quiet zone, brand lockup above, label below. */
+  if (d.glow) drawGlow(page, a.glowBackImage, ox, oy);
+  if (d.backGhost === "right") drawGhostByRing(page, a, ox + TRIM_W + 10, oy + 26, 124);
+
+  /* Right column: QR tile (4-module quiet zone), LinkedIn label, small mark above. */
   const n = a.qr.n;
   const moduleArea = 48;
   const m = moduleArea / n;
@@ -302,11 +416,12 @@ const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets) => {
   const tile = moduleArea + 2 * quiet;
   const tileX = R - tile;
   const tileY = B + 9.5;
+  const tileTop = tileY + tile;
 
-  page.drawRectangle({ x: ox + tileX, y: oy + tileY, width: tile, height: tile, color: C.TILE });
+  roundedRect(page, ox + tileX, oy + tileY, tile, tile, 2.2, C.TILE);
   const eps = 0.02;
   const qx0 = ox + tileX + quiet;
-  const qyTop = oy + tileY + tile - quiet;
+  const qyTop = oy + tileTop - quiet;
   for (let r = 0; r < n; r++) {
     let c = 0;
     while (c < n) {
@@ -317,51 +432,53 @@ const drawBack = (page: PDFPage, ox: number, oy: number, a: Assets) => {
       c += run;
     }
   }
+  const labelSize = 4.4;
+  drawTracked(page, "LINKEDIN", { rx: ox + R, y: oy + B, font: sansMed, size: labelSize, color: C.TAN, tr: 1.5 });
 
-  const labelSize = 4.6;
-  drawTracked(page, "LINKEDIN", { rx: ox + R, y: oy + B, font: sansMed, size: labelSize, color: C.TAN, tr: 1.6 });
+  /* Left column: eyebrow, serif name with italic gold surname, short gold rule, contact ledger. */
+  const ruleY = tileTop;
+  const nameSize = 21;
+  const nameBase = ruleY + 8.5;
+  const eyebrowSize = 4.8;
+  const eyebrowBase = nameBase + capH(serifSemi, nameSize) + 7.5;
+  const topCap = eyebrowBase + capH(sansSemi, eyebrowSize);
 
-  const lockLogout = 5;
-  const lockSpells = 7.5;
-  const spellsBase = tileY + tile + 9;
-  const logoutBase = spellsBase + 7;
-  drawTracked(page, "Spells", { rx: ox + R, y: oy + spellsBase, font: serifItal, size: lockSpells, color: C.GOLD_LIGHT, tr: 0.1 });
-  drawTracked(page, "LOGOUT", { rx: ox + R, y: oy + logoutBase, font: sansSemi, size: lockLogout, color: C.CREAM, tr: lockLogout * 0.42 });
-  const topCap = logoutBase + capH(sansSemi, lockLogout);
+  drawTracked(page, PERSON.title, { x: ox + L, y: oy + eyebrowBase, font: sansSemi, size: eyebrowSize, color: C.GOLD_LIGHT, tr: eyebrowSize * 0.32 });
+  const firstW = serifSemi.widthOfTextAtSize(PERSON.name.first, nameSize);
+  page.drawText(PERSON.name.first, { x: ox + L, y: oy + nameBase, size: nameSize, font: serifSemi, color: C.CREAM });
+  page.drawText(PERSON.name.last, { x: ox + L + firstW + nameSize * 0.24, y: oy + nameBase, size: nameSize, font: serifItal, color: C.GOLD_LIGHT });
+  page.drawLine({ start: { x: ox + L, y: oy + ruleY }, end: { x: ox + L + 18, y: oy + ruleY }, thickness: 0.6, color: C.GOLD_LIGHT });
 
-  /* Left column: identity block aligned to the lockup's cap line, contact rows aligned to the label baseline. */
-  const nameSize = 15.5;
-  const nameBase = topCap - capH(serifSemi, nameSize);
-  page.drawText(PERSON.name, { x: ox + L, y: oy + nameBase, size: nameSize, font: serifSemi, color: C.CREAM });
+  const markH = 13;
+  const markW = markH * (a.marks.gold.w / a.marks.gold.h);
+  page.drawImage(a.goldImage, { x: ox + R - markW, y: oy + topCap - markH, width: markW, height: markH });
 
-  const titleSize = 5.4;
-  const titleBase = nameBase - 11;
-  drawTracked(page, PERSON.title, { x: ox + L, y: oy + titleBase, font: sansMed, size: titleSize, color: C.GOLD_LIGHT, tr: 1.7 });
-
-  const valueSize = 6.6;
   const rowLabelSize = 4.4;
   const rowTr = 1.2;
   const labelW = Math.max(...PERSON.rows.map((r) => trackW(sansSemi, r.label, rowLabelSize, rowTr)));
-  const valueX = L + Math.max(40, labelW + 9);
-  let valueEnd = valueX;
+  const valueX = L + labelW + 9;
+  const limit = tileX - 10;
+  let valueSize = 7;
+  const widest = () => Math.max(...PERSON.rows.map((r) => sansMed.widthOfTextAtSize(r.value, valueSize)));
+  while (valueX + widest() > limit && valueSize > 6.2) valueSize -= 0.1;
+  if (valueX + widest() > limit) throw new Error(`Back layout collision: rows end at ${(valueX + widest()).toFixed(1)}pt, limit ${limit.toFixed(1)}pt`);
+
   PERSON.rows.forEach((row, i) => {
     const y = B + (PERSON.rows.length - 1 - i) * ROW;
     drawTracked(page, row.label, { x: ox + L, y: oy + y, font: sansSemi, size: rowLabelSize, color: C.TAN, tr: rowTr });
     page.drawText(row.value, { x: ox + valueX, y: oy + y, size: valueSize, font: sansMed, color: C.IVORY });
-    valueEnd = Math.max(valueEnd, valueX + sansMed.widthOfTextAtSize(row.value, valueSize));
   });
 
-  const phoneCapTop = B + (PERSON.rows.length - 1) * ROW + capH(sansMed, valueSize);
-  const hairY = (titleBase + phoneCapTop) / 2;
-  page.drawLine({ start: { x: ox + L, y: oy + hairY }, end: { x: ox + valueEnd, y: oy + hairY }, thickness: 0.45, color: C.HAIR });
-
-  if (valueEnd > tileX - 12) throw new Error(`Back layout collision: text ends at ${valueEnd.toFixed(1)}pt, tile starts at ${tileX.toFixed(1)}pt`);
+  const topRowCap = B + (PERSON.rows.length - 1) * ROW + capH(sansMed, valueSize);
+  if (topRowCap > ruleY - 6) throw new Error("Back layout: contact rows run into the rule");
+  if (topCap > TRIM_H - SAFE - 6) throw new Error("Back layout: header too close to the trim");
+  return { valueSize: Number(valueSize.toFixed(1)) };
 };
 
 /* ------------------------------------------------------------------ */
 /* Documents                                                            */
 /* ------------------------------------------------------------------ */
-const loadAssets = async (doc: PDFDocument, mark: MarkImage, qr: QrData): Promise<Assets> => {
+const loadAssets = async (doc: PDFDocument, marks: Marks, qr: QrData): Promise<Assets> => {
   doc.registerFontkit(fontkit);
   const fb = (f: string) => fs.readFileSync(path.join("fonts", f));
   /* Cormorant glyph outlines break under pdf-lib subsetting: embed full fonts. */
@@ -371,8 +488,11 @@ const loadAssets = async (doc: PDFDocument, mark: MarkImage, qr: QrData): Promis
     sansMed: await doc.embedFont(fb("inter-v20-latin_latin-ext-500.ttf"), { subset: true }),
     sansSemi: await doc.embedFont(fb("inter-v20-latin_latin-ext-600.ttf"), { subset: true }),
   };
-  const markImage = await doc.embedPng(mark.bytes);
-  return { fonts, mark, markImage, qr };
+  const goldImage = await doc.embedPng(marks.gold.bytes);
+  const ghostImage = await doc.embedPng(marks.ghost.bytes);
+  const glowFrontImage = await doc.embedPng(marks.glowFront.bytes);
+  const glowBackImage = await doc.embedPng(marks.glowBack.bytes);
+  return { fonts, marks, goldImage, ghostImage, glowFrontImage, glowBackImage, qr };
 };
 
 const setMeta = (doc: PDFDocument, variant: string) => {
@@ -387,10 +507,12 @@ const setMeta = (doc: PDFDocument, variant: string) => {
   doc.setModificationDate(now);
 };
 
-const buildPrintPdf = async (mark: MarkImage, qr: QrData): Promise<Uint8Array> => {
+let lastValueSize = 0;
+
+const buildPrintPdf = async (marks: Marks, qr: QrData, d: Design): Promise<Uint8Array> => {
   const doc = await PDFDocument.create();
   setMeta(doc, "Print with bleed");
-  const assets = await loadAssets(doc, mark, qr);
+  const assets = await loadAssets(doc, marks, qr);
   for (const side of ["front", "back"] as const) {
     const page = doc.addPage([PAGE_W, PAGE_H]);
     page.setMediaBox(0, 0, PAGE_W, PAGE_H);
@@ -398,16 +520,16 @@ const buildPrintPdf = async (mark: MarkImage, qr: QrData): Promise<Uint8Array> =
     page.setTrimBox(BLEED, BLEED, TRIM_W, TRIM_H);
     page.setArtBox(BLEED + SAFE, BLEED + SAFE, TRIM_W - 2 * SAFE, TRIM_H - 2 * SAFE);
     page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: C.BG });
-    if (side === "front") drawFront(page, BLEED, BLEED, assets);
-    else drawBack(page, BLEED, BLEED, assets);
+    if (side === "front") drawFront(page, BLEED, BLEED, assets, d);
+    else lastValueSize = drawBack(page, BLEED, BLEED, assets, d).valueSize;
   }
   return doc.save({ useObjectStreams: false });
 };
 
-const buildProofPdf = async (mark: MarkImage, qr: QrData): Promise<Uint8Array> => {
+const buildProofPdf = async (marks: Marks, qr: QrData, d: Design): Promise<Uint8Array> => {
   const doc = await PDFDocument.create();
   setMeta(doc, "Proof with crop marks");
-  const assets = await loadAssets(doc, mark, qr);
+  const assets = await loadAssets(doc, marks, qr);
   const M = MARK_MARGIN;
   const W = PAGE_W + 2 * M;
   const H = PAGE_H + 2 * M;
@@ -420,8 +542,11 @@ const buildProofPdf = async (mark: MarkImage, qr: QrData): Promise<Uint8Array> =
     page.setTrimBox(ox, oy, TRIM_W, TRIM_H);
     page.setArtBox(ox + SAFE, oy + SAFE, TRIM_W - 2 * SAFE, TRIM_H - 2 * SAFE);
     page.drawRectangle({ x: M, y: M, width: PAGE_W, height: PAGE_H, color: C.BG });
-    if (side === "front") drawFront(page, ox, oy, assets);
-    else drawBack(page, ox, oy, assets);
+    /* Keep the artwork inside the bleed box on the proof sheet. */
+    page.pushOperators(pushGraphicsState(), rectangle(M, M, PAGE_W, PAGE_H), clip(), endPath());
+    if (side === "front") drawFront(page, ox, oy, assets, d);
+    else drawBack(page, ox, oy, assets, d);
+    page.pushOperators(popGraphicsState());
 
     /* Crop marks: start just outside the bleed, aligned with the trim edges. */
     const gap = BLEED + 3;
@@ -475,6 +600,42 @@ const fill = (png: PNG, r: number, g: number, b: number) => {
   }
 };
 
+/** Soft drop shadow under a rectangle: separable box blur x3 (close to Gaussian). */
+const softShadow = (png: PNG, x: number, y: number, w: number, h: number, radius: number, alpha: number, dy: number) => {
+  const W = png.width, H = png.height;
+  let mask = new Float32Array(W * H);
+  for (let yy = Math.max(0, y + dy); yy < Math.min(H, y + dy + h); yy++) mask.fill(1, yy * W + Math.max(0, x), yy * W + Math.min(W, x + w));
+  const tmp = new Float32Array(W * H);
+  const r = Math.max(1, Math.round(radius / 3));
+  for (let pass = 0; pass < 3; pass++) {
+    for (let yy = 0; yy < H; yy++) {
+      let acc = 0;
+      const row = yy * W;
+      for (let xx = -r; xx <= r; xx++) acc += mask[row + Math.min(W - 1, Math.max(0, xx))];
+      for (let xx = 0; xx < W; xx++) {
+        tmp[row + xx] = acc / (2 * r + 1);
+        acc += mask[row + Math.min(W - 1, xx + r + 1)] - mask[row + Math.max(0, xx - r)];
+      }
+    }
+    for (let xx = 0; xx < W; xx++) {
+      let acc = 0;
+      for (let yy = -r; yy <= r; yy++) acc += tmp[Math.min(H - 1, Math.max(0, yy)) * W + xx];
+      for (let yy = 0; yy < H; yy++) {
+        mask[yy * W + xx] = acc / (2 * r + 1);
+        acc += tmp[Math.min(H - 1, yy + r + 1) * W + xx] - tmp[Math.max(0, yy - r) * W + xx];
+      }
+    }
+  }
+  for (let i = 0; i < W * H; i++) {
+    const a = mask[i] * alpha;
+    if (a <= 0) continue;
+    const o = i * 4;
+    png.data[o] = Math.round(png.data[o] * (1 - a) + 0x2a * a);
+    png.data[o + 1] = Math.round(png.data[o + 1] * (1 - a) + 0x24 * a);
+    png.data[o + 2] = Math.round(png.data[o + 2] * (1 - a) + 0x1c * a);
+  }
+};
+
 const scanTest = (pdf: Uint8Array, expected: string) => {
   const results: string[] = [];
   for (const scale of [6, 3, 2]) {
@@ -487,38 +648,71 @@ const scanTest = (pdf: Uint8Array, expected: string) => {
   console.log(`Scan test on rendered back side: ${results.join(", ")}`);
 };
 
+const trimRenders = (pdf: Uint8Array, scale: number): { front: PNG; back: PNG } => {
+  const b = Math.round(BLEED * scale);
+  const tw = Math.round(TRIM_W * scale);
+  const th = Math.round(TRIM_H * scale);
+  return {
+    front: crop(renderPage(pdf, 0, scale), b, b, tw, th),
+    back: crop(renderPage(pdf, 1, scale), b, b, tw, th),
+  };
+};
+
+const mockupSheet = (cards: PNG[], scale: number): PNG => {
+  const tw = Math.round(TRIM_W * scale);
+  const th = Math.round(TRIM_H * scale);
+  const pad = Math.round(16 * scale);
+  const gap = Math.round(11 * scale);
+  const sheet = new PNG({ width: tw + 2 * pad, height: cards.length * th + (cards.length - 1) * gap + 2 * pad });
+  fill(sheet, 0xe7, 0xe0, 0xd4);
+  cards.forEach((card, i) => {
+    const y = pad + i * (th + gap);
+    softShadow(sheet, pad, y, tw, th, Math.round(7 * scale), 0.42, Math.round(2.2 * scale));
+    blit(sheet, card, pad, y);
+  });
+  return sheet;
+};
+
 const main = async () => {
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  const mark = prepareMark();
+  const variantsMode = process.argv.includes("--variants");
+  const marks = prepareMarks();
   const qr = buildQr();
 
-  const printPdf = await buildPrintPdf(mark, qr);
-  const proofPdf = await buildProofPdf(mark, qr);
+  if (variantsMode) {
+    const designs: Design[] = [
+      { frontGhost: "concentric", backGhost: "none", glow: true },
+      { frontGhost: "right", backGhost: "right", glow: true },
+      { frontGhost: "none", backGhost: "none", glow: true },
+    ];
+    const scale = 3;
+    const cards: PNG[] = [];
+    for (const d of designs) {
+      const pdf = await buildPrintPdf(marks, qr, d);
+      const r = trimRenders(pdf, scale);
+      cards.push(r.front, r.back);
+    }
+    fs.writeFileSync("_variants.png", PNG.sync.write(mockupSheet(cards, scale)));
+    console.log("Wrote _variants.png");
+    return;
+  }
+
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  const printPdf = await buildPrintPdf(marks, qr, FINAL);
+  const proofPdf = await buildProofPdf(marks, qr, FINAL);
   fs.writeFileSync(path.join(OUT_DIR, `${BASE}-PRINT.pdf`), printPdf);
   fs.writeFileSync(path.join(OUT_DIR, `${BASE}-PROOF-crop-marks.pdf`), proofPdf);
 
   scanTest(printPdf, qr.url);
 
-  /* Previews: trim-size renders of each side plus a combined sheet. */
   const scale = 4;
-  const b = Math.round(BLEED * scale);
-  const tw = Math.round(TRIM_W * scale);
-  const th = Math.round(TRIM_H * scale);
-  const front = crop(renderPage(printPdf, 0, scale), b, b, tw, th);
-  const back = crop(renderPage(printPdf, 1, scale), b, b, tw, th);
+  const { front, back } = trimRenders(printPdf, scale);
   fs.writeFileSync(path.join(OUT_DIR, `${BASE}-front.png`), PNG.sync.write(front));
   fs.writeFileSync(path.join(OUT_DIR, `${BASE}-back.png`), PNG.sync.write(back));
-
-  const pad = 72;
-  const sheet = new PNG({ width: tw + 2 * pad, height: th * 2 + 3 * pad });
-  fill(sheet, 0xd8, 0xd2, 0xc6);
-  blit(sheet, front, pad, pad);
-  blit(sheet, back, pad, th + 2 * pad);
-  fs.writeFileSync(path.join(OUT_DIR, `${BASE}-preview.png`), PNG.sync.write(sheet));
+  fs.writeFileSync(path.join(OUT_DIR, `${BASE}-preview.png`), PNG.sync.write(mockupSheet([front, back], scale)));
 
   const kb = (n: number) => `${(n / 1024).toFixed(0)} KB`;
   console.log(`Wrote ${BASE}-PRINT.pdf (${kb(printPdf.length)}), ${BASE}-PROOF-crop-marks.pdf (${kb(proofPdf.length)}), previews -> ${OUT_DIR}`);
-  console.log(`Page: ${PAGE_W / IN} x ${PAGE_H / IN} in with bleed; trim ${TRIM_W / IN} x ${TRIM_H / IN} in; QR -> ${qr.url}`);
+  console.log(`Page: ${PAGE_W / IN} x ${PAGE_H / IN} in with bleed; trim ${TRIM_W / IN} x ${TRIM_H / IN} in; contact values ${lastValueSize}pt; QR -> ${qr.url}`);
 };
 
 await main();
