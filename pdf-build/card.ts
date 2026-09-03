@@ -628,26 +628,55 @@ const loadAssets = async (doc: PDFDocument, marks: Marks, qr: QrData, glow: bool
 };
 
 /* ------------------------------------------------------------------ */
-/* Topographic design: fractal gradient noise -> iso-lines (marching   */
-/* squares) -> Catmull-Rom curves stroked as fine gold vectors.         */
+/* Topographic design. A few flowing source curves (iso-lines of warped */
+/* gradient noise) are offset at one constant distance with a Euclidean */
+/* distance transform, so the gaps between lines stay even like plotted */
+/* map contours; the field is lightly blurred so families of offsets    */
+/* merge in soft pinches instead of creases. Curves become Catmull-Rom  */
+/* splines stroked as fine gold vectors, trimmed to a plain clearance   */
+/* around the lockup.                                                   */
 /* ------------------------------------------------------------------ */
 type Pt = { x: number; y: number };
 type TopoPath = { pts: Pt[]; closed: boolean };
 
-const TOPO = {
-  seed: 20260903,
-  /** Sampling grid in points (fine enough that facets vanish under a 0.4 pt stroke). */
-  cell: 0.6,
-  levels: 30,
+type TopoConfig = {
+  seed: number;
+  /** Sampling grid in points (fine enough that facets vanish under the stroke). */
+  cell: number;
   /** Size of the largest landforms in points. */
-  feature: 100,
-  octaves: [1, 0.42, 0.14],
+  feature: number;
+  octaves: number[];
   /** Domain warp strength: bends the ridges into flowing, map-like shapes. */
-  warp: 20,
-  width: 0.4,
+  warp: number;
+  /** Iso values of the noise field that become source curves. */
+  sources: number[];
+  /** Distance between neighbouring contour lines in points. */
+  spacing: number;
+  /** Blur radius (pt) applied to the distance field; rounds the creases where offset families meet. */
+  smooth: number;
+  width: number;
   /** Closed loops smaller than this (pt) read as specks in print and are dropped. */
-  minLoop: 5,
+  minLoop: number;
+  /** Open fragments shorter than this (pt) are dropped (slivers where offset families barely meet). */
+  minStub: number;
 };
+
+const TOPO: TopoConfig = {
+  seed: 20260904,
+  cell: 0.5,
+  feature: 90,
+  octaves: [1, 0.3],
+  warp: 22,
+  sources: [-0.4, 0.4],
+  spacing: 14,
+  smooth: 3.8,
+  width: 0.5,
+  minLoop: 6,
+  minStub: 12,
+};
+
+/** Plain area kept free of contour lines around the front lockup (padding and corner radius in pt). */
+const CLEARANCE = { padX: 16, padY: 13.5, radius: 20, minStub: 6 };
 
 /** Classic 2D gradient noise in [-1, 1] with a seeded permutation table. */
 const makeNoise = (seed: number): ((x: number, y: number) => number) => {
@@ -794,48 +823,203 @@ const simplify = (pts: Pt[], tol: number): Pt[] => {
   return pts.filter((_, i) => keep[i] === 1);
 };
 
-const buildTopoPaths = (): TopoPath[] => {
-  const noise = makeNoise(TOPO.seed);
-  const warpA = makeNoise(TOPO.seed + 101);
-  const warpB = makeNoise(TOPO.seed + 202);
+/** Squared Euclidean distance transform (Felzenszwalb-Huttenlocher) of a grid where sources are 0 and everything else FAR. */
+const FAR = 1e9;
+const distanceTransform = (f: Float64Array, nx: number, ny: number): Float64Array => {
+  const out = new Float64Array(nx * ny);
+  const n = Math.max(nx, ny);
+  const g = new Float64Array(n);
+  const d = new Float64Array(n);
+  const v = new Int32Array(n);
+  const z = new Float64Array(n + 1);
+  const pass = (len: number) => {
+    let k = 0;
+    v[0] = 0;
+    z[0] = -Infinity;
+    z[1] = Infinity;
+    const cross = (q: number, p: number) => (g[q] + q * q - (g[p] + p * p)) / (2 * q - 2 * p);
+    for (let q = 1; q < len; q++) {
+      let s = cross(q, v[k]);
+      while (s <= z[k]) {
+        k--;
+        s = cross(q, v[k]);
+      }
+      k++;
+      v[k] = q;
+      z[k] = s;
+      z[k + 1] = Infinity;
+    }
+    k = 0;
+    for (let q = 0; q < len; q++) {
+      while (z[k + 1] < q) k++;
+      d[q] = (q - v[k]) * (q - v[k]) + g[v[k]];
+    }
+  };
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) g[j] = f[j * nx + i];
+    pass(ny);
+    for (let j = 0; j < ny; j++) out[j * nx + i] = d[j];
+  }
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) g[i] = out[j * nx + i];
+    pass(nx);
+    for (let i = 0; i < nx; i++) out[j * nx + i] = d[i];
+  }
+  return out;
+};
+
+/** Separable box blur run three times (close to Gaussian); radius in cells. */
+const blurGrid = (src: Float32Array, nx: number, ny: number, r: number): Float32Array => {
+  if (r < 1) return src;
+  let a = new Float32Array(src);
+  let b = new Float32Array(src.length);
+  const norm = 1 / (2 * r + 1);
+  for (let pass = 0; pass < 3; pass++) {
+    for (let j = 0; j < ny; j++) {
+      const row = j * nx;
+      let acc = 0;
+      for (let i = -r; i <= r; i++) acc += a[row + Math.min(nx - 1, Math.max(0, i))];
+      for (let i = 0; i < nx; i++) {
+        b[row + i] = acc * norm;
+        acc += a[row + Math.min(nx - 1, i + r + 1)] - a[row + Math.max(0, i - r)];
+      }
+    }
+    for (let i = 0; i < nx; i++) {
+      let acc = 0;
+      for (let j = -r; j <= r; j++) acc += b[Math.min(ny - 1, Math.max(0, j)) * nx + i];
+      for (let j = 0; j < ny; j++) {
+        a[j * nx + i] = acc * norm;
+        acc += b[Math.min(ny - 1, j + r + 1) * nx + i] - b[Math.max(0, j - r) * nx + i];
+      }
+    }
+  }
+  return a;
+};
+
+const loopExtent = (pts: Pt[]): number => {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) {
+    if (p.x < x0) x0 = p.x;
+    if (p.x > x1) x1 = p.x;
+    if (p.y < y0) y0 = p.y;
+    if (p.y > y1) y1 = p.y;
+  }
+  return Math.max(x1 - x0, y1 - y0);
+};
+
+const pathLength = (pts: Pt[]): number => {
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  return len;
+};
+
+const buildTopoPaths = (cfg: TopoConfig): TopoPath[] => {
+  const noise = makeNoise(cfg.seed);
+  const warpA = makeNoise(cfg.seed + 101);
+  const warpB = makeNoise(cfg.seed + 202);
   const field = (x: number, y: number): number => {
-    const wx = x + TOPO.warp * warpA(x / 130 + 3.1, y / 130 + 7.7);
-    const wy = y + TOPO.warp * warpB(x / 130 + 9.2, y / 130 + 1.4);
+    const wx = x + cfg.warp * warpA(x / 130 + 3.1, y / 130 + 7.7);
+    const wy = y + cfg.warp * warpB(x / 130 + 9.2, y / 130 + 1.4);
     let v = 0;
-    let f = 1 / TOPO.feature;
-    for (const amp of TOPO.octaves) {
+    let f = 1 / cfg.feature;
+    for (const amp of cfg.octaves) {
       v += amp * noise(wx * f + 5.3, wy * f + 2.7);
       f *= 2.1;
     }
     return v;
   };
-  const nx = Math.ceil(PAGE_W / TOPO.cell) + 2;
-  const ny = Math.ceil(PAGE_H / TOPO.cell) + 2;
+  const nx = Math.ceil(PAGE_W / cfg.cell) + 2;
+  const ny = Math.ceil(PAGE_H / cfg.cell) + 2;
   const vals = new Float32Array(nx * ny);
-  let lo = Infinity;
-  let hi = -Infinity;
-  for (let j = 0; j < ny; j++) {
-    for (let i = 0; i < nx; i++) {
-      const v = field(i * TOPO.cell, j * TOPO.cell);
-      vals[j * nx + i] = v;
-      if (v < lo) lo = v;
-      if (v > hi) hi = v;
-    }
-  }
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) vals[j * nx + i] = field(i * cfg.cell, j * cfg.cell);
+
   const paths: TopoPath[] = [];
-  for (let k = 0; k < TOPO.levels; k++) {
-    const iso = lo + ((hi - lo) * (k + 0.5)) / TOPO.levels;
-    for (const chain of chainSegments(contourSegments(vals, nx, ny, TOPO.cell, iso))) {
+  const addContours = (grid: Float32Array, iso: number) => {
+    for (const chain of chainSegments(contourSegments(grid, nx, ny, cfg.cell, iso))) {
       const closed = chain.length > 3 && ptKey(chain[0]) === ptKey(chain[chain.length - 1]);
-      if (closed) {
-        const xs = chain.map((p) => p.x), ys = chain.map((p) => p.y);
-        if (Math.max(...xs) - Math.min(...xs) < TOPO.minLoop && Math.max(...ys) - Math.min(...ys) < TOPO.minLoop) continue;
-      }
+      if (closed && loopExtent(chain) < cfg.minLoop) continue;
+      if (!closed && pathLength(chain) < cfg.minStub) continue;
       const pts = simplify(chain, 0.16);
       if (pts.length >= (closed ? 4 : 2)) paths.push({ pts, closed });
     }
+  };
+
+  /* Source curves, then a binary raster of them (nearest grid node to each crossing). */
+  const seed = new Float64Array(nx * ny).fill(FAR);
+  for (const iso of cfg.sources) {
+    addContours(vals, iso);
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const a = vals[j * nx + i] - iso;
+        if (i + 1 < nx) {
+          const b = vals[j * nx + i + 1] - iso;
+          if ((a > 0) !== (b > 0)) seed[j * nx + i + (Math.abs(a) / (Math.abs(a) + Math.abs(b)) < 0.5 ? 0 : 1)] = 0;
+        }
+        if (j + 1 < ny) {
+          const b = vals[(j + 1) * nx + i] - iso;
+          if ((a > 0) !== (b > 0)) seed[(j + (Math.abs(a) / (Math.abs(a) + Math.abs(b)) < 0.5 ? 0 : 1)) * nx + i] = 0;
+        }
+      }
+    }
   }
+
+  /* Distance to the sources (pt), softened, then contoured every `spacing` points. */
+  const sq = distanceTransform(seed, nx, ny);
+  const dist = new Float32Array(nx * ny);
+  let maxDist = 0;
+  for (let k = 0; k < dist.length; k++) {
+    dist[k] = Math.sqrt(sq[k]) * cfg.cell;
+    if (dist[k] > maxDist) maxDist = dist[k];
+  }
+  const soft = blurGrid(dist, nx, ny, Math.round(cfg.smooth / cfg.cell));
+  for (let level = cfg.spacing; level < maxDist; level += cfg.spacing) addContours(soft, level);
   return paths;
+};
+
+/** Rounded rectangle in path coordinates; negative inside. */
+type RoundRect = { x: number; y: number; w: number; h: number; r: number };
+const sdRoundRect = (p: Pt, c: RoundRect): number => {
+  const qx = Math.abs(p.x - (c.x + c.w / 2)) - (c.w / 2 - c.r);
+  const qy = Math.abs(p.y - (c.y + c.h / 2)) - (c.h / 2 - c.r);
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - c.r;
+};
+
+/** Cuts every path where it enters the clearance, so lines stop cleanly at its edge; leftover slivers shorter than minStub are dropped. */
+const trimPaths = (paths: TopoPath[], clear: RoundRect, minStub: number): TopoPath[] => {
+  const out: TopoPath[] = [];
+  for (const path of paths) {
+    const pts = path.pts;
+    const sd = pts.map((p) => sdRoundRect(p, clear));
+    if (sd.every((v) => v >= 0)) {
+      out.push(path);
+      continue;
+    }
+    if (sd.every((v) => v < 0)) continue;
+    const pieces: Pt[][] = [];
+    let cur: Pt[] = sd[0] >= 0 ? [pts[0]] : [];
+    for (let i = 1; i < pts.length; i++) {
+      const a = sd[i - 1], b = sd[i];
+      if (a >= 0 && b >= 0) {
+        cur.push(pts[i]);
+      } else if (a >= 0 && b < 0) {
+        const t = a / (a - b);
+        cur.push({ x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t });
+        pieces.push(cur);
+        cur = [];
+      } else if (a < 0 && b >= 0) {
+        const t = a / (a - b);
+        cur = [{ x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t }, pts[i]];
+      }
+    }
+    if (cur.length > 0) pieces.push(cur);
+    /* A cut loop starts and ends at the same outside point: join those two pieces into one. */
+    if (path.closed && pieces.length > 1 && sd[0] >= 0) {
+      const last = pieces.pop();
+      if (last) pieces[0] = [...last, ...pieces[0].slice(1)];
+    }
+    for (const piece of pieces) if (piece.length >= 2 && pathLength(piece) >= minStub) out.push({ pts: piece, closed: false });
+  }
+  return out;
 };
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -864,8 +1048,8 @@ const pathOps = (path: TopoPath, ox: number, oy: number): PDFOperator[] => {
 };
 
 /** Strokes the contour set; paths are in bleed-page coordinates, so pass the page origin of the bleed box. */
-const drawTopo = (page: PDFPage, paths: TopoPath[], ox: number, oy: number) => {
-  const ops: PDFOperator[] = [pushGraphicsState(), setStrokingColor(T.LINE), setLineWidth(TOPO.width), setLineCap(LineCapStyle.Round), setLineJoin(LineJoinStyle.Round)];
+const drawTopo = (page: PDFPage, paths: TopoPath[], ox: number, oy: number, width: number) => {
+  const ops: PDFOperator[] = [pushGraphicsState(), setStrokingColor(T.LINE), setLineWidth(width), setLineCap(LineCapStyle.Round), setLineJoin(LineJoinStyle.Round)];
   for (const p of paths) ops.push(...pathOps(p, ox, oy));
   ops.push(popGraphicsState());
   for (let i = 0; i < ops.length; i += 4000) page.pushOperators(...ops.slice(i, i + 4000));
@@ -875,7 +1059,6 @@ const drawTopoFront = (page: PDFPage, ox: number, oy: number, a: Assets, paths: 
   const { sansBold, sansMed } = a.fonts;
   const cx = ox + TRIM_W / 2;
   const cy = oy + TRIM_H / 2;
-  drawTopo(page, paths, ox - BLEED, oy - BLEED);
 
   /* Centred lockup: mark, bold tracked wordmark, tagline justified to the wordmark width. */
   const markH = 26;
@@ -888,7 +1071,19 @@ const drawTopoFront = (page: PDFPage, ox: number, oy: number, a: Assets, paths: 
   const wordW = trackW(sansBold, BRAND.wordmark, wordSize, wordTr);
   const tagTr = justifyTracking(sansMed, BRAND.tagline, tagSize, wordW);
   const groupH = markH + gapMark + capH(sansBold, wordSize) + gapTag + capH(sansMed, tagSize);
+  const groupW = Math.max(markW, wordW);
   const top = cy + groupH / 2;
+
+  /* Contours stop at a plain rounded clearance around the lockup (path coordinates: bleed-page origin). */
+  const clear: RoundRect = {
+    x: BLEED + TRIM_W / 2 - groupW / 2 - CLEARANCE.padX,
+    y: BLEED + TRIM_H / 2 - groupH / 2 - CLEARANCE.padY,
+    w: groupW + 2 * CLEARANCE.padX,
+    h: groupH + 2 * CLEARANCE.padY,
+    r: CLEARANCE.radius,
+  };
+  drawTopo(page, trimPaths(paths, clear, CLEARANCE.minStub), ox - BLEED, oy - BLEED, TOPO.width);
+
   page.drawImage(a.goldImage, { x: cx - markW / 2, y: top - markH, width: markW, height: markH });
   const wordBase = top - markH - gapMark - capH(sansBold, wordSize);
   drawTracked(page, BRAND.wordmark, { cx, y: wordBase, font: sansBold, size: wordSize, color: T.GOLD, tr: wordTr });
@@ -1222,10 +1417,10 @@ const main = async () => {
   const variantsMode = process.argv.includes("--variants");
   const marks = prepareMarks(STYLE === "editorial");
   const qr = buildQr();
-  const topoPaths = STYLE === "topo" ? buildTopoPaths() : [];
+  const topoPaths = STYLE === "topo" ? buildTopoPaths(TOPO) : [];
   if (STYLE === "topo") {
     const points = topoPaths.reduce((s, p) => s + p.pts.length, 0);
-    console.log(`Topo: ${topoPaths.length} contour paths, ${points} points, ${TOPO.levels} levels`);
+    console.log(`Topo: ${topoPaths.length} contour paths, ${points} points, ${TOPO.spacing}pt spacing`);
   }
 
   if (variantsMode) {
@@ -1236,10 +1431,16 @@ const main = async () => {
     if (STYLE === "topo") {
       cols = 2;
       corner = TOPO_PREVIEW_CORNER;
-      const designs: TopoDesign[] = [{ qr: "none" }, { qr: "left" }];
-      for (const d of designs) {
-        const r = trimRenders(await buildPrintPdf(marks, qr, topoCard(d, topoPaths)), scale);
-        cards.push(r.front, r.back);
+      const configs: TopoConfig[] = [
+        TOPO,
+        { ...TOPO, seed: 20260905 },
+        { ...TOPO, spacing: 16 },
+        { ...TOPO, sources: [0], feature: 80, octaves: [1, 0.35] },
+      ];
+      for (const cfg of configs) {
+        const paths = buildTopoPaths(cfg);
+        console.log(`variant: sources ${cfg.sources.join("/")}, spacing ${cfg.spacing}, feature ${cfg.feature}: ${paths.length} paths`);
+        cards.push(trimRenders(await buildPrintPdf(marks, qr, topoCard(FINAL_TOPO, paths)), scale).front);
       }
     } else {
       const designs: Design[] = [
