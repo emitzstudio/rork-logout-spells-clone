@@ -561,21 +561,16 @@ for (const day of days) {
     dt(p, price, { x: cx - priceFont.widthOfTextAtSize(price, priceSize) / 2, y: cardTop - 64, font: priceFont, size: priceSize, color: CREAM });
     drawTracked(p, "PER PERSON", { cx, y: cardTop - 80, font: sansMed, size: 6.8, color: MUTED, tr: 2.4, opacity: 0.85 });
     hline(p, cx - 62, cx + 62, cardTop - 92, GOLD, 0.22);
-    drawTracked(p, "BOOKING AMOUNT · 30%", { cx, y: cardTop - 106, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
+    drawTracked(p, "BOOKING AMOUNT", { cx, y: cardTop - 106, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
     dt(p, booking, { x: cx - serifSemi.widthOfTextAtSize(booking, 17) / 2, y: cardTop - 124, font: serifSemi, size: 17, color: GOLD_HI });
     const remW = sansReg.widthOfTextAtSize(remaining, 7.5);
     dt(p, remaining, { x: cx - remW / 2, y: cardTop - 138, font: sansReg, size: 7.5, color: MUTED, opacity: 0.9 });
   };
 
-  priceCard(64, "EARLY BIRD", rupee("12,000"), rupee("3,600"), `remaining ${rupee("8,400")} before departure`, true);
-  priceCard(307.28, "REGULAR", rupee("14,000"), rupee("4,200"), `remaining ${rupee("9,800")} before departure`, false);
+  priceCard(64, "6 BED DORM", rupee("14,000"), rupee("4,000"), `remaining ${rupee("10,000")} before departure`, true);
+  priceCard(307.28, "4 BED DORM", rupee("16,000"), rupee("4,000"), `remaining ${rupee("12,000")} before departure`, false);
 
-  const saveText = "SAVE " + rupee("2,000");
-  const saveW = trackW(sansSemi, saveText, 6.3, 1.6) + 22;
-  roundRect(p, 64 + cardW / 2 - saveW / 2, cardTop + 8, saveW, 15, 7.5, { fill: GOLD, fillOpacity: 0.95 });
-  drawTracked(p, saveText, { cx: 64 + cardW / 2, y: cardTop + 8 - 12, font: sansSemi, size: 6.3, color: CHARCOAL, tr: 1.6 });
-
-  para(p, "Stay in a shared 6 bed dorm at Qudrat. Prices include GST. Book with 30% now and pay the rest before departure.", {
+  para(p, `Stay in a shared dorm at Qudrat. Prices include GST. Book with ${rupee("4,000")} now and pay the rest before departure.`, {
     cx: W / 2,
     y: 504,
     font: sansReg,
@@ -589,8 +584,7 @@ for (const day of days) {
   /* Included / not included */
   const included = [
     "Accommodation in Bir (2 nights)",
-    "Breakfast",
-    "Picnic brunch",
+    "All Day Breakfast",
     "Farewell dinner",
     "All local transfers & sightseeing",
     "Chokling visit",
