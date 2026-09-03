@@ -2108,6 +2108,26 @@ D (dates), D2 (price/seats) · no staged migrations remain.
 
 ---
 
+## 0048 — Bir dorm-tier pricing, website only (2026-09-03)
+
+- Founder instruction (in chat): change the Bir upcoming spell's pricing to
+  ₹14,000 for the 6 bed dorm and ₹16,000 for the 4 bed dorm - room-type
+  tiers instead of the 0035 early-bird vs regular model. Brochures
+  (Logout-Spells-Bir-Sept-2026.pdf, Bir Masala) intentionally untouched.
+- **0048_bir_dorm_pricing — APPLIED** (first attempt rolled back on the
+  change_kind enum: 'pricing' is not a value, 'price' is): price FAQ rewritten
+  to carry both tiers, stay amenity now reads "Shared 6 bed and 4 bed dorms",
+  urgency chip 'early-bird' → 'new' (no early-bird price exists anymore),
+  price_minor stays 1400000 (the 6 bed dorm is the from-price everywhere a
+  single number shows), spell_changes 'price' entry appended. Self-verify
+  pins the tiers, the amenity, zero stale early-bird/₹12,000 copy and the
+  dash-free rule; anon lens green. Post-apply REST check as anon confirms.
+- Note: online booking still charges off price_minor (₹14,000) - the 4 bed
+  dorm tier is display-only until room-type selection exists in the booking
+  flow.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
