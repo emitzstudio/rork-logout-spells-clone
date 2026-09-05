@@ -1,8 +1,8 @@
 /**
- * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro.
+ * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro + Vietnam.
  * Same charcoal + gold brand system as the Bir Grimoire PDF, no stay page.
- * Run: bun run trips.ts  ->  Logout-Spells-Valley-of-Flowers.pdf,
- *                            Logout-Spells-Jibhi.pdf, Logout-Spells-Ziro.pdf
+ * Run: bun run trips.ts            ->  all four PDFs
+ *      bun run trips.ts vietnam    ->  only Logout-Spells-Vietnam.pdf (keys: vof jibhi ziro vietnam)
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees } from "pdf-lib";
@@ -51,6 +51,8 @@ type PriceCard = {
 };
 type CoverSpec = {
   img: string;
+  /** Optional soft dark band (top edge y, height, peak opacity) for eyebrows that land on bright sky. */
+  shade?: { y: number; h: number; opacity: number };
   eyebrow: string;
   titleLines: { text: string; size: number; tr: number; y: number }[];
   sub: string;
@@ -71,10 +73,23 @@ type CoverSpec = {
   pill: string;
   pillY: number;
 };
+type GlanceRow = { day: string; place: string; experience: string; pace: string; accent?: boolean };
+type GlanceSpec = {
+  eyebrow: string;
+  titleA: string;
+  titleB: string;
+  intro: string;
+  rows: GlanceRow[];
+  /** Route stops in order; "\n" breaks a long label onto a second line. */
+  route: string[];
+  note?: string;
+  footer: string;
+};
 type FinalSpec = {
   img: string;
   subline: string;
-  cards: [PriceCard, PriceCard];
+  /** One card is centred, two sit side by side. */
+  cards: PriceCard[];
   cardNote: string;
   leftHeading: string;
   leftRows: InfoRow[];
@@ -90,6 +105,8 @@ type TripSpec = {
   docSubject: string;
   cover: CoverSpec;
   days: DaySpec[];
+  /** Optional itinerary-at-a-glance table page, placed after the day pages. */
+  glance?: GlanceSpec;
   final: FinalSpec;
 };
 
@@ -373,6 +390,11 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.16 });
     vgrad(p, 0, W, 585, 585, DEEP, 0, 0.97, 160);
 
+    if (c.shade) {
+      vgrad(p, 0, W, c.shade.y, c.shade.h / 2, DEEP, 0, c.shade.opacity, 40);
+      vgrad(p, 0, W, c.shade.y - c.shade.h / 2, c.shade.h / 2, DEEP, c.shade.opacity, 0, 40);
+    }
+
     roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.26, borderWidth: 0.8 });
 
     if (imgLogo) p.drawImage(imgLogo, { x: W / 2 - 23, y: H - 84, width: 46, height: 46 });
@@ -471,6 +493,94 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     footerLabel(p, day.footer);
   }
 
+  /* --------------------------- At a glance page --------------------------- */
+  if (spec.glance) {
+    const g = spec.glance;
+    const p = doc.addPage([W, H]);
+    bgFill(p);
+    roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.24, borderWidth: 0.8 });
+    if (imgLogo) p.drawImage(imgLogo, { x: W / 2 - 16, y: H - 66, width: 32, height: 32 });
+
+    drawTracked(p, g.eyebrow, { cx: W / 2, y: H - 100, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
+    mixedTitle(p, g.titleA, g.titleB, { cx: W / 2, y: H - 146, size: 38 });
+    let iy = H - 174;
+    for (const line of wrap(serifItal, g.intro, 12, 430)) {
+      drawTracked(p, line, { cx: W / 2, y: iy, font: serifItal, size: 12, color: CREAM, tr: 0, opacity: 0.78 });
+      iy -= 17.5;
+    }
+
+    /* The table: day · location · main experience · pace chip. */
+    const tX = 64;
+    const tW = W - 128;
+    const col = { day: tX + 14, place: tX + 62, exp: tX + 218, pace: tX + tW - 76 };
+    const placeW = col.exp - col.place - 14;
+    const expW = col.pace - col.exp - 14;
+    const headY = iy - 30;
+    for (const [label, x] of [["DAY", col.day], ["LOCATION", col.place], ["MAIN EXPERIENCE", col.exp], ["PACE", col.pace]] as const) {
+      drawTracked(p, label, { x, y: headY, font: sansSemi, size: 6.8, color: GOLD, tr: 2.2 });
+    }
+    hline(p, tX, tX + tW, headY - 9, GOLD, 0.45, 0.7);
+
+    const rowH = 46;
+    let rowTop = headY - 12;
+    for (const [i, row] of g.rows.entries()) {
+      if (i % 2 === 0) p.drawRectangle({ x: tX, y: rowTop - rowH, width: tW, height: rowH, color: CHARCOAL, opacity: 0.42 });
+      const mid = rowTop - rowH / 2;
+      dt(p, row.day, { x: col.day, y: mid - 5.4, font: serifSemi, size: 15, color: GOLD_LIGHT });
+
+      const block = (lines: string[], x: number, font: PDFFont, color: ReturnType<typeof rgb>) => {
+        let y = mid + (lines.length * 11.6) / 2 - 8.6;
+        for (const line of lines) {
+          dt(p, line, { x, y, font, size: 8.4, color });
+          y -= 11.6;
+        }
+      };
+      block(wrap(sansMed, row.place, 8.4, placeW).slice(0, 2), col.place, sansMed, CREAM);
+      block(wrap(sansReg, row.experience, 8.4, expW).slice(0, 2), col.exp, sansReg, MUTED);
+
+      const chipText = row.pace.toUpperCase();
+      const chipW = trackW(sansSemi, chipText, 6.3, 1.6) + 18;
+      roundRect(p, col.pace, mid + 7.5, chipW, 15, 7.5, {
+        fill: CHARCOAL_SOFT,
+        fillOpacity: 0.6,
+        border: row.accent ? GOLD : TAN,
+        borderOpacity: row.accent ? 0.85 : 0.45,
+        borderWidth: 0.7,
+      });
+      drawTracked(p, chipText, { x: col.pace + 9, y: mid - 2.2, font: sansSemi, size: 6.3, color: row.accent ? GOLD_LIGHT : MUTED, tr: 1.6 });
+
+      hline(p, tX, tX + tW, rowTop - rowH, GOLD, 0.16, 0.5);
+      rowTop -= rowH;
+    }
+
+    /* The route: one gold thread, a node per stop. */
+    const rTop = rowTop - 36;
+    drawTracked(p, "THE ROUTE", { cx: W / 2, y: rTop, font: sansSemi, size: 7, color: GOLD, tr: 2.6 });
+    const lineY = rTop - 24;
+    const rx0 = 86;
+    const rx1 = W - 86;
+    hline(p, rx0, rx1, lineY, GOLD, 0.35, 0.7);
+    sparkle(p, rx0 - 12, lineY, 2.4, GOLD_LIGHT, 0.8);
+    sparkle(p, rx1 + 12, lineY, 2.4, GOLD_LIGHT, 0.8);
+    for (const [i, stop] of g.route.entries()) {
+      const x = rx0 + ((rx1 - rx0) * i) / Math.max(1, g.route.length - 1);
+      p.drawCircle({ x, y: lineY, size: 3.6, color: DEEP, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.9 });
+      p.drawCircle({ x, y: lineY, size: 1.5, color: GOLD_LIGHT });
+      let ly = lineY - 15;
+      for (const l of stop.split("\n")) {
+        drawTracked(p, l, { cx: x, y: ly, font: sansMed, size: 6.2, color: MUTED, tr: 1.2 });
+        ly -= 9.5;
+      }
+    }
+
+    if (g.note) {
+      const noteW = hand.widthOfTextAtSize(g.note, 17);
+      dt(p, g.note, { x: W / 2 - noteW / 2, y: 118, font: hand, size: 17, color: GOLD_LIGHT, rotate: -2 });
+      sparkle(p, W / 2 + noteW / 2 + 14, 124, 3, GOLD_LIGHT, 0.85);
+    }
+    footerLabel(p, g.footer);
+  }
+
   /* ------------------------------ Final page ----------------------------- */
   {
     const f = spec.final;
@@ -517,8 +627,13 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       }
     };
 
-    priceCard(64, f.cards[0]);
-    priceCard(307.28, f.cards[1]);
+    const [cardA, cardB] = f.cards;
+    if (cardA && cardB) {
+      priceCard(64, cardA);
+      priceCard(307.28, cardB);
+    } else if (cardA) {
+      priceCard(W / 2 - cardW / 2, cardA);
+    }
 
     para(p, f.cardNote, { cx: W / 2, y: 504, font: sansReg, size: 8, color: MUTED, maxW: 470, leading: 12.5, opacity: 0.9 });
 
@@ -1129,8 +1244,226 @@ const ziro: TripSpec = {
   },
 };
 
+/* =============================== VIETNAM ================================= */
+const vietnam: TripSpec = {
+  fileName: "Logout-Spells-Vietnam.pdf",
+  docTitle: "Logout Spells · The Vietnam Spell · 7 Days from Ha Long Bay to Ho Chi Minh City",
+  docSubject: "Vietnam · Hanoi, Ha Long Bay, Hoi An, Da Nang, Ho Chi Minh City · trip itinerary and booking",
+  cover: {
+    img: "img2/final/vn-cover.jpg",
+    shade: { y: 580, h: 110, opacity: 0.55 },
+    eyebrow: "A SPELL FROM THE BAY TO THE DELTA",
+    titleLines: [{ text: "VIETNAM", size: 104, tr: 10, y: 404 }],
+    sub: "Where the bay, the lanterns and the city stay up late.",
+    subY: 372,
+    ruleY: 349,
+    dateLine: "7 DAYS · HANOI TO HO CHI MINH CITY",
+    dateY: 322,
+    locLine: "HANOI · HA LONG BAY · HOI AN · DA NANG · HO CHI MINH CITY",
+    locY: 305,
+    poem1: "Seven days. One coastline. Three cities that never sit still.",
+    poem2: "Cruise decks. Lantern streets. Stories worth carrying home.",
+    poemY: 274,
+    para: "Leave the usual behind and follow Vietnam from north to south: a night on the water in Ha Long Bay, street food in Hanoi, islands off Hoi An, a golden bridge above the clouds and rooftops in Ho Chi Minh City to close the spell.",
+    paraY: 224,
+    ital1: "This isn't about ticking places off a list.",
+    ital2: "It's about slow mornings, loud nights and letting the country set the pace.",
+    italY: 172,
+    pill: "CRUISE · ISLANDS · LANTERNS · ROOFTOPS",
+    pillY: 126,
+  },
+  days: [
+    {
+      img: "img2/final/vn-d1.jpg",
+      eyebrow: "DAY 01 · HANOI TO HA LONG BAY · CRUISE & PARTY",
+      titleA: "A Night on ",
+      titleB: "the Bay",
+      intro: "The spell begins on the water. Land in Hanoi, roll straight out to Ha Long Bay and let a cruise deck do the rest of the day's work.",
+      items: [
+        { title: "MORNING · ARRIVE IN HANOI", body: "Land, meet the circle and transfer out toward the coast while the city wakes up behind you." },
+        { title: "CHECK IN & LUNCH ON THE CRUISE", body: "Board, claim your cabin and sit down to lunch as the limestone islands start sliding past the windows." },
+        { title: "AFTERNOON ON THE DECK", body: "Nothing on the list but the bay: loungers, the view and whatever the cruise has planned." },
+        {
+          title: "SUNSET DRINKS & THE PARTY",
+          body: "Sunset drinks as the karsts turn gold, cruise activities, then the ship party runs late. Overnight on the cruise.",
+        },
+      ],
+      chip: "ARRIVE · CRUISE · CELEBRATE",
+      note: "the sea rocks you to sleep tonight",
+      footer: "02 · DAY ONE",
+    },
+    {
+      img: "img2/final/vn-d2.jpg",
+      eyebrow: "DAY 02 · HA LONG BAY TO HANOI · BAY & OLD QUARTER",
+      titleA: "Bay Morning, ",
+      titleB: "City Night",
+      intro: "A slow breakfast on the water, a last look at the bay, then Hanoi's Old Quarter for the kind of evening that turns into a night.",
+      items: [
+        { title: "SLOW BREAKFAST ON THE CRUISE", body: "No alarms. Breakfast on deck while the bay does its quiet morning thing." },
+        {
+          title: "HA LONG BAY EXPLORATION",
+          body: "Out among the islands one more time, with snorkeling or a swim depending on the cruise. Lunch on board.",
+        },
+        { title: "AFTERNOON · BACK TO HANOI", body: "Return to the city, check into the hotel and freshen up for the evening." },
+        {
+          title: "EVENING · THE OLD QUARTER",
+          body: "Street food on low plastic stools, cafes and bars, a slow loop around Hoan Kiem Lake. Overnight in Hanoi.",
+        },
+      ],
+      chip: "BREAKFAST · BAY · STREET FOOD",
+      footer: "03 · DAY TWO",
+    },
+    {
+      img: "img2/final/vn-d3.jpg",
+      eyebrow: "DAY 03 · HANOI TO DA NANG · CHAM ISLANDS BEACH DAY",
+      titleA: "Salt, Sand & ",
+      titleB: "Sunshine",
+      intro: "A morning flight south and straight onto a boat. Today is about clear water, coral and doing very little on a beach.",
+      items: [
+        { title: "MORNING FLIGHT · HANOI TO DA NANG", body: "Fly south with the circle and transfer toward Hoi An and Cua Dai on the coast." },
+        { title: "BOAT TO THE CHAM ISLANDS", body: "A boat ride out to the islands, where the water turns the colour of a postcard." },
+        { title: "SNORKEL, SWIM, DO NOTHING", body: "Snorkeling over the reef, swimming, then the beach for as long as the beach wants you." },
+        { title: "EVENING · HOI AN", body: "Return to Hoi An, check in and keep the evening free. Overnight in Hoi An." },
+      ],
+      chip: "FLY · SAIL · SNORKEL",
+      note: "sunscreen. more than you think.",
+      footer: "04 · DAY THREE",
+    },
+    {
+      img: "img2/final/vn-d4.jpg",
+      eyebrow: "DAY 04 · MARBLE MOUNTAINS & HOI AN · SLOW CULTURE",
+      titleA: "Caves & ",
+      titleB: "Lanterns",
+      intro: "A late breakfast, a mountain full of caves and pagodas, then the ancient town lights its lanterns for you.",
+      items: [
+        { title: "LATE BREAKFAST", body: "Sleep in. The morning starts when you do." },
+        {
+          title: "THE MARBLE MOUNTAINS",
+          body: "Five marble hills of caves, shrines and pagodas just outside Da Nang. Lunch after, then back to the hotel to rest.",
+        },
+        {
+          title: "AROUND 4 PM · THE ANCIENT TOWN",
+          body: "Head into Hoi An, on bikes if it's practical: the Japanese Covered Bridge, the riverside, the cafes.",
+        },
+        {
+          title: "LANTERNS & DINNER",
+          body: "The town glows as the light drops. Dinner in Hoi An, then wander until you're done. Overnight in Hoi An.",
+        },
+      ],
+      chip: "CAVES · BIKES · LANTERNS",
+      footer: "05 · DAY FOUR",
+    },
+    {
+      img: "img2/final/vn-d5.jpg",
+      eyebrow: "DAY 05 · BA NA HILLS · GOLDEN BRIDGE · THE BIG DAY",
+      titleA: "Above ",
+      titleB: "the Clouds",
+      intro: "One big attraction day, done properly. A cable car into the clouds and a bridge held up by two giant hands.",
+      items: [
+        { title: "BREAKFAST, THEN UP", body: "Breakfast and an early start for Ba Na Hills." },
+        { title: "THE CABLE CAR", body: "One of the longest cable car rides in the world, straight up into the mist." },
+        { title: "THE GOLDEN BRIDGE", body: "Walk the golden span held aloft by two giant stone hands, then explore the hilltop." },
+        {
+          title: "FRENCH VILLAGE OR FANTASY PARK",
+          body: "Pick one, don't force both. Lunch on the hill, then back down to Da Nang by evening. Free evening. Overnight in Da Nang.",
+        },
+      ],
+      chip: "CABLE CAR · BRIDGE · HILLTOP",
+      note: "our pick: the golden bridge + the french village",
+      footer: "06 · DAY FIVE",
+    },
+    {
+      img: "img2/final/vn-d6.jpg",
+      eyebrow: "DAY 06 · DA NANG TO HO CHI MINH CITY · CITY EVENING",
+      titleA: "Hello, ",
+      titleB: "Saigon",
+      intro: "A slow breakfast, a flight south and an afternoon with nothing in it, saved on purpose for the city's rooftops.",
+      items: [
+        { title: "SLOW BREAKFAST & FLIGHT", body: "Breakfast at your pace, then fly Da Nang to Ho Chi Minh City." },
+        { title: "CHECK IN, THEN NOTHING", body: "Hotel check-in and an afternoon that is completely, deliberately free." },
+        { title: "EVENING · BEN THANH & BEYOND", body: "The Ben Thanh area, cafe hopping, then a rooftop for the skyline and the nightlife." },
+        { title: "DINNER IN THE CITY", body: "Dinner wherever the evening takes the circle. Overnight in Ho Chi Minh City." },
+      ],
+      chip: "FLY · REST · ROOFTOPS",
+      footer: "07 · DAY SIX",
+    },
+    {
+      img: "img2/final/vn-d7.jpg",
+      eyebrow: "DAY 07 · HO CHI MINH CITY · A CHILL FINAL DAY",
+      titleA: "Your Last ",
+      titleB: "Day, Your Call",
+      intro: "Instead of packing the final day with activities, the circle gets two options. Both end at the same table.",
+      items: [
+        {
+          title: "OPTION A · CITY DAY",
+          body: "Late breakfast, the War Remnants Museum, Independence Palace and the Notre-Dame Cathedral and Central Post Office area. Lunch, then shopping and cafes.",
+        },
+        {
+          title: "OPTION B · THE MEKONG DELTA",
+          body: "One final experience: a morning trip to the delta, a boat ride through coconut waterways and a local village, lunch, and back in the city by evening.",
+        },
+        { title: "THE FINAL DINNER", body: "Everyone back at one table for the last dinner, the kind that runs long." },
+      ],
+      chip: "CITY OR DELTA · YOUR CALL",
+      note: "a loose last day is the whole point",
+      footer: "08 · DAY SEVEN",
+    },
+  ],
+  glance: {
+    eyebrow: "THE SPELL AT A GLANCE",
+    titleA: "Seven Days, ",
+    titleB: "One Coastline",
+    intro: "North to south in one unhurried line: easy days, one full day, and a last day left loose on purpose.",
+    rows: [
+      { day: "01", place: "Hanoi to Ha Long Bay", experience: "Cruise, sunset and the ship party", pace: "Easy" },
+      { day: "02", place: "Ha Long Bay to Hanoi", experience: "The bay, snorkeling and a Hanoi evening", pace: "Easy" },
+      { day: "03", place: "Hanoi to Da Nang to the Cham Islands", experience: "Beach and snorkeling", pace: "Moderate" },
+      { day: "04", place: "Hoi An", experience: "Marble Mountains and the Ancient Town", pace: "Easy" },
+      { day: "05", place: "Da Nang", experience: "Ba Na Hills and the Golden Bridge", pace: "Full day", accent: true },
+      { day: "06", place: "Da Nang to Ho Chi Minh City", experience: "Flight and a city evening", pace: "Very easy" },
+      { day: "07", place: "Ho Chi Minh City", experience: "City exploration or the Mekong Delta", pace: "Easy" },
+    ],
+    route: ["HANOI", "HA LONG BAY", "DA NANG", "CHAM ISLANDS", "HOI AN", "BA NA HILLS", "HO CHI MINH\nCITY"],
+    note: "we kept the last day loose on purpose",
+    footer: "09 · AT A GLANCE",
+  },
+  final: {
+    img: "img2/final/vn-night.jpg",
+    subline: "THE VIETNAM SPELL · 7 DAYS · HANOI TO HO CHI MINH CITY",
+    cards: [
+      {
+        label: "ALL SEVEN DAYS",
+        price: rupee("60,000"),
+        booking: rupee("18,000"),
+        remaining: `remaining ${rupee("42,000")} before departure`,
+        highlight: true,
+      },
+    ],
+    cardNote: "Price is per person. Book with 30% now and pay the rest before departure. Seats are confirmed in the order payments arrive.",
+    leftHeading: "GOOD TO KNOW",
+    leftRows: [
+      { icon: "check", title: "ONE NIGHT ON THE WATER", body: "Day 1 is spent aboard a Ha Long Bay cruise: cabin, lunch, sunset drinks and the ship party." },
+      { icon: "check", title: "TWO DOMESTIC FLIGHTS", body: "Hanoi to Da Nang on Day 3 and Da Nang to Ho Chi Minh City on Day 6 keep the road time short." },
+      { icon: "cross", title: "INTERNATIONAL FLIGHTS & VISA", body: "Flights into Hanoi and out of Ho Chi Minh City, and your Vietnam e-visa, are not part of the price." },
+    ],
+    rightHeading: "COME READY FOR",
+    rightRows: [
+      { icon: "check", title: "WATER DAYS", body: "Swimwear, a dry bag and reef safe sunscreen for the bay and the Cham Islands." },
+      { icon: "check", title: "ONE EARLY FLIGHT", body: "Day 3 starts with a morning flight south. Pack the night before." },
+      { icon: "check", title: "LATE NIGHTS", body: "A cruise party, Hanoi's Old Quarter and Saigon rooftops. Day 6 afternoon is for sleeping in." },
+    ],
+    qrBody: "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
+    closeThanks: "Thank you for choosing to wander with us.",
+    closeHand: "seven days. one country that keeps you up late.",
+  },
+};
+
 /* -------------------------------- Build --------------------------------- */
+const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam };
+const only = process.argv.slice(2);
+const unknown = only.filter((key) => !(key in trips));
+if (unknown.length > 0) throw new Error(`unknown trip(s): ${unknown.join(", ")} (known: ${Object.keys(trips).join(", ")})`);
 console.log("rupee glyph:", { serifHasRupee, sansHasRupee });
-await buildTrip(vof);
-await buildTrip(jibhi);
-await buildTrip(ziro);
+for (const [key, spec] of Object.entries(trips)) {
+  if (only.length === 0 || only.includes(key)) await buildTrip(spec);
+}

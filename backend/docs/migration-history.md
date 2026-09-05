@@ -2128,6 +2128,54 @@ D (dates), D2 (price/seats) · no staged migrations remain.
 
 ---
 
+## 0049 + 0050 — The Vietnam Spell goes live, ₹60,000, dates announced soon (2026-09-05)
+
+- Founder instruction (in chat): "add this trip in live trip" with the full
+  7 day Vietnam program (Hanoi → Ha Long Bay → Da Nang → Cham Islands → Hoi
+  An → Ba Na Hills → Ho Chi Minh City, with the Day 7 city-or-Mekong choice)
+  and "price 60k", plus a downloadable Grimoire-style brochure. The brochure
+  shipped first (pdf-build/trips.ts `vietnam` spec → 10 pages incl. a new
+  itinerary-at-a-glance table page → web/public/brochures/
+  Logout-Spells-Vietnam.pdf); the live spell mirrors its copy.
+- Imagery: 10 generated HD files (hero, 7 day images, 2 gallery portraits),
+  founder-approved AI generation as before, seeded into
+  `spells/e4c1a7b2-5d3f-4a8e-9b6c-7f2d1e0a3c50/hd/` through the 0049 window
+  (all 10 uploads + public reads verified 200 in-session).
+- **0049_vietnam_hd_seed_window — APPLIED**: the usual narrowest anon INSERT
+  policy on one fixed hd/ folder (0034/0041/0045 convention).
+- **0050_vietnam_live_spell — APPLIED**: §1 closes the window; spell
+  `the-vietnam-spell` published, hostless, category wandering, urgency 'new',
+  7 days · 6 nights, price_minor 6000000 (₹60,000; the price FAQ carries the
+  house 30% split ₹18,000 / ₹42,000), gradient left '' so the mapper's
+  compiled `wandering` gradient applies, symbol ≋, 7-entry itinerary, cruise
+  + city-hotels stay block, 7 inclusions / 4 exclusions, 7 FAQs, 2 gallery
+  shots. Departure ships in the honest TBC state ('Dates announced soon',
+  null dates, seats_total 0, the 0043/0046/0047 convention). Self-verify pins
+  the row shape, dash-free copy, ZERO anon INSERT policies left on
+  storage.objects, exactly 10 hd objects, and that every image URL the page
+  or hero references exists in storage; anon lens green. Post-apply REST
+  check as anon: 6 published spells, Vietnam departure visible, hero 200,
+  upload probe 400 (window really closed).
+- Scope assumptions (flagged to the founder in chat, one-line follow-up if
+  wrong): the price covers the program as written (both domestic flights,
+  6 nights incl. the cruise, transfers, boat rides, cable car, sightseeing);
+  international flights, the Vietnam e-visa and unlisted meals are listed as
+  not included, both on the live page and in the brochure.
+- Open founder numbers: Vietnam dates + circle size (a tiny follow-up
+  migration fills label + start + end + seats_total and the booking gates
+  lift by themselves), plus the earlier open items.
+
+### Baseline after 0050
+
+spells 6 published (Bir dated + priced · Udaipur priced, Dates TBC · Ziro
+dated, price on request + seats TBA · VoF priced, dates announced soon ·
+Jibhi priced early-bird, dates announced soon · Vietnam ₹60,000, dates
+announced soon) · no anon INSERT windows open · create-booking gates
+unchanged: C (pricing config), F (gateway), D (dates), D2 (price/seats) · no
+staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
