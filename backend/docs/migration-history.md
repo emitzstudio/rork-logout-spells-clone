@@ -2176,6 +2176,41 @@ staged migrations remain.
 
 ---
 
+## 0051 — Vietnam: 5% GST and 2% TCS applicable (2026-09-05)
+
+- Founder instruction (in chat), alongside a brochure edit: drop the 9th page
+  (the at-a-glance table) from Logout-Spells-Vietnam.pdf and "add 5% gst and
+  2% tcs applicable". The 2% TCS matches the flat overseas tour package rate
+  in force since 1 April 2026.
+- Brochure: the at-a-glance page and its renderer were removed from
+  pdf-build/trips.ts (no other spec used it); the price card gained an
+  optional tax line under the price (rows tighten to fit the same card
+  height) and the fine print states the taxes. Rebuilt to 9 pages and
+  republished at web/public/brochures/Logout-Spells-Vietnam.pdf. Jibhi
+  rebuilt as a control and rendered pixel-identical on all 6 pages, so the
+  other brochures are untouched.
+- **0051_vietnam_gst_tcs — APPLIED**: price FAQ (faqs[0]) now reads
+  "₹60,000 per person for all seven days; 5% GST and 2% TCS are applicable.
+  Book with a 30% amount, ₹18,000 ..."; Not Included gains a fifth row
+  (li-vietnam-n5, "5% GST and 2% TCS, applicable on the price"); spell_changes
+  'price' entry appended. price_minor unchanged at 6000000. Self-verify pins
+  the FAQ clause and split, exactly one tax row, no duplicate block ids
+  (jsonb_path_query strict $.**.id), dash-free copy; anon lens green.
+  Post-apply REST check as anon confirms both touch points; 82 block ids, all
+  unique.
+- Follow-up when Vietnam opens for online booking: the web receipt
+  (web/src/data/booking.ts) computes 5% GST only; an overseas spell needs a
+  TCS line before its book-now door is allowed to open. Unreachable today
+  because the departure is still dates-TBC (gate D).
+
+### Baseline after 0051
+
+Unchanged from 0050 except the Vietnam copy: spells 6 published · no anon
+INSERT windows open · create-booking gates unchanged · no staged migrations
+remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

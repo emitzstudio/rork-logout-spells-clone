@@ -48,6 +48,8 @@ type PriceCard = {
   remaining: string;
   highlight: boolean;
   badge?: string;
+  /** Optional tax note under the price, e.g. "5% GST & 2% TCS APPLICABLE"; the card re-spaces to fit it. */
+  taxLine?: string;
 };
 type CoverSpec = {
   img: string;
@@ -73,18 +75,6 @@ type CoverSpec = {
   pill: string;
   pillY: number;
 };
-type GlanceRow = { day: string; place: string; experience: string; pace: string; accent?: boolean };
-type GlanceSpec = {
-  eyebrow: string;
-  titleA: string;
-  titleB: string;
-  intro: string;
-  rows: GlanceRow[];
-  /** Route stops in order; "\n" breaks a long label onto a second line. */
-  route: string[];
-  note?: string;
-  footer: string;
-};
 type FinalSpec = {
   img: string;
   subline: string;
@@ -105,8 +95,6 @@ type TripSpec = {
   docSubject: string;
   cover: CoverSpec;
   days: DaySpec[];
-  /** Optional itinerary-at-a-glance table page, placed after the day pages. */
-  glance?: GlanceSpec;
   final: FinalSpec;
 };
 
@@ -493,94 +481,6 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     footerLabel(p, day.footer);
   }
 
-  /* --------------------------- At a glance page --------------------------- */
-  if (spec.glance) {
-    const g = spec.glance;
-    const p = doc.addPage([W, H]);
-    bgFill(p);
-    roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.24, borderWidth: 0.8 });
-    if (imgLogo) p.drawImage(imgLogo, { x: W / 2 - 16, y: H - 66, width: 32, height: 32 });
-
-    drawTracked(p, g.eyebrow, { cx: W / 2, y: H - 100, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
-    mixedTitle(p, g.titleA, g.titleB, { cx: W / 2, y: H - 146, size: 38 });
-    let iy = H - 174;
-    for (const line of wrap(serifItal, g.intro, 12, 430)) {
-      drawTracked(p, line, { cx: W / 2, y: iy, font: serifItal, size: 12, color: CREAM, tr: 0, opacity: 0.78 });
-      iy -= 17.5;
-    }
-
-    /* The table: day · location · main experience · pace chip. */
-    const tX = 64;
-    const tW = W - 128;
-    const col = { day: tX + 14, place: tX + 62, exp: tX + 218, pace: tX + tW - 76 };
-    const placeW = col.exp - col.place - 14;
-    const expW = col.pace - col.exp - 14;
-    const headY = iy - 30;
-    for (const [label, x] of [["DAY", col.day], ["LOCATION", col.place], ["MAIN EXPERIENCE", col.exp], ["PACE", col.pace]] as const) {
-      drawTracked(p, label, { x, y: headY, font: sansSemi, size: 6.8, color: GOLD, tr: 2.2 });
-    }
-    hline(p, tX, tX + tW, headY - 9, GOLD, 0.45, 0.7);
-
-    const rowH = 46;
-    let rowTop = headY - 12;
-    for (const [i, row] of g.rows.entries()) {
-      if (i % 2 === 0) p.drawRectangle({ x: tX, y: rowTop - rowH, width: tW, height: rowH, color: CHARCOAL, opacity: 0.42 });
-      const mid = rowTop - rowH / 2;
-      dt(p, row.day, { x: col.day, y: mid - 5.4, font: serifSemi, size: 15, color: GOLD_LIGHT });
-
-      const block = (lines: string[], x: number, font: PDFFont, color: ReturnType<typeof rgb>) => {
-        let y = mid + (lines.length * 11.6) / 2 - 8.6;
-        for (const line of lines) {
-          dt(p, line, { x, y, font, size: 8.4, color });
-          y -= 11.6;
-        }
-      };
-      block(wrap(sansMed, row.place, 8.4, placeW).slice(0, 2), col.place, sansMed, CREAM);
-      block(wrap(sansReg, row.experience, 8.4, expW).slice(0, 2), col.exp, sansReg, MUTED);
-
-      const chipText = row.pace.toUpperCase();
-      const chipW = trackW(sansSemi, chipText, 6.3, 1.6) + 18;
-      roundRect(p, col.pace, mid + 7.5, chipW, 15, 7.5, {
-        fill: CHARCOAL_SOFT,
-        fillOpacity: 0.6,
-        border: row.accent ? GOLD : TAN,
-        borderOpacity: row.accent ? 0.85 : 0.45,
-        borderWidth: 0.7,
-      });
-      drawTracked(p, chipText, { x: col.pace + 9, y: mid - 2.2, font: sansSemi, size: 6.3, color: row.accent ? GOLD_LIGHT : MUTED, tr: 1.6 });
-
-      hline(p, tX, tX + tW, rowTop - rowH, GOLD, 0.16, 0.5);
-      rowTop -= rowH;
-    }
-
-    /* The route: one gold thread, a node per stop. */
-    const rTop = rowTop - 36;
-    drawTracked(p, "THE ROUTE", { cx: W / 2, y: rTop, font: sansSemi, size: 7, color: GOLD, tr: 2.6 });
-    const lineY = rTop - 24;
-    const rx0 = 86;
-    const rx1 = W - 86;
-    hline(p, rx0, rx1, lineY, GOLD, 0.35, 0.7);
-    sparkle(p, rx0 - 12, lineY, 2.4, GOLD_LIGHT, 0.8);
-    sparkle(p, rx1 + 12, lineY, 2.4, GOLD_LIGHT, 0.8);
-    for (const [i, stop] of g.route.entries()) {
-      const x = rx0 + ((rx1 - rx0) * i) / Math.max(1, g.route.length - 1);
-      p.drawCircle({ x, y: lineY, size: 3.6, color: DEEP, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.9 });
-      p.drawCircle({ x, y: lineY, size: 1.5, color: GOLD_LIGHT });
-      let ly = lineY - 15;
-      for (const l of stop.split("\n")) {
-        drawTracked(p, l, { cx: x, y: ly, font: sansMed, size: 6.2, color: MUTED, tr: 1.2 });
-        ly -= 9.5;
-      }
-    }
-
-    if (g.note) {
-      const noteW = hand.widthOfTextAtSize(g.note, 17);
-      dt(p, g.note, { x: W / 2 - noteW / 2, y: 118, font: hand, size: 17, color: GOLD_LIGHT, rotate: -2 });
-      sparkle(p, W / 2 + noteW / 2 + 14, 124, 3, GOLD_LIGHT, 0.85);
-    }
-    footerLabel(p, g.footer);
-  }
-
   /* ------------------------------ Final page ----------------------------- */
   {
     const f = spec.final;
@@ -612,14 +512,19 @@ async function buildTrip(spec: TripSpec): Promise<void> {
         borderWidth: card.highlight ? 1.2 : 0.8,
       });
       const cx = x + cardW / 2;
-      drawTracked(p, card.label, { cx, y: cardTop - 30, font: sansSemi, size: 8, color: card.highlight ? GOLD_LIGHT : MUTED, tr: 3 });
-      dt(p, card.price, { x: cx - priceFont.widthOfTextAtSize(card.price, priceSize) / 2, y: cardTop - 64, font: priceFont, size: priceSize, color: CREAM });
-      drawTracked(p, "PER PERSON", { cx, y: cardTop - 80, font: sansMed, size: 6.8, color: MUTED, tr: 2.4, opacity: 0.85 });
-      hline(p, cx - 62, cx + 62, cardTop - 92, GOLD, 0.22);
-      drawTracked(p, "BOOKING AMOUNT · 30%", { cx, y: cardTop - 106, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
-      dt(p, card.booking, { x: cx - serifSemi.widthOfTextAtSize(card.booking, 17) / 2, y: cardTop - 124, font: serifSemi, size: 17, color: GOLD_HI });
+      /* With a tax line the rows tighten a little so the extra line fits in the same card height. */
+      const row = card.taxLine
+        ? { label: 26, price: 58, per: 73, tax: 84, rule: 95, bookLabel: 108, book: 125, remaining: 139 }
+        : { label: 30, price: 64, per: 80, tax: 0, rule: 92, bookLabel: 106, book: 124, remaining: 138 };
+      drawTracked(p, card.label, { cx, y: cardTop - row.label, font: sansSemi, size: 8, color: card.highlight ? GOLD_LIGHT : MUTED, tr: 3 });
+      dt(p, card.price, { x: cx - priceFont.widthOfTextAtSize(card.price, priceSize) / 2, y: cardTop - row.price, font: priceFont, size: priceSize, color: CREAM });
+      drawTracked(p, "PER PERSON", { cx, y: cardTop - row.per, font: sansMed, size: 6.8, color: MUTED, tr: 2.4, opacity: 0.85 });
+      if (card.taxLine) drawTracked(p, card.taxLine, { cx, y: cardTop - row.tax, font: sansSemi, size: 6.4, color: GOLD, tr: 1.9 });
+      hline(p, cx - 62, cx + 62, cardTop - row.rule, GOLD, 0.22);
+      drawTracked(p, "BOOKING AMOUNT · 30%", { cx, y: cardTop - row.bookLabel, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
+      dt(p, card.booking, { x: cx - serifSemi.widthOfTextAtSize(card.booking, 17) / 2, y: cardTop - row.book, font: serifSemi, size: 17, color: GOLD_HI });
       const remW = sansReg.widthOfTextAtSize(card.remaining, 7.5);
-      dt(p, card.remaining, { x: cx - remW / 2, y: cardTop - 138, font: sansReg, size: 7.5, color: MUTED, opacity: 0.9 });
+      dt(p, card.remaining, { x: cx - remW / 2, y: cardTop - row.remaining, font: sansReg, size: 7.5, color: MUTED, opacity: 0.9 });
       if (card.badge) {
         const saveW = trackW(sansSemi, card.badge, 6.3, 1.6) + 22;
         roundRect(p, cx - saveW / 2, cardTop + 8, saveW, 15, 7.5, { fill: GOLD, fillOpacity: 0.95 });
@@ -1409,24 +1314,6 @@ const vietnam: TripSpec = {
       footer: "08 · DAY SEVEN",
     },
   ],
-  glance: {
-    eyebrow: "THE SPELL AT A GLANCE",
-    titleA: "Seven Days, ",
-    titleB: "One Coastline",
-    intro: "North to south in one unhurried line: easy days, one full day, and a last day left loose on purpose.",
-    rows: [
-      { day: "01", place: "Hanoi to Ha Long Bay", experience: "Cruise, sunset and the ship party", pace: "Easy" },
-      { day: "02", place: "Ha Long Bay to Hanoi", experience: "The bay, snorkeling and a Hanoi evening", pace: "Easy" },
-      { day: "03", place: "Hanoi to Da Nang to the Cham Islands", experience: "Beach and snorkeling", pace: "Moderate" },
-      { day: "04", place: "Hoi An", experience: "Marble Mountains and the Ancient Town", pace: "Easy" },
-      { day: "05", place: "Da Nang", experience: "Ba Na Hills and the Golden Bridge", pace: "Full day", accent: true },
-      { day: "06", place: "Da Nang to Ho Chi Minh City", experience: "Flight and a city evening", pace: "Very easy" },
-      { day: "07", place: "Ho Chi Minh City", experience: "City exploration or the Mekong Delta", pace: "Easy" },
-    ],
-    route: ["HANOI", "HA LONG BAY", "DA NANG", "CHAM ISLANDS", "HOI AN", "BA NA HILLS", "HO CHI MINH\nCITY"],
-    note: "we kept the last day loose on purpose",
-    footer: "09 · AT A GLANCE",
-  },
   final: {
     img: "img2/final/vn-night.jpg",
     subline: "THE VIETNAM SPELL · 7 DAYS · HANOI TO HO CHI MINH CITY",
@@ -1437,9 +1324,10 @@ const vietnam: TripSpec = {
         booking: rupee("18,000"),
         remaining: `remaining ${rupee("42,000")} before departure`,
         highlight: true,
+        taxLine: "5% GST & 2% TCS APPLICABLE",
       },
     ],
-    cardNote: "Price is per person. Book with 30% now and pay the rest before departure. Seats are confirmed in the order payments arrive.",
+    cardNote: "Price is per person; 5% GST and 2% TCS are applicable. Book with 30% now and pay the rest before departure. Seats are confirmed in the order payments arrive.",
     leftHeading: "GOOD TO KNOW",
     leftRows: [
       { icon: "check", title: "ONE NIGHT ON THE WATER", body: "Day 1 is spent aboard a Ha Long Bay cruise: cabin, lunch, sunset drinks and the ship party." },
