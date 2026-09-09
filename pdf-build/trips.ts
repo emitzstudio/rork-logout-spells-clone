@@ -1,8 +1,11 @@
 /**
  * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro + Vietnam.
  * Same charcoal + gold brand system as the Bir Grimoire PDF, no stay page.
+ * A day may be a `spotlight` (hour-by-hour schedule, gold tag and frame) and a trip may
+ * carry a generic previous-spells memories page before booking (`memoriesFile`).
  * Run: bun run trips.ts            ->  all four PDFs
  *      bun run trips.ts vietnam    ->  only Logout-Spells-Vietnam.pdf (keys: vof jibhi ziro vietnam)
+ *      add --publish to also copy the built PDFs to ../web/public/brochures/
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees } from "pdf-lib";
@@ -29,6 +32,14 @@ const WHITE = rgb(1, 1, 1);
 
 /* -------------------------------- Specs --------------------------------- */
 type DayItem = { title: string; body: string };
+type DayStop = { time: string; title: string; body: string };
+/** The one day a spell is built around: gold frame and tag, an hour-by-hour schedule and a good-to-know box. */
+type DaySpotlight = {
+  badge: string;
+  stops: DayStop[];
+  noteTitle: string;
+  noteBody: string;
+};
 type DaySpec = {
   img: string;
   eyebrow: string;
@@ -41,6 +52,17 @@ type DaySpec = {
   footer: string;
   /** Optional height of the band's bottom fade (default 116pt); shorter keeps faces low in the frame visible. */
   fadeH?: number;
+  /** When set, the schedule replaces the numbered items and the page is dressed as the highlight of the spell. */
+  spotlight?: DaySpotlight;
+};
+/** Generic previous-spells page: eight real photographs in two rows and typeset review excerpts. */
+type MemoriesSpec = {
+  photosLabel: string;
+  photos: { image: string; source: string }[];
+  wordsSubtitle: string;
+  reviews: { id: string; author: string | null; excerpt: string; featured?: boolean; featuredTag?: string }[];
+  closing: string;
+  footer: string;
 };
 type InfoRow = { icon: "check" | "cross"; title: string; body: string };
 type PriceCard = {
@@ -98,6 +120,8 @@ type TripSpec = {
   cover: CoverSpec;
   days: DaySpec[];
   final: FinalSpec;
+  /** Optional JSON spec for the previous-spells and reviews page inserted before booking. */
+  memoriesFile?: string;
 };
 
 /* ------------------------------- Helpers -------------------------------- */
@@ -439,6 +463,83 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       iy -= 17.5;
     }
 
+    if (day.spotlight) {
+      const s = day.spotlight;
+
+      /* Dressed like the cover and booking pages: the gold frame marks this as the spell's centrepiece. */
+      roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.26, borderWidth: 0.8 });
+
+      const bandBottom = H - 235;
+      const badgeH = 22;
+      const badgeW = trackW(sansSemi, s.badge, 7.2, 2.6) + 40;
+      roundRect(p, W / 2 - badgeW / 2, bandBottom + badgeH / 2, badgeW, badgeH, badgeH / 2, { fill: GOLD, fillOpacity: 0.96 });
+      drawTracked(p, s.badge, { cx: W / 2, y: bandBottom - 2.6, font: sansSemi, size: 7.2, color: CHARCOAL, tr: 2.6 });
+      sparkle(p, W / 2 - badgeW / 2 - 14, bandBottom, 3, GOLD_LIGHT, 0.9);
+      sparkle(p, W / 2 + badgeW / 2 + 14, bandBottom, 3, GOLD_LIGHT, 0.9);
+
+      const eyebrowW = trackW(sansSemi, day.eyebrow, 8.5, 2.8);
+      eyebrowRule(p, 575, eyebrowW / 2 + 14, 26);
+
+      /* Hour-by-hour schedule: time in gold on the left, a dotted spine, title and one-line notes. */
+      const timeRight = 118;
+      const spineX = 131;
+      const textX = 146;
+      const bodyW = W - textX - 56;
+      const titleSize = 9.4;
+      const bodySize = 8.9;
+      const bodyLeading = 12.4;
+      let cursor = iy - 26;
+      const stops = s.stops.map((stop) => {
+        const bodyLines = wrap(sansReg, stop.body, bodySize, bodyW);
+        const titleY = cursor;
+        cursor = titleY - 13 - bodyLines.length * bodyLeading - 8;
+        return { stop, titleY, bodyLines };
+      });
+      const firstStop = stops[0];
+      const lastStop = stops[stops.length - 1];
+      if (firstStop && lastStop) {
+        p.drawLine({ start: { x: spineX, y: firstStop.titleY + 3 }, end: { x: spineX, y: lastStop.titleY + 3 }, thickness: 0.7, color: GOLD, opacity: 0.3 });
+      }
+      for (const { stop, titleY, bodyLines } of stops) {
+        const discY = titleY + 3;
+        p.drawCircle({ x: spineX, y: discY, size: 6, borderColor: GOLD, borderWidth: 0.7, borderOpacity: 0.45 });
+        p.drawCircle({ x: spineX, y: discY, size: 2.6, color: GOLD_LIGHT });
+        const timeW = trackW(sansSemi, stop.time, 7.2, 1.4);
+        drawTracked(p, stop.time, { x: timeRight - timeW, y: titleY, font: sansSemi, size: 7.2, color: GOLD, tr: 1.4 });
+        drawTracked(p, stop.title, { x: textX, y: titleY, font: sansSemi, size: titleSize, color: CREAM, tr: 1.8 });
+        let by = titleY - 13;
+        for (const line of bodyLines) {
+          dt(p, line, { x: textX, y: by, font: sansReg, size: bodySize, color: MUTED, opacity: 0.95 });
+          by -= bodyLeading;
+        }
+      }
+
+      /* Good-to-know box: the honest operational notes, kept out of the schedule itself. */
+      const noteX = 64;
+      const noteW = W - 128;
+      const noteLines = wrap(sansReg, s.noteBody, 8.2, noteW - 36);
+      const noteH = 31 + noteLines.length * 11.4 + 10;
+      const noteTop = cursor + 2;
+      const noteBottom = noteTop - noteH;
+      if (noteBottom < 92) throw new Error(`${day.footer}: the spotlight schedule runs into the page footer (${noteBottom.toFixed(1)})`);
+      roundRect(p, noteX, noteTop, noteW, noteH, 10, { fill: CHARCOAL, fillOpacity: 0.62, border: GOLD, borderOpacity: 0.38, borderWidth: 0.7 });
+      drawTracked(p, s.noteTitle, { x: noteX + 18, y: noteTop - 17, font: sansSemi, size: 7.2, color: GOLD, tr: 2.6 });
+      let ny = noteTop - 31;
+      for (const line of noteLines) {
+        dt(p, line, { x: noteX + 18, y: ny, font: sansReg, size: 8.2, color: MUTED, opacity: 0.9 });
+        ny -= 11.4;
+      }
+
+      if (day.note && noteBottom - 34 > 60) {
+        const handW = hand.widthOfTextAtSize(day.note, 16);
+        dt(p, day.note, { x: W / 2 - handW / 2, y: noteBottom - 30, font: hand, size: 16, color: GOLD_LIGHT, rotate: -2 });
+        sparkle(p, W / 2 + handW / 2 + 13, noteBottom - 24, 3, GOLD_LIGHT, 0.85);
+      }
+
+      footerLabel(p, day.footer);
+      continue;
+    }
+
     const spineX = 92;
     const textX = 122;
     const bodyW = 392;
@@ -482,6 +583,98 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     }
 
     footerLabel(p, day.footer);
+  }
+
+  /* ---------------------- Previous spells & reviews ---------------------- */
+  if (spec.memoriesFile) {
+    const memories: MemoriesSpec = JSON.parse(readFileSync(spec.memoriesFile, "utf8"));
+    if (memories.photos.length !== 8) throw new Error("The memories page needs exactly eight photographs, two rows of four");
+    const featured = memories.reviews.filter((review) => review.featured);
+    const highlight = featured[0];
+    if (featured.length !== 1 || !highlight?.author) throw new Error("The memories page needs one featured review with a visible author");
+    const others = memories.reviews.filter((review) => !review.featured);
+    if (others.length !== 6) throw new Error("The memories page needs six review excerpts beside the featured one");
+
+    const p = doc.addPage([W, H]);
+    const margin = 48;
+    const contentW = W - margin * 2;
+    bgFill(p);
+    roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.24, borderWidth: 0.8 });
+
+    drawTracked(p, "THE LOGOUT SPELLS CIRCLE", { cx: W / 2, y: 801, font: sansSemi, size: 7.5, color: GOLD, tr: 3 });
+    mixedTitle(p, "Spells that ", "Stay", { cx: W / 2, y: 760, size: 40 });
+    eyebrowRule(p, 743, 8, 30);
+
+    const labelY = 718;
+    const labelW = drawTracked(p, memories.photosLabel, { x: margin, y: labelY, font: sansSemi, size: 7.8, color: GOLD_LIGHT, tr: 2.2 });
+    hline(p, margin + labelW + 18, W - margin, labelY + 2.5, GOLD, 0.3);
+
+    /* Each row is scaled so four unstretched photographs fill the content width exactly. */
+    const photoRow = async (photos: MemoriesSpec["photos"], top: number): Promise<number> => {
+      const images = await Promise.all(photos.map(async (photo) => {
+        const image = await loadImage(photo.image);
+        if (!image) throw new Error(`Missing memories photograph ${photo.image}`);
+        return image;
+      }));
+      const gap = 6;
+      const ratios = images.map((image) => image.width / image.height);
+      const height = (contentW - gap * (images.length - 1)) / ratios.reduce((sum, ratio) => sum + ratio, 0);
+      let x = margin;
+      for (const image of images) {
+        const width = height * image.width / image.height;
+        p.drawImage(image, { x, y: top - height, width, height });
+        roundRect(p, x - 1.3, top + 1.3, width + 2.6, height + 2.6, 1.8, { border: GOLD, borderOpacity: 0.35, borderWidth: 0.5 });
+        x += width + gap;
+      }
+      if (Math.abs(x - gap - (W - margin)) > 0.01) throw new Error("Photo row exceeds its page margins");
+      return top - height;
+    };
+    const rowOneBottom = await photoRow(memories.photos.slice(0, 4), 704);
+    const rowTwoBottom = await photoRow(memories.photos.slice(4, 8), rowOneBottom - 7);
+
+    const wordsY = rowTwoBottom - 38;
+    mixedTitle(p, "In their ", "Words", { cx: W / 2, y: wordsY, size: 29 });
+    drawTracked(p, memories.wordsSubtitle, { cx: W / 2, y: wordsY - 19, font: sansMed, size: 6.7, color: MUTED, tr: 1.9 });
+
+    const quoteLines = wrap(serifSemiItal, `\u201C${highlight.excerpt}\u201D`, 14.2, contentW - 64);
+    const featureTop = wordsY - 37;
+    const featureH = 54 + (quoteLines.length - 1) * 17;
+    roundRect(p, margin, featureTop, contentW, featureH, 10, { fill: CHARCOAL, fillOpacity: 0.65, border: GOLD, borderOpacity: 0.48, borderWidth: 0.7 });
+    let quoteY = featureTop - 23;
+    for (const line of quoteLines) {
+      drawTracked(p, line, { cx: W / 2, y: quoteY, font: serifSemiItal, size: 14.2, color: GOLD_HI, tr: 0 });
+      quoteY -= 17;
+    }
+    const featuredTag = highlight.featuredTag ? `${highlight.author.toUpperCase()} \u00B7 ${highlight.featuredTag}` : highlight.author.toUpperCase();
+    drawTracked(p, featuredTag, { cx: W / 2, y: quoteY + 1, font: sansSemi, size: 7, color: GOLD_LIGHT, tr: 1.7 });
+
+    const gap = 26;
+    const columnW = (contentW - gap) / 2;
+    const bodySize = 9.2;
+    const leading = 12.2;
+    let rowTop = featureTop - featureH - 26;
+    for (let offset = 0; offset < others.length; offset += 2) {
+      const row = others.slice(offset, offset + 2).map((review) => ({
+        review,
+        lines: wrap(sansReg, `\u201C${review.excerpt}\u201D`, bodySize, columnW),
+      }));
+      const rowHeight = Math.max(...row.map(({ lines }) => lines.length)) * leading + 24;
+      if (rowTop - rowHeight < 96) throw new Error("Review excerpts run into the memories page's closing note");
+      for (const [column, { review, lines }] of row.entries()) {
+        const x = margin + column * (columnW + gap);
+        hline(p, x, x + columnW, rowTop, GOLD, 0.27, 0.5);
+        let y = rowTop - 14;
+        for (const line of lines) {
+          dt(p, line, { x, y, font: sansReg, size: bodySize, color: CREAM, opacity: 0.92 });
+          y -= leading;
+        }
+        drawTracked(p, (review.author ?? "From the group").toUpperCase(), { x, y: y - 1, font: sansSemi, size: 7, color: GOLD_LIGHT, tr: 1.5 });
+      }
+      rowTop -= rowHeight + 20;
+    }
+
+    dt(p, memories.closing, { x: W / 2 - hand.widthOfTextAtSize(memories.closing, 16) / 2, y: 72, font: hand, size: 16, color: GOLD_LIGHT, rotate: -1.5 });
+    footerLabel(p, memories.footer);
   }
 
   /* ------------------------------ Final page ----------------------------- */
@@ -593,6 +786,11 @@ async function buildTrip(spec: TripSpec): Promise<void> {
   const bytes = await doc.save();
   writeFileSync(spec.fileName, bytes);
   console.log("PDF written:", spec.fileName, (bytes.length / 1024).toFixed(0), "KB,", doc.getPageCount(), "pages");
+  if (process.argv.includes("--publish")) {
+    const publicPath = `../web/public/brochures/${spec.fileName}`;
+    writeFileSync(publicPath, bytes);
+    console.log("Share copy written:", publicPath);
+  }
 }
 
 /* ========================== VALLEY OF FLOWERS ============================ */
@@ -1153,13 +1351,15 @@ const ziro: TripSpec = {
 };
 
 /* =============================== VIETNAM ================================= */
-/* Rerouted 2026-09-09 (founder): Da Nang in, Hanoi out. Early bird ₹60,000 / normal ₹65,000. */
+/* Rerouted 2026-09-09 (founder): Da Nang in, Hanoi out. Early bird ₹60,000 / normal ₹65,000.
+ * Scenic imagery only (the founder's call): the original vn-* set plus two scenic vn3-* bands. */
 const vietnam: TripSpec = {
   fileName: "Logout-Spells-Vietnam.pdf",
   docTitle: "Logout Spells · The Vietnam Spell · 7 Days from Da Nang to Hanoi",
   docSubject: "Vietnam · Da Nang, Ba Na Hills, Cham Islands, Hoi An, Hanoi, Ha Long Bay · trip itinerary and booking",
+  memoriesFile: "img/spell-memories/sources.json",
   cover: {
-    img: "img2/final/vn2-cover.jpg",
+    img: "img2/final/vn-cover.jpg",
     shade: { y: 580, h: 110, opacity: 0.55 },
     eyebrow: "A SPELL FROM THE COAST TO THE CAPITAL",
     titleLines: [{ text: "VIETNAM", size: 104, tr: 10, y: 404 }],
@@ -1183,7 +1383,7 @@ const vietnam: TripSpec = {
   },
   days: [
     {
-      img: "img2/final/vn2-d1.jpg",
+      img: "img2/final/vn3-d1.jpg",
       eyebrow: "DAY 01 · ARRIVE IN DA NANG · DRAGON BRIDGE & THE NIGHT",
       titleA: "Hello, ",
       titleB: "Da Nang",
@@ -1197,13 +1397,12 @@ const vietnam: TripSpec = {
         },
         {
           title: "THE PARTY · CLUBS & TRANSFERS",
-          body: "Then the night proper: Da Nang's clubs and bars, with the transfers taken care of. Dance till you're done. Overnight in Da Nang.",
+          body: "Then the night proper: Da Nang's clubs and bars, with the transfers taken care of. Dance till you're done, then get back to the property.",
         },
       ],
       chip: "ARRIVE · DRAGON · DANCE",
       note: "the dragon breathes fire on weekend nights",
       footer: "02 · DAY ONE",
-      fadeH: 80,
     },
     {
       img: "img2/final/vn-d5.jpg",
@@ -1217,7 +1416,7 @@ const vietnam: TripSpec = {
         { title: "THE GOLDEN BRIDGE", body: "Walk the golden span held aloft by two giant stone hands, then explore the hilltop." },
         {
           title: "FRENCH VILLAGE OR FANTASY PARK",
-          body: "Pick one, don't force both. Lunch on the hill, then back down to Da Nang by evening. Free evening. Overnight in Da Nang.",
+          body: "Pick one, don't force both. Lunch on the hill, then back down to Da Nang by evening. The evening is free; get back to the property whenever you're done.",
         },
       ],
       chip: "CABLE CAR · BRIDGE · HILLTOP",
@@ -1236,7 +1435,7 @@ const vietnam: TripSpec = {
         { title: "SNORKEL, SWIM, DO NOTHING", body: "Snorkeling over the reef, swimming, then the beach for as long as the beach wants you." },
         {
           title: "EVENING · HOI AN",
-          body: "Return to Hoi An, check in and keep the evening free: a massage, a riverside cafe, an early night. Overnight in Hoi An.",
+          body: "Return to Hoi An, check in at the new property and keep the evening free: a massage, a riverside cafe, an early night.",
         },
       ],
       chip: "SAIL · SNORKEL · SETTLE",
@@ -1244,7 +1443,7 @@ const vietnam: TripSpec = {
       footer: "04 · DAY THREE",
     },
     {
-      img: "img2/final/vn2-d4.jpg",
+      img: "img2/final/vn-d4.jpg",
       eyebrow: "DAY 04 · MARBLE MOUNTAINS & HOI AN · SLOW CULTURE",
       titleA: "Caves & ",
       titleB: "Lanterns",
@@ -1261,14 +1460,14 @@ const vietnam: TripSpec = {
         },
         {
           title: "LANTERNS & DINNER",
-          body: "The town glows as the light drops. Dinner in Hoi An, then wander until you're done. Overnight in Hoi An.",
+          body: "The town glows as the light drops. Dinner in Hoi An, then wander until you're done and get back to the property.",
         },
       ],
       chip: "CAVES · BIKES · LANTERNS",
       footer: "05 · DAY FOUR",
     },
     {
-      img: "img2/final/vn2-d5.jpg",
+      img: "img2/final/vn-d2.jpg",
       eyebrow: "DAY 05 · HOI AN TO HANOI · A CHILL DAY IN THE CAPITAL",
       titleA: "Markets & ",
       titleB: "Train Tracks",
@@ -1284,8 +1483,8 @@ const vietnam: TripSpec = {
           body: "Egg coffee at one of the cafes squeezed against the tracks. When the train comes through, everyone leans back.",
         },
         {
-          title: "CYCLES, IF YOU WANT",
-          body: "Rent a cycle and loop Hoan Kiem Lake and the Old Quarter. Rental isn't included; we'll share where to get one. Overnight in Hanoi.",
+          title: "LEISURE TIME",
+          body: "Rent a cycle or loop Hoan Kiem Lake and the Old Quarter on foot. This day is yours, we've got your back!",
         },
       ],
       chip: "FLY · MARKET · COFFEE",
@@ -1293,29 +1492,34 @@ const vietnam: TripSpec = {
       footer: "06 · DAY FIVE",
     },
     {
-      img: "img2/final/vn2-d6.jpg",
-      eyebrow: "DAY 06 · HA LONG BAY · DAY CRUISE",
+      img: "img2/final/vn-d1.jpg",
+      eyebrow: "DAY 06 · HA LONG BAY · THE FULL DAY CRUISE",
       titleA: "A Day on ",
       titleB: "the Bay",
-      intro: "The bay everyone flies here for: a full day cruising between the limestone islands, then back to Hanoi for the night.",
-      items: [
-        { title: "EARLY START", body: "Breakfast, an early pick-up and the drive out from Hanoi to the coast." },
-        { title: "BOARD THE CRUISE", body: "Board the day cruise and claim a spot on deck as the karsts start sliding past." },
-        {
-          title: "THE BAY, PROPERLY",
-          body: "The islands, the caves and floating villages the boat calls at, and a kayak or a swim if the day allows.",
-        },
-        {
-          title: "BACK TO HANOI",
-          body: "Back to the harbour by late afternoon and the drive home to the city. Last night in the Old Quarter. Overnight in Hanoi.",
-        },
-      ],
-      chip: "DRIVE · CRUISE · DRIFT",
+      intro: "The one everyone flies here for: six hours among the limestone islands, lunch on board, a cave, a peak, a kayak and a sunset party on deck.",
+      items: [],
+      chip: "CRUISE · CAVE · KAYAK · SUNSET",
       note: "bring the good camera today",
       footer: "07 · DAY SIX",
+      spotlight: {
+        badge: "THE HIGHLIGHT OF THE SPELL",
+        stops: [
+          { time: "7:15 AM", title: "PICK-UP IN THE OLD QUARTER", body: "Our guide collects the circle at the hotel, then it's the expressway out to the coast." },
+          { time: "10:30 AM", title: "WELCOME ABOARD", body: "Board at Halong International Cruise Port for six hours among the bay's islets, caves and passages." },
+          { time: "MIDDAY", title: "LUNCH ON THE CRUISE", body: "Vietnamese and continental dishes, vegetarian options included, as the karsts slide past." },
+          { time: "2:00 PM", title: "SURPRISING CAVE", body: "Stalactites and stalagmites shaped like sea creatures, inside the bay's great cave." },
+          { time: "3:00 PM", title: "TITOP ISLAND", body: "A sandy beach under a limestone tower; climb Titop Peak for the panoramic view of the bay." },
+          { time: "4:00 PM", title: "KAYAK OR BAMBOO BOAT · LUON CAVE", body: "Paddle through the low cave mouth into the hidden lagoon behind it." },
+          { time: "5:30 PM", title: "SUNSET PARTY ON THE UPPER DECK", body: "Tea, cakes, music and sunbathing as the boat cruises back through the islands." },
+          { time: "6:00 PM", title: "EXPRESSWAY BACK TO HANOI", body: "A short break on the way, and by around 9 PM you're back at the property." },
+        ],
+        noteTitle: "GOOD TO KNOW",
+        noteBody: "Pick-up runs from selected hotels in the Old Quarter; from other hotels the meeting point is the Hanoi Opera House. Timings on the bay can change with the weather or the Ha Long Bay Management Board.",
+      },
     },
     {
-      img: "img2/final/vn2-d7.jpg",
+      img: "img2/final/vn3-d7.jpg",
+      fadeH: 88,
       eyebrow: "DAY 07 · HANOI · FLY HOME",
       titleA: "One Last ",
       titleB: "Morning",
@@ -1365,7 +1569,7 @@ const vietnam: TripSpec = {
     rightHeading: "COME READY FOR",
     rightRows: [
       { icon: "check", title: "WATER DAYS", body: "Swimwear, a dry bag and reef safe sunscreen for the Cham Islands and the bay." },
-      { icon: "check", title: "ONE FLIGHT, ONE EARLY START", body: "Day 5 flies north and Day 6 leaves early for Ha Long Bay. Pack the night before." },
+      { icon: "check", title: "ONE FLIGHT, ONE EARLY START", body: "Day 5 flies north and Day 6 picks up at 7:15 AM for Ha Long Bay. Pack the night before." },
       { icon: "check", title: "LATE NIGHTS", body: "Da Nang's clubs, lantern-lit Hoi An and Hanoi's Old Quarter. Day 5 is for taking it slow." },
     ],
     qrBody: "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
@@ -1376,7 +1580,7 @@ const vietnam: TripSpec = {
 
 /* -------------------------------- Build --------------------------------- */
 const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam };
-const only = process.argv.slice(2);
+const only = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
 const unknown = only.filter((key) => !(key in trips));
 if (unknown.length > 0) throw new Error(`unknown trip(s): ${unknown.join(", ")} (known: ${Object.keys(trips).join(", ")})`);
 console.log("rupee glyph:", { serifHasRupee, sansHasRupee });

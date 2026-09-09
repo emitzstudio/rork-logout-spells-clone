@@ -2282,6 +2282,72 @@ D2 (price/seats) · no staged migrations remain.
 
 ---
 
+## 0054 + 0055 — Vietnam: scenic imagery restored, the cruise day made the highlight (2026-09-09)
+
+- Founder review of the rerouted brochure (in chat): "the pdf is good" but the
+  women-and-community photos "are not matching the vibe", so the earlier scenic
+  imagery returns. Copy notes: "Overnight in Da Nang" style lines become "get
+  back to the property"; Day 5's cycle note becomes "Leisure time ... This day
+  is yours, we've got your back!"; the Ha Long Bay day cruise is "gonna be the
+  special thing in the spell so it should stand out", with the operator's
+  hour-by-hour program supplied (7:15 AM Old Quarter pick-up, 10:30 boarding,
+  lunch on board with vegetarian options, 2 PM Surprising Cave, 3 PM Titop
+  Island and peak, 4 PM kayak or bamboo boat in Luon Cave, 5:30 sunset party on
+  the upper deck, 6 PM expressway back, about 9 PM at the hotel; pick-up only
+  from selected Old Quarter hotels, otherwise the Opera House; timings subject
+  to weather and the bay's Management Board). Also requested: a generic
+  previous-spells and reviews page between the last day and booking, like the
+  Content Spell's page but naming no spell or host.
+- Brochure (pdf-build/trips.ts): the six original scenic print crops
+  (img2/final/vn-*.jpg, deleted in the 0052/0053 pass) were restored from git;
+  two scenic bands were generated for the days that had none (vn3-d1 Dragon
+  Bridge at night, vn3-d7 Hoan Kiem Lake at dawn) and the rejected vn2-* crops
+  removed. Day 6 is now a `spotlight` page: gold frame, a solid gold "THE
+  HIGHLIGHT OF THE SPELL" tag on the photo band, flanked eyebrow, an eight-stop
+  timed schedule and a GOOD TO KNOW box (pick-up rule, weather clause). A
+  generic memories page (`memoriesFile`, img/spell-memories/) sits before
+  booking: eight real photos of previous Logout Spells groups in two rows under
+  one "PREVIOUS LOGOUT SPELLS" label, then "In their Words" with a featured Riya
+  excerpt (her generic passage, not the workshop line) and six excerpts from the
+  same transcriptions, subtitled "MESSAGES FROM PREVIOUS LOGOUT SPELLS GROUPS".
+  Rebuilt to 10 pages (5819 KB), Jibhi control pixel-identical on all 6 pages,
+  republished at web/public/brochures/Logout-Spells-Vietnam.pdf via the new
+  `--publish` flag.
+- **0054_vietnam_scenic_seed_window — APPLIED**: the usual narrowest anon
+  INSERT policy on the spell's fixed hd/ folder; 3 uploads (the two scenic day
+  shots plus the brochure cover as a portrait mobile hero,
+  hero-mobile-ha-long-sunset.jpg) verified 200 and byte-identical in-session.
+- **0055_vietnam_scenic_imagery — APPLIED**: §1 closes the window; §2 puts
+  hero_url back on hero-ha-long-bay.jpg, sets the new mobile hero, and replaces
+  the page whole (same ids): gallery back to the two 0050 shots, about image
+  null as in 0050, day images Dragon Bridge night / Golden Bridge / Cham Islands
+  / Hoi An dusk / Old Quarter after dark / sunset on deck / Hoan Kiem dawn, stay
+  keeps Hoi An dusk (0050 also reused a day image there), every "Overnight in"
+  line rewritten, Day 5 leisure line and chip, Day 6 body carrying the full
+  cruise program with the Opera House and weather notes, four new Day 6 chips,
+  the cruise first and accented in tripHighlights, the cruise FAQ rewritten and
+  the quick-info highlight line updated. Two spell_changes entries (image /
+  edited). Self-verify pins the row shape, the two new day images, the cruise
+  body markers, zero "Overnight in", no stale old-route or dropped-photo
+  references, dash-free copy, no duplicate block ids (84), every referenced
+  image present in storage, exactly 22 hd objects, ZERO anon INSERT policies
+  left. Post-apply REST check as anon: heroes, 7 days with the expected images,
+  all 11 referenced images 200, upload probe 400 (window really closed).
+  Price, urgency, inclusions and the TBC departure untouched. The nine 0053
+  photos stay in storage, unreferenced.
+- Scope notes (flagged to the founder in chat): the operator's program is a
+  seat-in-coach (shared) day tour, worded on the page as the pick-up rule only;
+  the club night still covers transfers only; cycle rental stays in Not Included
+  even though the day text no longer says so.
+
+### Baseline after 0055
+
+Unchanged from 0053 except the Vietnam imagery and copy: spells 6 published ·
+no anon INSERT windows open · create-booking gates unchanged · no staged
+migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

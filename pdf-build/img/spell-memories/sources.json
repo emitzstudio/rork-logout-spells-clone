@@ -1,0 +1,65 @@
+{
+  "purpose": "Generic previous-spells page shared by the no-stay Grimoire brochures (first used by Logout-Spells-Vietnam.pdf). Nothing on it names a specific spell, host or workshop.",
+  "photoMethod": "Original founder-supplied photographs of previous Logout Spells groups, copied from img/content-memories (attachments 1-8 of the Content Spell request) and img/content-real (the Content Spell's real photo set), resized to at most 1400 px wide with high-quality JPEG encoding only. Full image proportions are retained; no faces, scenes or details are regenerated.",
+  "reviewMethod": "Excerpts are contiguous passages from the visible message transcriptions recorded in img/content-memories/sources.json (attachments 9-14 of the Content Spell request), with punctuation and initial capitalization normalized only. Passages that name a host or a workshop are not used. Unnamed messages are attributed only to the group.",
+  "photosLabel": "PREVIOUS LOGOUT SPELLS",
+  "photos": [
+    { "image": "img/spell-memories/garden-tables.jpg", "source": "img/content-memories/01-bir.jpg (Content Spell attachment 1)" },
+    { "image": "img/spell-memories/river-rocks.jpg", "source": "img/content-memories/03-bir.jpg (Content Spell attachment 3)" },
+    { "image": "img/spell-memories/the-circle.jpg", "source": "img/content-real/day1-circle.jpg (Content Spell real photo set)" },
+    { "image": "img/spell-memories/the-walk.jpg", "source": "img/content-real/day3-walk.jpg (Content Spell real photo set)" },
+    { "image": "img/spell-memories/ghat-steps.jpg", "source": "img/content-memories/06-anshika.jpg (Content Spell attachment 6)" },
+    { "image": "img/spell-memories/sunset-selfie.jpg", "source": "img/content-memories/08-anshika.jpg (Content Spell attachment 8)" },
+    { "image": "img/spell-memories/the-farewell.jpg", "source": "img/content-real/day3-farewell.jpg (Content Spell real photo set)" },
+    { "image": "img/spell-memories/monastery-doors.jpg", "source": "img/content-memories/02-bir.jpg (Content Spell attachment 2)" }
+  ],
+  "wordsSubtitle": "MESSAGES FROM PREVIOUS LOGOUT SPELLS GROUPS",
+  "reviews": [
+    {
+      "id": "riya-friends",
+      "author": "Riya",
+      "featured": true,
+      "featuredTag": "A PREVIOUS LOGOUT SPELL",
+      "sourceNote": "Contiguous passage from Riya's message (attachment 12); the sentence about the host's workshop is not used.",
+      "excerpt": "Not a single person made me feel like I am a stranger to them, everyone made me feel like we are friends."
+    },
+    {
+      "id": "group-connection",
+      "author": null,
+      "sourceNote": "Attachment 9; the sender name is outside the screenshot.",
+      "excerpt": "I felt like I've known you guys forever. That instant connection I felt with each one of you really means everything to me."
+    },
+    {
+      "id": "arpita",
+      "author": "Arpita",
+      "sourceNote": "Attachments 10 and 11; printed once.",
+      "excerpt": "This trip felt like a reunion trip more than going with strangers."
+    },
+    {
+      "id": "mehak",
+      "author": "Mehak",
+      "sourceNote": "Attachment 11; complete message with the emoji and group mention omitted.",
+      "excerpt": "Loved the trip and the people! It was such a great experience. Would love to do more of these with you guys soon!"
+    },
+    {
+      "id": "group-memories",
+      "author": null,
+      "sourceNote": "Attachment 13; the sender name is outside the screenshot.",
+      "excerpt": "It was lovely meeting all of you. Really grateful for all the laughs, conversations, random moments, and memories we made together."
+    },
+    {
+      "id": "ankush",
+      "author": "Ankush",
+      "sourceNote": "Attachment 14; the complete closing sentence followed by the visible signature.",
+      "excerpt": "Here's to having more magic super soooon."
+    },
+    {
+      "id": "yashvi",
+      "author": "Yashvi Sood",
+      "sourceNote": "Attachment 14; the sender name is visible above the full message.",
+      "excerpt": "I NEVER THOUGHT I WOULD HAVE THIS MUCH FUN. You guys made it worth it and im genuinely looking forward to hanging out againnn with yall."
+    }
+  ],
+  "closing": "your story could be next.",
+  "footer": "09 · THE CIRCLE BEFORE YOURS"
+}
