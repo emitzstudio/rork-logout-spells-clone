@@ -1,0 +1,121 @@
+{
+  "photoMethod": "Original user-supplied photographs, with high-quality JPEG encoding only. Full image proportions are retained in the PDF; no faces, scenes or details are regenerated.",
+  "reviewMethod": "Visible message text transcribed from attachments 9-14. Emoji and chat interface text are omitted. Overlapping screenshots are deduplicated. Printed excerpts are contiguous passages from the transcriptions, with punctuation and initial capitalization normalized only. No missing text, names or ratings are inferred. Unnamed messages are attributed only to the group.",
+  "photos": [
+    {
+      "attachment": 1,
+      "group": "bir",
+      "image": "img/content-memories/01-bir.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/z28dqi0r2k9sbgax2e183.png"
+    },
+    {
+      "attachment": 2,
+      "group": "bir",
+      "image": "img/content-memories/02-bir.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/3pbu0ao4wtk6hqzp1i1sg.png"
+    },
+    {
+      "attachment": 3,
+      "group": "bir",
+      "image": "img/content-memories/03-bir.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/f7jl7m0b1i6q2dl3t97ek.png"
+    },
+    {
+      "attachment": 4,
+      "group": "bir",
+      "image": "img/content-memories/04-bir.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/er8wwy5bv3z64ciy9ntte.png"
+    },
+    {
+      "attachment": 5,
+      "group": "anshika",
+      "image": "img/content-memories/05-anshika.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/ry4f3c52wqudg6gv4d519.png"
+    },
+    {
+      "attachment": 6,
+      "group": "anshika",
+      "image": "img/content-memories/06-anshika.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/jimkfo95ldabc1fndmxo8.png"
+    },
+    {
+      "attachment": 7,
+      "group": "anshika",
+      "image": "img/content-memories/07-anshika.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/xy4v5sgiaecf707zfo4vd.png"
+    },
+    {
+      "attachment": 8,
+      "group": "anshika",
+      "image": "img/content-memories/08-anshika.jpg",
+      "originalUrl": "https://r2-pub.rork.com/attachments/f2c2r9srus28ouqmo9l9n.png"
+    }
+  ],
+  "reviewScreenshots": [
+    { "attachment": 9, "url": "https://r2-pub.rork.com/attachments/v032pm1q9rxbqbtcpe3gb.png" },
+    { "attachment": 10, "url": "https://r2-pub.rork.com/attachments/14syawnw72id5krkmeh33.png" },
+    { "attachment": 11, "url": "https://r2-pub.rork.com/attachments/sj15ditq0shqrubifl4jo.png" },
+    { "attachment": 12, "url": "https://r2-pub.rork.com/attachments/ak57ff6zw8t7ihd8l32hg.png" },
+    { "attachment": 13, "url": "https://r2-pub.rork.com/attachments/g3td6n2j8op4akrdfwfb7.png" },
+    { "attachment": 14, "url": "https://r2-pub.rork.com/attachments/5god2xp9ipmgn7tia79fc.png" }
+  ],
+  "reviews": [
+    {
+      "id": "group-connection",
+      "sourceAttachments": [9],
+      "author": null,
+      "sourceNote": "The sender name is outside the screenshot. The last paragraph continues below the visible area; its incomplete final sentence is not used.",
+      "transcription": "Honestly, this was my first time doing something like this, and I did not have much expectations, rather I had some pressure because I wanted you all to have the best trip experience.\n\nBut little did I know that you all are so much fun that I did not have to care about a lot of things that much.\n\nJaha dekhri hu vaha maze he maze chal rhe hai. Sab itne fun,itne adjusting,mastikhor ki bhai there was not even one dull moment in these three days.\n\nAnd trust me when I say this, I felt like I've known you guys forever. That instant connection I felt with each one of you really means everything to me.",
+      "excerpt": "I felt like I've known you guys forever. That instant connection I felt with each one of you really means everything to me."
+    },
+    {
+      "id": "arpita",
+      "sourceAttachments": [10, 11],
+      "author": "Arpita",
+      "sourceNote": "The same Arpita message appears in both screenshots and is printed only once.",
+      "transcription": "Hiee @all\nIt was so soo fun being with y'alll the bestest spontaneous decision i made that i'm not gonna regret everrr...... everyone of you were sooo nice and I'm grateful that we met this trip felt like a reunion trip more than going with strangers not gonna forget the games, random tea's , the laughter's , the I'm judging y'all expressions gonna miss this trip fs let's hope we gonna meet again soon",
+      "excerpt": "This trip felt like a reunion trip more than going with strangers."
+    },
+    {
+      "id": "mehak",
+      "sourceAttachments": [11],
+      "author": "Mehak",
+      "sourceNote": "Complete message, with only the emoji and group mention omitted.",
+      "transcription": "Loved the trip and the people! It was such a great experience. Would love to do more of these with you guys soon!",
+      "excerpt": "Loved the trip and the people! It was such a great experience. Would love to do more of these with you guys soon!"
+    },
+    {
+      "id": "riya",
+      "sourceAttachments": [12],
+      "author": "Riya",
+      "featured": true,
+      "sourceNote": "The compliment is addressed to Anshika in the screenshot.",
+      "transcription": "Thankyou to each and everyone of you\n\nEspecially @Anshika Influencer I loved your fun chulbuli vibe and your humble nature and your content workshop was BOMB (gonna make lot of content now)\n\n@all Not a single person made me feel like I am a stranger to them, everyone made me feel like we are friends\n\nAll the games, dance and bakchodi was crazyyyy\n\nGonna miss each one of you\n\nDefinitely had a great time",
+      "excerpt": "I loved your fun chulbuli vibe and your humble nature and your content workshop was BOMB."
+    },
+    {
+      "id": "group-memories",
+      "sourceAttachments": [13],
+      "author": null,
+      "sourceNote": "The sender name is outside the screenshot. The Riya name below belongs to the next message, not this one.",
+      "transcription": "Thankyou so much guys\n\nIt was lovely meeting all of you. Really grateful for all the laughs, conversations, random moments, and memories we made together\n\nAnd that night definitely one to remember\n\nI'll share the photos videos soon edit and all karke bas make sure to tag me and logout spells when posting",
+      "excerpt": "It was lovely meeting all of you. Really grateful for all the laughs, conversations, random moments, and memories we made together."
+    },
+    {
+      "id": "ankush",
+      "sourceAttachments": [14],
+      "author": "Ankush",
+      "sourceNote": "The beginning of the message is clipped. The selected complete closing sentence is followed by the visible signature Ankush.",
+      "transcription": "Here's to having more magic super soooon",
+      "excerpt": "Here's to having more magic super soooon."
+    },
+    {
+      "id": "yashvi",
+      "sourceAttachments": [14],
+      "author": "Yashvi Sood",
+      "sourceNote": "The sender name is visible above the full message.",
+      "transcription": "our trip is done bro its sad BUT I NEVER THOUGHT I WOULD HAVE THIS MUCH FUN. You guys made it worth it and im genuinely looking forward to hanging out againnn with yall crazy kra hai humne kaafi guys mazza aagya. I cant imagine what fun i wouldve missed out on iffff i didnt agree on the last minute",
+      "excerpt": "I NEVER THOUGHT I WOULD HAVE THIS MUCH FUN. You guys made it worth it and im genuinely looking forward to hanging out againnn with yall."
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 /**
  * Logout Spells - Grimoire brochures with a stay page: the Bir editions.
- * 6 A4 pages each (cover, our stay, three days, booking), charcoal + gold brand system.
+ * Six A4 base pages (cover, stay, three days, booking), charcoal + gold brand system.
+ * The Content Spell adds one memories / reviews page before booking.
  * Run: bun run index.ts            ->  every edition
  *      bun run index.ts content    ->  only the Content Spell (keys: bir content)
  *
  * Editions:
  *   bir      The Bir Spell, 11-13 September 2026            -> Logout-Spells-Bir-Sept-2026.pdf
- *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026-v2.pdf
+ *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees, pushGraphicsState, popGraphicsState, rectangle, clip, endPath } from "pdf-lib";
@@ -91,6 +92,10 @@ type FinalSpec = {
   closeThanks: string;
   closeHand: string;
 };
+type MemoriesSpec = {
+  photos: { attachment: number; group: "bir" | "anshika"; image: string }[];
+  reviews: { id: string; author: string | null; excerpt: string; featured?: boolean }[];
+};
 type EditionSpec = {
   fileName: string;
   docTitle: string;
@@ -99,6 +104,7 @@ type EditionSpec = {
   stay: StaySpec;
   days: DaySpec[];
   final: FinalSpec;
+  memoriesFile?: string;
 };
 
 /* ------------------------------- Helpers -------------------------------- */
@@ -671,6 +677,99 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     dt(p, f.closeHand, { x: W / 2 - hand.widthOfTextAtSize(f.closeHand, 16) / 2, y: 48, font: hand, size: 16, color: GOLD_LIGHT, rotate: -1.5 });
   }
 
+  /* ======================= PREVIOUS SPELLS & REVIEWS ======================= */
+  if (spec.memoriesFile) {
+    const memories: MemoriesSpec = JSON.parse(readFileSync(spec.memoriesFile, "utf8"));
+    if (memories.photos.length !== 8 || memories.reviews.length !== 7) {
+      throw new Error("The memories page requires all eight photographs and seven distinct messages");
+    }
+    // Draw after the existing pages so their font subsetting order remains intact.
+    const p = doc.insertPage(doc.getPageCount() - 1, [W, H]);
+    const margin = 48;
+    const contentW = W - margin * 2;
+    bgFill(p);
+    roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.24, borderWidth: 0.8 });
+
+    drawTracked(p, "THE LOGOUT SPELLS CIRCLE", { cx: W / 2, y: 801, font: sansSemi, size: 7.5, color: GOLD, tr: 3 });
+    mixedTitle(p, "Spells that ", "Stay", { cx: W / 2, y: 760, size: 40 });
+    eyebrowRule(p, 743, 8, 30);
+
+    const photoStrip = async (group: "bir" | "anshika", title: string, labelY: number, photoTop: number) => {
+      const photos = memories.photos.filter((photo) => photo.group === group);
+      if (photos.length !== 4) throw new Error(`Expected four ${group} photographs`);
+      const images = await Promise.all(photos.map(async (photo) => {
+        const image = await loadImage(photo.image);
+        if (!image) throw new Error(`Missing memories photograph ${photo.attachment}`);
+        return image;
+      }));
+      const titleW = drawTracked(p, title, { x: margin, y: labelY, font: sansSemi, size: 7.8, color: GOLD_LIGHT, tr: 2.2 });
+      hline(p, margin + titleW + 18, W - margin, labelY + 2.5, GOLD, 0.3);
+      const gap = 6;
+      const ratios = images.map((image) => image.width / image.height);
+      const height = (contentW - gap * (images.length - 1)) / ratios.reduce((sum, ratio) => sum + ratio, 0);
+      let x = margin;
+      for (const image of images) {
+        const width = height * image.width / image.height;
+        p.drawImage(image, { x, y: photoTop - height, width, height });
+        roundRect(p, x - 1.3, photoTop + 1.3, width + 2.6, height + 2.6, 1.8, { border: GOLD, borderOpacity: 0.35, borderWidth: 0.5 });
+        x += width + gap;
+      }
+      if (Math.abs(x - gap - (W - margin)) > 0.01) throw new Error("Photo strip exceeds its page margins");
+    };
+
+    await photoStrip("bir", "PREVIOUS BIR SPELLS", 718, 704);
+    await photoStrip("anshika", "PREVIOUS SPELLS WITH ANSHIKA", 598, 584);
+
+    mixedTitle(p, "In their ", "Words", { cx: W / 2, y: 472, size: 29 });
+    drawTracked(p, "EXCERPTS FROM THE UDAIPUR SPELL GROUP", { cx: W / 2, y: 453, font: sansMed, size: 6.7, color: MUTED, tr: 1.9 });
+
+    const featured = memories.reviews.filter((review) => review.featured);
+    const highlight = featured[0];
+    if (featured.length !== 1 || !highlight?.author) throw new Error("The featured review must have a visible author");
+    const quoteLines = wrap(serifSemiItal, `“${highlight.excerpt}”`, 14.2, contentW - 64);
+    const featureTop = 435;
+    const featureH = 54 + (quoteLines.length - 1) * 17;
+    roundRect(p, margin, featureTop, contentW, featureH, 10, { fill: CHARCOAL, fillOpacity: 0.65, border: GOLD, borderOpacity: 0.48, borderWidth: 0.7 });
+    let quoteY = featureTop - 23;
+    for (const line of quoteLines) {
+      if (trackW(serifSemiItal, line, 14.2, 0) > contentW - 56) throw new Error("Featured review exceeds its text area");
+      drawTracked(p, line, { cx: W / 2, y: quoteY, font: serifSemiItal, size: 14.2, color: GOLD_HI, tr: 0 });
+      quoteY -= 17;
+    }
+    drawTracked(p, `${highlight.author.toUpperCase()} · ON ANSHIKA'S WORKSHOP`, { cx: W / 2, y: quoteY + 1, font: sansSemi, size: 7, color: GOLD_LIGHT, tr: 1.7 });
+
+    const reviews = memories.reviews.filter((review) => !review.featured);
+    const gap = 26;
+    const columnW = (contentW - gap) / 2;
+    const bodySize = 9.2;
+    const leading = 12.2;
+    let rowTop = featureTop - featureH - 19;
+    for (let offset = 0; offset < reviews.length; offset += 2) {
+      const row = reviews.slice(offset, offset + 2).map((review) => ({
+        review,
+        lines: wrap(sansReg, `“${review.excerpt}”`, bodySize, columnW),
+      }));
+      const rowHeight = Math.max(...row.map(({ lines }) => lines.length)) * leading + 24;
+      if (rowTop - rowHeight < 92) throw new Error("Review excerpts run into the memories page's closing note");
+      for (const [column, { review, lines }] of row.entries()) {
+        const x = margin + column * (columnW + gap);
+        hline(p, x, x + columnW, rowTop, GOLD, 0.27, 0.5);
+        let y = rowTop - 14;
+        for (const line of lines) {
+          if (sansReg.widthOfTextAtSize(line, bodySize) > columnW) throw new Error(`Review ${review.id} exceeds its column`);
+          dt(p, line, { x, y, font: sansReg, size: bodySize, color: CREAM, opacity: 0.92 });
+          y -= leading;
+        }
+        drawTracked(p, (review.author ?? "From the group").toUpperCase(), { x, y: y - 1, font: sansSemi, size: 7, color: GOLD_LIGHT, tr: 1.5 });
+      }
+      rowTop -= rowHeight + 12;
+    }
+
+    const closing = "your story could be next.";
+    dt(p, closing, { x: W / 2 - hand.widthOfTextAtSize(closing, 16) / 2, y: 72, font: hand, size: 16, color: GOLD_LIGHT, rotate: -1.5 });
+    footerLabel(p, "06 · THE CIRCLE BEFORE YOURS");
+  }
+
   /* -------------------------------- Output --------------------------------- */
   const bytes = await doc.save();
   writeFileSync(spec.fileName, bytes);
@@ -834,13 +933,14 @@ const bir: EditionSpec = {
 };
 
 /* ============ THE CONTENT SPELL WITH ANSHIKA · 25-27 SEPT 2026 ============ */
-/* September revision: the same six-page Grimoire design with real photos,
- * the workshop on Day 2, games and karaoke, a café visit and two fare tiers. */
+/* September revision: the original six designed pages remain unchanged.
+ * A seventh page of previous spells and review excerpts precedes booking. */
 const contentDayThree = dayThree("DAY 03 · SUNDAY, 27 SEPTEMBER · BAIJNATH");
 const content: EditionSpec = {
-  fileName: "Logout-Spells-Content-Spell-25-27-Sept-2026-v2.pdf",
+  fileName: "Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf",
   docTitle: "Logout Spells · The Content Spell with Anshika · 25-27 September 2026",
   docSubject: "Bir, Himachal Pradesh · Content Spell itinerary and booking",
+  memoriesFile: "img/content-memories/sources.json",
   cover: {
     img: "img/cover.jpg",
     eyebrow: "THE CONTENT SPELL · WITH ANSHIKA",
