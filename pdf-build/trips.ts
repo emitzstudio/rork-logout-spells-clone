@@ -39,6 +39,8 @@ type DaySpec = {
   chip: string;
   note?: string;
   footer: string;
+  /** Optional height of the band's bottom fade (default 116pt); shorter keeps faces low in the frame visible. */
+  fadeH?: number;
 };
 type InfoRow = { icon: "check" | "cross"; title: string; body: string };
 type PriceCard = {
@@ -423,7 +425,8 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     bgFill(p);
     coverImage(p, await loadImage(day.img), H, 235);
     vgrad(p, 0, W, H, 60, DEEP, 0.35, 0);
-    vgrad(p, 0, W, 722, 116, DEEP, 0, 1);
+    if (day.fadeH !== undefined) vgrad(p, 0, W, H - 235 + day.fadeH, day.fadeH, DEEP, 0, 1);
+    else vgrad(p, 0, W, 722, 116, DEEP, 0, 1);
 
     drawTracked(p, day.eyebrow, { cx: W / 2, y: 572, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
     mixedTitle(p, day.titleA, day.titleB, { cx: W / 2, y: 526, size: 38 });
@@ -1150,117 +1153,61 @@ const ziro: TripSpec = {
 };
 
 /* =============================== VIETNAM ================================= */
+/* Rerouted 2026-09-09 (founder): Da Nang in, Hanoi out. Early bird ₹60,000 / normal ₹65,000. */
 const vietnam: TripSpec = {
   fileName: "Logout-Spells-Vietnam.pdf",
-  docTitle: "Logout Spells · The Vietnam Spell · 7 Days from Ha Long Bay to Ho Chi Minh City",
-  docSubject: "Vietnam · Hanoi, Ha Long Bay, Hoi An, Da Nang, Ho Chi Minh City · trip itinerary and booking",
+  docTitle: "Logout Spells · The Vietnam Spell · 7 Days from Da Nang to Hanoi",
+  docSubject: "Vietnam · Da Nang, Ba Na Hills, Cham Islands, Hoi An, Hanoi, Ha Long Bay · trip itinerary and booking",
   cover: {
-    img: "img2/final/vn-cover.jpg",
+    img: "img2/final/vn2-cover.jpg",
     shade: { y: 580, h: 110, opacity: 0.55 },
-    eyebrow: "A SPELL FROM THE BAY TO THE DELTA",
+    eyebrow: "A SPELL FROM THE COAST TO THE CAPITAL",
     titleLines: [{ text: "VIETNAM", size: 104, tr: 10, y: 404 }],
     sub: "Where the bay, the lanterns and the city stay up late.",
     subY: 372,
     ruleY: 349,
-    dateLine: "7 DAYS · HANOI TO HO CHI MINH CITY",
+    dateLine: "7 DAYS · DA NANG TO HANOI",
     dateY: 322,
-    locLine: "HANOI · HA LONG BAY · HOI AN · DA NANG · HO CHI MINH CITY",
+    locLine: "DA NANG · BA NA HILLS · CHAM ISLANDS · HOI AN · HANOI · HA LONG BAY",
     locY: 305,
-    poem1: "Seven days. One coastline. Three cities that never sit still.",
-    poem2: "Cruise decks. Lantern streets. Stories worth carrying home.",
+    poem1: "Seven days. One long coastline. Three towns that never sit still.",
+    poem2: "Market mornings. Lantern streets. Stories worth carrying home.",
     poemY: 274,
-    para: "Leave the usual behind and follow Vietnam from north to south: a night on the water in Ha Long Bay, street food in Hanoi, islands off Hoi An, a golden bridge above the clouds and rooftops in Ho Chi Minh City to close the spell.",
+    para: "Leave the usual behind and follow Vietnam from the coast to the capital: a dragon bridge over Da Nang, a golden bridge above the clouds, islands off Hoi An, lantern streets, train-track coffee in Hanoi and a day on Ha Long Bay to close the spell.",
     paraY: 224,
     ital1: "This isn't about ticking places off a list.",
     ital2: "It's about slow mornings, loud nights and letting the country set the pace.",
     italY: 172,
-    pill: "CRUISE · ISLANDS · LANTERNS · ROOFTOPS",
+    pill: "ISLANDS · LANTERNS · MARKETS · THE BAY",
     pillY: 126,
   },
   days: [
     {
-      img: "img2/final/vn-d1.jpg",
-      eyebrow: "DAY 01 · HANOI TO HA LONG BAY · CRUISE & PARTY",
-      titleA: "A Night on ",
-      titleB: "the Bay",
-      intro: "The spell begins on the water. Land in Hanoi, roll straight out to Ha Long Bay and let a cruise deck do the rest of the day's work.",
+      img: "img2/final/vn2-d1.jpg",
+      eyebrow: "DAY 01 · ARRIVE IN DA NANG · DRAGON BRIDGE & THE NIGHT",
+      titleA: "Hello, ",
+      titleB: "Da Nang",
+      intro: "The spell begins on the coast. Land in Da Nang, drop your bags and let the city's dragon light up your first night.",
       items: [
-        { title: "MORNING · ARRIVE IN HANOI", body: "Land, meet the circle and transfer out toward the coast while the city wakes up behind you." },
-        { title: "CHECK IN & LUNCH ON THE CRUISE", body: "Board, claim your cabin and sit down to lunch as the limestone islands start sliding past the windows." },
-        { title: "AFTERNOON ON THE DECK", body: "Nothing on the list but the bay: loungers, the view and whatever the cruise has planned." },
+        { title: "ARRIVE IN DA NANG", body: "Land, meet the circle and transfer to the hotel. The coast starts here." },
+        { title: "SETTLE IN", body: "Freshen up, find the beach or a first Vietnamese coffee, and let the flight wear off before the night begins." },
         {
-          title: "SUNSET DRINKS & THE PARTY",
-          body: "Sunset drinks as the karsts turn gold, cruise activities, then the ship party runs late. Overnight on the cruise.",
+          title: "EVENING · THE DRAGON BRIDGE",
+          body: "Walk the Han riverfront as the Dragon Bridge lights up in gold. On weekend nights it breathes fire and water at 9 PM.",
+        },
+        {
+          title: "THE PARTY · CLUBS & TRANSFERS",
+          body: "Then the night proper: Da Nang's clubs and bars, with the transfers taken care of. Dance till you're done. Overnight in Da Nang.",
         },
       ],
-      chip: "ARRIVE · CRUISE · CELEBRATE",
-      note: "the sea rocks you to sleep tonight",
+      chip: "ARRIVE · DRAGON · DANCE",
+      note: "the dragon breathes fire on weekend nights",
       footer: "02 · DAY ONE",
-    },
-    {
-      img: "img2/final/vn-d2.jpg",
-      eyebrow: "DAY 02 · HA LONG BAY TO HANOI · BAY & OLD QUARTER",
-      titleA: "Bay Morning, ",
-      titleB: "City Night",
-      intro: "A slow breakfast on the water, a last look at the bay, then Hanoi's Old Quarter for the kind of evening that turns into a night.",
-      items: [
-        { title: "SLOW BREAKFAST ON THE CRUISE", body: "No alarms. Breakfast on deck while the bay does its quiet morning thing." },
-        {
-          title: "HA LONG BAY EXPLORATION",
-          body: "Out among the islands one more time, with snorkeling or a swim depending on the cruise. Lunch on board.",
-        },
-        { title: "AFTERNOON · BACK TO HANOI", body: "Return to the city, check into the hotel and freshen up for the evening." },
-        {
-          title: "EVENING · THE OLD QUARTER",
-          body: "Street food on low plastic stools, cafes and bars, a slow loop around Hoan Kiem Lake. Overnight in Hanoi.",
-        },
-      ],
-      chip: "BREAKFAST · BAY · STREET FOOD",
-      footer: "03 · DAY TWO",
-    },
-    {
-      img: "img2/final/vn-d3.jpg",
-      eyebrow: "DAY 03 · HANOI TO DA NANG · CHAM ISLANDS BEACH DAY",
-      titleA: "Salt, Sand & ",
-      titleB: "Sunshine",
-      intro: "A morning flight south and straight onto a boat. Today is about clear water, coral and doing very little on a beach.",
-      items: [
-        { title: "MORNING FLIGHT · HANOI TO DA NANG", body: "Fly south with the circle and transfer toward Hoi An and Cua Dai on the coast." },
-        { title: "BOAT TO THE CHAM ISLANDS", body: "A boat ride out to the islands, where the water turns the colour of a postcard." },
-        { title: "SNORKEL, SWIM, DO NOTHING", body: "Snorkeling over the reef, swimming, then the beach for as long as the beach wants you." },
-        { title: "EVENING · HOI AN", body: "Return to Hoi An, check in and keep the evening free. Overnight in Hoi An." },
-      ],
-      chip: "FLY · SAIL · SNORKEL",
-      note: "sunscreen. more than you think.",
-      footer: "04 · DAY THREE",
-    },
-    {
-      img: "img2/final/vn-d4.jpg",
-      eyebrow: "DAY 04 · MARBLE MOUNTAINS & HOI AN · SLOW CULTURE",
-      titleA: "Caves & ",
-      titleB: "Lanterns",
-      intro: "A late breakfast, a mountain full of caves and pagodas, then the ancient town lights its lanterns for you.",
-      items: [
-        { title: "LATE BREAKFAST", body: "Sleep in. The morning starts when you do." },
-        {
-          title: "THE MARBLE MOUNTAINS",
-          body: "Five marble hills of caves, shrines and pagodas just outside Da Nang. Lunch after, then back to the hotel to rest.",
-        },
-        {
-          title: "AROUND 4 PM · THE ANCIENT TOWN",
-          body: "Head into Hoi An, on bikes if it's practical: the Japanese Covered Bridge, the riverside, the cafes.",
-        },
-        {
-          title: "LANTERNS & DINNER",
-          body: "The town glows as the light drops. Dinner in Hoi An, then wander until you're done. Overnight in Hoi An.",
-        },
-      ],
-      chip: "CAVES · BIKES · LANTERNS",
-      footer: "05 · DAY FOUR",
+      fadeH: 80,
     },
     {
       img: "img2/final/vn-d5.jpg",
-      eyebrow: "DAY 05 · BA NA HILLS · GOLDEN BRIDGE · THE BIG DAY",
+      eyebrow: "DAY 02 · BA NA HILLS · GOLDEN BRIDGE · THE BIG DAY",
       titleA: "Above ",
       titleB: "the Clouds",
       intro: "One big attraction day, done properly. A cable car into the clouds and a bridge held up by two giant hands.",
@@ -1275,70 +1222,151 @@ const vietnam: TripSpec = {
       ],
       chip: "CABLE CAR · BRIDGE · HILLTOP",
       note: "our pick: the golden bridge + the french village",
+      footer: "03 · DAY TWO",
+    },
+    {
+      img: "img2/final/vn-d3.jpg",
+      eyebrow: "DAY 03 · DA NANG TO THE CHAM ISLANDS · BEACH DAY",
+      titleA: "Salt, Sand & ",
+      titleB: "Sunshine",
+      intro: "Check out of Da Nang and straight onto a boat. Today is about clear water, coral and doing very little on a beach.",
+      items: [
+        { title: "MORNING · DOWN THE COAST", body: "Check out and drive south along the coast to Cua Dai, where the boats leave for the islands." },
+        { title: "BOAT TO THE CHAM ISLANDS", body: "A boat ride out to the islands, where the water turns the colour of a postcard." },
+        { title: "SNORKEL, SWIM, DO NOTHING", body: "Snorkeling over the reef, swimming, then the beach for as long as the beach wants you." },
+        {
+          title: "EVENING · HOI AN",
+          body: "Return to Hoi An, check in and keep the evening free: a massage, a riverside cafe, an early night. Overnight in Hoi An.",
+        },
+      ],
+      chip: "SAIL · SNORKEL · SETTLE",
+      note: "sunscreen. more than you think.",
+      footer: "04 · DAY THREE",
+    },
+    {
+      img: "img2/final/vn2-d4.jpg",
+      eyebrow: "DAY 04 · MARBLE MOUNTAINS & HOI AN · SLOW CULTURE",
+      titleA: "Caves & ",
+      titleB: "Lanterns",
+      intro: "A late breakfast, a mountain full of caves and pagodas, then the ancient town lights its lanterns for you.",
+      items: [
+        { title: "LATE BREAKFAST", body: "Sleep in. The morning starts when you do." },
+        {
+          title: "THE MARBLE MOUNTAINS",
+          body: "Five marble hills of caves, shrines and pagodas just outside Da Nang. Lunch after, then back to the hotel to rest.",
+        },
+        {
+          title: "AROUND 4 PM · THE ANCIENT TOWN",
+          body: "Head into Hoi An, on bikes if it's practical: the Japanese Covered Bridge, the riverside, the market stalls and the cafes.",
+        },
+        {
+          title: "LANTERNS & DINNER",
+          body: "The town glows as the light drops. Dinner in Hoi An, then wander until you're done. Overnight in Hoi An.",
+        },
+      ],
+      chip: "CAVES · BIKES · LANTERNS",
+      footer: "05 · DAY FOUR",
+    },
+    {
+      img: "img2/final/vn2-d5.jpg",
+      eyebrow: "DAY 05 · HOI AN TO HANOI · A CHILL DAY IN THE CAPITAL",
+      titleA: "Markets & ",
+      titleB: "Train Tracks",
+      intro: "A flight north and a day with nothing heavy in it: a market, coffee beside the train tracks and the Old Quarter at your own pace.",
+      items: [
+        { title: "FLY TO HANOI", body: "Transfer to Da Nang airport and fly north with the circle. Check in and shake off the flight." },
+        {
+          title: "THE MARKET",
+          body: "A local market, Dong Xuan or the streets around it, for fabric, snacks and the kind of things you didn't know you needed.",
+        },
+        {
+          title: "TRAIN STREET COFFEE",
+          body: "Egg coffee at one of the cafes squeezed against the tracks. When the train comes through, everyone leans back.",
+        },
+        {
+          title: "CYCLES, IF YOU WANT",
+          body: "Rent a cycle and loop Hoan Kiem Lake and the Old Quarter. Rental isn't included; we'll share where to get one. Overnight in Hanoi.",
+        },
+      ],
+      chip: "FLY · MARKET · COFFEE",
+      note: "the train comes. everyone leans back.",
       footer: "06 · DAY FIVE",
     },
     {
-      img: "img2/final/vn-d6.jpg",
-      eyebrow: "DAY 06 · DA NANG TO HO CHI MINH CITY · CITY EVENING",
-      titleA: "Hello, ",
-      titleB: "Saigon",
-      intro: "A slow breakfast, a flight south and an afternoon with nothing in it, saved on purpose for the city's rooftops.",
+      img: "img2/final/vn2-d6.jpg",
+      eyebrow: "DAY 06 · HA LONG BAY · DAY CRUISE",
+      titleA: "A Day on ",
+      titleB: "the Bay",
+      intro: "The bay everyone flies here for: a full day cruising between the limestone islands, then back to Hanoi for the night.",
       items: [
-        { title: "SLOW BREAKFAST & FLIGHT", body: "Breakfast at your pace, then fly Da Nang to Ho Chi Minh City." },
-        { title: "CHECK IN, THEN NOTHING", body: "Hotel check-in and an afternoon that is completely, deliberately free." },
-        { title: "EVENING · BEN THANH & BEYOND", body: "The Ben Thanh area, cafe hopping, then a rooftop for the skyline and the nightlife." },
-        { title: "DINNER IN THE CITY", body: "Dinner wherever the evening takes the circle. Overnight in Ho Chi Minh City." },
+        { title: "EARLY START", body: "Breakfast, an early pick-up and the drive out from Hanoi to the coast." },
+        { title: "BOARD THE CRUISE", body: "Board the day cruise and claim a spot on deck as the karsts start sliding past." },
+        {
+          title: "THE BAY, PROPERLY",
+          body: "The islands, the caves and floating villages the boat calls at, and a kayak or a swim if the day allows.",
+        },
+        {
+          title: "BACK TO HANOI",
+          body: "Back to the harbour by late afternoon and the drive home to the city. Last night in the Old Quarter. Overnight in Hanoi.",
+        },
       ],
-      chip: "FLY · REST · ROOFTOPS",
+      chip: "DRIVE · CRUISE · DRIFT",
+      note: "bring the good camera today",
       footer: "07 · DAY SIX",
     },
     {
-      img: "img2/final/vn-d7.jpg",
-      eyebrow: "DAY 07 · HO CHI MINH CITY · A CHILL FINAL DAY",
-      titleA: "Your Last ",
-      titleB: "Day, Your Call",
-      intro: "Instead of packing the final day with activities, the circle gets two options. Both end at the same table.",
+      img: "img2/final/vn2-d7.jpg",
+      eyebrow: "DAY 07 · HANOI · FLY HOME",
+      titleA: "One Last ",
+      titleB: "Morning",
+      intro: "No big plans, on purpose. A last slow breakfast, a last wander, and the flight home with a camera roll that needs its own hard drive.",
       items: [
+        { title: "LAST BREAKFAST", body: "Pho on a plastic stool or coffee by the lake, your call." },
         {
-          title: "OPTION A · CITY DAY",
-          body: "Late breakfast, the War Remnants Museum, Independence Palace and the Notre-Dame Cathedral and Central Post Office area. Lunch, then shopping and cafes.",
+          title: "A LAST WANDER",
+          body: "If the flight allows, one more loop of the Old Quarter: the thrift shops, the tailors, the things you kept meaning to buy.",
         },
-        {
-          title: "OPTION B · THE MEKONG DELTA",
-          body: "One final experience: a morning trip to the delta, a boat ride through coconut waterways and a local village, lunch, and back in the city by evening.",
-        },
-        { title: "THE FINAL DINNER", body: "Everyone back at one table for the last dinner, the kind that runs long." },
+        { title: "TRANSFER TO THE AIRPORT", body: "Check out, group transfer to the airport and the flight home." },
       ],
-      chip: "CITY OR DELTA · YOUR CALL",
-      note: "a loose last day is the whole point",
+      chip: "BREAKFAST · WANDER · FLY",
+      note: "you'll be back. they always are.",
       footer: "08 · DAY SEVEN",
     },
   ],
   final: {
     img: "img2/final/vn-night.jpg",
-    subline: "THE VIETNAM SPELL · 7 DAYS · HANOI TO HO CHI MINH CITY",
+    subline: "THE VIETNAM SPELL · 7 DAYS · DA NANG TO HANOI",
     cards: [
       {
-        label: "ALL SEVEN DAYS",
+        label: "EARLY BIRD",
         price: rupee("60,000"),
         booking: rupee("18,000"),
         remaining: `remaining ${rupee("42,000")} before departure`,
         highlight: true,
+        badge: "SAVE " + rupee("5,000"),
+        taxLine: "5% GST & 2% TCS APPLICABLE",
+      },
+      {
+        label: "NORMAL PRICE",
+        price: rupee("65,000"),
+        booking: rupee("19,500"),
+        remaining: `remaining ${rupee("45,500")} before departure`,
+        highlight: false,
         taxLine: "5% GST & 2% TCS APPLICABLE",
       },
     ],
-    cardNote: "Price is per person; 5% GST and 2% TCS are applicable. Book with 30% now and pay the rest before departure. Seats are confirmed in the order payments arrive.",
+    cardNote: "Prices are per person; 5% GST and 2% TCS are applicable. Early bird seats go first; once they're gone, the normal price applies. Book with 30% now and pay the rest before departure.",
     leftHeading: "GOOD TO KNOW",
     leftRows: [
-      { icon: "check", title: "ONE NIGHT ON THE WATER", body: "Day 1 is spent aboard a Ha Long Bay cruise: cabin, lunch, sunset drinks and the ship party." },
-      { icon: "check", title: "TWO DOMESTIC FLIGHTS", body: "Hanoi to Da Nang on Day 3 and Da Nang to Ho Chi Minh City on Day 6 keep the road time short." },
-      { icon: "cross", title: "INTERNATIONAL FLIGHTS & VISA", body: "Flights into Hanoi and out of Ho Chi Minh City, and your Vietnam e-visa, are not part of the price." },
+      { icon: "check", title: "ONE DOMESTIC FLIGHT", body: "Da Nang to Hanoi on Day 5 is part of the price and keeps the road time short." },
+      { icon: "check", title: "SIX NIGHTS IN CITY HOTELS", body: "Two in Da Nang, two in Hoi An and two in Hanoi, each close to the evening plan." },
+      { icon: "cross", title: "INTERNATIONAL FLIGHTS & VISA", body: "Flights into Da Nang and out of Hanoi, and your Vietnam e-visa, are not part of the price." },
     ],
     rightHeading: "COME READY FOR",
     rightRows: [
-      { icon: "check", title: "WATER DAYS", body: "Swimwear, a dry bag and reef safe sunscreen for the bay and the Cham Islands." },
-      { icon: "check", title: "ONE EARLY FLIGHT", body: "Day 3 starts with a morning flight south. Pack the night before." },
-      { icon: "check", title: "LATE NIGHTS", body: "A cruise party, Hanoi's Old Quarter and Saigon rooftops. Day 6 afternoon is for sleeping in." },
+      { icon: "check", title: "WATER DAYS", body: "Swimwear, a dry bag and reef safe sunscreen for the Cham Islands and the bay." },
+      { icon: "check", title: "ONE FLIGHT, ONE EARLY START", body: "Day 5 flies north and Day 6 leaves early for Ha Long Bay. Pack the night before." },
+      { icon: "check", title: "LATE NIGHTS", body: "Da Nang's clubs, lantern-lit Hoi An and Hanoi's Old Quarter. Day 5 is for taking it slow." },
     ],
     qrBody: "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
     closeThanks: "Thank you for choosing to wander with us.",

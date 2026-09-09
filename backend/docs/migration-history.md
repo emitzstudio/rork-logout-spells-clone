@@ -2211,6 +2211,77 @@ remain.
 
 ---
 
+## 0052 + 0053 — Vietnam rerouted: Da Nang to Hanoi, early bird ₹60,000 / normal ₹65,000 (2026-09-09)
+
+- Founder instruction (in chat): a "major change" to the Vietnam itinerary.
+  The circle now lands in Da Nang and flies home from Hanoi: D1 arrive Da
+  Nang, Dragon Bridge evening, clubs with transfers · D2 Ba Na Hills (cable
+  car, Golden Bridge, French Village or Fantasy Park) · D3 boat to the Cham
+  Islands, evening in Hoi An · D4 late breakfast, Marble Mountains, ~4 PM the
+  Ancient Town, lanterns and dinner · D5 flight to Hanoi, a market, train
+  street coffee, cycle rental (not included, details shared) · D6 Ha Long Bay
+  day cruise, back to Hanoi · D7 flight home. Pricing: early bird ₹60,000,
+  normal ₹65,000 (5% GST + 2% TCS still applicable per 0051). Photos were
+  asked to read "women and community" (local bazaar, women eating, thrift
+  shops, a spa, a few men in the circle).
+- Brochure: pdf-build/trips.ts `vietnam` spec rewritten (cover, all seven
+  days, two price cards EARLY BIRD with a SAVE ₹5,000 badge / NORMAL PRICE,
+  30% splits ₹18,000 / ₹42,000 and ₹19,500 / ₹45,500, fine print, good-to-know
+  rows). DaySpec gained an optional `fadeH` (band fade height; default 116
+  unchanged) so faces low in a band stay visible - only Vietnam Day 1 uses it.
+  Jibhi rebuilt as a control and rendered pixel-identical on all 6 pages (mean
+  abs diff 0.0000). Ten new AI photos (Indian women travellers plus a couple of
+  men: lantern-street cover from behind, Dragon Bridge selfie, Hoi An market
+  stall, Hanoi train street cafe, Ha Long day-cruise deck, street pho breakfast,
+  thrift shop, spa evening, two lantern heroes); Golden Bridge, Cham Islands
+  and the lantern-river closing page reused. Print crops img2/final/vn2-*.jpg,
+  web JPGs img2/vietnam/web/ (folder mirrors the 19 storage objects); the six
+  now-unused old print crops deleted. Rebuilt to 9 pages and republished at
+  web/public/brochures/Logout-Spells-Vietnam.pdf (same URL, so a hard refresh
+  may be needed where the old file was cached).
+- **0052_vietnam_reroute_seed_window — APPLIED**: the usual narrowest anon
+  INSERT policy on the spell's fixed hd/ folder (0034/0041/0045/0049
+  convention); 9 uploads + public reads verified 200 in-session.
+- **0053_vietnam_reroute — APPLIED**: §1 closes the window; the spell row is
+  rerouted in place (same id/slug): location 'Da Nang to Hanoi, Vietnam',
+  urgency 'early-bird' (price_minor stays 6000000 as the from-price, the
+  0035/0047 convention), new hero + mobile hero, 6 card inclusions, and the
+  page document replaced whole: 4 gallery shots (thrift, spa, lantern river,
+  golden hour), about block with the portrait lantern-street image, 7-day
+  itinerary, city-hotels stay block, 8 inclusions / 6 exclusions (cycle rental
+  and the taxes named), 3 audience cards, 4 highlights, 7 FAQs (price with
+  both tiers and both splits, dates TBC, cover, day-cruise-not-overnight,
+  stay, pack, change). Three spell_changes entries (edited / price / image).
+  Departure untouched (still 'Dates announced soon', seats_total 0).
+  Self-verify pins the row shape, both price tiers in the FAQ, zero stale
+  old-route copy (Ho Chi Minh / Saigon / Mekong / Ben Thanh / overnight
+  cruise), dash-free copy, no duplicate block ids, exactly 19 hd objects,
+  every referenced image present in storage, ZERO anon INSERT policies left;
+  anon lens green. Post-apply REST check as anon: early-bird row, 7/7/8/6/4
+  block counts, 87 unique block ids, all 14 referenced images 200, upload
+  probe 400 (window really closed).
+- Scope assumptions (flagged to the founder in chat): the Dragon Bridge fire
+  show runs on weekend nights only, so it is worded as conditional; the day
+  cruise is described without promising lunch or kayaks; the Day 1 club night
+  covers transfers only; international flights into Da Nang / out of Hanoi and
+  the e-visa stay excluded.
+- Follow-up: the 0051 note stands - the web receipt computes 5% GST only and
+  needs a TCS line before Vietnam's book-now door opens; still unreachable
+  because the departure is dates-TBC (gate D). Online booking would charge
+  price_minor (₹60,000 early bird); the normal tier is display-only until a
+  tier switch exists.
+
+### Baseline after 0053
+
+spells 6 published (Bir dated + priced · Udaipur priced, Dates TBC · Ziro
+dated, price on request + seats TBA · VoF priced, dates announced soon ·
+Jibhi priced early-bird, dates announced soon · Vietnam early bird ₹60,000,
+Da Nang to Hanoi, dates announced soon) · no anon INSERT windows open ·
+create-booking gates unchanged: C (pricing config), F (gateway), D (dates),
+D2 (price/seats) · no staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
