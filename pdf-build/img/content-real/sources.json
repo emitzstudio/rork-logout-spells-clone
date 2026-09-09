@@ -1,0 +1,47 @@
+{
+  "method": "AI-guided tonal enhancement applied to the original photographs. Original pixel geometry, people, architecture, objects and lettering are retained. No generated scene pixels are substituted.",
+  "photos": [
+    {
+      "name": "qudrat",
+      "page": 2,
+      "originalUrl": "https://r2-pub.rork.com/attachments/ono8ni9w3bcybr1ztk7w7.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/53c15fb0-bb42-4d1c-a000-5cdf96840a1f.png"
+    },
+    {
+      "name": "day1-circle",
+      "page": 3,
+      "originalUrl": "https://r2-pub.rork.com/attachments/zwrzb1nqe0xakr3y6bm3x.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/13746961-447a-4867-897f-947e3dc62e51.png"
+    },
+    {
+      "name": "day1-chokling",
+      "page": 3,
+      "originalUrl": "https://r2-pub.rork.com/attachments/baxqew13ac4zah52ovmau.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/d07ab801-32c1-4ab3-b480-cc78a0b2cae2.png"
+    },
+    {
+      "name": "day2-pottery-objects",
+      "page": 4,
+      "originalUrl": "https://r2-pub.rork.com/attachments/pbgm4pk2bubik2rpln5xl.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/3f3bac6b-d471-4012-bed8-b6faa375a945.png"
+    },
+    {
+      "name": "day2-pottery-people",
+      "page": 4,
+      "originalUrl": "https://r2-pub.rork.com/attachments/eoka615jv15w65s5sz6rc.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/5c9467ef-c0e1-4fa7-8f62-c32edd25e2b9.png"
+    },
+    {
+      "name": "day3-farewell",
+      "page": 5,
+      "originalUrl": "https://r2-pub.rork.com/attachments/u89udhls6rj2tv5jl78vb.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/d554bcc1-e65f-4071-964b-0ad245651378.png"
+    },
+    {
+      "name": "day3-walk",
+      "page": 5,
+      "originalUrl": "https://r2-pub.rork.com/attachments/uhve3rj2uy8f638sco8xe.png",
+      "enhancementUrl": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/e65c012a-cb1f-4bbf-b1d2-9539c6e71f11.png"
+    }
+  ]
+}

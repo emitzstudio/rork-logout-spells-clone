@@ -6,11 +6,12 @@
  *
  * Editions:
  *   bir      The Bir Spell, 11-13 September 2026            -> Logout-Spells-Bir-Sept-2026.pdf
- *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026.pdf
+ *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026-v2.pdf
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees, pushGraphicsState, popGraphicsState, rectangle, clip, endPath } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { PNG } from "pngjs";
 
 const W = 595.28;
 const H = 841.89;
@@ -35,6 +36,8 @@ const WHITE = rgb(1, 1, 1);
 type DayItem = { title: string; body: string };
 type DaySpec = {
   img: string;
+  /** Real photos share the original header area without stretching or cropping people. */
+  companionImg?: string;
   eyebrow: string;
   titleA: string;
   titleB: string;
@@ -59,6 +62,7 @@ type CoverSpec = {
 };
 type StaySpec = {
   img: string;
+  preserveImageAspect?: boolean;
   eyebrow: string;
   titleA: string;
   titleB: string;
@@ -79,6 +83,7 @@ type FinalSpec = {
   /** Two cards sit side by side. */
   cards: PriceCard[];
   priceNotes: string[];
+  upgradeNote?: string;
   cardNote: string;
   included: string[];
   excluded: string[];
@@ -375,6 +380,60 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     else page.drawRectangle({ x: 0, y: yTop - h, width: W, height: h, color: CHARCOAL_SOFT });
   };
 
+  const realStayImage = (page: PDFPage, img: PDFImage | null) => {
+    if (!img) throw new Error("The Content Spell's real Qudrat photograph is missing");
+    const height = 310;
+    const scale = Math.max(W / img.width, height / img.height);
+    const drawW = img.width * scale;
+    const drawH = img.height * scale;
+    page.pushOperators(pushGraphicsState(), rectangle(0, H - height, W, height), clip(), endPath());
+    page.drawImage(img, { x: (W - drawW) / 2, y: H - drawH + (drawH - height) * 0.65, width: drawW, height: drawH });
+    page.pushOperators(popGraphicsState());
+  };
+
+  /* A single alpha ramp avoids overlapping transparent strips banding across real photos. */
+  const photoFades = new Map<string, PDFImage>();
+  const photoFade = async (page: PDFPage, yTop: number, height: number, topOpacity: number, bottomOpacity: number) => {
+    const key = `${topOpacity}:${bottomOpacity}`;
+    let image = photoFades.get(key);
+    if (!image) {
+      const ramp = new PNG({ width: 2, height: 1024 });
+      for (let y = 0; y < ramp.height; y++) {
+        const alpha = Math.round(255 * (topOpacity + (bottomOpacity - topOpacity) * y / (ramp.height - 1)));
+        for (let x = 0; x < ramp.width; x++) {
+          const offset = (y * ramp.width + x) * 4;
+          ramp.data[offset] = 10;
+          ramp.data[offset + 1] = 8;
+          ramp.data[offset + 2] = 6;
+          ramp.data[offset + 3] = alpha;
+        }
+      }
+      image = await doc.embedPng(PNG.sync.write(ramp));
+      photoFades.set(key, image);
+    }
+    page.drawImage(image, { x: 0, y: yTop - height, width: W, height });
+  };
+
+  const realPhotoPair = async (page: PDFPage, firstPath: string, secondPath: string) => {
+    const [first, second] = await Promise.all([loadImage(firstPath), loadImage(secondPath)]);
+    if (!first || !second) throw new Error(`Missing real day photo: ${firstPath} or ${secondPath}`);
+    const gap = 3;
+    const firstRatio = first.width / first.height;
+    const secondRatio = second.width / second.height;
+    const photoHeight = Math.min(235, (W - gap) / (firstRatio + secondRatio));
+    const firstWidth = firstRatio * photoHeight;
+    const secondWidth = secondRatio * photoHeight;
+    const left = (W - firstWidth - gap - secondWidth) / 2;
+    page.drawImage(first, { x: left, y: H - photoHeight, width: firstWidth, height: photoHeight });
+    page.drawImage(second, { x: left + firstWidth + gap, y: H - photoHeight, width: secondWidth, height: photoHeight });
+    page.drawLine({ start: { x: left + firstWidth + gap / 2, y: H }, end: { x: left + firstWidth + gap / 2, y: H - photoHeight }, color: GOLD, thickness: 0.55, opacity: 0.38 });
+    page.drawRectangle({ x: 0, y: H - photoHeight, width: W, height: photoHeight, color: DEEP, opacity: 0.1 });
+    await photoFade(page, H, 52, 0.32, 0);
+    const fadeHeight = Math.min(72, photoHeight * 0.34);
+    await photoFade(page, H - photoHeight + fadeHeight, fadeHeight, 0, 1);
+    page.drawRectangle({ x: 0, y: H - photoHeight - 0.5, width: W, height: 1, color: DEEP });
+  };
+
   /* ================================ COVER ================================= */
   {
     const c = spec.cover;
@@ -419,9 +478,15 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     const s = spec.stay;
     const p = doc.addPage([W, H]);
     bgFill(p);
-    coverImage(p, await loadImage(s.img), H, 310);
-    vgrad(p, 0, W, H, 70, DEEP, 0.4, 0);
-    vgrad(p, 0, W, 715, 185, DEEP, 0, 1);
+    if (s.preserveImageAspect) {
+      realStayImage(p, await loadImage(s.img));
+      await photoFade(p, H, 70, 0.4, 0);
+      await photoFade(p, 715, 185, 0, 1);
+    } else {
+      coverImage(p, await loadImage(s.img), H, 310);
+      vgrad(p, 0, W, H, 70, DEEP, 0.4, 0);
+      vgrad(p, 0, W, 715, 185, DEEP, 0, 1);
+    }
 
     drawTracked(p, s.eyebrow, { cx: W / 2, y: 556, font: sansSemi, size: 8.5, color: GOLD, tr: 3.6 });
     mixedTitle(p, s.titleA, s.titleB, { cx: W / 2, y: 508, size: 42 });
@@ -455,9 +520,13 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
   for (const day of spec.days) {
     const p = doc.addPage([W, H]);
     bgFill(p);
-    coverImage(p, await loadImage(day.img), H, 235);
-    vgrad(p, 0, W, H, 60, DEEP, 0.35, 0);
-    vgrad(p, 0, W, 722, 116, DEEP, 0, 1);
+    if (day.companionImg) {
+      await realPhotoPair(p, day.img, day.companionImg);
+    } else {
+      coverImage(p, await loadImage(day.img), H, 235);
+      vgrad(p, 0, W, H, 60, DEEP, 0.35, 0);
+      vgrad(p, 0, W, 722, 116, DEEP, 0, 1);
+    }
 
     drawTracked(p, day.eyebrow, { cx: W / 2, y: 572, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
     mixedTitle(p, day.titleA, day.titleB, { cx: W / 2, y: 526, size: 38 });
@@ -495,6 +564,7 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
       p.drawCircle({ x: spineX, y: pos.discY, size: 12.5, color: CHARCOAL_SOFT, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.5 });
       const num = `0${i + 1}`;
       dt(p, num, { x: spineX - serifSemi.widthOfTextAtSize(num, 13.5) / 2, y: pos.discY - 4.6, font: serifSemi, size: 13.5, color: GOLD_LIGHT });
+      if (trackW(sansSemi, item.title, 9.8, 2) > bodyW) throw new Error(`${spec.fileName}: day heading is too wide: ${item.title}`);
       drawTracked(p, item.title, { x: textX, y: pos.titleY, font: sansSemi, size: 9.8, color: CREAM, tr: 2 });
       let by = pos.titleY - 15;
       for (const line of pos.bodyLines) {
@@ -558,7 +628,10 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     if (cardA) priceCard(64, cardA);
     if (cardB) priceCard(307.28, cardB);
 
-    para(p, f.cardNote, { cx: W / 2, y: 489, font: sansReg, size: 8, color: MUTED, maxW: 470, leading: 12.5, opacity: 0.9 });
+    if (f.upgradeNote) {
+      para(p, f.upgradeNote, { cx: W / 2, y: 497, font: sansMed, size: 8.6, color: GOLD_HI, maxW: 470, leading: 12 });
+    }
+    para(p, f.cardNote, { cx: W / 2, y: f.upgradeNote ? 483 : 489, font: sansReg, size: 8, color: MUTED, maxW: 470, leading: 12.5, opacity: 0.9 });
 
     /* Included / not included */
     drawTracked(p, "WHAT'S INCLUDED", { x: 72, y: 470, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
@@ -602,12 +675,16 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
   const bytes = await doc.save();
   writeFileSync(spec.fileName, bytes);
   console.log("PDF written:", spec.fileName, (bytes.length / 1024).toFixed(0), "KB,", doc.getPageCount(), "pages");
+  if (process.argv.includes("--publish")) {
+    const publicPath = `../web/public/brochures/${spec.fileName}`;
+    writeFileSync(publicPath, bytes);
+    console.log("Share copy written:", publicPath);
+  }
 }
 
 /* ======================= SHARED BIR BUILDING BLOCKS ======================= */
-/* Everything below is common to every Bir edition: the same stay, the same
- * Day 1 stops, the same Day 3, the same money. An edition only overrides what
- * actually changes, so "unchanged" is guaranteed by construction. */
+/* The original Bir itinerary and commercial terms remain the baseline.
+ * Each edition overrides only its requested activities, photos and prices. */
 
 const qudratStay: StaySpec = {
   img: "img/stay.jpg",
@@ -639,7 +716,7 @@ const cafeHopping: DayItem = {
 };
 const dinnerAtTheProperty: DayItem = { title: "DINNER AT THE PROPERTY", body: "Good food, easy conversations and your first night together." };
 
-/** Day 3 is the same on every edition; only the date in the eyebrow moves. */
+/** Original Bir Day 3, with an edition-specific date. */
 const dayThree = (eyebrow: string): DaySpec => ({
   img: "img/day3.jpg",
   eyebrow,
@@ -659,7 +736,7 @@ const dayThree = (eyebrow: string): DaySpec => ({
   footer: "05 · DAY THREE",
 });
 
-/** Pricing, inclusions and the booking panel: identical across editions. */
+/** Original Bir pricing and the shared inclusions, payment terms and QR panel. */
 const birBooking: Omit<FinalSpec, "img" | "subline"> = {
   cards: [
     { label: "6 BED DORM", price: rupee("14,000"), booking: rupee("4,000"), highlight: true },
@@ -757,11 +834,11 @@ const bir: EditionSpec = {
 };
 
 /* ============ THE CONTENT SPELL WITH ANSHIKA · 25-27 SEPT 2026 ============ */
-/* Same edition as the Bir Spell above: same stay, same Day 1 stops, same Day 3,
- * same pricing. What moves: the dates, a content workshop on Day 1, and Day 2
- * becomes Content Day with a party night in place of the dress-up evening. */
+/* September revision: the same six-page Grimoire design with real photos,
+ * the workshop on Day 2, games and karaoke, a café visit and two fare tiers. */
+const contentDayThree = dayThree("DAY 03 · SUNDAY, 27 SEPTEMBER · BAIJNATH");
 const content: EditionSpec = {
-  fileName: "Logout-Spells-Content-Spell-25-27-Sept-2026.pdf",
+  fileName: "Logout-Spells-Content-Spell-25-27-Sept-2026-v2.pdf",
   docTitle: "Logout Spells · The Content Spell with Anshika · 25-27 September 2026",
   docSubject: "Bir, Himachal Pradesh · Content Spell itinerary and booking",
   cover: {
@@ -778,67 +855,73 @@ const content: EditionSpec = {
     ital2: "It's about arriving, connecting, creating, and letting Bir set the pace.",
     pill: "15 SPOTS ONLY",
   },
-  stay: qudratStay,
+  stay: { ...qudratStay, img: "img/content-real/qudrat.jpg", preserveImageAspect: true },
   days: [
     {
-      img: "img/day1.jpg",
+      img: "img/content-real/day1-circle.jpg",
+      companionImg: "img/content-real/day1-chokling.jpg",
       eyebrow: "DAY 01 · FRIDAY, 25 SEPTEMBER · BIR",
       titleA: "Arrive, Connect & ",
       titleB: "Create",
       intro:
-        "The first day is about arriving, meeting the people you'll be sharing the spell with, sitting down with Anshika to talk content, and easing into Bir's slower rhythm.",
+        "The first day is about arriving, meeting the people you'll be sharing the spell with, and easing into Bir's slower rhythm.",
       items: [
         iceBreaking,
-        {
-          title: "CONTENT WORKSHOP WITH ANSHIKA",
-          body: "Learn, create and understand content with Anshika: finding your angle, hooks that hold, shooting on your phone and what makes people stop scrolling.",
-        },
         choklingVisit,
         cafeHopping,
-        dinnerAtTheProperty,
+        {
+          title: "GAMES NIGHT",
+          body: "Mafia, reels, plenty of fun and Anshika's special games. Settle in for a games night together.",
+        },
       ],
       chip: "ARRIVE · CONNECT · CREATE",
       footer: "03 · DAY ONE",
     },
     {
-      img: "img/day2.jpg",
+      img: "img/content-real/day2-pottery-objects.jpg",
+      companionImg: "img/content-real/day2-pottery-people.jpg",
       eyebrow: "DAY 02 · SATURDAY, 26 SEPTEMBER · BIR",
       titleA: "Content ",
       titleB: "Day",
       intro:
-        "Today is entirely about creating. Everyone shoots, everyone makes: creative prompts, solo and group challenges, reels and collabs across Bir's prettiest corners, then a party night to celebrate it all.",
+        "Today is about learning, creating and having fun: a workshop with Anshika, tea gardens, pottery and a karaoke night together.",
       items: [
-        { title: "MORNING BRIEF & CREATIVE PROMPTS", body: "Prompts land over chai: hooks, shot lists and the day's challenges." },
         {
-          title: "WAH TEA ESTATE · SOLO CHALLENGE",
-          body: "Walk the tea gardens with a brief in hand. One location, one reel, your own point of view.",
+          title: "CONTENT CREATION WORKSHOP WITH ANSHIKA",
+          body: "Clear your doubts, learn content creation and explore ideas through fun activities with Anshika.",
         },
-        { title: "POTTERY AT ANDRETTA · PROCESS REEL", body: "Hands on clay, camera rolling: the wheel, the mess, the thing you make." },
-        {
-          title: "LUNCH AT HER CAFÉ · COLLAB ROUND",
-          body: "Slow down over a delicious meal, then pair up: two creators, one idea, one collab reel before dessert.",
-        },
-        {
-          title: "GROUP CONTENT CHALLENGE",
-          body: "One brief for the whole circle. Shoot it, cut it and screen it for everyone back at the property.",
-        },
-        { title: "PARTY NIGHT", body: "Cameras down. Dinner, music and a party night to celebrate a day well shot." },
+        { title: "WAH TEA ESTATE", body: "Visit the tea estate and enjoy lunch there." },
+        { title: "POTTERY AT ANDRETTA · 3 - 6 PM", body: "Hands on clay, camera rolling: the wheel, the mess, the thing you make." },
+        { title: "KARAOKE NIGHT", body: "Cameras down. Dinner, music and karaoke to end the day on a high note." },
       ],
       chip: "SHOOT · CREATE · CELEBRATE",
       footer: "04 · DAY TWO",
     },
-    dayThree("DAY 03 · SUNDAY, 27 SEPTEMBER · BAIJNATH"),
+    {
+      ...contentDayThree,
+      img: "img/content-real/day3-farewell.jpg",
+      companionImg: "img/content-real/day3-walk.jpg",
+      items: contentDayThree.items.map((item) => item.title === "TOY TRAIN EXPERIENCE"
+        ? { title: "VISIT TO HER CAFÉ", body: "Visit Her Café for one last slow pause together before the journey home." }
+        : item),
+    },
   ],
   final: {
     img: "img/night.jpg",
     subline: "BIR · 25 - 27 SEPTEMBER 2026 · ONLY 15 SPOTS",
     ...birBooking,
+    cards: [
+      { label: "EARLY BIRD", price: rupee("13,000"), booking: rupee("4,000"), highlight: true },
+      { label: "NORMAL PRICE", price: rupee("15,000"), booking: rupee("4,000"), highlight: false },
+    ],
+    upgradeNote: `Upgrade to a 4-bed dorm for ${rupee("2,000")} extra per person.`,
+    cardNote: `6-bed shared dorm at Qudrat. Book with ${rupee("4,000")} now and pay the remaining amount before departure.`,
   },
 };
 
 /* -------------------------------- Build --------------------------------- */
 const editions: Record<string, EditionSpec> = { bir, content };
-const only = process.argv.slice(2);
+const only = process.argv.slice(2).filter((arg) => arg !== "--publish");
 const unknown = only.filter((key) => !(key in editions));
 if (unknown.length > 0) throw new Error(`unknown edition(s): ${unknown.join(", ")} (known: ${Object.keys(editions).join(", ")})`);
 console.log("rupee glyph:", { serifHasRupee, sansHasRupee });
