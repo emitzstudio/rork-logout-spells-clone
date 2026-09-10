@@ -9,7 +9,7 @@
  *      add --publish to also copy the built PDFs to ../web/public/brochures/
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFName, PDFPage, PDFString, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
 const W = 595.28;
@@ -68,7 +68,9 @@ type CreatorSpec = {
   roles: string;
   handle: string;
   handleSub: string;
-  /** Optional centred italic bio lines drawn between the handle stack and the motto. */
+  /** Optional profile URL; when set, the handle pill and its subline become a tappable link. */
+  url?: string;
+  /** Optional centred italic bio lines drawn between the handle stack and the motto (the motto moves down past two lines). */
   bio?: string[];
   motto: string;
   footer: string;
@@ -406,6 +408,22 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     drawTracked(page, text, { cx: o.cx, y: o.cyTop - h / 2 - o.size * 0.36, font: o.font, size: o.size, color: o.color, tr: o.tr });
   };
 
+  /** Invisible link annotation over a rectangle; readers open `url` when it is tapped. */
+  const link = (page: PDFPage, x: number, yBottom: number, w: number, h: number, url: string) => {
+    const annot = doc.context.register(
+      doc.context.obj({
+        Type: "Annot",
+        Subtype: "Link",
+        Rect: [x, yBottom, x + w, yBottom + h],
+        Border: [0, 0, 0],
+        A: { Type: "Action", S: "URI", URI: PDFString.of(url) },
+      }),
+    );
+    const existing = page.node.Annots();
+    if (existing) existing.push(annot);
+    else page.node.set(PDFName.of("Annots"), doc.context.obj([annot]));
+  };
+
   const footerLabel = (page: PDFPage, text: string) => {
     hline(page, W / 2 - 36, W / 2 + 36, 50, GOLD, 0.22);
     drawTracked(page, text, { cx: W / 2, y: 33, font: sansMed, size: 6.8, color: MUTED, tr: 2.6, opacity: 0.75 });
@@ -495,6 +513,11 @@ async function buildTrip(spec: TripSpec): Promise<void> {
 
     pill(p, c.handle, { cx: W / 2, cyTop: 228, font: sansSemi, size: 8.5, tr: 3, color: GOLD_LIGHT });
     drawTracked(p, c.handleSub, { cx: W / 2, y: 182, font: sansMed, size: 6.8, color: MUTED, tr: 2, opacity: 0.85 });
+    if (c.url) {
+      /* One tap target over the handle pill and its subline. */
+      const linkW = Math.max(trackW(sansSemi, c.handle, 8.5, 3) + 44, trackW(sansMed, c.handleSub, 6.8, 2)) + 16;
+      link(p, W / 2 - linkW / 2, 176, linkW, 58, c.url);
+    }
     if (c.bio) {
       let bioY = 168;
       for (const line of c.bio) {
@@ -504,15 +527,16 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     }
 
     /* Camera-lens rings flank the motto: the one quiet nod to the craft on this page. */
+    const mottoY = 138 - Math.max(0, (c.bio?.length ?? 0) - 2) * 13;
     const mottoW = trackW(sansSemi, c.motto, 9.5, 3.6);
     const mottoX = W / 2 - mottoW / 2;
-    hline(p, mottoX - 84, mottoX - 22, 140, GOLD, 0.45);
-    hline(p, W / 2 + mottoW / 2 + 22, W / 2 + mottoW / 2 + 84, 140, GOLD, 0.45);
+    hline(p, mottoX - 84, mottoX - 22, mottoY + 2, GOLD, 0.45);
+    hline(p, W / 2 + mottoW / 2 + 22, W / 2 + mottoW / 2 + 84, mottoY + 2, GOLD, 0.45);
     for (const lx of [mottoX - 110, W / 2 + mottoW / 2 + 110]) {
-      p.drawCircle({ x: lx, y: 142, size: 6, borderColor: GOLD, borderWidth: 0.8, borderOpacity: 0.55 });
-      p.drawCircle({ x: lx, y: 142, size: 2.2, color: GOLD_LIGHT });
+      p.drawCircle({ x: lx, y: mottoY + 4, size: 6, borderColor: GOLD, borderWidth: 0.8, borderOpacity: 0.55 });
+      p.drawCircle({ x: lx, y: mottoY + 4, size: 2.2, color: GOLD_LIGHT });
     }
-    drawTracked(p, c.motto, { cx: W / 2, y: 138, font: sansSemi, size: 9.5, color: GOLD_LIGHT, tr: 3.6 });
+    drawTracked(p, c.motto, { cx: W / 2, y: mottoY, font: sansSemi, size: 9.5, color: GOLD_LIGHT, tr: 3.6 });
 
     footerLabel(p, c.footer);
   }
@@ -1469,9 +1493,12 @@ const ziro: TripSpec = {
 };
 
 /* =============================== VIETNAM ================================= */
-/* Rerouted again 2026-09-10 (founder): Hanoi in, Da Nang out. Early bird ₹60,000 / normal ₹65,000.
- * Copy follows the founder's day-by-day brief (headline, body, THE VIBE, STAY). Scenic imagery only:
- * the original vn-* set plus two scenic vn4-* bands (the Ninh Binh karsts, a Da Nang beach morning). */
+/* Rerouted again 2026-09-10 (founder): Hanoi in, Da Nang out. Early bird ₹65,000 / normal ₹70,000,
+ * flat ₹18,000 booking amount. Hosted by Naksi (@naksimanicpixie): her creator page sits right after the
+ * cover, so the day footers count from 03. Copy follows the founder's day-by-day brief (headline, body,
+ * THE VIBE, STAY): Ninh Binh and Ba Na Hills carry their days, Day 4 stays in Da Nang, Day 7 is optional.
+ * Scenic imagery only: the original vn-* set plus two scenic vn4-* bands (the Ninh Binh karsts, a Da Nang
+ * beach morning). */
 const vietnam: TripSpec = {
   fileName: "Logout-Spells-Vietnam.pdf",
   docTitle: "Logout Spells · The Vietnam Spell · 7 Days from Hanoi to Da Nang",
@@ -1492,13 +1519,30 @@ const vietnam: TripSpec = {
     poem1: "Seven days. Old streets, emerald water and lantern nights.",
     poem2: "Slow mornings. Green views. Stories worth carrying home.",
     poemY: 274,
-    para: "Leave the usual behind and follow Vietnam from the capital to the coast: coffee in Hanoi's Old Quarter, a day on Ha Long Bay, cycling and caves in Ninh Binh, lantern-lit Hoi An, a golden bridge above the clouds and a slow island day to close the spell.",
+    para: "Leave the usual behind and follow Vietnam from the capital to the coast: coffee in Hanoi's Old Quarter, a day on Ha Long Bay, the caves and karsts of Ninh Binh, lantern-lit Hoi An, Ba Na Hills above the clouds and a slow island day to close the spell.",
     paraY: 224,
     ital1: "This isn't about ticking places off a list.",
     ital2: "It's about slow mornings, sea breezes and letting the country set the pace.",
     italY: 172,
     pill: "COFFEE · THE BAY · CAVES · LANTERNS · ISLANDS",
     pillY: 126,
+  },
+  creator: {
+    img: "img2/final/vn-naksi.jpg",
+    eyebrow: "MEET THE CREATOR",
+    nameA: "Meet ",
+    nameB: "Naksi",
+    roles: "CREATOR · STORYTELLER · YOUR HOST IN VIETNAM",
+    handle: "@NAKSIMANICPIXIE",
+    handleSub: "INSTAGRAM · INSTAGRAM.COM/NAKSIMANICPIXIE",
+    url: "https://www.instagram.com/naksimanicpixie",
+    bio: [
+      "Creator, storyteller and the host of this spell. Naksi turns everyday moments",
+      "into stories worth remembering: slow mornings, new streets, spontaneous detours",
+      "and the people you meet along the way. This time, the story is Vietnam.",
+    ],
+    motto: "SLOW MORNINGS · REAL STORIES",
+    footer: "02 · THE CREATOR",
   },
   days: [
     {
@@ -1518,7 +1562,7 @@ const vietnam: TripSpec = {
       vibe: "Old streets · Coffee · Exploring · First-night energy",
       chip: "STAY · HANOI",
       note: "no rushing. no packed schedule.",
-      footer: "02 · DAY ONE",
+      footer: "03 · DAY ONE",
     },
     {
       img: "img2/final/vn-d1.jpg",
@@ -1534,23 +1578,23 @@ const vietnam: TripSpec = {
       vibe: "Cruise · Islands · Ocean views · Slow moments",
       chip: "STAY · HANOI",
       note: "bring the good camera today",
-      footer: "03 · DAY TWO",
+      footer: "04 · DAY TWO",
     },
     {
       img: "img2/final/vn4-d3.jpg",
-      eyebrow: "DAY 03 · NINH BINH",
-      titleA: "Into the ",
-      titleB: "Wild",
-      intro: "Trade city streets for Vietnam's stunning countryside. Explore Ninh Binh through scenic cycling routes, peaceful boat rides and incredible caves surrounded by towering limestone formations.",
+      eyebrow: "DAY 03 · INTO THE WILD",
+      titleA: "Ninh ",
+      titleB: "Binh",
+      intro: "Trade city streets for Vietnam's stunning countryside. Today belongs to Ninh Binh: towering limestone formations, emerald rice fields and a day that feels slower, greener and a little more magical.",
       items: [
+        { title: "THE CAVES", body: "Incredible caves hidden among the karsts, the heart of the Ninh Binh day." },
         { title: "CYCLING", body: "Scenic routes through the countryside, at whatever pace the circle agrees on." },
         { title: "BOAT RIDES", body: "Peaceful boat rides between the towering limestone formations." },
-        { title: "THE CAVES", body: "Incredible caves hidden among the karsts. A day that feels slower, greener and a little more magical." },
       ],
-      vibe: "Cycling · Boat rides · Caves · Countryside",
+      vibe: "Ninh Binh · Caves · Cycling · Boat rides",
       chip: "STAY · HANOI",
       note: "slower, greener, a little more magical",
-      footer: "04 · DAY THREE",
+      footer: "05 · DAY THREE",
     },
     {
       img: "img2/final/vn-d4.jpg",
@@ -1559,29 +1603,32 @@ const vietnam: TripSpec = {
       titleB: "Lantern Nights",
       intro: "Fly south towards Da Nang and make your way to the charming streets of Hoi An. Spend the evening discovering the ancient town, wandering through its atmospheric lanes and taking in the famous lantern-lit surroundings.",
       items: [
-        { title: "FLY SOUTH", body: "Leave the capital behind: the flight to Da Nang, then the road to Hoi An." },
-        { title: "THE ANCIENT TOWN", body: "Wander the atmospheric lanes as the town lights its lanterns for the night." },
+        { title: "FLY SOUTH", body: "Leave the capital behind on the flight to Da Nang, the coast city that is home for the rest of the spell." },
+        { title: "THE ROAD TO HOI AN", body: "Settle into Da Nang, then the short coastal drive to the charming streets of Hoi An." },
+        { title: "THE ANCIENT TOWN", body: "Spend the evening discovering the ancient town, wandering through its atmospheric lanes." },
+        { title: "LANTERN NIGHTS", body: "As the light fades the town lights its lanterns: the famous lantern-lit surroundings, then back to Da Nang." },
       ],
       vibe: "Coastal · Charming · Lanterns · Hoi An nights",
-      chip: "STAY · DA NANG / HOI AN",
+      chip: "STAY · DA NANG",
       note: "lanterns beat streetlights",
-      footer: "05 · DAY FOUR",
+      footer: "06 · DAY FOUR",
     },
     {
       img: "img2/final/vn-d5.jpg",
-      eyebrow: "DAY 05 · BA NA HILLS",
-      titleA: "Above the ",
-      titleB: "Clouds",
-      intro: "Today takes us into the mountains. Head up to Ba Na Hills and experience the spectacular mountain setting, the famous cable car journey and the iconic Golden Bridge.",
+      eyebrow: "DAY 05 · ABOVE THE CLOUDS",
+      titleA: "Ba Na ",
+      titleB: "Hills",
+      intro: "Today takes us into the mountains. The whole day belongs to Ba Na Hills: the spectacular mountain setting, the famous cable car journey and the iconic Golden Bridge above the clouds.",
       items: [
-        { title: "THE CABLE CAR", body: "The famous cable car journey up into the mountain setting." },
-        { title: "THE GOLDEN BRIDGE", body: "The iconic span held aloft by two giant stone hands, above the clouds." },
-        { title: "THE VIEWS", body: "A day for incredible views, fun photographs and seeing Vietnam from a completely different perspective." },
+        { title: "BA NA HILLS", body: "Up into the spectacular mountain setting above Da Nang. The day starts and ends in the hills." },
+        { title: "THE CABLE CAR", body: "The famous cable car journey up through the clouds to the top." },
+        { title: "THE GOLDEN BRIDGE", body: "The iconic span held aloft by two giant stone hands." },
+        { title: "THE VIEWS", body: "Incredible views, fun photographs and Vietnam from a completely different perspective." },
       ],
-      vibe: "Mountains · Clouds · Golden Bridge · Views",
+      vibe: "Ba Na Hills · Cable car · Golden Bridge · Clouds",
       chip: "STAY · DA NANG",
       note: "held up by two giant hands",
-      footer: "06 · DAY FIVE",
+      footer: "07 · DAY FIVE",
     },
     {
       img: "img2/final/vn-d3.jpg",
@@ -1599,7 +1646,7 @@ const vietnam: TripSpec = {
       vibe: "Island day · Beach · Slow moments · Spa · Shopping · Chill",
       chip: "STAY · DA NANG",
       note: "just a slow day by the coast",
-      footer: "07 · DAY SIX",
+      footer: "08 · DAY SIX",
     },
     {
       img: "img2/final/vn4-d7.jpg",
@@ -1607,16 +1654,17 @@ const vietnam: TripSpec = {
       eyebrow: "DAY 07 · ONE LAST DAY",
       titleA: "Before We Say ",
       titleB: "Goodbye",
-      intro: "Our final day in Vietnam is completely flexible. Wake up slowly. Grab one last Vietnamese coffee. Explore a little more. Or simply enjoy your last few hours by the coast.",
+      intro: "Our final day in Vietnam is completely flexible. Wake up slowly. Grab one last Vietnamese coffee. Explore a little more. Or simply enjoy your last few hours by the coast. Four optional ideas:",
       items: [
         { title: "SPA & WELLNESS", body: "One last massage before heading home." },
         { title: "SHOPPING", body: "Pick up souvenirs, gifts and your final Vietnam finds." },
         { title: "CAFÉS & FOOD", body: "Discover a few last cafés or grab one final Vietnamese meal." },
         { title: "BEACH & RELAX", body: "Do absolutely nothing. You've earned it." },
       ],
+      vibe: "Optional · Flexible · Zero pressure · Your choice",
       chip: "DEPARTURE FROM DA NANG",
       note: "until the next spell.",
-      footer: "08 · DAY SEVEN",
+      footer: "09 · DAY SEVEN",
     },
   ],
   final: {
@@ -1625,7 +1673,7 @@ const vietnam: TripSpec = {
     cards: [
       {
         label: "EARLY BIRD",
-        price: rupee("60,000"),
+        price: rupee("65,000"),
         booking: rupee("18,000"),
         bookingLabel: "BOOKING AMOUNT",
         remaining: "remaining balance due before departure",
@@ -1635,7 +1683,7 @@ const vietnam: TripSpec = {
       },
       {
         label: "NORMAL PRICE",
-        price: rupee("65,000"),
+        price: rupee("70,000"),
         booking: rupee("18,000"),
         bookingLabel: "BOOKING AMOUNT",
         remaining: "remaining balance due before departure",
@@ -1651,9 +1699,9 @@ const vietnam: TripSpec = {
     lists: {
       left: [
         "Domestic flight: Hanoi to Da Nang",
-        "6 nights in city hotels: three in Hanoi, three in Da Nang & Hoi An",
+        "6 nights in city hotels: three in Hanoi, three in Da Nang",
         "Ha Long Bay day cruise",
-        "Ninh Binh day: cycling, boat rides & caves",
+        "Ninh Binh day: caves, cycling & boat rides",
         "Ba Na Hills cable car & the Golden Bridge",
         "Cham Island tour & beach day",
         "All transfers & sightseeing in the program",
