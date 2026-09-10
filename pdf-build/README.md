@@ -40,4 +40,10 @@ provenance are recorded in `img/spell-memories/sources.json`. Vietnam's day band
 the scenic `img2/final/vn-*.jpg` set plus two scenic `vn3-*.jpg` bands; the web copies
 of every photo seeded to the live spell sit in `img2/vietnam/web/`.
 
+On the booking page a price card may pass `bookingLabel` when the booking amount is a
+flat figure rather than the house 30% split, and a trip may pass `lists` (plain
+What's included / Not included items with check and cross marks) in place of the
+titled GOOD TO KNOW / COME READY FOR rows; Vietnam uses both. The website's spell page
+carries the same tiers through the page document's optional `pricing` block.
+
 This project was created using `bun init` in bun v1.3.9. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.

@@ -10,9 +10,12 @@ import type {
   FaqItem,
   HostBlock,
   ListItem,
+  PriceTier,
+  PricingBlock,
   StayBlock,
   TripHighlight,
 } from "@/data/builder";
+import { formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -233,6 +236,67 @@ export function PreviewStay({ stay, symbol }: PreviewStayProps) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Price & booking ----------------------------- */
+
+interface PreviewPricingProps {
+  pricing: PricingBlock;
+  /** Priced tiers, lead first (see pricingTiers). */
+  tiers: PriceTier[];
+  isMobile: boolean;
+}
+
+/** The tiered price cards - only spells selling seats at more than one price carry them. */
+export function PreviewPricing({ pricing, tiers, isMobile }: PreviewPricingProps) {
+  return (
+    <div className={blockClass}>
+      <p className={eyebrowClass}>Price & booking</p>
+      <div className={cn("mt-4 grid gap-3", tiers.length > 1 && !isMobile && "grid-cols-2")}>
+        {tiers.map((tier) => (
+          <div
+            key={tier.id}
+            className={cn(
+              "relative rounded-lg border px-3 pb-3.5 pt-4 text-center",
+              tier.highlight ? "border-gold/50 bg-gold/[0.05]" : "border-cream/[0.08] bg-cream/[0.02]",
+            )}
+          >
+            {tier.badge.trim() !== "" && (
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-2 py-0.5 font-sans text-[6.5px] font-semibold uppercase tracking-[0.14em] text-charcoal-deep">
+                {tier.badge}
+              </span>
+            )}
+            <p
+              className={cn(
+                "font-sans text-[7px] uppercase tracking-[0.24em]",
+                tier.highlight ? "text-gold-light" : "text-cream/40",
+              )}
+            >
+              {tier.label.trim() !== "" ? tier.label : "Per seat"}
+              {tier.availability.trim() !== "" && ` · ${tier.availability}`}
+            </p>
+            <p className="mt-1.5 font-serif text-[20px] leading-none text-cream">{formatINR(tier.price)}</p>
+            <p className="mt-1 font-sans text-[6.5px] uppercase tracking-[0.18em] text-cream/35">
+              per person
+              {pricing.taxNote.trim() !== "" && ` · ${pricing.taxNote}`}
+            </p>
+            {tier.bookingAmount > 0 && (
+              <>
+                <p className="mt-2.5 font-sans text-[6.5px] uppercase tracking-[0.18em] text-cream/35">Booking amount</p>
+                <p className="mt-0.5 font-serif text-[13px] leading-none text-gold-light">{formatINR(tier.bookingAmount)}</p>
+                {pricing.remainingNote.trim() !== "" && (
+                  <p className="mt-1 font-sans text-[8px] text-cream/40">{pricing.remainingNote}</p>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+      {pricing.note.trim() !== "" && (
+        <p className="mt-3 text-center font-sans text-[8.5px] leading-snug text-cream/45">{pricing.note}</p>
+      )}
     </div>
   );
 }

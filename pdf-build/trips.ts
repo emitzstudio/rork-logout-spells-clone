@@ -74,6 +74,8 @@ type PriceCard = {
   badge?: string;
   /** Optional tax note under the price, e.g. "5% GST & 2% TCS APPLICABLE"; the card re-spaces to fit it. */
   taxLine?: string;
+  /** Label over the booking figure; defaults to the house 30% split. Flat booking amounts pass "BOOKING AMOUNT". */
+  bookingLabel?: string;
 };
 type CoverSpec = {
   img: string;
@@ -109,6 +111,8 @@ type FinalSpec = {
   leftRows: InfoRow[];
   rightHeading: string;
   rightRows: InfoRow[];
+  /** Plain one-line items (What's included / Not included) drawn under the headings instead of the titled note rows. */
+  lists?: { left: string[]; right: string[] };
   qrBody: string;
   closeThanks: string;
   closeHand: string;
@@ -717,7 +721,7 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       drawTracked(p, "PER PERSON", { cx, y: cardTop - row.per, font: sansMed, size: 6.8, color: MUTED, tr: 2.4, opacity: 0.85 });
       if (card.taxLine) drawTracked(p, card.taxLine, { cx, y: cardTop - row.tax, font: sansSemi, size: 6.4, color: GOLD, tr: 1.9 });
       hline(p, cx - 62, cx + 62, cardTop - row.rule, GOLD, 0.22);
-      drawTracked(p, "BOOKING AMOUNT · 30%", { cx, y: cardTop - row.bookLabel, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
+      drawTracked(p, card.bookingLabel ?? "BOOKING AMOUNT · 30%", { cx, y: cardTop - row.bookLabel, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
       dt(p, card.booking, { x: cx - serifSemi.widthOfTextAtSize(card.booking, 17) / 2, y: cardTop - row.book, font: serifSemi, size: 17, color: GOLD_HI });
       const remW = sansReg.widthOfTextAtSize(card.remaining, 7.5);
       dt(p, card.remaining, { x: cx - remW / 2, y: cardTop - row.remaining, font: sansReg, size: 7.5, color: MUTED, opacity: 0.9 });
@@ -738,9 +742,28 @@ async function buildTrip(spec: TripSpec): Promise<void> {
 
     para(p, f.cardNote, { cx: W / 2, y: 504, font: sansReg, size: 8, color: MUTED, maxW: 470, leading: 12.5, opacity: 0.9 });
 
-    /* Two info columns: honest notes on the left, what to come ready for on the right. */
-    drawTracked(p, f.leftHeading, { x: 72, y: 470, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
-    drawTracked(p, f.rightHeading, { x: 330, y: 470, font: sansSemi, size: 8.5, color: MUTED, tr: 2.8 });
+    /* Two info columns: honest notes on the left, what to come ready for on the right. Plain lists
+       (What's included / Not included) sit a touch higher and borrow a little from the QR panel. */
+    const listMode = f.lists !== undefined;
+    const headingY = listMode ? 474 : 470;
+    const qTop = listMode ? 288 : 296;
+    const qH = listMode ? 128 : 136;
+    drawTracked(p, f.leftHeading, { x: 72, y: headingY, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
+    drawTracked(p, f.rightHeading, { x: 330, y: headingY, font: sansSemi, size: 8.5, color: MUTED, tr: 2.8 });
+
+    const infoList = (items: string[], iconX: number, tX: number, icon: "check" | "cross"): number => {
+      let y = 452;
+      for (const item of items) {
+        if (icon === "check") checkDisc(p, iconX, y + 2.6);
+        else crossMark(p, iconX, y + 2.6);
+        for (const line of wrap(sansReg, item, 8.2, 218)) {
+          dt(p, line, { x: tX, y, font: sansReg, size: 8.2, color: icon === "check" ? CREAM : MUTED, opacity: icon === "check" ? 0.88 : 0.85 });
+          y -= 10.8;
+        }
+        y -= 3.6;
+      }
+      return y;
+    };
 
     const infoColumn = (rows: InfoRow[], iconX: number, tX: number) => {
       let y = 446;
@@ -757,12 +780,16 @@ async function buildTrip(spec: TripSpec): Promise<void> {
         y = by - 8;
       }
     };
-    infoColumn(f.leftRows, 77, 89);
-    infoColumn(f.rightRows, 335, 347);
+    if (f.lists) {
+      const leftEnd = infoList(f.lists.left, 77, 89, "check");
+      const rightEnd = infoList(f.lists.right, 335, 347, "cross");
+      if (Math.min(leftEnd, rightEnd) < qTop + 12) throw new Error("Booking page lists run into the QR panel");
+    } else {
+      infoColumn(f.leftRows, 77, 89);
+      infoColumn(f.rightRows, 335, 347);
+    }
 
     /* QR booking panel */
-    const qTop = 296;
-    const qH = 136;
     roundRect(p, 64, qTop, W - 128, qH, 14, { fill: CHARCOAL, fillOpacity: 0.8, border: GOLD, borderOpacity: 0.5, borderWidth: 1 });
 
     drawTracked(p, "BOOK YOUR SPELL", { x: 90, y: qTop - 32, font: sansSemi, size: 8, color: GOLD, tr: 3 });
@@ -1545,34 +1572,48 @@ const vietnam: TripSpec = {
         label: "EARLY BIRD",
         price: rupee("60,000"),
         booking: rupee("18,000"),
-        remaining: `remaining ${rupee("42,000")} before departure`,
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: "remaining balance due before departure",
         highlight: true,
-        badge: "SAVE " + rupee("5,000"),
+        badge: "3 SPOTS LEFT · SAVE " + rupee("5,000"),
         taxLine: "5% GST & 2% TCS APPLICABLE",
       },
       {
         label: "NORMAL PRICE",
         price: rupee("65,000"),
-        booking: rupee("19,500"),
-        remaining: `remaining ${rupee("45,500")} before departure`,
+        booking: rupee("18,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: "remaining balance due before departure",
         highlight: false,
         taxLine: "5% GST & 2% TCS APPLICABLE",
       },
     ],
-    cardNote: "Prices are per person; 5% GST and 2% TCS are applicable. Early bird seats go first; once they're gone, the normal price applies. Book with 30% now and pay the rest before departure.",
-    leftHeading: "GOOD TO KNOW",
-    leftRows: [
-      { icon: "check", title: "ONE DOMESTIC FLIGHT", body: "Da Nang to Hanoi on Day 5 is part of the price and keeps the road time short." },
-      { icon: "check", title: "SIX NIGHTS IN CITY HOTELS", body: "Two in Da Nang, two in Hoi An and two in Hanoi, each close to the evening plan." },
-      { icon: "cross", title: "INTERNATIONAL FLIGHTS & VISA", body: "Flights into Da Nang and out of Hanoi, and your Vietnam e-visa, are not part of the price." },
-    ],
-    rightHeading: "COME READY FOR",
-    rightRows: [
-      { icon: "check", title: "WATER DAYS", body: "Swimwear, a dry bag and reef safe sunscreen for the Cham Islands and the bay." },
-      { icon: "check", title: "ONE FLIGHT, ONE EARLY START", body: "Day 5 flies north and Day 6 picks up at 7:15 AM for Ha Long Bay. Pack the night before." },
-      { icon: "check", title: "LATE NIGHTS", body: "Da Nang's clubs, lantern-lit Hoi An and Hanoi's Old Quarter. Day 5 is for taking it slow." },
-    ],
-    qrBody: "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
+    cardNote: `Prices are per person; 5% GST and 2% TCS are applicable. The early bird price holds for the first three seats; after that the normal price applies. Either way, book with ${rupee("18,000")} and pay the rest before departure.`,
+    leftHeading: "WHAT'S INCLUDED",
+    leftRows: [],
+    rightHeading: "NOT INCLUDED",
+    rightRows: [],
+    lists: {
+      left: [
+        "Domestic flight: Da Nang to Hanoi",
+        "6 nights in city hotels: two each in Da Nang, Hoi An & Hanoi",
+        "Ha Long Bay day cruise",
+        "Cham Islands boat ride & snorkeling day",
+        "Ba Na Hills cable car, the Golden Bridge & the Marble Mountains",
+        "Dragon Bridge evening & club night transfers in Da Nang",
+        "All transfers & sightseeing in the program",
+        "Logout Spells community access",
+      ],
+      right: [
+        "International flights to Da Nang & back from Hanoi",
+        "Vietnam e-visa",
+        "Cycle rental in Hanoi (we share where to get one)",
+        "Meals not mentioned in the program, cafe tabs & drinks",
+        "Personal expenses, shopping & anything not mentioned in the inclusions",
+        "5% GST and 2% TCS, applicable on the price",
+      ],
+    },
+    qrBody: `Pay the ${rupee("18,000")} booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.`,
     closeThanks: "Thank you for choosing to wander with us.",
     closeHand: "seven days. one country that keeps you up late.",
   },

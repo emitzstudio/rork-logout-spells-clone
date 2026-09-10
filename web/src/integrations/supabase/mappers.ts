@@ -10,7 +10,7 @@ import type { BlogBlock, BlogCategoryId } from "@/data/blog";
 import type { CrmLead } from "@/data/crm";
 import type { ManagedBlogPost } from "@/data/blogStore";
 import { CATEGORY_FAMILY, createEmptyDraft } from "@/data/builder";
-import type { DraftImage, SpellDraft } from "@/data/builder";
+import type { DraftImage, PriceTier, PricingBlock, SpellDraft } from "@/data/builder";
 import type { FormQuestion, FormResponse, LogoutForm, ResponseAnswer } from "@/data/forms";
 import type { Interest } from "@/data/interests";
 import type {
@@ -75,6 +75,37 @@ const reviveImage = (raw: unknown): DraftImage | null => {
 const reviveImages = (raw: unknown): DraftImage[] =>
   Array.isArray(raw) ? raw.map(reviveImage).filter((i): i is DraftImage => i !== null) : [];
 
+/** Revives the optional tiered pricing block; anything malformed reads as "one price". */
+const revivePricing = (raw: unknown): PricingBlock | undefined => {
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const doc = raw as Partial<PricingBlock> & { tiers?: unknown };
+  if (!Array.isArray(doc.tiers)) return undefined;
+  const tiers: PriceTier[] = [];
+  for (const [index, item] of doc.tiers.entries()) {
+    if (typeof item !== "object" || item === null) continue;
+    const tier = item as Partial<PriceTier>;
+    const price = Number(tier.price);
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const bookingAmount = Number(tier.bookingAmount);
+    tiers.push({
+      id: typeof tier.id === "string" && tier.id !== "" ? tier.id : `tier-${index}`,
+      label: typeof tier.label === "string" ? tier.label : "",
+      price,
+      availability: typeof tier.availability === "string" ? tier.availability : "",
+      bookingAmount: Number.isFinite(bookingAmount) ? Math.max(0, bookingAmount) : 0,
+      badge: typeof tier.badge === "string" ? tier.badge : "",
+      highlight: tier.highlight === true,
+    });
+  }
+  if (tiers.length === 0) return undefined;
+  return {
+    tiers,
+    remainingNote: typeof doc.remainingNote === "string" ? doc.remainingNote : "",
+    taxNote: typeof doc.taxNote === "string" ? doc.taxNote : "",
+    note: typeof doc.note === "string" ? doc.note : "",
+  };
+};
+
 /** Serializes the builder page sections into the v1 `spells.page` document. */
 export const pageFromDraft = (draft: SpellDraft): Record<string, unknown> => ({
   version: 1,
@@ -89,6 +120,8 @@ export const pageFromDraft = (draft: SpellDraft): Record<string, unknown> => ({
   audience: draft.audience,
   tripHighlights: draft.tripHighlights,
   faqs: draft.faqs,
+  /* Only spells that carry tiers write the key - every other page document stays as it was. */
+  ...(draft.pricing ? { pricing: draft.pricing } : {}),
 });
 
 /** Rebuilds the builder draft from columns + the v1 page document. */
@@ -143,6 +176,7 @@ const draftFromRow = (row: SpellRow, dep: ActiveDepartureRow | undefined): Spell
       ? (doc.tripHighlights as SpellDraft["tripHighlights"])
       : [],
     faqs: Array.isArray(doc.faqs) ? (doc.faqs as SpellDraft["faqs"]) : [],
+    pricing: revivePricing(doc.pricing),
   };
 };
 

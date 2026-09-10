@@ -11,7 +11,9 @@ import {
   FINAL_CTA,
   dayHasContent,
   hostHasContent,
+  pricingTiers,
   quickEffectiveValue,
+  sharedBookingAmount,
   stayHasContent,
 } from "@/data/builder";
 import type { ItineraryDay, SpellDraft } from "@/data/builder";
@@ -89,6 +91,10 @@ interface BookingStripProps {
 /** The slim reservation band right under the hero. */
 export function BookingStrip({ draft, seatsLeft, onBook }: BookingStripProps) {
   const priceNumber = Number(draft.price);
+  /* Tiered spells lead with their highlight price; the other tiers follow, quieter. */
+  const tiers = pricingTiers(draft);
+  const lead = tiers[0];
+  const bookingAmount = sharedBookingAmount(tiers);
   const bits: string[] = [draft.dates.trim() !== "" ? draft.dates : "Dates TBC"];
   if (seatsLeft !== null && draft.maxSeats > 0)
     bits.push(seatsLeft > 0 ? `${seatsLeft} of ${draft.maxSeats} seats open` : "Sold out");
@@ -100,7 +106,28 @@ export function BookingStrip({ draft, seatsLeft, onBook }: BookingStripProps) {
       <div className="mx-auto flex w-full max-w-[1140px] flex-wrap items-center justify-between gap-x-8 gap-y-4 px-5 py-4 sm:px-8 md:py-5">
         <div className="min-w-0">
           <p className="font-sans text-[12px] text-cream/50">{bits.join(" · ")}</p>
-          {priceNumber > 0 ? (
+          {lead !== undefined ? (
+            <div className="mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
+              <p className="font-serif text-[24px] leading-none text-gold-light md:text-[27px]">
+                {formatINR(lead.price)}{" "}
+                <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">
+                  {lead.label.trim() !== "" ? lead.label : "per seat"}
+                  {lead.availability.trim() !== "" && ` · ${lead.availability}`}
+                </span>
+              </p>
+              {tiers.slice(1).map((tier) => (
+                <p key={tier.id} className="font-serif text-[18px] leading-none text-cream/60">
+                  {formatINR(tier.price)}{" "}
+                  <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/35">{tier.label}</span>
+                </p>
+              ))}
+              {bookingAmount !== null && (
+                <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-gold/80">
+                  Book with {formatINR(bookingAmount)}
+                </p>
+              )}
+            </div>
+          ) : priceNumber > 0 ? (
             <p className="mt-1.5 font-serif text-[24px] leading-none text-gold-light md:text-[27px]">
               {formatINR(priceNumber)}{" "}
               <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">per seat</span>
@@ -588,6 +615,97 @@ export function SpellStay({ draft }: { draft: SpellDraft }) {
             )}
           </div>
         </div>
+      </Reveal>
+    </Section>
+  );
+}
+
+/* ---------------------------------- Pricing --------------------------------- */
+
+interface SpellPricingProps {
+  draft: SpellDraft;
+  onBook: () => void;
+}
+
+/** "Price & booking" - the price tiers as booking cards, the brochure's last page brought to the web. */
+export function SpellPricing({ draft, onBook }: SpellPricingProps) {
+  const tiers = pricingTiers(draft);
+  const pricing = draft.pricing;
+  if (tiers.length === 0 || pricing === undefined) return null;
+
+  return (
+    <Section id="price">
+      <SectionHeading eyebrow="Price & booking" />
+      <div
+        className={cn(
+          "mx-auto mt-12 grid gap-6 md:mt-16",
+          tiers.length === 1 && "max-w-[420px]",
+          tiers.length === 2 && "max-w-[820px] sm:grid-cols-2",
+          tiers.length >= 3 && "sm:grid-cols-2 lg:grid-cols-3",
+        )}
+      >
+        {tiers.map((tier, i) => (
+          <Reveal key={tier.id} delay={i * 0.08} className="min-w-0">
+            <div
+              className={cn(
+                "relative h-full rounded-2xl border px-7 pb-8 pt-10 text-center transition-shadow duration-500",
+                tier.highlight
+                  ? "border-gold/60 bg-gold/[0.05] shadow-[0_0_70px_rgba(184,150,62,0.14)]"
+                  : "card-glass",
+              )}
+            >
+              {tier.badge.trim() !== "" && (
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-4 py-1.5 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-charcoal-deep shadow-[0_6px_24px_rgba(184,150,62,0.35)]">
+                  {tier.badge}
+                </span>
+              )}
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <p
+                  className={cn(
+                    "font-sans text-[11px] font-semibold uppercase tracking-[0.3em]",
+                    tier.highlight ? "text-gold-light" : "text-cream/45",
+                  )}
+                >
+                  {tier.label.trim() !== "" ? tier.label : "Per seat"}
+                </p>
+                {tier.availability.trim() !== "" && (
+                  <span className="rounded-full border border-gold/35 bg-gold/10 px-2.5 py-0.5 font-sans text-[10px] uppercase tracking-[0.18em] text-gold-light">
+                    {tier.availability}
+                  </span>
+                )}
+              </div>
+              <p className="mt-5 font-serif text-[46px] leading-none text-cream md:text-[52px]">
+                {formatINR(tier.price)}
+              </p>
+              <p className="mt-2.5 font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">per person</p>
+              {pricing.taxNote.trim() !== "" && (
+                <p className="mt-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-gold/80">{pricing.taxNote}</p>
+              )}
+              {tier.bookingAmount > 0 && (
+                <>
+                  <span aria-hidden className="mx-auto mt-7 block h-px w-24 bg-gold/25" />
+                  <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">Booking amount</p>
+                  <p className="mt-2 font-serif text-[28px] leading-none text-gold-light">{formatINR(tier.bookingAmount)}</p>
+                  {pricing.remainingNote.trim() !== "" && (
+                    <p className="mt-2.5 font-sans text-[12.5px] text-cream/45">{pricing.remainingNote}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      {pricing.note.trim() !== "" && (
+        <Reveal delay={0.16}>
+          <p className="mx-auto mt-9 max-w-[640px] text-center font-sans text-[14px] leading-[1.8] text-cream/55">
+            {pricing.note}
+          </p>
+        </Reveal>
+      )}
+      <Reveal delay={0.2} className="mt-9 flex justify-center">
+        <button type="button" onClick={onBook} className="btn-gold !rounded-full !px-10">
+          {FINAL_CTA.button} <ArrowRight size={16} />
+        </button>
       </Reveal>
     </Section>
   );

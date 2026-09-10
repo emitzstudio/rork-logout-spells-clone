@@ -19,6 +19,7 @@ import {
   PreviewFinalCta,
   PreviewHost,
   PreviewInclusions,
+  PreviewPricing,
   PreviewStay,
   PreviewTripHighlights,
 } from "@/components/dashboard/builder/PreviewSections";
@@ -29,6 +30,7 @@ import {
   FINAL_CTA,
   dayHasContent,
   hostHasContent,
+  pricingTiers,
   quickEffectiveValue,
   stayHasContent,
 } from "@/data/builder";
@@ -98,6 +100,9 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
   const symbol = draft.category ? CATEGORY_META[draft.category].symbol : "✦";
   const family = draft.category ? CATEGORY_FAMILY[draft.category] : "A Logout Spell";
   const priceNumber = Number(draft.price);
+  /* Tiered spells lead the booking bar with their highlight price. */
+  const tiers = pricingTiers(draft);
+  const leadTier = tiers[0];
   const layout = draft.about.layout;
   const hasAbout =
     [draft.about.heading, draft.about.body, draft.about.quote].some((v) => v.trim() !== "") ||
@@ -447,8 +452,11 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
             {draft.location.trim() !== "" ? ` · ${draft.location}` : ""}
           </p>
           <p className="mt-0.5 font-serif text-[16px] leading-none text-gold-light">
-            {priceNumber > 0 ? formatINR(priceNumber) : "₹ -"}{" "}
-            <span className="font-sans text-[8px] uppercase tracking-[0.14em] text-cream/35">per seat</span>
+            {leadTier !== undefined ? formatINR(leadTier.price) : priceNumber > 0 ? formatINR(priceNumber) : "₹ -"}{" "}
+            <span className="font-sans text-[8px] uppercase tracking-[0.14em] text-cream/35">
+              {leadTier !== undefined && leadTier.label.trim() !== "" ? leadTier.label : "per seat"}
+              {leadTier !== undefined && leadTier.availability.trim() !== "" && ` · ${leadTier.availability}`}
+            </span>
           </p>
         </div>
         <button
@@ -601,6 +609,11 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
 
       {/* Where we'll stay */}
       {stayHasContent(draft) && <PreviewStay stay={draft.stay} symbol={symbol} />}
+
+      {/* Price & booking - tiered spells only */}
+      {draft.pricing !== undefined && tiers.length > 0 && (
+        <PreviewPricing pricing={draft.pricing} tiers={tiers} isMobile={isMobile} />
+      )}
 
       {/* What's included / not included */}
       {showInclusions && (

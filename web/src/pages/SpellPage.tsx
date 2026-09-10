@@ -17,6 +17,7 @@ import {
   SpellHost,
   SpellInclusions,
   SpellJourney,
+  SpellPricing,
   SpellQuickInfo,
   SpellStay,
   SpellTripHighlights,
@@ -141,6 +142,7 @@ export default function SpellPage() {
       <SpellGallery draft={draft} />
       <SpellTripHighlights draft={draft} />
       <SpellStay draft={draft} />
+      <SpellPricing draft={draft} onBook={openBooking} />
       <SpellInclusions draft={draft} />
       <SpellAudience draft={draft} />
       <SpellFaqs draft={draft} />

@@ -2348,6 +2348,55 @@ migrations remain.
 
 ---
 
+## 0056 — Vietnam: both prices side by side, ₹18,000 booking amount at either (2026-09-10)
+
+- Founder note (in chat): the website should show "60k early bird (3 spots)" and
+  "65k normal price" like the brochure; "the booking amount for both ... is 18k";
+  the remaining line must not carry a figure ("just write remaining before
+  departure"); and the brochure's GOOD TO KNOW / COME READY FOR columns become
+  What's included / Not included with the founder's exact lists.
+- Brochure (pdf-build/trips.ts): `PriceCard.bookingLabel` (Vietnam passes
+  "BOOKING AMOUNT" instead of the house "BOOKING AMOUNT · 30%"), both cards
+  ₹18,000 with "remaining balance due before departure", the early bird pill now
+  "3 SPOTS LEFT · SAVE ₹5,000", card note and QR body reworded; `FinalSpec.lists`
+  renders plain check/cross lists in place of the titled note rows (headings a
+  touch higher, QR panel 8pt shorter, overflow guarded). Rebuilt (10 pages,
+  5816 KB), Jibhi control pixel-identical on all 6 pages, republished via
+  `--publish`.
+- Website: the page document gains an optional `pricing` block (`tiers[]` with
+  id / label / price / availability / bookingAmount / badge / highlight, plus
+  `remainingNote`, `taxNote`, `note`). `pageFromDraft` writes the key only when a
+  draft carries it, `draftFromRow` revives it defensively, so every other spell's
+  document is byte-for-byte what it was and builder edits keep the block. New
+  `SpellPricing` section (Price & booking: the tier cards with the availability
+  chip, gold badge, tax line, booking amount and remaining note, closing note and
+  a Join button) sits between the stay and the inclusions; the booking strip
+  leads with the highlight tier ("₹60,000 EARLY BIRD · 3 SPOTS LEFT"), lists the
+  others quieter and adds "Book with ₹18,000" when every tier shares one booking
+  amount; the console preview mirrors both.
+- **0056_vietnam_pricing_tiers — APPLIED**: §1 `page || {pricing}` + `jsonb_set`
+  of the price FAQ ("... for the first three seats ... Whichever price you book
+  at, the booking amount is ₹18,000 per person and the remaining balance is due
+  before departure."); §2 one spell_changes 'price' row (`...3c59`); §3
+  self-verify pins the row shape, both tiers, the FAQ markers, zero "30%" /
+  "19,500" / "42,000" / "45,500" anywhere on the page, dash-free copy, unique
+  block ids (86), no `pricing` key on any other spell, at least 8 change rows.
+  Post-apply REST check as anon: pricing block and FAQ as expected, price_minor
+  6000000, urgency early-bird, status published. Idempotent (same document on a
+  second pass). No storage window needed.
+- Scope note: the web receipt and create-booking still compute the house 30%
+  advance (and GST only); Vietnam's flat ₹18,000 booking amount and the 2% TCS
+  line must land there before its Book Now opens (unreachable while the
+  departure is TBC, gate D).
+
+### Baseline after 0056
+
+Unchanged from 0055 except the Vietnam pricing block and price FAQ: spells 6
+published · no anon INSERT windows open · create-booking gates unchanged · no
+staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

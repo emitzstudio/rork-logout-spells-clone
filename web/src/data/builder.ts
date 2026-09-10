@@ -155,6 +155,36 @@ export interface FaqItem {
   answer: string;
 }
 
+/** One seat price on the booking cards - e.g. Early bird next to Normal price. */
+export interface PriceTier {
+  id: string;
+  label: string;
+  /** Per-person price in INR. */
+  price: number;
+  /** How many seats this price still holds, e.g. "3 spots left"; empty hides the chip. */
+  availability: string;
+  /** The amount that confirms a seat at this price, in INR; 0 hides the booking row. */
+  bookingAmount: number;
+  /** Small gold pill on the card's top edge, e.g. "Save ₹5,000"; empty hides it. */
+  badge: string;
+  /** The tier the page leads with - gold card, and the headline price in the booking strip. */
+  highlight: boolean;
+}
+
+/**
+ * Tiered pricing for spells that sell seats at more than one price. Spells
+ * without it keep the single per-seat price from the basics.
+ */
+export interface PricingBlock {
+  tiers: PriceTier[];
+  /** Under each booking amount, e.g. "remaining balance due before departure". */
+  remainingNote: string;
+  /** Under each price, e.g. "5% GST & 2% TCS applicable"; empty hides it. */
+  taxNote: string;
+  /** Closing paragraph under the cards; empty hides it. */
+  note: string;
+}
+
 export interface SpellDraft {
   name: string;
   hook: string;
@@ -190,6 +220,8 @@ export interface SpellDraft {
   audience: AudienceCard[];
   tripHighlights: TripHighlight[];
   faqs: FaqItem[];
+  /** Optional tiered pricing; absent for spells with one price. Survives builder edits untouched. */
+  pricing?: PricingBlock;
 }
 
 /* ----------------------------- Icon registry ----------------------------- */
@@ -491,6 +523,19 @@ export const stayHasContent = (d: SpellDraft): boolean =>
   d.stay.images.length > 0 ||
   d.stay.amenities.some((a) => a.text.trim() !== "") ||
   d.stay.highlights.some((h) => h.text.trim() !== "");
+
+/** The priced tiers of a spell, lead tier first - empty for spells with one price. */
+export const pricingTiers = (d: SpellDraft): PriceTier[] => {
+  const tiers = (d.pricing?.tiers ?? []).filter((tier) => tier.price > 0);
+  const lead = tiers.find((tier) => tier.highlight);
+  return lead ? [lead, ...tiers.filter((tier) => tier !== lead)] : tiers;
+};
+
+/** The one booking amount every tier shares ("Book with ₹18,000"), or null when they differ. */
+export const sharedBookingAmount = (tiers: PriceTier[]): number | null => {
+  const amounts = new Set(tiers.map((tier) => tier.bookingAmount).filter((amount) => amount > 0));
+  return amounts.size === 1 ? [...amounts][0] : null;
+};
 
 /* ---------------------------- Draft factories ---------------------------- */
 
