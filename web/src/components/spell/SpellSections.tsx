@@ -17,6 +17,7 @@ import {
   stayHasContent,
 } from "@/data/builder";
 import type { ItineraryDay, SpellDraft } from "@/data/builder";
+import { brochureLink } from "@/data/publishedPricing";
 import { formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -355,6 +356,17 @@ export function SpellHost({ draft }: { draft: SpellDraft }) {
         <p className="mt-4 text-center font-sans text-[10.5px] uppercase tracking-[0.24em] text-cream/30">
           Click the card to flip it
         </p>
+        {host.instagram.trim() !== "" && (
+          <a
+            href={`https://www.instagram.com/${encodeURIComponent(host.instagram.trim().replace(/^@/, ""))}/?hl=en`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mx-auto mt-3 flex min-h-11 w-fit items-center justify-center gap-2 rounded-full border border-gold/25 px-5 font-sans text-sm text-gold-light transition-colors hover:border-gold/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold"
+            aria-label={`Visit ${name} on Instagram`}
+          >
+            <Instagram className="h-4 w-4" aria-hidden /> @{host.instagram.trim().replace(/^@/, "")}
+          </a>
+        )}
       </Reveal>
     </Section>
   );
@@ -631,6 +643,7 @@ interface SpellPricingProps {
 export function SpellPricing({ draft, onBook }: SpellPricingProps) {
   const tiers = pricingTiers(draft);
   const pricing = draft.pricing;
+  const brochure = brochureLink(pricing);
   if (tiers.length === 0 || pricing === undefined) return null;
 
   return (
@@ -686,8 +699,8 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
                   <span aria-hidden className="mx-auto mt-7 block h-px w-24 bg-gold/25" />
                   <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.26em] text-cream/40">Booking amount</p>
                   <p className="mt-2 font-serif text-[28px] leading-none text-gold-light">{formatINR(tier.bookingAmount)}</p>
-                  {pricing.remainingNote.trim() !== "" && (
-                    <p className="mt-2.5 font-sans text-[12.5px] text-cream/45">{pricing.remainingNote}</p>
+                  {(tier.remainingNote ?? pricing.remainingNote).trim() !== "" && (
+                    <p className="mt-2.5 font-sans text-[12.5px] text-cream/45">{tier.remainingNote ?? pricing.remainingNote}</p>
                   )}
                 </>
               )}
@@ -702,10 +715,15 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
           </p>
         </Reveal>
       )}
-      <Reveal delay={0.2} className="mt-9 flex justify-center">
+      <Reveal delay={0.2} className="mt-9 flex flex-wrap items-center justify-center gap-4">
         <button type="button" onClick={onBook} className="btn-gold !rounded-full !px-10">
           {FINAL_CTA.button} <ArrowRight size={16} />
         </button>
+        {brochure && (
+          <a href={brochure} target="_blank" rel="noopener noreferrer" className="btn-ghost-gold !rounded-full !px-8">
+            Download brochure (PDF) <ArrowRight size={16} aria-hidden />
+          </a>
+        )}
       </Reveal>
     </Section>
   );

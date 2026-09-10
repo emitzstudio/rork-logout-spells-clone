@@ -27,6 +27,7 @@ import {
 import type { DepartureInfo, MyWaitlistEntry } from "@/data/account/selfService";
 import { bookingService } from "@/data/booking";
 import type { PriceInfo, TravellerDetails, TripDates } from "@/data/booking";
+import { publishedRequestTerms } from "@/data/publishedPricing";
 import { formatINR } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 import { isUuid } from "@/integrations/supabase/client";
@@ -248,6 +249,18 @@ function PaymentPolicyNote() {
   );
 }
 
+/** The same published terms appear in review and in the team's reserve-request note. */
+function PublishedBookingTerms({ lines }: { lines: string[] }) {
+  return (
+    <div className="mt-4 space-y-3 rounded-xl border border-gold/25 bg-gold/[0.05] p-4">
+      <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">Published pricing</p>
+      {lines.map((line) => (
+        <p key={line} className="font-sans text-[12.5px] leading-relaxed text-cream/65">{line}</p>
+      ))}
+    </div>
+  );
+}
+
 interface FieldErrs {
   [key: string]: string | undefined;
 }
@@ -348,6 +361,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
   const seatsTba = (departure ? departure.seatsTotal : spell.seatsTotal) <= 0;
   const maxSeats = Math.max(1, Math.min(seatsTba ? 6 : seatsLeft, 6));
   const price = useMemo<PriceInfo>(() => bookingService.price(spell, seats), [spell, seats]);
+  const publishedTerms = useMemo(() => publishedRequestTerms(spell.draft, seats), [spell.draft, seats]);
 
   /* Reset the journey every time the doors open. */
   useEffect(() => {
@@ -1044,7 +1058,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           {seats} seat{seats > 1 ? "s" : ""}
                         </span>
                       </div>
-                      {priceTbc ? (
+                      {publishedTerms ? <PublishedBookingTerms lines={publishedTerms} /> : priceTbc ? (
                         <div className="mt-4 rounded-lg border border-gold/25 bg-gold/[0.07] px-4 py-3.5">
                           <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-gold">Price on request</p>
                           <p className="mt-1.5 font-sans text-[12.5px] leading-relaxed text-cream/60">
@@ -1074,10 +1088,12 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       )}
                     </div>
 
-                    <PaymentPolicyNote />
+                    {!publishedTerms && <PaymentPolicyNote />}
 
                     <p className="mt-3 font-sans text-[11px] leading-relaxed text-cream/35">
-                      All-inclusive: stay, meals, sessions and everything the spell lists. Flights not included.
+                      {publishedTerms
+                        ? "Includes only the accommodation, meals, transport and experiences listed on this spell. Please check the inclusions and exclusions."
+                        : "All-inclusive: stay, meals, sessions and everything the spell lists. Flights not included."}
                     </p>
 
                     <button
@@ -1201,7 +1217,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                           <dd className="text-right text-cream/85">{companionNames.join(", ")}</dd>
                         </div>
                       )}
-                      {priceTbc ? (
+                      {publishedTerms ? (
+                        <div><dt className="sr-only">Published booking terms</dt><dd><PublishedBookingTerms lines={publishedTerms} /></dd></div>
+                      ) : priceTbc ? (
                         <div className="flex justify-between gap-4 border-t border-cream/[0.08] pt-2.5 text-cream/55">
                           <dt>Price</dt>
                           <dd className="text-right text-gold-light">On request · shared personally</dd>
@@ -1232,7 +1250,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       <ShieldCheck size={13} className="mt-0.5 shrink-0 text-gold" aria-hidden />
                       <span>
                         Nothing is paid today. Your request lands with the Logout Spells team, who
-                        confirm your seats and the 30% advance personally, usually within 24 hours.
+                        {publishedTerms
+                          ? "confirm availability, your price tier and the published booking amount personally, usually within 24 hours."
+                          : "confirm your seats and the 30% advance personally, usually within 24 hours."}
                       </span>
                     </p>
 

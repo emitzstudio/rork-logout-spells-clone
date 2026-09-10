@@ -165,6 +165,8 @@ export interface PriceTier {
   availability: string;
   /** The amount that confirms a seat at this price, in INR; 0 hides the booking row. */
   bookingAmount: number;
+  /** Tier-specific balance wording; falls back to the pricing block's note. */
+  remainingNote?: string;
   /** Small gold pill on the card's top edge, e.g. "Save ₹5,000"; empty hides it. */
   badge: string;
   /** The tier the page leads with - gold card, and the headline price in the booking strip. */
@@ -177,6 +179,10 @@ export interface PriceTier {
  */
 export interface PricingBlock {
   tiers: PriceTier[];
+  /** Use the published tiers in reserve requests; the team confirms the final quote. */
+  requestMode?: "published-terms";
+  /** Optional HTTPS or same-site brochure PDF link. */
+  brochureUrl?: string;
   /** Under each booking amount, e.g. "remaining balance due before departure". */
   remainingNote: string;
   /** Under each price, e.g. "5% GST & 2% TCS applicable"; empty hides it. */

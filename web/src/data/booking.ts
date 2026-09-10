@@ -19,6 +19,7 @@
  */
 import { fmtRange, parseSpellDates } from "@/data/account/derive";
 import type { DepartureInfo } from "@/data/account/selfService";
+import { publishedRequestTerms } from "@/data/publishedPricing";
 import { formatINR } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 import { isUuid, supabase } from "@/integrations/supabase/client";
@@ -164,7 +165,10 @@ export const bookingService = {
       `Lead: ${lead.fullName.trim()} · ${lead.phone.trim()}`,
       `Companions: ${names.length > 0 ? names.join(", ") : "·"}`,
     ];
-    if (spell.price > 0) {
+    const publishedTerms = publishedRequestTerms(spell.draft, seats);
+    if (publishedTerms !== null) {
+      lines.push("Published pricing (team to confirm tier):", ...publishedTerms);
+    } else if (spell.price > 0) {
       const p = bookingService.price(spell, seats);
       lines.push(
         `Trip amount: ${formatINR(spell.price)} × ${seats} = ${formatINR(p.subtotal)}`,

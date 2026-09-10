@@ -2539,6 +2539,53 @@ remain.
 
 ---
 
+## 0061 — Jibhi: Kavya, four days / three nights, brochure parity (2026-09-10)
+
+- **0061_jibhi_kavya_brochure_parity — APPLIED** after the founder asked to update
+  the website to match the seven-page Jibhi Kavya brochure. The existing spell
+  `b7e83d15-2c4a-4f09-9d61-84f2a6c9e3d0` and `/live/the-jibhi-spell` are retained.
+- From-price is ₹14,000; regular is ₹16,000; booking is ₹4,000 at either price,
+  with ₹10,000 / ₹12,000 remaining before departure. No early-bird seat count or
+  tax ruling is invented. Nights change from two to three. Kavya's host columns
+  and card use the approved portrait, Instagram handle and trip-focused bio.
+- Four separate itinerary days now mirror the brochure, including the three
+  TODAY'S MOOD lines: Jibhi Waterfall / Mini Thailand / cafés; Shoja and Jalori
+  with one unnamed trek; Chhoie Waterfall and Bahu Village; Tirthan River then
+  the journey home. About, quick facts, stay, highlights, audience and FAQs lose
+  the stale Day 0, two-night dorm, dual-trek and nightly-dinner/bonfire promises.
+  The summary and page lists carry all eight inclusions and seven exclusions.
+- New portrait and river crop are published as immutable, date-suffixed assets
+  in web/public; no storage policy was opened. Existing heroes and gallery are
+  preserved. The stay has no unverified property photo or room-type claim.
+  The downloadable PDF is `/brochures/Logout-Spells-Jibhi-Kavya.pdf`.
+- Optional per-tier balance notes and brochure URL survive builder round trips.
+  Public pricing cards show both balances and the PDF link; the host Instagram
+  link sits outside the flip button. Existing shared balance notes still work.
+- Jibhi opts into `pricing.requestMode = 'published-terms'`: offline reservation
+  summary, review and submitted inquiry show both published price tiers and
+  the fixed booking amount multiplied by travellers, rather than the old 30%
+  estimate. The team confirms tier, availability and any applicable taxes before
+  collecting money. Other spells' arithmetic and server payment gates remain
+  unchanged; this is not an online-payment or tax-policy implementation.
+- The migration asserts row/page parity, unique block IDs, unchanged departure,
+  gallery, unrelated columns and all other spells, then appends three audit rows.
+  Live anonymous REST matches every migrated section. Six distinct image URLs
+  return images; deployed portrait, river and PDF are byte-identical to local.
+  Vietnam remains ₹65,000 with Naksi and seven days; cinematography is untouched.
+- Validation: all 165 website unit tests pass (including eight new Jibhi/pricing
+  regressions). Live Chromium checks at 390px and 1440px passed: host flip and
+  Instagram link, brochure link, two-traveller summary and review, no 30% copy,
+  no runtime errors or horizontal overflow. No test inquiry was submitted.
+
+### Baseline after 0061
+
+Jibhi: four days / three nights, Kavya, ₹14,000 / ₹16,000, ₹4,000 booking.
+Departure remains Dates announced soon, null dates, zero capacity/booked seats
+and no price override. Bookings, forms, publication state, security and payment
+functions are unchanged. No staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

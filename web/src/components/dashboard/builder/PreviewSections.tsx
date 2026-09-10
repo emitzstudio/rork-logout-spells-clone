@@ -286,8 +286,8 @@ export function PreviewPricing({ pricing, tiers, isMobile }: PreviewPricingProps
               <>
                 <p className="mt-2.5 font-sans text-[6.5px] uppercase tracking-[0.18em] text-cream/35">Booking amount</p>
                 <p className="mt-0.5 font-serif text-[13px] leading-none text-gold-light">{formatINR(tier.bookingAmount)}</p>
-                {pricing.remainingNote.trim() !== "" && (
-                  <p className="mt-1 font-sans text-[8px] text-cream/40">{pricing.remainingNote}</p>
+                {(tier.remainingNote ?? pricing.remainingNote).trim() !== "" && (
+                  <p className="mt-1 font-sans text-[8px] text-cream/40">{tier.remainingNote ?? pricing.remainingNote}</p>
                 )}
               </>
             )}

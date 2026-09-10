@@ -95,11 +95,14 @@ const revivePricing = (raw: unknown): PricingBlock | undefined => {
       bookingAmount: Number.isFinite(bookingAmount) ? Math.max(0, bookingAmount) : 0,
       badge: typeof tier.badge === "string" ? tier.badge : "",
       highlight: tier.highlight === true,
+      ...(typeof tier.remainingNote === "string" ? { remainingNote: tier.remainingNote } : {}),
     });
   }
   if (tiers.length === 0) return undefined;
   return {
     tiers,
+    ...(doc.requestMode === "published-terms" ? { requestMode: "published-terms" as const } : {}),
+    ...(typeof doc.brochureUrl === "string" ? { brochureUrl: doc.brochureUrl } : {}),
     remainingNote: typeof doc.remainingNote === "string" ? doc.remainingNote : "",
     taxNote: typeof doc.taxNote === "string" ? doc.taxNote : "",
     note: typeof doc.note === "string" ? doc.note : "",
