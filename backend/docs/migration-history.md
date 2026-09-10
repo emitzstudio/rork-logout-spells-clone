@@ -2397,6 +2397,72 @@ staged migrations remain.
 
 ---
 
+## 0057 + 0058 — Vietnam rerouted again: Hanoi to Da Nang (2026-09-10)
+
+- Founder instruction (in chat): "we have to change the whole itinerary again of
+  vietnam", with the complete day-by-day brief (headline, body, THE VIBE, STAY):
+  D1 Hanoi (Old Quarter, coffee, first-night energy) · D2 Ha Long Bay (cruise,
+  islands, slow moments) · D3 Ninh Binh (cycling, boat rides, caves) · D4 Hanoi
+  to Da Nang to Hoi An (lantern nights) · D5 Ba Na Hills (cable car, Golden
+  Bridge) · D6 Cham Island tour, evening spa / shopping / coffee "if time allows"
+  · D7 one last day, completely flexible, departure from Da Nang. Stays: three
+  nights Hanoi, then Da Nang / Hoi An. No pricing change was asked for, so the
+  0056 tiers (₹60,000 early bird, ₹65,000 normal, ₹18,000 booking amount, GST +
+  TCS) carry over verbatim.
+- Brochure (pdf-build/trips.ts `vietnam`): the founder's taglines become the day
+  titles ("Where the Spell Begins", "Into the Emerald", "Into the Wild", "City
+  Lights to Lantern Nights", "Above the Clouds", "Slow Days. Sea Breezes.",
+  "Before We Say Goodbye"), the body copy is split into the intro and the
+  numbered points without adding activities, THE VIBE lines use the existing
+  `vibe` meta line, the STAY lines ride the gold chip ("STAY · HANOI" ... 
+  "DEPARTURE FROM DA NANG"), and the closing note is "until the next spell."
+  The Day 6 hour-by-hour cruise `spotlight` is gone with the old route (the
+  founder's Day 2 copy is deliberately simple). Two scenic bands were generated
+  (vn4-d3 the Ninh Binh karsts, vn4-d7 a Da Nang beach morning); the other five
+  reuse the vn-* set. Cover, booking page subline, inclusions and exclusions
+  rewritten for the southbound route. Rebuilt (10 pages, 5317 KB), text-verified
+  (every headline, vibe line, stay chip and price present; no Dragon Bridge,
+  Marble Mountains, club, snorkel, train street or "Da Nang to Hanoi" left;
+  dash-free), republished via `--publish` and confirmed byte-identical at the
+  preview link.
+- **0057_vietnam_southbound_seed_window — APPLIED**: the usual narrowest anon
+  INSERT policy on the spell's fixed hd/ folder; 2 uploads
+  (day-3-ninh-binh-karsts.jpg, day-7-da-nang-coast-morning.jpg, both 1024x683)
+  verified 200 and byte-identical in-session. Note: the web bundle now carries
+  only the `sb_publishable_` key, which storage rejects as a bearer; the legacy
+  anon JWT was fetched from the management API (`refreshSupabaseToken`) for the
+  upload and discarded afterwards.
+- **0058_vietnam_hanoi_to_da_nang — APPLIED**: §1 closes the window; §2 sets
+  hook ("Where the old streets, the bay and the lanterns slow you down."),
+  location ('Hanoi to Da Nang, Vietnam'), the six-item inclusions array, and
+  replaces the page whole (same block ids, 86 unique): seven new days with the
+  founder's copy (bold markers, four chips each, stay lines as "The night is
+  spent in ..."), quick info, about, stay, audience, included (8) / notIncluded
+  (6: spa, shopping and cafe tabs on the free evenings replace cycle rental),
+  four trip highlights (the bay first and accented, then Ninh Binh, the Golden
+  Bridge, Hoi An), the cruise / included / stay / pack / change FAQs rewritten,
+  price and dates FAQs untouched, gallery and both heroes reused, `pricing`
+  carried over verbatim. §3 two spell_changes rows (`...3c5a` edited, `...3c5b`
+  image). §4 self-verify pins the row shape, both tiers, the three marker
+  titles, the two new day images, zero stale old-route words, dash-free copy,
+  unique ids, every referenced image present in storage, exactly 24 hd objects,
+  no `pricing` leak, at least 10 change rows, ZERO anon INSERT policies left.
+  Post-apply REST check as anon: location, hook, 7 days with the expected
+  titles and images, all 9 referenced images 200, upload probe 400 (window
+  really closed). Price, urgency, heroes and the TBC departure untouched.
+- Scope notes (flagged to the founder in chat): the Day 2 cruise keeps its
+  operator-independent wording (a day cruise out of Hanoi, timings weather
+  dependent); the girls-only deck (Logout-Spells-Vietnam-Girls-Trip.pdf) already
+  follows the same route and was not touched.
+
+### Baseline after 0058
+
+Unchanged from 0056 except the Vietnam route, copy and two new photos: spells 6
+published · no anon INSERT windows open · create-booking gates unchanged · no
+staged migrations remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
