@@ -2463,6 +2463,82 @@ staged migrations remain.
 
 ---
 
+## 0059 + 0060 — Vietnam: Naksi hosts, ₹65,000 / ₹70,000, Days 3 / 4 / 5 / 7 refined (2026-09-10)
+
+- Founder instruction (in chat, against the Grimoire brochure): a creator page as
+  the second page (photo attached, name Naksi, instagram.com/naksimanicpixie, "a
+  bit about her"); prices early bird ₹65,000 / normal ₹70,000; Days 1 and 2 are
+  good; Day 3 keeps the focus on Ninh Binh with caves, cycling and boat rides as
+  secondary points in that order; Day 4 gets four pointers instead of two (same
+  content, divided) and the stay is fixed in Da Nang; Day 5 keeps the major focus
+  on Ba Na Hills; Day 7's four ideas (spa & wellness, shopping, cafés & food,
+  beach & relax) are explicitly optional. Booking amount (₹18,000), the 3 early
+  bird seats, the ₹5,000 saving and the GST/TCS line were not mentioned and stay.
+- Brochure (pdf-build/trips.ts `vietnam`): the template's `creator` page slot now
+  supports an optional `url` (invisible link annotation over the handle pill, so
+  the Instagram handle is tappable) and a 3-line `bio` (the motto and its
+  ornaments slide down 13pt per extra line). Naksi's page sits right after the
+  cover ("02 · THE CREATOR"), so every day footer counts from 03 and the shared
+  memories page footer becomes "10 · THE CIRCLE BEFORE YOURS" (sources.json;
+  the girls deck does not use that file). Portrait cropped to a 2:3 band
+  (img2/final/vn-naksi.jpg, 683x1024). Day 3 is titled "Ninh Binh" (eyebrow
+  "DAY 03 · INTO THE WILD"; points THE CAVES, CYCLING, BOAT RIDES), Day 4 has
+  four points (FLY SOUTH, THE ROAD TO HOI AN, THE ANCIENT TOWN, LANTERN NIGHTS)
+  and the chip "STAY · DA NANG", Day 5 is titled "Ba Na Hills" (eyebrow "DAY 05
+  · ABOVE THE CLOUDS", four points), Day 7's intro ends "Four optional ideas:"
+  with the founder's four blocks verbatim and the vibe line "Optional · Flexible
+  · Zero pressure · Your choice". Booking page: ₹65,000 / ₹70,000, inclusions
+  "three in Hanoi, three in Da Nang" and "caves, cycling & boat rides". Rebuilt
+  (11 pages, 5559 KB), rendered and inspected, the page 2 link verified with
+  mupdf, republished via `--publish`.
+- **0059_vietnam_host_seed_window — APPLIED**: the usual narrowest anon INSERT
+  policy on the spell's fixed hd/ folder; 1 upload (host-naksi.jpg, 846x982,
+  98 KB) verified 200 and byte-identical in-session. The legacy anon JWT was
+  fetched from the management API (`refreshSupabaseToken`) for the upload and
+  discarded afterwards, as in 0057.
+- **0060_vietnam_host_prices_refinements — APPLIED**: §1 closes the window; §2
+  sets price_minor 6500000 (the from-price; urgency stays 'early-bird'),
+  host_name 'Naksi', host_role 'Creator · Storyteller', the six-item inclusions
+  array ("Hanoi & Da Nang", "caves, cycling & boat rides"), and replaces the
+  page whole (87 unique block ids: 86 from 0058 plus `img-vietnam-host`): the
+  `host` block filled for the Meet your Spellcaster card (portrait, bold-led
+  bio, quote "Slow mornings. Real stories.", handle, three tags); `pricing`
+  tiers 65000 / 70000 with the ₹18,000 booking amount, badge and availability
+  unchanged; the price FAQ rewritten; Day 3 titled "Ninh Binh" with subtitle
+  "Day 3 · Into the Wild" and chips caves, cycling, boat rides, countryside;
+  Day 4 body and four chips rewritten with "The night is spent in Da Nang.";
+  Day 5 titled "Ba Na Hills" with subtitle "Day 5 · Above the Clouds"; Day 7
+  body carries the four optional ideas as a bold-led bullet list and its chips
+  are the four ideas; stay, about bullets, included, trip highlights (Ninh Binh
+  and Ba Na Hills rewritten), the stay and pack FAQs and quick info updated so
+  no "Da Nang / Hoi An" or "Da Nang and Hoi An" survives; the stay card image
+  switches to the Da Nang beach morning. §3 three spell_changes rows (`...3c5c`
+  price, `...3c5d` edited, `...3c5e` image). §4 self-verify pins the row shape,
+  both tiers, host columns and block, the three retitled days, the four-chip
+  counts, the optional bullets, zero stale words (60,000, Da Nang / Hoi An,
+  cycling, boat rides, plus the 0058 list), dash-free copy, unique ids, every
+  referenced image present in storage, exactly 25 hd objects, no `pricing` or
+  host leak onto other spells, at least 13 change rows, ZERO anon INSERT
+  policies left. Post-apply REST check as anon: price_minor, host columns,
+  tiers, host card, all 7 days with the expected titles and chips, all 10
+  referenced images 200, upload probe 400 (window really closed). Heroes,
+  gallery and the TBC departure untouched.
+- Scope notes: the girls-only deck (Logout-Spells-Vietnam-Girls-Trip.pdf)
+  already carried ₹65,000 / ₹70,000 and was not touched; its stay chip still
+  reads "DA NANG / HOI AN" and it has no creator page (flagged to the founder).
+  The mobile app renders the same `host` block (portrait, bio, handle) through
+  its RichBody port; it shows the single from-price (₹65,000) as it has no
+  tiered pricing strip.
+
+### Baseline after 0060
+
+Unchanged from 0058 except the Vietnam host, prices, copy and one new photo:
+spells 6 published · Vietnam from-price ₹65,000 (price_minor 6500000) · no anon
+INSERT windows open · create-booking gates unchanged · no staged migrations
+remain.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
