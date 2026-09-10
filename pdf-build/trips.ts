@@ -1,11 +1,11 @@
 /**
- * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro + Vietnam + Cinematography.
+ * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro + Vietnam + Cinematography + the girls-only Vietnam escape.
  * Same charcoal + gold brand system as the Bir Grimoire PDF, no stay page.
  * A day may be a `spotlight` (hour-by-hour schedule, gold tag and frame) and a trip may
  * carry a generic previous-spells memories page before booking (`memoriesFile`) or a
  * creator page right after the cover (`creator`); day pages may carry CREATE / VIBE lines.
- * Run: bun run trips.ts            ->  all five PDFs
- *      bun run trips.ts cine       ->  only Logout-Spells-Cinematography.pdf (keys: vof jibhi ziro vietnam cine)
+ * Run: bun run trips.ts            ->  all six PDFs
+ *      bun run trips.ts cine       ->  only Logout-Spells-Cinematography.pdf (keys: vof jibhi ziro vietnam cine vnGirls)
  *      add --publish to also copy the built PDFs to ../web/public/brochures/
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -48,7 +48,7 @@ type DaySpec = {
   titleB: string;
   intro: string;
   items: DayItem[];
-  chip: string;
+  chip?: string;
   /** Tracked CREATE / VIBE metadata lines drawn under the intro (the cinematography spells). */
   create?: string;
   vibe?: string;
@@ -68,6 +68,8 @@ type CreatorSpec = {
   roles: string;
   handle: string;
   handleSub: string;
+  /** Optional centred italic bio lines drawn between the handle stack and the motto. */
+  bio?: string[];
   motto: string;
   footer: string;
 };
@@ -493,6 +495,13 @@ async function buildTrip(spec: TripSpec): Promise<void> {
 
     pill(p, c.handle, { cx: W / 2, cyTop: 228, font: sansSemi, size: 8.5, tr: 3, color: GOLD_LIGHT });
     drawTracked(p, c.handleSub, { cx: W / 2, y: 182, font: sansMed, size: 6.8, color: MUTED, tr: 2, opacity: 0.85 });
+    if (c.bio) {
+      let bioY = 168;
+      for (const line of c.bio) {
+        drawTracked(p, line, { cx: W / 2, y: bioY, font: serifItal, size: 8.2, color: MUTED, tr: 0, opacity: 0.85 });
+        bioY -= 13;
+      }
+    }
 
     /* Camera-lens rings flank the motto: the one quiet nod to the craft on this page. */
     const mottoW = trackW(sansSemi, c.motto, 9.5, 3.6);
@@ -611,18 +620,24 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     let cursor = iy - 24;
 
     /* CREATE / VIBE: a small metadata block, labelled in gold like a camera roll. */
+    const metaLine = (label: string, words: string, color: ReturnType<typeof rgb>, y: number) => {
+      const lw = trackW(sansSemi, label, 7, 2.6);
+      const gap = 12;
+      const ww = trackW(sansMed, words, 8.2, 2.2);
+      const x0 = W / 2 - (lw + gap + ww) / 2;
+      drawTracked(p, label, { x: x0, y, font: sansSemi, size: 7, color: GOLD, tr: 2.6 });
+      drawTracked(p, words, { x: x0 + lw + gap, y: y + 0.5, font: sansMed, size: 8.2, color, tr: 2.2 });
+    };
     if (day.create && day.vibe) {
-      const metaLine = (label: string, words: string, color: ReturnType<typeof rgb>, y: number) => {
-        const lw = trackW(sansSemi, label, 7, 2.6);
-        const gap = 12;
-        const ww = trackW(sansMed, words, 8.2, 2.2);
-        const x0 = W / 2 - (lw + gap + ww) / 2;
-        drawTracked(p, label, { x: x0, y, font: sansSemi, size: 7, color: GOLD, tr: 2.6 });
-        drawTracked(p, words, { x: x0 + lw + gap, y: y + 0.5, font: sansMed, size: 8.2, color, tr: 2.2 });
-      };
       metaLine("CREATE", day.create, CREAM, iy - 4);
       metaLine("VIBE", day.vibe, MUTED, iy - 21);
       cursor = iy - 21 - 24;
+    } else if (day.vibe) {
+      metaLine("THE VIBE", day.vibe, MUTED, iy - 4);
+      cursor = iy - 28;
+    } else if (day.create) {
+      metaLine("CREATE", day.create, CREAM, iy - 4);
+      cursor = iy - 28;
     }
 
     const positions: { discY: number; titleY: number; bodyLines: string[] }[] = [];
@@ -654,7 +669,7 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     }
 
     const chipTop = Math.max(cursor - 12, 96);
-    pill(p, day.chip, { cx: W / 2, cyTop: chipTop, font: sansSemi, size: 8.3, tr: 3, color: GOLD_LIGHT, h: 24, borderOpacity: 0.55 });
+    if (day.chip) pill(p, day.chip, { cx: W / 2, cyTop: chipTop, font: sansSemi, size: 8.3, tr: 3, color: GOLD_LIGHT, h: 24, borderOpacity: 0.55 });
 
     if (day.note) {
       const noteW = hand.widthOfTextAtSize(day.note, 17);
@@ -1859,8 +1874,211 @@ const cine: TripSpec = {
   },
 };
 
+/* ==================== VIETNAM · THE GIRLS-ONLY ESCAPE ==================== */
+/* The 7 day girls-only Vietnam spell hosted by Naksi (@naksimanicpixie).
+ * 06 - 12 November 2026 · early bird ₹65,000 / regular ₹70,000 · flat ₹18,000 booking amount. */
+const vnGirls: TripSpec = {
+  fileName: "Logout-Spells-Vietnam-Girls-Trip.pdf",
+  docTitle: "Logout Spells · The Vietnam Spell · 7 Day Girls-Only Escape",
+  docSubject: "Hanoi, Ha Long Bay, Ninh Binh, Da Nang and Hoi An · girls-only group trip itinerary and booking",
+  cover: {
+    img: "img2/final/vn-cover.jpg",
+    shade: { y: 580, h: 110, opacity: 0.55 },
+    eyebrow: "LOGOUT SPELLS PRESENTS",
+    titleLines: [
+      { text: "THE VIETNAM", size: 48, tr: 12, y: 440 },
+      { text: "SPELL", size: 112, tr: 20, y: 352 },
+    ],
+    sub: "A girls-only escape.",
+    subY: 322,
+    ruleY: 300,
+    dateLine: "06 - 12 NOVEMBER 2026",
+    dateY: 276,
+    locLine: "HANOI · HA LONG BAY · NINH BINH · DA NANG · HOI AN",
+    locY: 259,
+    poem1: "No men.",
+    poem2: "Just girls, good vibes & Vietnam.",
+    poemY: 234,
+    para: "Seven days from the Old Quarter to the lantern streets: coffee, karsts, caves, beaches and the kind of nights you will still be talking about next year.",
+    paraY: 188,
+    ital1: "Ten to fifteen girls. One private circle.",
+    ital2: "Come for Vietnam, leave with your people.",
+    italY: 140,
+    pill: "10 - 15 GIRLS · PRIVATE GROUP",
+    pillY: 102,
+  },
+  creator: {
+    img: "img2/final/naksi-creator.jpg",
+    eyebrow: "MEET THE CREATOR",
+    nameA: "Meet ",
+    nameB: "Naksi",
+    roles: "CREATOR · STORYTELLER · YOUR HOST IN VIETNAM",
+    handle: "@NAKSIMANICPIXIE",
+    handleSub: "",
+    bio: [
+      "The girl turning everyday moments into stories worth remembering:",
+      "a girls-only escape, new places, spontaneous moments, real memories.",
+    ],
+    motto: "NO MEN · JUST MEMORIES",
+    footer: "FOLLOW THE JOURNEY · @NAKSIMANICPIXIE",
+  },
+  days: [
+    {
+      img: "img2/final/vn-d2.jpg",
+      eyebrow: "DAY 01 · HANOI · WHERE THE SPELL BEGINS",
+      titleA: "Hello, ",
+      titleB: "Hanoi",
+      intro: "Touch down in Vietnam and ease into the energy of Hanoi. The atmospheric Old Quarter, its buzzing streets, and a proper Vietnamese coffee to settle in. No rushing, no packed schedule.",
+      items: [
+        { title: "THE OLD QUARTER", body: "Wander the buzzing lanes and let the city set the pace. Your first taste of Vietnam, exactly how it lands." },
+        { title: "COFFEE, PROPER", body: "The first proper Vietnamese coffee of the week, wherever the group finds its corner." },
+      ],
+      vibe: "Old streets · Coffee · Exploring · First-night energy",
+      note: "first coffee on a plastic stool",
+      footer: "STAY · HANOI",
+    },
+    {
+      img: "img2/final/vn-d1.jpg",
+      eyebrow: "DAY 02 · INTO THE EMERALD",
+      titleA: "Ha Long ",
+      titleB: "Bay",
+      intro: "Today we leave the city behind and set sail across the legendary waters of Ha Long Bay, surrounded by towering limestone islands and dramatic landscapes. A day to cruise, unwind, take photos and simply enjoy being somewhere completely different.",
+      items: [
+        { title: "SET SAIL", body: "Out among the karsts, where the water turns the colour of a postcard." },
+        { title: "SLOW MOMENTS", body: "A day made for photographs, sea air and doing absolutely nothing important." },
+      ],
+      vibe: "Cruise · Islands · Ocean views · Slow moments",
+      note: "the bay does the posing",
+      footer: "STAY · HANOI",
+    },
+    {
+      img: "img2/final/vng-ninhbinh.jpg",
+      eyebrow: "DAY 03 · INTO THE WILD",
+      titleA: "Ninh ",
+      titleB: "Binh",
+      intro: "Trade city streets for Vietnam's stunning countryside: scenic cycling routes, peaceful boat rides and incredible caves beneath towering limestone formations. A day that feels slower, greener and a little more magical.",
+      items: [
+        { title: "CYCLING", body: "Scenic routes through rice fields and villages, at whatever pace the group agrees on." },
+        { title: "BOAT RIDES", body: "Drift between the limestone formations on the river, rowed the local way." },
+        { title: "THE CAVES", body: "Step out of the sun and into incredible caves hidden inside the karsts." },
+      ],
+      vibe: "Cycling · Boat rides · Caves · Countryside",
+      note: "greener than the feed",
+      footer: "STAY · HANOI",
+    },
+    {
+      img: "img2/final/vn-d4.jpg",
+      eyebrow: "DAY 04 · HANOI · DA NANG · HOI AN",
+      titleA: "City Lights, ",
+      titleB: "Lantern Nights",
+      intro: "Fly south towards Da Nang and make your way to the charming streets of Hoi An. The evening belongs to the ancient town: atmospheric lanes and the famous lantern-lit surroundings.",
+      items: [
+        { title: "FLY SOUTH", body: "Leave the capital behind and trade Hanoi's cool air for the coast." },
+        { title: "LANTERN NIGHTS", body: "Wander Hoi An's lanes as the town lights its lanterns for the night." },
+      ],
+      vibe: "Coastal · Charming · Lanterns · Hoi An nights",
+      note: "lanterns beat streetlights",
+      footer: "STAY · DA NANG / HOI AN",
+    },
+    {
+      img: "img2/final/vn-d5.jpg",
+      eyebrow: "DAY 05 · ABOVE THE CLOUDS",
+      titleA: "Ba Na ",
+      titleB: "Hills",
+      intro: "Today takes us into the mountains: the famous cable car journey, the iconic Golden Bridge, and Vietnam from a completely different perspective. A day for incredible views and fun photographs.",
+      items: [
+        { title: "THE CABLE CAR", body: "Ride up into the mist, above the clouds and into the mountain air." },
+        { title: "THE GOLDEN BRIDGE", body: "Walk the golden span held aloft by two giant stone hands." },
+      ],
+      vibe: "Mountains · Clouds · Golden Bridge · Views",
+      note: "held up by two giant hands",
+      footer: "STAY · DA NANG",
+    },
+    {
+      img: "img2/final/vn-d3.jpg",
+      eyebrow: "DAY 06 · NO PLANS · JUST POSSIBILITIES",
+      titleA: "Cham ",
+      titleB: "Islands",
+      intro: "Today is intentionally yours. Around the Cham Islands and Da Nang, the day bends to whatever the circle feels like. Four ideas, zero pressure:",
+      items: [
+        { title: "ISLAND DAY", body: "Head towards the Cham Islands for a slower coastal day surrounded by blue water and island scenery." },
+        { title: "SPA DAY", body: "Take some time for yourself with a relaxing Vietnamese spa or massage session." },
+        { title: "SHOPPING", body: "Da Nang's shopping spots, local markets, boutiques and cafes." },
+        { title: "JUST CHILL", body: "Beach. Pool. Cafe. Hotel. Whatever your mood says." },
+      ],
+      vibe: "Flexible · Slow · Self-care · Your choice",
+      note: "no plans. just possibilities.",
+      footer: "STAY · DA NANG",
+    },
+    {
+      img: "img2/final/vn3-d7.jpg",
+      fadeH: 88,
+      eyebrow: "DAY 07 · BEFORE WE SAY GOODBYE",
+      titleA: "One Last ",
+      titleB: "Day",
+      intro: "Our final day in Vietnam is completely flexible. Wake up slowly, grab one last Vietnamese coffee, explore a little more, or simply enjoy your last hours by the coast.",
+      items: [
+        { title: "SPA & WELLNESS", body: "One last massage before heading home." },
+        { title: "SHOPPING", body: "Pick up souvenirs, gifts and your final Vietnam finds." },
+        { title: "CAFÉS & FOOD", body: "A few last cafes, or one final Vietnamese meal." },
+        { title: "BEACH & RELAX", body: "Do absolutely nothing. You've earned it." },
+      ],
+      note: "until the next spell.",
+      footer: "DEPARTURE FROM DA NANG",
+    },
+  ],
+  final: {
+    img: "img2/final/vn-night.jpg",
+    subline: "THE VIETNAM SPELL · 7 DAYS · 6 NIGHTS · GIRLS ONLY",
+    cards: [
+      {
+        label: "EARLY BIRD",
+        price: rupee("65,000"),
+        booking: rupee("18,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: "remaining balance due before departure",
+        highlight: true,
+        badge: "SAVE " + rupee("5,000"),
+      },
+      {
+        label: "REGULAR PRICE",
+        price: rupee("70,000"),
+        booking: rupee("18,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: "remaining balance due before departure",
+        highlight: false,
+      },
+    ],
+    cardNote: `Prices are per person. Secure your spot with the ${rupee("18,000")} booking amount and pay the rest before departure. Anything not mentioned in the inclusions is excluded.`,
+    leftHeading: "INCLUSIONS",
+    leftRows: [],
+    rightHeading: "EXCLUSIONS",
+    rightRows: [],
+    lists: {
+      left: [
+        "6 nights stay",
+        "All airport, hotel and sightseeing transfers on a private basis",
+        "Entrance fees to the attractions mentioned in the program",
+        "Sightseeing and excursions mentioned in this itinerary",
+        "1 domestic flight: Hanoi to Da Nang",
+        "English-speaking local guide",
+      ],
+      right: [
+        "International airfare to and from Vietnam",
+        "Tips for guides and drivers",
+        "Personal expenses such as telephone, laundry and drinks",
+        "Meals not mentioned in the program",
+        "Bank fees related to payment",
+      ],
+    },
+    qrBody: `Pay the ${rupee("18,000")} booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.`,
+    closeThanks: "See you in Vietnam.",
+    closeHand: "no men. just memories.",
+  },
+};
+
 /* -------------------------------- Build --------------------------------- */
-const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam, cine };
+const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam, cine, vnGirls };
 const only = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
 const unknown = only.filter((key) => !(key in trips));
 if (unknown.length > 0) throw new Error(`unknown trip(s): ${unknown.join(", ")} (known: ${Object.keys(trips).join(", ")})`);
