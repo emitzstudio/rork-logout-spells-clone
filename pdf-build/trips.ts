@@ -52,6 +52,8 @@ type DaySpec = {
   /** Tracked CREATE / VIBE metadata lines drawn under the intro (the cinematography spells). */
   create?: string;
   vibe?: string;
+  /** A closing mood strip, separate from the activity list. */
+  mood?: string;
   note?: string;
   footer: string;
   /** Optional height of the band's bottom fade (default 116pt); shorter keeps faces low in the frame visible. */
@@ -72,6 +74,8 @@ type CreatorSpec = {
   url?: string;
   /** Optional centred italic bio lines drawn between the handle stack and the motto (the motto moves down past two lines). */
   bio?: string[];
+  /** Optional larger bio type for short creator introductions. */
+  bioSize?: number;
   motto: string;
   footer: string;
 };
@@ -521,7 +525,7 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     if (c.bio) {
       let bioY = 168;
       for (const line of c.bio) {
-        drawTracked(p, line, { cx: W / 2, y: bioY, font: serifItal, size: 8.2, color: MUTED, tr: 0, opacity: 0.85 });
+        drawTracked(p, line, { cx: W / 2, y: bioY, font: serifItal, size: c.bioSize ?? 8.2, color: MUTED, tr: 0, opacity: 0.85 });
         bioY -= 13;
       }
     }
@@ -690,6 +694,15 @@ async function buildTrip(spec: TripSpec): Promise<void> {
         dt(p, line, { x: textX, y: by, font: sansReg, size: 9.3, color: MUTED, opacity: 0.95 });
         by -= 13.8;
       }
+    }
+
+    if (day.mood) {
+      const moodY = cursor - 18;
+      if (moodY - 22 < 78) throw new Error(`${day.footer}: mood strip runs into the footer`);
+      hline(p, 122, W - 81, moodY + 19, GOLD, 0.25);
+      drawTracked(p, "TODAY'S MOOD", { cx: W / 2, y: moodY, font: sansSemi, size: 7.5, color: GOLD, tr: 2.8 });
+      drawTracked(p, day.mood, { cx: W / 2, y: moodY - 22, font: sansMed, size: 8.5, color: MUTED, tr: 0.7 });
+      cursor = moodY - 40;
     }
 
     const chipTop = Math.max(cursor - 12, 96);
@@ -1121,134 +1134,195 @@ const vof: TripSpec = {
 
 /* ================================ JIBHI ================================== */
 const jibhi: TripSpec = {
-  fileName: "Logout-Spells-Jibhi.pdf",
-  docTitle: "Logout Spells · The Jibhi Spell · 4 Day Himachal Escape",
-  docSubject: "Jibhi and Tirthan Valley, Himachal Pradesh · trip itinerary and booking",
+  fileName: "Logout-Spells-Jibhi-Kavya.pdf",
+  docTitle: "Logout Spells · The Spell to the Himalayas · Jibhi with Kavya Lilhare",
+  docSubject: "4 days · Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village · itinerary and booking",
   cover: {
     img: "img2/final/jb-cover.jpg",
-    eyebrow: "A SPELL INTO THE PINES",
+    eyebrow: "THE SPELL TO THE HIMALAYAS",
     titleLines: [{ text: "JIBHI", size: 150, tr: 14, y: 404 }],
-    sub: "Where the forest keeps its own time.",
+    sub: "A slow escape into the Himachal hills.",
     subY: 372,
     ruleY: 349,
-    dateLine: "DAY 0 TO DAY 4 · DELHI TO DELHI",
+    dateLine: "4 DAYS · FORESTS · WATERFALLS · MOUNTAINS",
     dateY: 322,
-    locLine: "TIRTHAN VALLEY · HIMACHAL PRADESH",
-    locY: 305,
-    poem1: "Four days. Pine forests. Waterfalls and wood smoke.",
-    poem2: "Slow walks. Warm bonfires. Stories worth taking home.",
-    poemY: 274,
-    para: "Leave the usual behind and disappear into Jibhi, where waterfall trails, riverside cafes, a high mountain pass and slow forest walks set the rhythm of the days.",
-    paraY: 224,
-    ital1: "This isn't about ticking places off a list.",
-    ital2: "It's about wood smoke, river sounds and letting the valley set the pace.",
-    italY: 172,
-    pill: "WATERFALLS · PASSES · BONFIRES",
-    pillY: 126,
+    locLine: "HIMACHAL PRADESH · DELHI TO DELHI",
+    locY: 301,
+    poem1: "Pine forests. Mountain cafés.",
+    poem2: "Waterfalls. Quiet riversides.",
+    poemY: 263,
+    para: "And the kind of days you wish lasted longer.",
+    paraY: 213,
+    ital1: "Come for the mountains.",
+    ital2: "Stay for the feeling.",
+    italY: 168,
+    pill: "WANDER · BREATHE · BELONG",
+    pillY: 116,
+  },
+  creator: {
+    img: "img2/final/jb-kavya.jpg",
+    eyebrow: "MEET THE CREATOR",
+    nameA: "Kavya ",
+    nameB: "Lilhare",
+    roles: "CREATOR · YOUR HOST IN THE HILLS",
+    handle: "@KAVYA.LILHARE",
+    handleSub: "TAP TO EXPLORE KAVYA'S INSTAGRAM",
+    url: "https://www.instagram.com/kavya.lilhare/?hl=en",
+    bio: [
+      "Meet Kavya Lilhare, the creator joining you on this Himalayan escape.",
+      "Four days of forest trails, mountain cafés and quiet riversides,",
+      "with space to slow down, connect and make a few stories of your own.",
+    ],
+    bioSize: 11,
+    motto: "SLOW DAYS · REAL STORIES",
+    footer: "02 · THE CREATOR",
   },
   days: [
     {
-      img: "img2/final/jb-d0.jpg",
-      eyebrow: "DAY 00 · DELHI TO JIBHI · OVERNIGHT DRIVE",
-      titleA: "The Road ",
-      titleB: "North",
-      intro: "The spell begins the moment the city slips behind. An easy overnight run toward Himachal with good company and better playlists.",
-      items: [
-        { title: "LATE EVENING DEPARTURE", body: "Leave Delhi in the late evening and settle in for a comfortable overnight journey." },
-        { title: "DINNER STOP ON THE WAY", body: "A dhaba dinner on the highway, self paid, exactly as road dinners should be." },
-        { title: "TEA & WASHROOM BREAKS", body: "Regular pauses through the night to stretch and sip chai." },
-        { title: "ICE BREAKERS & MUSIC", body: "Games, light conversations and music sessions until the mountains begin." },
-      ],
-      chip: "DEPART · BOND · DRIVE",
-      footer: "02 · DAY ZERO",
-    },
-    {
       img: "img2/final/jb-d1.jpg",
-      eyebrow: "DAY 01 · JIBHI",
-      titleA: "Waterfalls & ",
-      titleB: "Wood Smoke",
-      intro: "Wake up surrounded by pines. Today is Jibhi at its own pace: waterfalls, forest walks, cafes and a first bonfire.",
+      eyebrow: "DAY 01 · PINE FORESTS & LITTLE HIDEAWAYS",
+      titleA: "",
+      titleB: "Jibhi",
+      intro: "Arrive in Jibhi and ease into the rhythm of the mountains.",
       items: [
-        { title: "MORNING ARRIVAL", body: "Roll into Jibhi among the pine forests, check in at the hotel and freshen up." },
-        { title: "JIBHI WATERFALL", body: "A short walk into the forest to Jibhi's own waterfall." },
-        { title: "KULHI KATANDI · MINI THAILAND", body: "A peaceful forest walk to the little gorge everyone calls mini Thailand." },
-        { title: "CAFES & RIVERSIDE", body: "Explore local cafes and riverside corners at your own pace." },
-        { title: "GOLDEN HOUR, FREE HOUR", body: "Time for photography, rest or nothing at all." },
-        { title: "DINNER & BONFIRE", body: "Dinner at 8 PM, then bonfire, music and group bonding. Overnight in Jibhi." },
+        {
+          title: "JIBHI WATERFALL",
+          body: "Begin with a visit to the beautiful Jibhi Waterfall, tucked away among the trees and surrounded by the peaceful energy of the valley.",
+        },
+        {
+          title: "MINI THAILAND",
+          body: "From there, head towards Mini Thailand, a naturally beautiful spot known for its rocky landscape and clear mountain surroundings.",
+        },
+        {
+          title: "AND THEN, NO RUSHING",
+          body: "Spend the rest of the day café hopping through Jibhi, discovering cosy mountain cafés, sipping something warm and taking in the slow village life.",
+        },
       ],
-      chip: "ARRIVE · WANDER · GATHER",
+      mood: "Waterfalls · Pine Forests · Cafés · Slow Evenings",
       footer: "03 · DAY ONE",
     },
     {
       img: "img2/final/jb-d2.jpg",
-      eyebrow: "DAY 02 · SHOJA · JALORI PASS · SEROLSAR LAKE",
-      titleA: "The Pass & ",
-      titleB: "The Lake",
-      intro: "The big day out: a mountain pass at 10,800 feet, dense old oak forests and a quiet high lake.",
+      eyebrow: "DAY 02 · ABOVE THE TREELINE",
+      titleA: "Shoja & ",
+      titleB: "Jalori",
+      intro: "Today, the road takes us higher.",
       items: [
-        { title: "EARLY WAKE UP CALL", body: "Breakfast first, then wheels up the mountain through Shoja." },
-        { title: "JALORI PASS · 10,800 FT", body: "Panoramic Himalayan views and lungfuls of thin, clean air." },
-        { title: "TREK THROUGH THE OAKS", body: "Walk the forest trail toward Raghupur Fort through dense oak woods." },
-        { title: "SEROLSAR LAKE", body: "Reach the lake and spend unhurried time by its crystal clear water." },
-        { title: "DINNER & BONFIRE", body: "Back to Jibhi for dinner at 8 PM, then fire, music and group bonding. Overnight in Jibhi." },
+        {
+          title: "SHOJA & JALORI PASS",
+          body: "Head towards Shoja and Jalori Pass, where dense forests open up to expansive Himalayan views. At Jalori Pass, breathe in the mountain air and take in the changing landscape as the valley stretches out below.",
+        },
+        {
+          title: "THE TREK",
+          body: "Then comes the adventure. Choose one beautiful trek from Jalori Pass and spend the day surrounded by forests, mountain trails and panoramic views.",
+        },
+        {
+          title: "LET THE MOUNTAINS DO THE REST",
+          body: "No need to rush to the next thing. Just walk, explore, stop when the view makes you stop, and let the mountains do the rest.",
+        },
       ],
-      chip: "CLIMB · BREATHE · WANDER",
+      mood: "Mountain Roads · Forest Trails · Big Views · Adventure",
       footer: "04 · DAY TWO",
     },
     {
       img: "img2/final/jb-d34.jpg",
-      eyebrow: "DAY 03 + 04 · TIRTHAN VALLEY TO DELHI",
-      titleA: "The Road ",
-      titleB: "Home",
-      intro: "One last waterfall, one last cafe, and the long easy road back with new people who no longer feel new.",
+      eyebrow: "DAY 03 · WATERFALLS & VALLEY VIEWS",
+      titleA: "Tirthan ",
+      titleB: "Valley",
+      intro: "Today is all about slowing down and getting closer to the valley.",
       items: [
-        { title: "BREAKFAST & CHECKOUT", body: "A slow morning before the valley lets you go." },
-        { title: "CHHOIE WATERFALL TREK", body: "A gentle walk to Chhoie waterfall, the Tirthan valley's quiet farewell." },
-        { title: "VILLAGE LANES & CAFES", body: "Free time to relax, explore village life or hop one last cafe." },
-        { title: "OVERNIGHT DRIVE BACK", body: "Begin the return journey toward Delhi as the mountains fade into the mirrors." },
-        { title: "DAY 4 · MORNING IN DELHI", body: "Arrive with peaceful moments, new friendships and mountain stories." },
+        {
+          title: "CHHOIE WATERFALL",
+          body: "Begin with the beautiful Chhoie Waterfall, surrounded by the raw greenery and peaceful atmosphere of Tirthan.",
+        },
+        {
+          title: "BAHU VILLAGE",
+          body: "Later, head towards Bahu Village and take in the scenic mountain views from higher up.",
+        },
+        {
+          title: "A LITTLE SPACE TO WANDER",
+          body: "It's a day for wandering without a schedule that feels too full. Fresh air. Green valleys. Quiet roads. And views that make you forget about the outside world.",
+        },
       ],
-      chip: "PAUSE · WANDER · RETURN",
-      note: "the pines will wait. they always do.",
-      footer: "05 · DAYS THREE & FOUR",
+      mood: "Waterfalls · Villages · Valley Views · Slow Exploring",
+      footer: "05 · DAY THREE",
+    },
+    {
+      img: "img2/final/jb-river.jpg",
+      eyebrow: "DAY 04 · ONE LAST SLOW MORNING",
+      titleA: "Tirthan ",
+      titleB: "River",
+      intro: "Before heading back, spend some time by the Tirthan River.",
+      items: [
+        {
+          title: "BY THE RIVERSIDE",
+          body: "Walk along the riverside, sit by the water, soak in the mountain air and enjoy one final slow moment in the valley.",
+        },
+        {
+          title: "A LITTLE MORE TIME",
+          body: "No packed itinerary. No rushing from one place to another. Just the river, the mountains and a little more time to take it all in.",
+        },
+        {
+          title: "TIME TO HEAD HOME",
+          body: "And then, time to head home. Four days of mountains, forests, waterfalls and little moments worth remembering.",
+        },
+      ],
+      chip: "TIRTHAN TO DELHI",
+      note: "until the next spell.",
+      footer: "06 · DAY FOUR · LOGOUT SPELLS",
     },
   ],
   final: {
-    img: "img2/final/jb-night.jpg",
-    subline: "JIBHI · DAY 0 TO DAY 4 · DELHI TO DELHI",
+    img: "img2/final/jb-cover2.jpg",
+    subline: "JIBHI · 4 DAYS · 3 NIGHTS · DELHI TO DELHI",
     cards: [
       {
         label: "EARLY BIRD",
-        price: rupee("12,000"),
-        booking: rupee("3,600"),
-        remaining: `remaining ${rupee("8,400")} before departure`,
+        price: rupee("14,000"),
+        booking: rupee("4,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: `remaining ${rupee("10,000")} before departure`,
         highlight: true,
         badge: "SAVE " + rupee("2,000"),
       },
       {
         label: "REGULAR",
-        price: rupee("14,000"),
-        booking: rupee("4,200"),
-        remaining: `remaining ${rupee("9,800")} before departure`,
+        price: rupee("16,000"),
+        booking: rupee("4,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: `remaining ${rupee("12,000")} before departure`,
         highlight: false,
       },
     ],
-    cardNote: "Dorm style stays, Bir spell style. Prices are per person. Book with 30% now and pay the rest before departure.",
-    leftHeading: "GOOD TO KNOW",
-    leftRows: [
-      { icon: "check", title: "OVERNIGHT DRIVES BOTH WAYS", body: "Comfortable night journeys from Delhi and back bookend the spell." },
-      { icon: "cross", title: "DAY 0 DINNER IS SELF PAID", body: "The highway dinner stop on the drive up is on you." },
-      { icon: "check", title: "DORM STYLE STAYS", body: "Shared dorms in Jibhi, just like the Bir spell." },
-    ],
-    rightHeading: "COME READY FOR",
-    rightRows: [
-      { icon: "check", title: "A 10,800 FT MOUNTAIN PASS", body: "Jalori gets cold. Pack a warm layer, even in summer." },
-      { icon: "check", title: "FOREST TRAILS", body: "Easy walks to waterfalls, the fort and the lake." },
-      { icon: "check", title: "BONFIRE EVENINGS", body: "Music, games and slow conversations by the fire." },
-    ],
-    qrBody: "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
-    closeThanks: "Thank you for choosing to wander with us.",
-    closeHand: "four days. one forest that follows you home.",
+    cardNote: `Prices are per person. Book with ${rupee("4,000")} at either price and pay the remaining balance before departure.`,
+    leftHeading: "WHAT'S INCLUDED",
+    leftRows: [],
+    rightHeading: "NOT INCLUDED",
+    rightRows: [],
+    lists: {
+      left: [
+        "Accommodation in Jibhi (3 nights)",
+        "Breakfast on 3 days",
+        "Farewell dinner",
+        "All local transfers & sightseeing",
+        "Waterfall visits",
+        "Secret Spellbound experience",
+        "Logout Spells community access",
+        "Delhi to Delhi transportation",
+      ],
+      right: [
+        "Personal expenses",
+        "Rest of the meals",
+        "Optional activities",
+        "Scooter / e-bike rentals",
+        "Additional activities",
+        "Optional spa / wellness experiences",
+        "Travel insurance",
+      ],
+    },
+    qrBody: `Pay the ${rupee("4,000")} booking amount on this QR to confirm your spot. Once it's done, our team reaches out with everything else.`,
+    closeThanks: "Come for the mountains. Stay for the feeling.",
+    closeHand: "four days. little moments worth remembering.",
   },
 };
 
