@@ -32,7 +32,9 @@ Earlier real photo sources and AI enhancement references remain in `img/content-
 
 The no-stay brochures in `trips.ts` share one renderer. A day may be marked as the
 spell's `spotlight` (gold frame and tag, an hour-by-hour schedule and a good-to-know
-box; Vietnam's Ha Long Bay day), and a trip may carry a generic previous-spells page
+box; Vietnam's Ha Long Bay day), a trip may open with a `creator` page (a minimal
+portrait-focused page for the cinematography spell's host) and carry CREATE / VIBE
+metadata lines on its day pages, and a trip may carry a generic previous-spells page
 before booking through `memoriesFile`. The generic page (`img/spell-memories/`) shows
 eight real photographs of previous Logout Spells groups in two rows and seven review
 excerpts; it names no spell, host or workshop. Its photo copies, sources and excerpt

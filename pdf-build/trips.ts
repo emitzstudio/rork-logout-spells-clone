@@ -1,10 +1,11 @@
 /**
- * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro + Vietnam.
+ * Logout Spells - Grimoire brochures for Valley of Flowers + Jibhi + Ziro + Vietnam + Cinematography.
  * Same charcoal + gold brand system as the Bir Grimoire PDF, no stay page.
  * A day may be a `spotlight` (hour-by-hour schedule, gold tag and frame) and a trip may
- * carry a generic previous-spells memories page before booking (`memoriesFile`).
- * Run: bun run trips.ts            ->  all four PDFs
- *      bun run trips.ts vietnam    ->  only Logout-Spells-Vietnam.pdf (keys: vof jibhi ziro vietnam)
+ * carry a generic previous-spells memories page before booking (`memoriesFile`) or a
+ * creator page right after the cover (`creator`); day pages may carry CREATE / VIBE lines.
+ * Run: bun run trips.ts            ->  all five PDFs
+ *      bun run trips.ts cine       ->  only Logout-Spells-Cinematography.pdf (keys: vof jibhi ziro vietnam cine)
  *      add --publish to also copy the built PDFs to ../web/public/brochures/
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -48,12 +49,27 @@ type DaySpec = {
   intro: string;
   items: DayItem[];
   chip: string;
+  /** Tracked CREATE / VIBE metadata lines drawn under the intro (the cinematography spells). */
+  create?: string;
+  vibe?: string;
   note?: string;
   footer: string;
   /** Optional height of the band's bottom fade (default 116pt); shorter keeps faces low in the frame visible. */
   fadeH?: number;
   /** When set, the schedule replaces the numbered items and the page is dressed as the highlight of the spell. */
   spotlight?: DaySpotlight;
+};
+/** Minimal portrait-focused page: the creator behind the spell. */
+type CreatorSpec = {
+  img: string;
+  eyebrow: string;
+  nameA: string;
+  nameB: string;
+  roles: string;
+  handle: string;
+  handleSub: string;
+  motto: string;
+  footer: string;
 };
 /** Generic previous-spells page: eight real photographs in two rows and typeset review excerpts. */
 type MemoriesSpec = {
@@ -122,6 +138,8 @@ type TripSpec = {
   docTitle: string;
   docSubject: string;
   cover: CoverSpec;
+  /** Optional creator page drawn right after the cover. */
+  creator?: CreatorSpec;
   days: DaySpec[];
   final: FinalSpec;
   /** Optional JSON spec for the previous-spells and reviews page inserted before booking. */
@@ -447,6 +465,49 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     drawTracked(p, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", { cx: W / 2, y: 36, font: sansMed, size: 7, color: MUTED, tr: 2.8, opacity: 0.85 });
   }
 
+  /* ---------------------------- Creator page ------------------------------ */
+  if (spec.creator) {
+    const c = spec.creator;
+    const p = doc.addPage([W, H]);
+    bgFill(p);
+
+    /* The portrait runs full bleed from the top edge; everything else breathes below it. */
+    const portrait = await loadImage(c.img);
+    const ph = 470;
+    const pw = Math.round(ph * (2 / 3));
+    if (portrait) {
+      p.drawImage(portrait, { x: W / 2 - pw / 2, y: H - ph, width: pw, height: ph });
+      vgrad(p, W / 2 - pw / 2, pw, H - ph + 10, 90, DEEP, 0, 1);
+    } else {
+      p.drawRectangle({ x: W / 2 - pw / 2, y: H - ph, width: pw, height: ph, color: CHARCOAL_SOFT });
+    }
+
+    roundRect(p, 16, H - 16, W - 32, H - 32, 10, { border: GOLD, borderOpacity: 0.26, borderWidth: 0.8 });
+
+    const eyebrowW = trackW(sansSemi, c.eyebrow, 8.5, 3);
+    eyebrowRule(p, 333, eyebrowW / 2 + 14, 26);
+    drawTracked(p, c.eyebrow, { cx: W / 2, y: 330, font: sansSemi, size: 8.5, color: GOLD, tr: 3 });
+
+    mixedTitle(p, c.nameA, c.nameB, { cx: W / 2, y: 284, size: 46 });
+    drawTracked(p, c.roles, { cx: W / 2, y: 256, font: sansSemi, size: 8.5, color: MUTED, tr: 3 });
+
+    pill(p, c.handle, { cx: W / 2, cyTop: 228, font: sansSemi, size: 8.5, tr: 3, color: GOLD_LIGHT });
+    drawTracked(p, c.handleSub, { cx: W / 2, y: 182, font: sansMed, size: 6.8, color: MUTED, tr: 2, opacity: 0.85 });
+
+    /* Camera-lens rings flank the motto: the one quiet nod to the craft on this page. */
+    const mottoW = trackW(sansSemi, c.motto, 9.5, 3.6);
+    const mottoX = W / 2 - mottoW / 2;
+    hline(p, mottoX - 84, mottoX - 22, 140, GOLD, 0.45);
+    hline(p, W / 2 + mottoW / 2 + 22, W / 2 + mottoW / 2 + 84, 140, GOLD, 0.45);
+    for (const lx of [mottoX - 110, W / 2 + mottoW / 2 + 110]) {
+      p.drawCircle({ x: lx, y: 142, size: 6, borderColor: GOLD, borderWidth: 0.8, borderOpacity: 0.55 });
+      p.drawCircle({ x: lx, y: 142, size: 2.2, color: GOLD_LIGHT });
+    }
+    drawTracked(p, c.motto, { cx: W / 2, y: 138, font: sansSemi, size: 9.5, color: GOLD_LIGHT, tr: 3.6 });
+
+    footerLabel(p, c.footer);
+  }
+
   /* ------------------------------ Day pages ------------------------------ */
   for (const day of spec.days) {
     const p = doc.addPage([W, H]);
@@ -548,6 +609,21 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     const textX = 122;
     const bodyW = 392;
     let cursor = iy - 24;
+
+    /* CREATE / VIBE: a small metadata block, labelled in gold like a camera roll. */
+    if (day.create && day.vibe) {
+      const metaLine = (label: string, words: string, color: ReturnType<typeof rgb>, y: number) => {
+        const lw = trackW(sansSemi, label, 7, 2.6);
+        const gap = 12;
+        const ww = trackW(sansMed, words, 8.2, 2.2);
+        const x0 = W / 2 - (lw + gap + ww) / 2;
+        drawTracked(p, label, { x: x0, y, font: sansSemi, size: 7, color: GOLD, tr: 2.6 });
+        drawTracked(p, words, { x: x0 + lw + gap, y: y + 0.5, font: sansMed, size: 8.2, color, tr: 2.2 });
+      };
+      metaLine("CREATE", day.create, CREAM, iy - 4);
+      metaLine("VIBE", day.vibe, MUTED, iy - 21);
+      cursor = iy - 21 - 24;
+    }
 
     const positions: { discY: number; titleY: number; bodyLines: string[] }[] = [];
     for (const item of day.items) {
@@ -1619,8 +1695,172 @@ const vietnam: TripSpec = {
   },
 };
 
+/* ======================= THE HIMALAYAS · CINEMATOGRAPHY ================== */
+/* The 4 day cinematography & content creation spell with Kavya Lilhare.
+ * Early bird ₹15,000 / regular ₹18,000, flat ₹4,000 booking amount at either. */
+const cine: TripSpec = {
+  fileName: "Logout-Spells-Cinematography.pdf",
+  docTitle: "Logout Spells · The Spell to the Himalayas · 4 Day Cinematography & Content Creation Spell",
+  docSubject: "Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village, Himachal Pradesh · cinematography and content creation retreat itinerary and booking",
+  creator: {
+    img: "img2/final/cine-creator.jpg",
+    eyebrow: "MEET THE CREATOR",
+    nameA: "Kavya ",
+    nameB: "Lilhare",
+    roles: "CINEMATOGRAPHER · CREATOR · STORYTELLER",
+    handle: "@KAVYA.LILHARE",
+    handleSub: "INSTAGRAM · INSTAGRAM.COM/KAVYA.LILHARE",
+    motto: "SEE · SHOOT · CREATE · TELL",
+    footer: "02 · THE CREATOR",
+  },
+  cover: {
+    img: "img2/final/jb-cover2.jpg",
+    eyebrow: "THE SPELL TO THE HIMALAYAS",
+    titleLines: [
+      { text: "TIRTHAN", size: 92, tr: 9, y: 448 },
+      { text: "VALLEY", size: 92, tr: 9, y: 366 },
+    ],
+    sub: "A cinematography & content creation spell.",
+    subY: 334,
+    ruleY: 311,
+    dateLine: "4 DAYS · MOUNTAINS · CINEMATOGRAPHY · STORIES",
+    dateY: 284,
+    locLine: "JIBHI · SHOJA · JALORI · TIRTHAN VALLEY · BAHU VILLAGE",
+    locY: 267,
+    poem1: "Come for the mountains.",
+    poem2: "Leave with a story.",
+    poemY: 240,
+    para: "Four days of frames and forests with a camera in hand: waterfall mornings, a pass above the clouds, riverside sound and one slow last light to cut the story together.",
+    paraY: 186,
+    ital1: "This isn't a sightseeing tour.",
+    ital2: "It's a creative retreat where the mountains are your set.",
+    italY: 132,
+    pill: "SHOOT · CREATE · TELL",
+    pillY: 88,
+  },
+  days: [
+    {
+      img: "img2/final/jb-d1.jpg",
+      eyebrow: "DAY 01 · JIBHI",
+      titleA: "Finding ",
+      titleB: "the Frame",
+      intro: "Arrive among the pines and let Jibhi teach you its light.",
+      create: "WATER · FORESTS · PORTRAITS · LIFESTYLE · REELS",
+      vibe: "EASY · SOCIAL · EXPERIMENTAL",
+      items: [
+        { title: "JIBHI WATERFALL", body: "Long exposures on the falls, portraits in the spray and the shade." },
+        { title: "MINI THAILAND", body: "The little gorge everyone photographs. Find the frame nobody has." },
+        { title: "CAFÉ HOPPING", body: "Wood, windows and warm interiors. The reels shoot themselves here." },
+      ],
+      chip: "WANDER · FRAME · CREATE",
+      note: "shoot first. filter later.",
+      footer: "03 · DAY ONE",
+    },
+    {
+      img: "img2/final/jb-d2.jpg",
+      eyebrow: "DAY 02 · SHOJA & JALORI",
+      titleA: "Scale & ",
+      titleB: "Story",
+      intro: "A pass at 10,800 feet, an old oak forest walk and a lake that mirrors the sky.",
+      create: "LANDSCAPES · HIKING · SILHOUETTES · MOVEMENT · ADVENTURE",
+      vibe: "EPIC · ADVENTUROUS · CINEMATIC",
+      items: [
+        { title: "JALORI PASS · 10,800 FT", body: "Wide Himalayan frames above the valley. Breathe, then shoot." },
+        { title: "SEROLSAR LAKE", body: "The forest trail in, then still water made for reflections." },
+        { title: "RAGHUPUR FORT", body: "Silhouettes and movement on the grassy ruins at the top." },
+      ],
+      chip: "CLIMB · BREATHE · FRAME",
+      note: "the wide shots shoot themselves",
+      footer: "04 · DAY TWO",
+    },
+    {
+      img: "img2/final/jb-d34.jpg",
+      eyebrow: "DAY 03 · TIRTHAN VALLEY",
+      titleA: "People & ",
+      titleB: "Place",
+      intro: "Slow into the valley's rhythm: stone houses, river sound and the people who live between them.",
+      create: "CULTURE · ARCHITECTURE · PEOPLE · NATURE · SOUND",
+      vibe: "RAW · AUTHENTIC · IMMERSIVE",
+      items: [
+        { title: "CHEHNI KOTHI", body: "The great tower house: texture, wood, stone and scale." },
+        { title: "CHHOIE WATERFALL", body: "A gentle forest walk to moving water and soft green light." },
+        { title: "RIVERSIDE SESSION", body: "Record the river, shoot the evening light, create together." },
+      ],
+      chip: "LISTEN · OBSERVE · CAPTURE",
+      note: "some frames you hear before you see",
+      footer: "05 · DAY THREE",
+    },
+    {
+      img: "img2/final/cine-bahu.jpg",
+      eyebrow: "DAY 04 · BAHU VILLAGE",
+      titleA: "Slow Down & ",
+      titleB: "Create",
+      intro: "The last day belongs to slow light, slow cafes and one final creator session before goodbyes.",
+      create: "MORNING LIGHT · LIFESTYLE · PORTRAITS · TRAVEL FILM",
+      vibe: "SLOW · PERSONAL · NOSTALGIC",
+      items: [
+        { title: "BAHU VILLAGE", body: "Morning light through the lanes and terraces of the village." },
+        { title: "SLOW CAFÉ VISITS", body: "No schedule, just windows, chai and last portraits." },
+        { title: "FINAL CREATOR SESSION", body: "Cut, colour and share the travel film together, one last time." },
+        { title: "GOODBYES", body: "The road home with footage worth the whole trip." },
+      ],
+      chip: "EDIT · SHARE · GOODBYE",
+      note: "leave with a story",
+      footer: "06 · DAY FOUR",
+    },
+  ],
+  final: {
+    img: "img2/final/jb-cover.jpg",
+    subline: "YOUR NEXT STORY STARTS IN THE MOUNTAINS",
+    cards: [
+      {
+        label: "EARLY BIRD",
+        price: rupee("15,000"),
+        booking: rupee("4,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: "remaining balance due before departure",
+        highlight: true,
+        badge: "SAVE " + rupee("3,000"),
+      },
+      {
+        label: "REGULAR",
+        price: rupee("18,000"),
+        booking: rupee("4,000"),
+        bookingLabel: "BOOKING AMOUNT",
+        remaining: "remaining balance due before departure",
+        highlight: false,
+      },
+    ],
+    cardNote: `Prices are per person. Book with ${rupee("4,000")} to confirm your spot and pay the rest before departure. Seats are confirmed in the order payments arrive.`,
+    leftHeading: "WHAT'S INCLUDED",
+    leftRows: [],
+    rightHeading: "COME READY FOR",
+    rightRows: [],
+    lists: {
+      left: [
+        "Cinematography experiences through the spell",
+        "Creator community access",
+        "Jibhi",
+        "Shoja & Jalori",
+        "Tirthan Valley",
+        "Bahu Village",
+        "All-day breakfast",
+        "Farewell dinner",
+      ],
+      right: [
+        "A camera, any camera: phone, mirrorless or borrowed",
+        "Chargers, a power bank & empty storage",
+        "A warm layer for the pass & the mornings",
+      ],
+    },
+    qrBody: `Pay the ${rupee("4,000")} booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.`,
+    closeThanks: "Thank you for choosing to wander with us.",
+    closeHand: "four days. one story you shot yourself.",
+  },
+};
+
 /* -------------------------------- Build --------------------------------- */
-const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam };
+const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam, cine };
 const only = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
 const unknown = only.filter((key) => !(key in trips));
 if (unknown.length > 0) throw new Error(`unknown trip(s): ${unknown.join(", ")} (known: ${Object.keys(trips).join(", ")})`);
