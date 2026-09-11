@@ -8,8 +8,9 @@ const api = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 assert(api && key, "Run with Bun from web/ to load public config");
 const content = JSON.parse(readFileSync(new URL("../../backend/migrations/0065_starboy_spell.sql", import.meta.url), "utf8").split("$starboy$")[1]);
-const patches = JSON.parse(readFileSync(new URL("../../backend/migrations/0066_starboy_weeknd_photography.sql", import.meta.url), "utf8").split("$weeknd$")[1]);
-const applyPhotoRefresh = (value) => {
+const previousPatches = JSON.parse(readFileSync(new URL("../../backend/migrations/0066_starboy_weeknd_photography.sql", import.meta.url), "utf8").split("$weeknd$")[1]);
+const uploadPatches = JSON.parse(readFileSync(new URL("../../backend/migrations/0067_starboy_uploaded_photography.sql", import.meta.url), "utf8").split("$upload$")[1]);
+const applyPhotoRefresh = (value, patches = uploadPatches) => {
   const result = structuredClone(value);
   for (const patch of patches) {
     let target = result;
@@ -18,14 +19,15 @@ const applyPhotoRefresh = (value) => {
   }
   return result;
 };
-const snapshotPath = new URL("../../pdf-build/.cache/spells-before-weeknd.json", import.meta.url);
+Object.assign(content, applyPhotoRefresh(content, previousPatches));
+const snapshotPath = new URL("../../pdf-build/.cache/spells-before-weeknd-upload.json", import.meta.url);
 const stable = (row) => Object.fromEntries(Object.entries(row).filter(([key]) => !["views", "updated_at"].includes(key)));
 async function readPublic(path) {
   const response = await fetch(`${api}/rest/v1/${path}`, { headers: { apikey: key } });
   assert(response.ok, `Public read failed: ${response.status}`);
   return response.json();
 }
-if (process.argv.includes("--snapshot-weeknd")) {
+if (process.argv.includes("--snapshot-upload")) {
   const [spells, departures] = await Promise.all([readPublic("spells?select=*&order=id"), readPublic("spell_departures?select=*&order=id")]);
   const original = spells.find((row) => row.slug === content.slug);
   assert(original, "Starboy must exist before refreshing photography");
@@ -100,7 +102,10 @@ try {
     await concert.evaluate((img) => img.decode());
     await page.waitForTimeout(800);
     await page.screenshot({ path: `../pdf-build/.cache/starboy-concert-${width}.png` });
-    assert.equal(await page.getByRole("link", { name: "Nicolas Padovani", exact: true }).getAttribute("href"), "https://www.flickr.com/photos/npado/44778856382/");
+    assert(text.includes("Performance image supplied by Logout Spells"));
+    assert(!/Nicolas Padovani|CC BY 2\.0|Québec 2018/.test(text));
+    assert.equal(await concert.evaluate((img) => img.naturalWidth), 1200);
+    assert.equal(await concert.evaluate((img) => img.naturalHeight), 800);
     await page.locator("#price").scrollIntoViewIfNeeded();
     await page.waitForTimeout(700);
     await page.screenshot({ path: `../pdf-build/.cache/starboy-pricing-${width}.png` });

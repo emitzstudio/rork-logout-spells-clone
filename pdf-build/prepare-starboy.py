@@ -1,5 +1,6 @@
 """Prepare immutable, locally served destination photography for the Starboy brochure and site."""
 from pathlib import Path
+from shutil import copyfile
 from PIL import Image, ImageOps, ImageDraw
 
 root = Path(__file__).resolve().parent
@@ -49,3 +50,36 @@ for role, size, photo_height in [("cover", (1191, 1684), 1120), ("mobile", (1000
     target = root / "img2/starboy-weeknd-cover-v2.jpg" if role == "cover" else root.parent / "web/public/starboy-weeknd-mobile-20260911-v2.jpg"
     canvas.save(target, "JPEG", quality=92, optimize=True)
     print(f"Prepared Weeknd {role}: {size}")
+
+# User-selected replacement: keep native pixels and avoid another lossy JPEG pass.
+source = root / "raw/starboy-weeknd-user-20260911.png"
+selected = ImageOps.exif_transpose(Image.open(source)).convert("RGB")
+assert selected.size == (1200, 800), "Review crop coordinates if the upload changes"
+public = root.parent / "web/public"
+original = public / "starboy-weeknd-live-20260911-v3.png"
+if not original.exists():
+    copyfile(source, original)
+assert original.read_bytes() == source.read_bytes(), "The public original must be byte-identical"
+
+band = root / "img2/starboy-weeknd-band-v3.png"
+if not band.exists():
+    # Native-width 2.53:1 band: include the raised arms, face and microphone.
+    selected.crop((0, 195, 1200, 669)).save(band, "PNG", optimize=True)
+
+for role, size, crop in [
+    ("cover", (1200, 1697), (0, 0, 1200, 800)),
+    ("mobile", (900, 1800), (150, 0, 1050, 800)),
+]:
+    target = root / "img2/starboy-weeknd-cover-v3.png" if role == "cover" else public / "starboy-weeknd-mobile-20260911-v3.png"
+    if target.exists():
+        continue
+    portrait = selected.crop(crop)
+    canvas = Image.new("RGB", size, (10, 8, 6))
+    canvas.paste(portrait, (0, 0))
+    fade = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(fade)
+    # The face (y=280–480) stays untouched; fade only the lower costume into charcoal.
+    for y in range(600, 800):
+        draw.line((0, y, size[0], y), fill=(10, 8, 6, round(255 * (y - 600) / 199)))
+    Image.alpha_composite(canvas.convert("RGBA"), fade).convert("RGB").save(target, "PNG", optimize=True)
+    print(f"Prepared uploaded Weeknd {role}: {size}, native-scale photo")

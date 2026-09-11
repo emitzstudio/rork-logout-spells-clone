@@ -71,8 +71,8 @@ type DaySpec = {
   /** Optional compact heading size for unusually long supplied labels. */
   pointTitleSize?: number;
   ending?: string;
-  /** Visible source and license for attributed archive photography. */
-  imageCredit?: { text: string; note: string; sourceUrl: string; licenseUrl: string };
+  /** Visible image provenance; source/license links are only included when supplied. */
+  imageCredit?: { text: string; note: string; sourceUrl?: string; licenseUrl?: string };
 };
 /** Minimal portrait-focused page: the creator behind the spell. */
 type CreatorSpec = {
@@ -622,8 +622,8 @@ async function buildTrip(spec: TripSpec): Promise<void> {
         const credit = day.imageCredit;
         para(p, credit.text, { cx: W / 2, y: 87, font: sansReg, size: 7.2, color: MUTED, maxW: W - 100, leading: 10 });
         para(p, credit.note, { cx: W / 2, y: 75, font: sansReg, size: 6.8, color: MUTED, maxW: W - 100, leading: 9 });
-        link(p, 110, 83, 252, 12, credit.sourceUrl);
-        link(p, 362, 83, 123, 12, credit.licenseUrl);
+        if (credit.sourceUrl) link(p, 110, 83, 252, 12, credit.sourceUrl);
+        if (credit.licenseUrl) link(p, 362, 83, 123, 12, credit.licenseUrl);
       }
       footerLabel(p, day.footer);
       continue;

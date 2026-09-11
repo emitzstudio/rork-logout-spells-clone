@@ -44,7 +44,7 @@ for (let index = 0; index < doc.countPages(); index++) {
   if (index === 3) {
     const credit = spec.days[2].imageCredit;
     const links = page.getLinks();
-    assert.deepEqual(links.map((link) => link.getURI()), [credit.sourceUrl, credit.licenseUrl]);
+    assert.deepEqual(links.map((link) => link.getURI()), [credit.sourceUrl, credit.licenseUrl].filter(Boolean));
     links.forEach((link) => link.destroy());
   }
   if (index === 8) {
@@ -63,5 +63,7 @@ for (let index = 0; index < doc.countPages(); index++) {
 for (const phrase of ["THE STARBOY", "9 - 15 OCTOBER 2026", "7 DAYS", "PRICES", "TBA", "Bacarrat or Apt 101", "Everyone", "Akara Skyhanuman Club", "Iconsiam Mall", "Spa Day", "Patong Street", "END OF THE SPELL"]) assert(compact(texts.join(" ")).includes(compact(phrase)), `Missing ${phrase}`);
 assert(!/₹|30%|GST|TCS|Scan to reserve|Pay the|4-Star|6 nights/i.test(texts.join(" ")), "Invented commercial terms");
 assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)), "Public copy differs");
+assert(!/Nicolas Padovani|CC BY 2\.0|Québec 2018/.test(texts.join(" ")), "Previous photo's attribution must not be assigned to the upload");
+assert(readFileSync("raw/starboy-weeknd-user-20260911.png").equals(readFileSync("../web/public/starboy-weeknd-live-20260911-v3.png")), "Uploaded photo must be preserved without recompression");
 console.log(`PASS: all 22 supplied stops, dates, included/optional labels, TBA pricing, clickable inquiry link, no payment QR; ${bytes.length} bytes`);
 doc.destroy();

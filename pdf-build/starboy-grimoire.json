@@ -1,9 +1,9 @@
 {
-  "fileName": "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-Weeknd.pdf",
+  "fileName": "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-Weeknd-v3.pdf",
   "docTitle": "Logout Spells · The Starboy Spell · 9-15 October 2026",
   "docSubject": "Bangkok & Phuket · seven-day itinerary · prices TBA",
   "cover": {
-    "img": "img2/starboy-weeknd-cover-v2.jpg",
+    "img": "img2/starboy-weeknd-cover-v3.png",
     "eyebrow": "BANGKOK NIGHTS. ISLAND DAYS.",
     "titleLines": [
       {"text":"THE STARBOY","size":65,"tr":4,"y":445},
@@ -44,7 +44,7 @@
       "footer":"03 · DAY TWO"
     },
     {
-      "img":"img2/starboy-weeknd-band-v2.jpg", "fadeH":48,
+      "img":"img2/starboy-weeknd-band-v3.png", "fadeH":48,
       "eyebrow":"DAY 03 · 11 OCTOBER · BANGKOK",
       "titleA":"Cooking", "titleB":" & Concert", "intro":"", "items":[],
       "points":[
@@ -52,7 +52,7 @@
         {"title":"THE WEEKND CONCERT","body":"Included · The night at the heart of the spell."}
       ],
       "ending":"THE WEEKND · LIVE ON STAGE",
-      "imageCredit":{"text":"Cover & concert photo: Nicolas Padovani · CC BY 2.0","note":"The Weeknd, Québec 2018. Cropped / faded. Archive photo; no endorsement.","sourceUrl":"https://www.flickr.com/photos/npado/44778856382/","licenseUrl":"https://creativecommons.org/licenses/by/2.0/"},
+      "imageCredit":{"text":"Cover & concert image supplied by Logout Spells.","note":"Illustrative performance photo; not the Bangkok event or an endorsement."},
       "footer":"04 · DAY THREE"
     },
     {

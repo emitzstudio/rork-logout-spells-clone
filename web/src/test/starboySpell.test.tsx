@@ -1,5 +1,6 @@
 import sql from "../../../backend/migrations/0065_starboy_spell.sql?raw";
 import photoSql from "../../../backend/migrations/0066_starboy_weeknd_photography.sql?raw";
+import uploadedPhotoSql from "../../../backend/migrations/0067_starboy_uploaded_photography.sql?raw";
 import brochure from "../../../pdf-build/starboy-grimoire.json";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -19,7 +20,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 const content = JSON.parse(sql.split("$starboy$")[1]) as Partial<SpellRow> & { departure: Partial<ActiveDepartureRow> };
 const originalContent = structuredClone(content);
-const patches = JSON.parse(photoSql.split("$weeknd$")[1]) as { path: string[]; value: unknown }[];
+const patches = [...JSON.parse(photoSql.split("$weeknd$")[1]), ...JSON.parse(uploadedPhotoSql.split("$upload$")[1])] as { path: string[]; value: unknown }[];
 for (const patch of patches) {
   let target = content as Record<string, unknown>;
   for (const key of patch.path.slice(0, -1)) target = target[key] as Record<string, unknown>;
@@ -40,18 +41,20 @@ const spell = mapSpell(row, departure, []);
 const draft = spell.draft!;
 
 describe("Starboy TBA itinerary", () => {
-  it("uses credited Weeknd photography without changing trip terms or activities", () => {
-    expect(spell.image).toContain("starboy-weeknd-live-");
-    expect(draft.mobileHero?.url).toContain("starboy-weeknd-mobile-");
-    expect(draft.itinerary[2].image?.url).toContain("starboy-weeknd-live-");
+  it("uses the user-selected lossless PNG without changing trip terms or misattributing the photo", () => {
+    expect(spell.image).toContain("starboy-weeknd-live-20260911-v3.png");
+    expect(draft.mobileHero?.url).toContain("starboy-weeknd-mobile-20260911-v3.png");
+    expect(draft.itinerary[2].image?.url).toBe(spell.image);
+    expect(draft.gallery[4].url).toBe(spell.image);
     const journey = renderToStaticMarkup(createElement(SpellJourney, { draft }));
-    expect(journey).toContain('href="https://www.flickr.com/photos/npado/44778856382/"');
-    expect(journey).toContain('href="https://creativecommons.org/licenses/by/2.0/"');
-    expect(journey).not.toContain("not a photograph of The Weeknd");
+    expect(journey).toContain("Performance image supplied by Logout Spells");
+    expect(journey).toContain("not the Bangkok event or an endorsement");
+    expect(JSON.stringify(content)).not.toMatch(/Nicolas Padovani|CC BY 2\.0|Québec|flickr\.com/);
     expect(content.departure).toEqual(originalContent.departure);
-    expect(brochure.cover.img).toContain("weeknd");
-    expect(brochure.days[2].imageCredit?.text).toContain("Nicolas Padovani");
-    expect(brochure.fileName).toContain("Grimoire-Weeknd.pdf");
+    expect(brochure.cover.img).toContain("weeknd-cover-v3.png");
+    expect(brochure.days[2].img).toContain("weeknd-band-v3.png");
+    expect(brochure.days[2].imageCredit?.text).toContain("supplied by Logout Spells");
+    expect(brochure.fileName).toContain("Grimoire-Weeknd-v3.pdf");
   });
   it("keeps preview links inert and only enables safe web links in published rich text", () => {
     const body = "[Photo](https://example.com/photo) [Bad](javascript:evil) [Data](data:text/html,evil)";
