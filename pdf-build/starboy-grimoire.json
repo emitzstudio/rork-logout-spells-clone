@@ -1,0 +1,117 @@
+{
+  "fileName": "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire.pdf",
+  "docTitle": "Logout Spells · The Starboy Spell · 9-15 October 2026",
+  "docSubject": "Bangkok & Phuket · seven-day itinerary · prices TBA",
+  "cover": {
+    "img": "img2/starboy-cover.jpg",
+    "eyebrow": "BANGKOK NIGHTS. ISLAND DAYS.",
+    "titleLines": [
+      {"text":"THE STARBOY","size":65,"tr":4,"y":445},
+      {"text":"SPELL","size":86,"tr":10,"y":365}
+    ],
+    "sub":"After hours, beyond the ordinary.","subY":333,"ruleY":310,
+    "dateLine":"9 - 15 OCTOBER 2026","dateY":283,
+    "locLine":"7 DAYS · BANGKOK & PHUKET · THAILAND","locY":260,
+    "poem1":"Neon nights. Rooftop skies. The Weeknd.",
+    "poem2":"Then the sea takes over.","poemY":227,
+    "para":"Seven days from Bangkok's art, street food and late-night energy to Phuket's beaches, Phi Phi island hopping and Old Town discoveries.","paraY":178,
+    "ital1":"Turn up the night. Slow down by the water.","ital2":"Prices TBA · Booking details to be announced.","italY":125,
+    "pill":"CITY LIGHTS · CONCERT · COAST","pillY":80
+  },
+  "days":[
+    {
+      "img":"img2/starboy-bangkok-night-band.jpg",
+      "eyebrow":"DAY 01 · 9 OCTOBER · BANGKOK",
+      "titleA":"Dispensary & Art Museum", "titleB":" / Drag Show",
+      "intro":"", "items":[], "pointTitleSize":8,
+      "points":[
+        {"title":"DISPENSARY & ART MUSEUM / DRAG SHOW","body":"Explore Bangkok's art and after-dark scene together."},
+        {"title":"UNDERGROUND CLUBS","body":"Bacarrat or Apt 101 · Everyone."}
+      ],
+      "footer":"02 · DAY ONE"
+    },
+    {
+      "img":"img2/starboy-skyline-band.jpg",
+      "eyebrow":"DAY 02 · 10 OCTOBER · BANGKOK",
+      "titleA":"BKK Shopping", "titleB":" & Night Out", "intro":"", "items":[],
+      "points":[
+        {"title":"BKK SHOPPING","body":"Iconsiam Mall."},
+        {"title":"BACK TO VILLA","body":"A pause to freshen up before heading out again."},
+        {"title":"SONG WHAT ROAD","body":"Wander the street and take in its local character."},
+        {"title":"FOOD CRAWL / CHINATOWN","body":"Follow the flavours through Bangkok's Chinatown."},
+        {"title":"ROOFTOP","body":"Akara Skyhanuman Club."}
+      ],
+      "footer":"03 · DAY TWO"
+    },
+    {
+      "img":"img2/starboy-concert-band.jpg",
+      "eyebrow":"DAY 03 · 11 OCTOBER · BANGKOK",
+      "titleA":"Cooking", "titleB":" & Concert", "intro":"", "items":[],
+      "points":[
+        {"title":"THAI COOKING","body":"Optional · Try your hand at Thai cooking."},
+        {"title":"THE WEEKND CONCERT","body":"Included · The night at the heart of the spell."}
+      ],
+      "ending":"CONCERT IMAGE FOR ATMOSPHERE ONLY",
+      "footer":"04 · DAY THREE"
+    },
+    {
+      "img":"img2/starboy-phuket-beach-band.jpg",
+      "eyebrow":"DAY 04 · 12 OCTOBER · BANGKOK TO PHUKET",
+      "titleA":"Spa", "titleB":" & Phuket", "intro":"", "items":[],
+      "points":[
+        {"title":"THAI MASSAGE","body":"Spa Day · Slow down and reset."},
+        {"title":"FLY TO PHUKET","body":"Leave Bangkok behind and head for the coast."},
+        {"title":"BEACHSIDE DINNER & DRINKS","body":"Settle into Phuket with an evening by the water."}
+      ],
+      "footer":"05 · DAY FOUR"
+    },
+    {
+      "img":"img2/starboy-phi-phi-band.jpg",
+      "eyebrow":"DAY 05 · 13 OCTOBER · PHI PHI",
+      "titleA":"Phi Phi", "titleB":" Island", "intro":"", "items":[],
+      "points":[
+        {"title":"PHI PHI ISLAND HOPPING TOUR","body":"Included · A day out among the islands."}
+      ],
+      "footer":"06 · DAY FIVE"
+    },
+    {
+      "img":"img2/starboy-phuket-beach-band.jpg",
+      "eyebrow":"DAY 06 · 14 OCTOBER · PHUKET",
+      "titleA":"Adventure", "titleB":" Day", "intro":"", "items":[],
+      "points":[
+        {"title":"ATV RIDE","body":"Optional · Add a little off-road adventure."},
+        {"title":"CAFE DEL MAR","body":"Lunch · Sunset."},
+        {"title":"NIGHT CLUBS","body":"Patong Street."}
+      ],
+      "footer":"07 · DAY SIX"
+    },
+    {
+      "img":"img2/starboy-old-town-band.jpg",
+      "eyebrow":"DAY 07 · 15 OCTOBER · PHUKET",
+      "titleA":"Phuket", "titleB":" Old Town", "intro":"", "items":[],
+      "points":[
+        {"title":"PHUKET OLD TOWN MARKET","body":"One last wander through the Old Town market."},
+        {"title":"CAFÉS","body":"Pause for a café stop along the way."},
+        {"title":"SHOPPING","body":"Browse the streets at your own pace."},
+        {"title":"LOCAL THAI BRANDS","body":"Discover local labels and independent finds."},
+        {"title":"SOUVENIRS","body":"Pick up a little piece of Thailand to take home."},
+        {"title":"HEAD AIRPORT","body":"Make your way to the airport for your onward journey."}
+      ],
+      "ending":"END OF THE SPELL",
+      "footer":"08 · DAY SEVEN"
+    }
+  ],
+  "final":{
+    "img":"img2/starboy-final.jpg",
+    "subline":"THE STARBOY SPELL · 9 - 15 OCTOBER 2026",
+    "cards":[],
+    "announcement":{"url":"https://z57wkqd89o09lsi6kc7v1-web.rork.live/live/the-starboy-spell","label":"EXPLORE THE STARBOY SPELL","body":"Open the website to send an inquiry. No payment is collected and no seat is reserved by an inquiry."},
+    "cardNote":"Host, stays, group size, taxes and booking terms are to be announced. Only the two experiences below are currently marked included; other activity costs and travel inclusions are TBA.",
+    "leftHeading":"MARKED INCLUDED", "leftRows":[],
+    "rightHeading":"OPTIONAL", "rightRows":[],
+    "lists":{"left":["The Weeknd concert","Phi Phi island hopping tour"],"right":["Thai cooking","ATV ride"]},
+    "qrBody":"",
+    "closeThanks":"From city lights to island skies.",
+    "closeHand":"take the night. keep the memories."
+  }
+}

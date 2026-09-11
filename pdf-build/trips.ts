@@ -68,6 +68,8 @@ type DaySpec = {
   schedule?: DaySchedule;
   /** Numbered supplied headings, each with one short line; no extra activities or day sections. */
   points?: DayItem[];
+  /** Optional compact heading size for unusually long supplied labels. */
+  pointTitleSize?: number;
   ending?: string;
 };
 /** Minimal portrait-focused page: the creator behind the spell. */
@@ -149,6 +151,8 @@ type FinalSpec = {
   /** Plain one-line items (What's included / Not included) drawn under the headings instead of the titled note rows. */
   lists?: { left: string[]; right: string[] };
   qrBody: string;
+  /** TBA brochures have an inquiry link instead of prices, deposits or a payment QR. */
+  announcement?: { url: string; label: string; body: string };
   closeThanks: string;
   closeHand: string;
 };
@@ -480,7 +484,8 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       drawTracked(p, line.text, { cx: W / 2, y: line.y, font: serifBold, size, color: CREAM, tr: line.tr });
     }
 
-    dt(p, c.sub, { x: W / 2 - serifItal.widthOfTextAtSize(c.sub, 19.5) / 2, y: c.subY, font: serifItal, size: 19.5, color: GOLD_HI });
+    if (spec.final.announcement) drawTracked(p, c.sub, { cx: W / 2, y: c.subY, font: serifItal, size: 19.5, color: GOLD_HI, tr: 0 });
+    else dt(p, c.sub, { x: W / 2 - serifItal.widthOfTextAtSize(c.sub, 19.5) / 2, y: c.subY, font: serifItal, size: 19.5, color: GOLD_HI });
     eyebrowRule(p, c.ruleY, 8, 30);
     drawTracked(p, c.dateLine, { cx: W / 2, y: c.dateY, font: sansSemi, size: 11, color: CREAM, tr: 3 });
     drawTracked(p, c.locLine, { cx: W / 2, y: c.locY, font: sansMed, size: 8.5, color: MUTED, tr: 2.6 });
@@ -595,18 +600,19 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       if (day.points.length > 1) {
         p.drawLine({ start: { x: spineX, y: firstY + 3 }, end: { x: spineX, y: lastY + 3 }, thickness: 0.7, color: GOLD, opacity: 0.28 });
       }
+      const pointTitleSize = day.pointTitleSize ?? 10;
       for (const [index, point] of day.points.entries()) {
         const titleY = firstY - index * rowStep;
         const discY = titleY + 3;
         const title = point.title.toUpperCase();
-        if (trackW(sansSemi, title, 10, 1.7) > bodyW) throw new Error(`${day.footer}: point heading is too wide: ${point.title}`);
+        if (trackW(sansSemi, title, pointTitleSize, 1.7) > bodyW) throw new Error(`${day.footer}: point heading is too wide: ${point.title}`);
         if (!point.body.trim() || point.body.includes("\n") || sansReg.widthOfTextAtSize(point.body, 9.5) > bodyW) {
           throw new Error(`${day.footer}: description must fit one line: ${point.title}`);
         }
         p.drawCircle({ x: spineX, y: discY, size: 12.5, color: CHARCOAL_SOFT, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.5 });
         const number = String(index + 1).padStart(2, "0");
         dt(p, number, { x: spineX - serifSemi.widthOfTextAtSize(number, 13.5) / 2, y: discY - 4.6, font: serifSemi, size: 13.5, color: GOLD_LIGHT });
-        drawTracked(p, title, { x: textX, y: titleY, font: sansSemi, size: 10, color: CREAM, tr: 1.7 });
+        drawTracked(p, title, { x: textX, y: titleY, font: sansSemi, size: pointTitleSize, color: CREAM, tr: 1.7 });
         dt(p, point.body, { x: textX, y: titleY - 15, font: sansReg, size: 9.5, color: MUTED, opacity: 0.95 });
       }
       if (day.ending) drawTracked(p, day.ending, { cx: W / 2, y: 112, font: sansSemi, size: 8.5, color: GOLD_LIGHT, tr: 3 });
@@ -969,7 +975,7 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     const p = doc.addPage([W, H]);
     bgFill(p);
     coverImage(p, await loadImage(f.img), H, H);
-    p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.45 });
+    p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: f.announcement ? 0.65 : 0.45 });
     vgrad(p, 0, W, H, 110, DEEP, 0.55, 0, 72);
     vgrad(p, 0, W, 420, 420, DEEP, 0, 0.88, 128);
 
@@ -1014,6 +1020,13 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       }
     };
 
+    if (f.announcement) {
+      if (f.cards.length > 0) throw new Error("An announcement cannot contain payment cards");
+      roundRect(p, 128, cardTop, W - 256, cardH, 14, { fill: CHARCOAL, fillOpacity: 0.8, border: GOLD, borderOpacity: 0.7, borderWidth: 1 });
+      drawTracked(p, "PRICES", { cx: W / 2, y: 638, font: sansSemi, size: 8, color: GOLD_LIGHT, tr: 3 });
+      drawTracked(p, "TBA", { cx: W / 2, y: 586, font: serifBold, size: 44, color: CREAM, tr: 4 });
+      drawTracked(p, "DETAILS TO BE ANNOUNCED", { cx: W / 2, y: 553, font: sansMed, size: 7, color: MUTED, tr: 2 });
+    }
     const [cardA, cardB] = f.cards;
     if (cardA && cardB) {
       priceCard(64, cardA);
@@ -1074,6 +1087,12 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     /* QR booking panel */
     roundRect(p, 64, qTop, W - 128, qH, 14, { fill: CHARCOAL, fillOpacity: 0.8, border: GOLD, borderOpacity: 0.5, borderWidth: 1 });
 
+    if (f.announcement) {
+      drawTracked(p, f.announcement.label, { x: 90, y: qTop - 32, font: sansSemi, size: 8, color: GOLD, tr: 2.2 });
+      drawTracked(p, "Inquire about this trip", { x: 90, y: qTop - 62, font: serifSemi, size: 23, color: CREAM, tr: 0 });
+      para(p, f.announcement.body, { x: 90, y: qTop - 84, font: sansReg, size: 8.4, color: MUTED, maxW: 410, leading: 13 });
+      link(p, 64, qTop - qH, W - 128, qH, f.announcement.url);
+    } else {
     drawTracked(p, "BOOK YOUR SPELL", { x: 90, y: qTop - 32, font: sansSemi, size: 8, color: GOLD, tr: 3 });
     dt(p, "Scan to reserve your seat.", { x: 90, y: qTop - 58, font: serifSemi, size: 19, color: CREAM });
     para(p, f.qrBody, { x: 90, y: qTop - 78, font: sansReg, size: 8.4, color: MUTED, maxW: 268, leading: 13 });
@@ -1083,6 +1102,7 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     const qrTop = qTop - (qH - qrCard) / 2;
     roundRect(p, qrX, qrTop, qrCard, qrCard, 10, { fill: WHITE });
     if (imgQr) p.drawImage(imgQr, { x: qrX + 8, y: qrTop - qrCard + 8, width: qrCard - 16, height: qrCard - 16 });
+    }
 
     /* Closing */
     eyebrowRule(p, 138, 10, 30);
@@ -2331,7 +2351,8 @@ const vnGirls: TripSpec = {
 };
 
 /* -------------------------------- Build --------------------------------- */
-const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam, cine, vnGirls };
+const starboy: TripSpec = JSON.parse(readFileSync("starboy-grimoire.json", "utf8"));
+const trips: Record<string, TripSpec> = { vof, jibhi, ziro, vietnam, cine, vnGirls, starboy };
 const only = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
 const unknown = only.filter((key) => !(key in trips));
 if (unknown.length > 0) throw new Error(`unknown trip(s): ${unknown.join(", ")} (known: ${Object.keys(trips).join(", ")})`);

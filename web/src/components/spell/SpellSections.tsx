@@ -644,11 +644,19 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
   const tiers = pricingTiers(draft);
   const pricing = draft.pricing;
   const brochure = brochureLink(pricing);
-  if (tiers.length === 0 || pricing === undefined) return null;
+  if (pricing === undefined || (tiers.length === 0 && !brochure)) return null;
+  const isTba = tiers.length === 0 && !(Number(draft.price) > 0);
 
   return (
     <Section id="price">
-      <SectionHeading eyebrow="Price & booking" />
+      <SectionHeading eyebrow={isTba ? "Price & itinerary" : "Price & booking"} />
+      {isTba && (
+        <Reveal className="mx-auto mt-12 max-w-[520px] rounded-2xl border border-gold/40 bg-gold/[0.05] px-8 py-10 text-center">
+          <p className="eyebrow">Prices</p>
+          <p className="mt-4 font-serif text-5xl text-cream">TBA</p>
+          <p className="mt-4 font-sans text-sm leading-relaxed text-cream/55">Pricing and booking details will be announced. You can send an inquiry in the meantime.</p>
+        </Reveal>
+      )}
       <div
         className={cn(
           "mx-auto mt-12 grid gap-6 md:mt-16",
@@ -717,7 +725,7 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
       )}
       <Reveal delay={0.2} className="mt-9 flex flex-wrap items-center justify-center gap-4">
         <button type="button" onClick={onBook} className="btn-gold !rounded-full !px-10">
-          {FINAL_CTA.button} <ArrowRight size={16} />
+          {isTba ? "Inquire about this spell" : FINAL_CTA.button} <ArrowRight size={16} />
         </button>
         {brochure && (
           <a href={brochure} target="_blank" rel="noopener noreferrer" className="btn-ghost-gold !rounded-full !px-8">

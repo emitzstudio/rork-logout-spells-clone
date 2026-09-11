@@ -52,7 +52,7 @@ function WishCard({ spell, onRemove }: { spell: ManagedSpell; onRemove: () => vo
           </Text>
         </View>
         <Text style={styles.cardPrice}>
-          {formatINR(spell.price)} <Text style={styles.cardSeat}>/ seat</Text>
+          {spell.price > 0 ? formatINR(spell.price) : "Prices TBA"} {spell.price > 0 && <Text style={styles.cardSeat}>/ seat</Text>}
           {seatsLeft > 0 && seatsLeft <= 3 ? (
             <Text style={styles.cardUrgent}>  · only {seatsLeft} left</Text>
           ) : null}

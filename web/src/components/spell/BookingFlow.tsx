@@ -450,6 +450,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
      mounted briefly, so a double-click must never file two requests. */
   const reservingRef = useRef<boolean>(false);
   const submitReserve = useCallback(async () => {
+    if (spell.price <= 0) { setStep("inquire"); return; }
     if (reservingRef.current) return;
     reservingRef.current = true;
     setStep("sending");
@@ -598,7 +599,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                 {/* ------------------------------ CHOICE ------------------------------ */}
                 {step === "choice" && (
                   <StepShell stepKey="choice">
-                    <p className="eyebrow !text-[10px]">Two ways in</p>
+                    <p className="eyebrow !text-[10px]">{priceTbc ? "Prices TBA · Inquiries open" : "Two ways in"}</p>
                     <h3 className="mt-2 font-serif text-3xl font-medium leading-tight text-cream">
                       How would you like to <span className="italic text-gold-gradient">begin?</span>
                     </h3>
@@ -624,12 +625,12 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                             <ArrowRight size={14} className="text-gold opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden />
                           </span>
                           <span className="mt-1 block font-sans text-[13px] leading-relaxed text-cream/55">
-                            Not ready to commit? Ask us anything. We reply personally within 24 hours.
+                            {priceTbc ? "Ask about the itinerary and upcoming prices. An inquiry does not reserve a seat or collect payment." : "Not ready to commit? Ask us anything. We reply personally within 24 hours."}
                           </span>
                         </span>
                       </button>
 
-                      {soldOut ? (
+                      {priceTbc ? null : soldOut ? (
                         <button
                           type="button"
                           onClick={() => setStep("waitlist")}
@@ -701,7 +702,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
 
                     <p className="mt-5 text-center font-serif text-[13px] italic text-cream/40">
                       {dates.label} · {priceTbc ? "price on request" : `${formatINR(spell.price)} per seat`} ·{" "}
-                      {seatsTba ? "an intimate circle ✦" : `circles of ${spell.seatsTotal} ✦`}
+                      {seatsTba ? "circle size to be announced" : `circles of ${spell.seatsTotal} ✦`}
                     </p>
                   </StepShell>
                 )}
@@ -714,7 +715,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm }: 
                       Ask us <span className="italic text-gold-gradient">anything.</span>
                     </h3>
                     <p className="mt-2 font-sans text-[13px] leading-relaxed text-cream/50">
-                      Dates, fitness levels, dietary needs, cold feet. All fair questions.
+                      {priceTbc ? "Prices and booking terms are TBA. Send your question; no payment is taken and no seat is reserved." : "Dates, fitness levels, dietary needs, cold feet. All fair questions."}
                     </p>
 
                     <div className="mt-6 space-y-5">

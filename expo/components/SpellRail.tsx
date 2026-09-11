@@ -40,7 +40,7 @@ export default function SpellRail({ items, testID }: SpellRailProps) {
       {items.map(({ spell, reason }) => {
         const colors = gradientColors(spell.gradient);
         const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
-        const soldOut = spell.status === "soldout" || seatsLeft === 0;
+        const soldOut = spell.status === "soldout" || (spell.seatsTotal > 0 && seatsLeft === 0);
         return (
           <PressableScale
             key={spell.id}
@@ -96,8 +96,8 @@ export default function SpellRail({ items, testID }: SpellRailProps) {
                 </Text>
               </View>
               <View style={styles.priceRow}>
-                <Text style={styles.price}>{formatINR(spell.price)}</Text>
-                <Text style={styles.perSeat}> / seat</Text>
+                <Text style={styles.price}>{spell.price > 0 ? formatINR(spell.price) : "Prices TBA"}</Text>
+                {spell.price > 0 && <Text style={styles.perSeat}> / seat</Text>}
               </View>
             </View>
           </PressableScale>

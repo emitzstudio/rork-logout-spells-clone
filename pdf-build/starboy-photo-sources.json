@@ -1,0 +1,12 @@
+{
+  "usage": "Destination and atmosphere photography, not photographs of a previous Logout Spells trip or proof of a booked event.",
+  "downloadedOn": "2026-09-11",
+  "photos": [
+    {"name":"bangkok-night","source":"https://images.unsplash.com/photo-1569169507605-f91e088ce91a","license":"Unsplash License","subject":"Bangkok night skyline"},
+    {"name":"skyline","source":"https://images.unsplash.com/photo-1672471668250-2e852b9adbcb","license":"Unsplash License","subject":"Bangkok skyline"},
+    {"name":"phi-phi","source":"https://images.unsplash.com/photo-1506665531195-3566af2b4dfa","license":"Unsplash License","subject":"Phi Phi island scenery"},
+    {"name":"phuket-beach","source":"https://images.pexels.com/photos/36687407/pexels-photo-36687407.jpeg","license":"Pexels License","subject":"Phuket beach"},
+    {"name":"old-town","source":"https://images.unsplash.com/photo-1687842542880-0f42a42f89a9","license":"Unsplash License","subject":"Phuket Old Town"},
+    {"name":"concert","source":"https://images.unsplash.com/photo-1761959148757-e7dac1bed71d","license":"Unsplash License","subject":"Concert atmosphere only; not The Weeknd or the booked event"}
+  ]
+}

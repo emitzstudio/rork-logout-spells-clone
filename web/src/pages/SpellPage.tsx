@@ -96,7 +96,8 @@ export default function SpellPage() {
   /* Search snippet + structured data built from the spell's real fields only. */
   const days = spell.durationDays > 0 ? `${spell.durationDays}-day ` : "";
   const where = spell.location.trim() !== "" ? ` in ${spell.location}` : "";
-  const seoDescription = `${spell.name} is a ${days}creator-led small-group trip${where}. ${spell.hook}`.trim();
+  const tripType = spell.host.name.trim() !== "" && spell.seatsTotal > 0 ? "creator-led small-group trip" : "trip";
+  const seoDescription = `${spell.name} is a ${days}${tripType}${where}. ${spell.hook}`.trim();
   const heroImage = draft.hero?.url ?? draft.mobileHero?.url ?? (spell.image !== "" ? spell.image : null);
 
   // A spell with an attached (and published) form routes its Inquire door

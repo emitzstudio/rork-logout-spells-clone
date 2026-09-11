@@ -13,6 +13,7 @@ import { CATEGORY_FAMILY, createEmptyDraft } from "@/data/builder";
 import type { DraftImage, PriceTier, PricingBlock, SpellDraft } from "@/data/builder";
 import type { FormQuestion, FormResponse, LogoutForm, ResponseAnswer } from "@/data/forms";
 import type { Interest } from "@/data/interests";
+import { brochureLink } from "@/data/publishedPricing";
 import type {
   CommunityMoment,
   PastChapter,
@@ -98,7 +99,8 @@ const revivePricing = (raw: unknown): PricingBlock | undefined => {
       ...(typeof tier.remainingNote === "string" ? { remainingNote: tier.remainingNote } : {}),
     });
   }
-  if (tiers.length === 0) return undefined;
+  const brochure = brochureLink({ tiers: [], remainingNote: "", taxNote: "", note: "", brochureUrl: typeof doc.brochureUrl === "string" ? doc.brochureUrl : undefined });
+  if (tiers.length === 0 && brochure === null) return undefined;
   return {
     tiers,
     ...(doc.requestMode === "published-terms" ? { requestMode: "published-terms" as const } : {}),
@@ -123,7 +125,7 @@ export const pageFromDraft = (draft: SpellDraft): Record<string, unknown> => ({
   audience: draft.audience,
   tripHighlights: draft.tripHighlights,
   faqs: draft.faqs,
-  /* Only spells that carry tiers write the key - every other page document stays as it was. */
+  /* Pricing may contain published tiers or a brochure-only TBA announcement. */
   ...(draft.pricing ? { pricing: draft.pricing } : {}),
 });
 

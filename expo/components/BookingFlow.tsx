@@ -290,7 +290,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
   }, [departure, fallbackDates]);
 
   const seatsLeft = dates.seatsLeft;
-  const soldOut = seatsLeft === 0;
+  const priceTba = spell.price <= 0;
+  const seatsTba = (departure?.seatsTotal ?? spell.seatsTotal) <= 0;
+  const soldOut = !seatsTba && seatsLeft === 0;
   const maxSeats = Math.max(1, Math.min(seatsLeft, 6));
   const price = useMemo<PriceInfo>(() => bookingService.price(spell, seats), [spell, seats]);
 
@@ -403,6 +405,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
   };
 
   const submitReserve = async (): Promise<void> => {
+    if (spell.price <= 0) { goTo("inquire"); return; }
     goTo("sending");
     try {
       const ref = await bookingService.submitReserveRequest({
@@ -539,9 +542,9 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
         <View style={styles.fixedRowText}>
           <Text style={styles.fixedRowLabel}>SEATS</Text>
           <Text style={styles.fixedRowValue}>
-            {soldOut
+            {priceTba ? "Prices and circle size TBA" : soldOut
               ? `Sold out · ${formatINR(spell.price)} per seat`
-              : `${seatsLeft} open · ${formatINR(spell.price)} per seat`}
+              : `${seatsTba ? "Circle size TBA" : `${seatsLeft} open`} · ${formatINR(spell.price)} per seat`}
           </Text>
         </View>
       </View>
@@ -570,7 +573,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
         <ArrowRight size={16} color="rgba(245,240,232,0.4)" />
       </PressableScale>
 
-      {soldOut ? (
+      {priceTba ? null : soldOut ? (
         <PressableScale
           onPress={() => goTo("waitlist")}
           scaleTo={0.975}
@@ -611,7 +614,8 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
       )}
 
       <Text style={styles.choiceFoot}>
-        {dates.label} · {formatINR(spell.price)} per seat · circles of {spell.seatsTotal} ✦
+        {dates.label} · {priceTba ? "Prices TBA · Inquiries only" : `${formatINR(spell.price)} per seat`}
+        {!priceTba && spell.seatsTotal > 0 ? ` · circles of ${spell.seatsTotal}` : ""}
       </Text>
     </View>
   );
@@ -619,7 +623,7 @@ export default function BookingFlow({ open, spell, onClose, onInquireViaForm = n
   const renderInquire = () => (
     <View style={styles.stepBody}>
       <Text style={styles.stepLead}>
-        Dates, fitness levels, dietary needs, cold feet — all fair questions.
+        {priceTba ? "Prices and booking details are TBA. An inquiry does not collect payment or reserve a seat." : "Dates, fitness levels, dietary needs, cold feet — all fair questions."}
       </Text>
       <Field label="Your name" value={inqName} onChangeText={setInqName} placeholder="Full name" autoCapitalize="words" testID="inquire-name" />
       <Field

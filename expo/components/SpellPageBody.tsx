@@ -586,11 +586,11 @@ export default function SpellPageBody({ draft, width, onBook }: SpellPageBodyPro
       >
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ fontFamily: Fonts.sans, fontSize: 9.5 * z, color: cream(0.45) }}>
-            {draft.dates.trim() !== "" ? draft.dates : "Dates TBC"} · {draft.maxSeats} seats
+            {draft.dates.trim() !== "" ? draft.dates : "Dates TBC"}{draft.maxSeats > 0 ? ` · ${draft.maxSeats} seats` : ""}
             {draft.location.trim() !== "" ? ` · ${draft.location}` : ""}
           </Text>
           <Text style={{ marginTop: 3 * z, fontFamily: Fonts.serif, fontSize: 16 * z, color: Colors.goldLight }}>
-            {priceNumber > 0 ? formatINR(priceNumber) : "₹ —"}{" "}
+            {priceNumber > 0 ? formatINR(priceNumber) : "Prices TBA"}{" "}
             <Text
               style={{
                 fontFamily: Fonts.sans,
@@ -600,7 +600,7 @@ export default function SpellPageBody({ draft, width, onBook }: SpellPageBodyPro
                 color: cream(0.35),
               }}
             >
-              per seat
+              {priceNumber > 0 ? "per seat" : ""}
             </Text>
           </Text>
         </View>
