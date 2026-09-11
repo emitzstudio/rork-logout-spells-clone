@@ -7,6 +7,7 @@
     {"name":"phi-phi","source":"https://images.unsplash.com/photo-1506665531195-3566af2b4dfa","license":"Unsplash License","subject":"Phi Phi island scenery"},
     {"name":"phuket-beach","source":"https://images.pexels.com/photos/36687407/pexels-photo-36687407.jpeg","license":"Pexels License","subject":"Phuket beach"},
     {"name":"old-town","source":"https://images.unsplash.com/photo-1687842542880-0f42a42f89a9","license":"Unsplash License","subject":"Phuket Old Town"},
-    {"name":"concert","source":"https://images.unsplash.com/photo-1761959148757-e7dac1bed71d","license":"Unsplash License","subject":"Concert atmosphere only; not The Weeknd or the booked event"}
+    {"name":"concert","source":"https://images.unsplash.com/photo-1761959148757-e7dac1bed71d","license":"Unsplash License","subject":"Concert atmosphere only; retained for the original brochure"},
+    {"name":"weeknd-feq-2018","source":"https://upload.wikimedia.org/wikipedia/commons/d/da/FEQ_July_2018_The_Weeknd_%2844778856382%29.jpg","sourcePage":"https://commons.wikimedia.org/wiki/File:FEQ_July_2018_The_Weeknd_(44778856382).jpg","original":"https://www.flickr.com/photos/npado/44778856382/","author":"Nicolas Padovani","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0/","subject":"The Weeknd performing at Festival d’été de Québec, 5 July 2018","changes":"Resized, cropped and faded into charcoal for mobile/cover layouts; archive photo, not the Bangkok event or an endorsement","usage":"Website hero/mobile hero, Day 3 and gallery; revised Grimoire cover and Day 3. Credit and source/license links in website story and PDF Day 3."}
   ]
 }

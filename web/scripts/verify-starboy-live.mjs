@@ -8,21 +8,34 @@ const api = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 assert(api && key, "Run with Bun from web/ to load public config");
 const content = JSON.parse(readFileSync(new URL("../../backend/migrations/0065_starboy_spell.sql", import.meta.url), "utf8").split("$starboy$")[1]);
-const snapshotPath = new URL("../../pdf-build/.cache/spells-before-starboy.json", import.meta.url);
+const patches = JSON.parse(readFileSync(new URL("../../backend/migrations/0066_starboy_weeknd_photography.sql", import.meta.url), "utf8").split("$weeknd$")[1]);
+const applyPhotoRefresh = (value) => {
+  const result = structuredClone(value);
+  for (const patch of patches) {
+    let target = result;
+    for (const key of patch.path.slice(0, -1)) target = target[key];
+    target[patch.path.at(-1)] = patch.value;
+  }
+  return result;
+};
+const snapshotPath = new URL("../../pdf-build/.cache/spells-before-weeknd.json", import.meta.url);
 const stable = (row) => Object.fromEntries(Object.entries(row).filter(([key]) => !["views", "updated_at"].includes(key)));
 async function readPublic(path) {
   const response = await fetch(`${api}/rest/v1/${path}`, { headers: { apikey: key } });
   assert(response.ok, `Public read failed: ${response.status}`);
   return response.json();
 }
-if (process.argv.includes("--snapshot")) {
+if (process.argv.includes("--snapshot-weeknd")) {
   const [spells, departures] = await Promise.all([readPublic("spells?select=*&order=id"), readPublic("spell_departures?select=*&order=id")]);
-  assert(!spells.some((row) => row.slug === content.slug), "Already published; do not replace baseline");
+  const original = spells.find((row) => row.slug === content.slug);
+  assert(original, "Starboy must exist before refreshing photography");
+  for (const [field, value] of Object.entries(content)) if (field !== "departure") assert.deepEqual(original[field], value, `Pre-refresh ${field} changed; inspect before mutation`);
   writeFileSync(snapshotPath, JSON.stringify({ spells: spells.map(stable), departures: departures.map(stable) }), { flag: "wx" });
   console.log(`PASS: preserved public baseline of ${spells.length} spells / ${departures.length} departures`);
   process.exit(0);
 }
-const images = new Set([content.hero_url]);
+Object.assign(content, applyPhotoRefresh(content));
+const images = new Set([content.hero_url, content.mobile_hero_url]);
 function visit(value) {
   if (value && typeof value === "object") {
     if (typeof value.url === "string") images.add(value.url);
@@ -37,7 +50,7 @@ await Promise.all([...images, content.page.pricing.brochureUrl].map(async (url) 
   assert(response.headers.get("content-type")?.startsWith(path.endsWith(".pdf") ? "application/pdf" : "image/"));
   assert(Buffer.from(await response.arrayBuffer()).equals(readFileSync(new URL(`../public${path}`, import.meta.url))), `Asset bytes differ: ${path}`);
 }));
-console.log("PASS: six destination/atmosphere images and Grimoire PDF served byte-identically");
+console.log("PASS: destination images, Weeknd desktop/mobile photos and revised Grimoire PDF served byte-identically");
 if (process.argv.includes("--assets-only")) process.exit(0);
 const [spells, departures] = await Promise.all([readPublic("spells?select=*&order=id"), readPublic("spell_departures?select=*&order=id")]);
 const spell = spells.find((row) => row.slug === content.slug);
@@ -51,9 +64,9 @@ const [active] = await readPublic(`spell_active_departures?spell_id=eq.${spell.i
 assert.equal(active.id, runs[0].id);
 assert.equal(active.seats_total, 0);
 const before = JSON.parse(readFileSync(snapshotPath, "utf8"));
-assert.equal(spells.length, before.spells.length + 1);
-assert.equal(departures.length, before.departures.length + 1);
-for (const previous of before.spells) assert.deepEqual(stable(spells.find((row) => row.id === previous.id)), previous, `Existing spell changed: ${previous.slug}`);
+assert.equal(spells.length, before.spells.length);
+assert.equal(departures.length, before.departures.length);
+for (const previous of before.spells) assert.deepEqual(stable(spells.find((row) => row.id === previous.id)), previous.slug === content.slug ? applyPhotoRefresh(previous) : previous, `Unexpected spell change: ${previous.slug}`);
 for (const previous of before.departures) assert.deepEqual(stable(departures.find((row) => row.id === previous.id)), previous, "Existing departure changed");
 console.log("PASS: full published Starboy page, real dates, TBA price/capacity; all existing trips unchanged");
 if (process.argv.includes("--api-only")) process.exit(0);
@@ -77,7 +90,17 @@ try {
     const text = await page.locator("body").innerText();
     for (const phrase of ["The Starboy Spell", "9-15 October 2026", "Prices", "TBA", ...content.page.itinerary.map((day) => day.title)]) assert(text.includes(phrase), `Missing ${phrase}`);
     assert(!/₹0|₹0\.00|0 seats|Sold out|30%|Creator-led|4-Star/i.test(text));
+    const hero = page.locator(`img[src="${width < 768 ? content.mobile_hero_url : content.hero_url}"]`).first();
+    await hero.waitFor({ state: "visible" });
+    await hero.evaluate((img) => img.decode());
+    await page.waitForTimeout(1200);
     await page.screenshot({ path: `../pdf-build/.cache/starboy-hero-${width}.png` });
+    const concert = page.locator("#journey").locator(`img[src="${content.hero_url}"]`);
+    await concert.scrollIntoViewIfNeeded();
+    await concert.evaluate((img) => img.decode());
+    await page.waitForTimeout(800);
+    await page.screenshot({ path: `../pdf-build/.cache/starboy-concert-${width}.png` });
+    assert.equal(await page.getByRole("link", { name: "Nicolas Padovani", exact: true }).getAttribute("href"), "https://www.flickr.com/photos/npado/44778856382/");
     await page.locator("#price").scrollIntoViewIfNeeded();
     await page.waitForTimeout(700);
     await page.screenshot({ path: `../pdf-build/.cache/starboy-pricing-${width}.png` });

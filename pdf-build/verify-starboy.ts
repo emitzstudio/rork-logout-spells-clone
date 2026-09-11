@@ -35,11 +35,17 @@ for (let index = 0; index < doc.countPages(); index++) {
   if (index > 0 && index < 8) {
     const day = spec.days[index - 1];
     assert.deepEqual(day.points.map((point: {title: string}) => point.title), supplied[index - 1]);
-    const expected = [day.eyebrow, day.titleA + day.titleB, ...day.points.flatMap((point: {title: string; body: string}, i: number) => [String(i + 1).padStart(2, "0"), point.title, point.body]), day.ending ?? "", day.footer];
+    const expected = [day.eyebrow, day.titleA + day.titleB, ...day.points.flatMap((point: {title: string; body: string}, i: number) => [String(i + 1).padStart(2, "0"), point.title, point.body]), day.ending ?? "", day.imageCredit?.text ?? "", day.imageCredit?.note ?? "", day.footer];
     assert.equal(compact(text), compact(expected.join(" ")), `Day ${index}: missing, added or reordered text`);
     assert(compact(text).includes(compact(`${index + 8} OCTOBER`)), `Day ${index}: calendar date`);
     const numbers = lines.filter((line) => line.bbox.x > 75 && line.bbox.x < 105 && line.bbox.y > 350 && line.bbox.y < 740);
     assert.deepEqual(numbers.map((line) => line.text), supplied[index - 1]!.map((_, i) => String(i + 1).padStart(2, "0")));
+  }
+  if (index === 3) {
+    const credit = spec.days[2].imageCredit;
+    const links = page.getLinks();
+    assert.deepEqual(links.map((link) => link.getURI()), [credit.sourceUrl, credit.licenseUrl]);
+    links.forEach((link) => link.destroy());
   }
   if (index === 8) {
     const links = page.getLinks();

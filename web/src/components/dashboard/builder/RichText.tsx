@@ -234,20 +234,23 @@ const renderEmphasis = (text: string, keyBase: string): ReactNode[] =>
 
 const LINK_RE = /\[([^\]]+)\]\(([^)\s]+)\)/g;
 
-const renderInline = (text: string, keyBase: string): ReactNode[] => {
+const renderInline = (text: string, keyBase: string, allowLinks = false): ReactNode[] => {
   const nodes: ReactNode[] = [];
   let cursor = 0;
   Array.from(text.matchAll(LINK_RE)).forEach((match, i) => {
     const index = match.index ?? 0;
     if (index > cursor) nodes.push(...renderEmphasis(text.slice(cursor, index), `${keyBase}-t${i}`));
-    nodes.push(
-      <span
-        key={`${keyBase}-l${i}`}
-        className="text-gold-light underline decoration-gold/40 underline-offset-2"
-      >
+    const href = /^https?:\/\//i.test(match[2]) ? match[2] : null;
+    const linkClass = "text-gold-light underline decoration-gold/40 underline-offset-2";
+    nodes.push(allowLinks && href ? (
+      <a key={`${keyBase}-l${i}`} href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
         {renderEmphasis(match[1], `${keyBase}-lt${i}`)}
-      </span>,
-    );
+      </a>
+    ) : (
+      <span key={`${keyBase}-l${i}`} className={linkClass}>
+        {renderEmphasis(match[1], `${keyBase}-lt${i}`)}
+      </span>
+    ));
     cursor = index + match[0].length;
   });
   if (cursor < text.length) nodes.push(...renderEmphasis(text.slice(cursor), `${keyBase}-tail`));
@@ -289,7 +292,7 @@ export function RichBody({ body, className, pClass, full = false }: RichBodyProp
         if (block.kind === "heading") {
           return (
             <p key={i} className={headingClass}>
-              {renderInline(block.text, `h${i}`)}
+              {renderInline(block.text, `h${i}`, full)}
             </p>
           );
         }
@@ -306,7 +309,7 @@ export function RichBody({ body, className, pClass, full = false }: RichBodyProp
                       ✦
                     </span>
                   )}
-                  <span className="min-w-0">{renderInline(item, `${block.ordered ? "o" : "u"}${i}-${j}`)}</span>
+                  <span className="min-w-0">{renderInline(item, `${block.ordered ? "o" : "u"}${i}-${j}`, full)}</span>
                 </li>
               ))}
             </Tag>
@@ -314,7 +317,7 @@ export function RichBody({ body, className, pClass, full = false }: RichBodyProp
         }
         return (
           <p key={i} className={paragraphClass}>
-            {renderInline(block.text, `p${i}`)}
+            {renderInline(block.text, `p${i}`, full)}
           </p>
         );
       })}
