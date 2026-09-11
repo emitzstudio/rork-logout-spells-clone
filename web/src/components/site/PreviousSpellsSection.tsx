@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight, MapPin, MessageCircle } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 
@@ -78,14 +78,20 @@ export function PastSpellCard({
         </p>
         <Heading className="heading-serif mt-2.5 text-3xl text-cream md:text-4xl">{past.title}</Heading>
         <p className="mt-3 font-serif text-lg italic leading-snug text-cream/60">{past.caption}</p>
-        {summary.count > 0 && (
+        {summary.rated > 0 ? (
           <p className="mt-4 flex items-center gap-2.5">
             <RatingStars value={summary.average} label={`Rated ${summary.average} out of 5`} />
             <span className="font-sans text-xs text-cream/50">
-              {summary.average} · {summary.count} review{summary.count > 1 ? "s" : ""}
+              {summary.average} · {summary.rated} review{summary.rated > 1 ? "s" : ""}
             </span>
           </p>
-        )}
+        ) : summary.total > 0 ? (
+          /* Trip-group words without stars: counted, never averaged. */
+          <p className="mt-4 flex items-center gap-2 font-sans text-xs text-cream/50">
+            <MessageCircle size={13} className="text-gold/70" aria-hidden />
+            Words from {summary.total} traveller{summary.total > 1 ? "s" : ""}
+          </p>
+        ) : null}
         <span className="mt-5 inline-flex items-center gap-2 font-sans text-xs uppercase tracking-[0.2em] text-gold transition-all duration-300 group-hover:gap-3.5 group-hover:text-gold-light">
           Relive this journey <ArrowRight size={14} />
         </span>

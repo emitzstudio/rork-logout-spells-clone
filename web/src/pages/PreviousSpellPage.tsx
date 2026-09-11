@@ -5,6 +5,7 @@ import {
   Check,
   Lock,
   MapPin,
+  MessageCircle,
   PenLine,
   Users,
 } from "lucide-react";
@@ -16,17 +17,18 @@ import { toast } from "sonner";
 import Page from "@/components/site/Layout";
 import { RatingStars, StarPicker } from "@/components/site/RatingStars";
 import { Reveal } from "@/components/site/Reveal";
+import { ReviewCard } from "@/components/site/ReviewCard";
 import { useAccount } from "@/data/account/AccountProvider";
 import { fetchMyReviewForBooking, submitReview } from "@/data/account/selfService";
 import { usePreviousSpell } from "@/data/previousSpells";
 import type { PreviousSpell } from "@/data/previousSpells";
 import {
   eligibleBookingFor,
+  provenanceLine,
   ratingSummary,
   reviewsKey,
   useSpellReviews,
 } from "@/data/reviews";
-import type { SpellReview } from "@/data/reviews";
 import { CATEGORY_META } from "@/data/spells";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -107,14 +109,20 @@ function MemoryHero({ past }: { past: PreviousSpell }) {
               ? `${past.travellers} travellers · hosted by ${past.host.name}`
               : `Hosted by ${past.host.name}`}
           </span>
-          {summary.count > 0 && (
+          {summary.rated > 0 ? (
             <span className="flex items-center gap-2">
               <RatingStars value={summary.average} />
               <span className="text-cream/55">
-                {summary.average} · {summary.count} review{summary.count > 1 ? "s" : ""}
+                {summary.average} · {summary.rated} review{summary.rated > 1 ? "s" : ""}
               </span>
             </span>
-          )}
+          ) : summary.total > 0 ? (
+            /* Unrated words (trip-group messages) are counted, never starred. */
+            <span className="flex items-center gap-2">
+              <MessageCircle size={14} className="text-gold/80" aria-hidden />
+              Words from {summary.total} traveller{summary.total > 1 ? "s" : ""}
+            </span>
+          ) : null}
         </div>
       </div>
     </section>
@@ -136,40 +144,6 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: React.Reac
 }
 
 /* --------------------------------- Reviews --------------------------------- */
-
-function ReviewCard({ review }: { review: SpellReview }) {
-  return (
-    <article className="card-glass rounded-[14px] p-6 md:p-7">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          {review.avatar !== "" ? (
-            <img src={review.avatar} alt="" loading="lazy" decoding="async" className="h-11 w-11 rounded-full border border-gold/30 object-cover" />
-          ) : (
-            <span className="grid h-11 w-11 place-items-center rounded-full border border-gold/30 bg-gold/[0.08] font-serif text-lg italic text-gold">
-              {review.author.charAt(0)}
-            </span>
-          )}
-          <div>
-            <p className="font-sans text-sm font-medium text-cream/90">{review.author}</p>
-            <p className="mt-0.5 font-sans text-[11px] text-cream/45">
-              Travelled {review.travelledOn}
-              {review.verified && (
-                <span className="ml-2 inline-flex items-center gap-1 text-gold/75">
-                  <Check size={10} aria-hidden /> Verified traveller
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-        <RatingStars value={review.rating} size={13} />
-      </div>
-      {review.title !== "" && (
-        <h3 className="mt-4 font-serif text-xl italic text-cream">{review.title}</h3>
-      )}
-      <p className="mt-2 font-sans text-sm leading-relaxed text-cream/60">{review.body}</p>
-    </article>
-  );
-}
 
 interface ReviewFormProps {
   past: PreviousSpell;
@@ -300,6 +274,7 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
   });
 
   const summary = useMemo(() => ratingSummary(reviews), [reviews]);
+  const provenance = useMemo(() => provenanceLine(reviews), [reviews]);
   const eligible = booking !== null;
   const myReview = myReviewQuery.data ?? null;
   const already = myReview !== null;
@@ -321,33 +296,50 @@ function ReviewsSection({ past }: { past: PreviousSpell }) {
           {/* Summary panel */}
           <Reveal>
             <div className="card-glass rounded-[16px] p-7 text-center md:sticky md:top-28">
-              <p className="heading-serif text-6xl text-gold-gradient">
-                {summary.count > 0 ? summary.average.toFixed(1) : "·"}
-              </p>
-              <div className="mt-3 flex justify-center">
-                <RatingStars value={summary.average} size={16} label={`Average rating ${summary.average} out of 5`} />
-              </div>
-              <p className="mt-2 font-sans text-xs text-cream/50">
-                {summary.count} review{summary.count === 1 ? "" : "s"} · verified travellers
-              </p>
-              <div className="mt-6 space-y-2">
-                {[5, 4, 3, 2, 1].map((star) => {
-                  const count = summary.distribution[star - 1];
-                  const pct = summary.count === 0 ? 0 : Math.round((count / summary.count) * 100);
-                  return (
-                    <div key={star} className="flex items-center gap-3">
-                      <span className="w-6 shrink-0 text-right font-sans text-[11px] text-cream/50">{star}★</span>
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream/[0.08]">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-gold to-gold-light transition-all duration-700"
-                          style={{ width: `${pct}%` }}
-                        />
+              {summary.rated > 0 ? (
+                <>
+                  <p className="heading-serif text-6xl text-gold-gradient">{summary.average.toFixed(1)}</p>
+                  <div className="mt-3 flex justify-center">
+                    <RatingStars value={summary.average} size={16} label={`Average rating ${summary.average} out of 5`} />
+                  </div>
+                  <p className="mt-2 font-sans text-xs text-cream/50">
+                    {summary.total > summary.rated
+                      ? `${summary.rated} starred · ${summary.total} voices in all`
+                      : `${summary.rated} review${summary.rated === 1 ? "" : "s"}`}
+                  </p>
+                </>
+              ) : (
+                /* No stars were ever given here - the number is how many travellers wrote. */
+                <>
+                  <p className="heading-serif text-6xl text-gold-gradient">{summary.total > 0 ? summary.total : "·"}</p>
+                  <p className="mt-3 font-sans text-xs text-cream/50">
+                    {summary.total > 0 ? `voice${summary.total === 1 ? "" : "s"} from the circle` : "No reviews yet"}
+                  </p>
+                </>
+              )}
+              {provenance !== "" && (
+                <p className="mt-2 font-sans text-[11px] leading-relaxed text-cream/40">{provenance}</p>
+              )}
+              {summary.rated > 0 && (
+                <div className="mt-6 space-y-2">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = summary.distribution[star - 1];
+                    const pct = Math.round((count / summary.rated) * 100);
+                    return (
+                      <div key={star} className="flex items-center gap-3">
+                        <span className="w-6 shrink-0 text-right font-sans text-[11px] text-cream/50">{star}★</span>
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream/[0.08]">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-gold to-gold-light transition-all duration-700"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="w-7 shrink-0 font-sans text-[11px] text-cream/40">{count}</span>
                       </div>
-                      <span className="w-7 shrink-0 font-sans text-[11px] text-cream/40">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* The gate - only travellers who completed THIS spell may write. */}
               <div className="mt-7 border-t border-cream/[0.07] pt-6">

@@ -25,8 +25,11 @@ import { effectiveStatus } from "@/data/account/derive";
 import { submitReview as submitLiveReview } from "@/data/account/selfService";
 import { usePreviousSpells } from "@/data/previousSpells";
 import {
+  REVIEW_SOURCE_LABEL,
   canReviewSpell,
   hasReviewed,
+  isRated,
+  provenanceLine,
   ratingSummary,
   useSpellReviews,
 } from "@/data/reviews";
@@ -35,6 +38,7 @@ import { hapticSuccess } from "@/lib/haptics";
 import { useAccount } from "@/providers/AccountProvider";
 
 function ReviewCard({ review }: { review: SpellReview }) {
+  const sourceLabel = REVIEW_SOURCE_LABEL[review.source];
   return (
     <View style={styles.review} testID={`review-${review.id}`}>
       <View style={styles.reviewTop}>
@@ -56,9 +60,11 @@ function ReviewCard({ review }: { review: SpellReview }) {
           </View>
         ) : null}
       </View>
-      <Stars rating={review.rating} />
-      <Text style={styles.reviewTitle}>{review.title}</Text>
+      {/* Trip-group messages carry no stars — five empty ones would read as zero. */}
+      {isRated(review) ? <Stars rating={review.rating} /> : null}
+      {review.title !== "" ? <Text style={styles.reviewTitle}>{review.title}</Text> : null}
       <Text style={styles.reviewBody}>{review.body}</Text>
+      {sourceLabel !== "" ? <Text style={styles.reviewSource}>{sourceLabel.toUpperCase()}</Text> : null}
     </View>
   );
 }
@@ -83,6 +89,7 @@ export default function PreviousSpellScreen() {
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
   const summary = useMemo(() => ratingSummary(reviews), [reviews]);
+  const provenance = useMemo(() => provenanceLine(reviews), [reviews]);
   const eligible = spell ? canReviewSpell(data, spell) : false;
   const alreadyReviewed = hasReviewed(reviews, session?.userId ?? null);
 
@@ -184,11 +191,17 @@ export default function PreviousSpellScreen() {
                 {spell.location}, {spell.region} · {spell.durationDays} days · {spell.travellers}{" "}
                 travellers · hosted by {spell.host.name}
               </Text>
-              {summary.count > 0 ? (
+              {summary.rated > 0 ? (
                 <View style={styles.heroRating}>
                   <Stars rating={summary.average} />
                   <Text style={styles.heroRatingText}>
-                    {summary.average} · {summary.count} review{summary.count > 1 ? "s" : ""}
+                    {summary.average} · {summary.rated} review{summary.rated > 1 ? "s" : ""}
+                  </Text>
+                </View>
+              ) : summary.total > 0 ? (
+                <View style={styles.heroRating}>
+                  <Text style={styles.heroRatingText}>
+                    Words from {summary.total} traveller{summary.total > 1 ? "s" : ""}
                   </Text>
                 </View>
               ) : null}
@@ -297,13 +310,13 @@ export default function PreviousSpellScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Traveller reviews</Text>
 
-            {summary.count > 0 ? (
+            {summary.rated > 0 ? (
               <View style={styles.summaryCard}>
                 <View style={styles.summaryLeft}>
                   <Text style={styles.summaryAverage}>{summary.average}</Text>
                   <Stars rating={summary.average} />
                   <Text style={styles.summaryCount}>
-                    {summary.count} review{summary.count > 1 ? "s" : ""}
+                    {summary.rated} rated review{summary.rated > 1 ? "s" : ""}
                   </Text>
                 </View>
                 <View style={styles.summaryBars}>
@@ -311,11 +324,7 @@ export default function PreviousSpellScreen() {
                     <View key={star} style={styles.summaryBarRow}>
                       <Text style={styles.summaryBarLabel}>{star}★</Text>
                       <GoldProgress
-                        progress={
-                          summary.count === 0
-                            ? 0
-                            : summary.distribution[star - 1] / summary.count
-                        }
+                        progress={summary.distribution[star - 1] / summary.rated}
                         height={5}
                         style={styles.summaryBar}
                       />
@@ -324,6 +333,7 @@ export default function PreviousSpellScreen() {
                 </View>
               </View>
             ) : null}
+            {provenance !== "" ? <Text style={styles.provenance}>{provenance}</Text> : null}
 
             {/* Review gate */}
             {eligible && !alreadyReviewed && completedBooking !== null ? (
@@ -816,6 +826,20 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     lineHeight: 20,
     color: "rgba(245,240,232,0.65)",
+  },
+  reviewSource: {
+    marginTop: 4,
+    fontFamily: Fonts.sansSemi,
+    fontSize: 8.5,
+    letterSpacing: 1.4,
+    color: "rgba(245,240,232,0.4)",
+  },
+  provenance: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    lineHeight: 18,
+    color: "rgba(245,240,232,0.45)",
+    marginBottom: 14,
   },
   footerLine: {
     marginTop: 48,

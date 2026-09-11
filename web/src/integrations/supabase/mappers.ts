@@ -21,6 +21,7 @@ import type {
   PastMemoryNote,
   PreviousSpell,
 } from "@/data/previousSpells";
+import { reviewSource } from "@/data/reviews";
 import type { SpellReview } from "@/data/reviews";
 import { timeAgo } from "@/data/spells";
 import type { ManagedSpell, SpellChange } from "@/data/spells";
@@ -416,6 +417,7 @@ export const mapReview = (row: ReviewRow): SpellReview => ({
   travelledOn: row.travelled_on,
   createdAt: row.created_at,
   verified: row.verified,
+  source: reviewSource(row.source),
 });
 
 /* ---------------------------------- Forms ---------------------------------- */

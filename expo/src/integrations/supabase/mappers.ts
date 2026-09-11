@@ -16,6 +16,7 @@ import type {
   PastMemoryNote,
   PreviousSpell,
 } from "@/data/previousSpells";
+import { reviewSource } from "@/data/reviews";
 import type { SpellReview } from "@/data/reviews";
 import type { ManagedSpell } from "@/data/spells";
 import type { TeamDepartment, TeamMember } from "@/data/team";
@@ -251,4 +252,5 @@ export const mapReview = (row: ReviewRow): SpellReview => ({
   travelledOn: row.travelled_on,
   createdAt: row.created_at,
   verified: row.verified,
+  source: reviewSource(row.source),
 });

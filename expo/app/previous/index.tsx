@@ -57,11 +57,17 @@ function PastCard({
             <Users size={12} color="rgba(184,150,62,0.75)" />
             <Text style={styles.cardMeta}>{spell.travellers} travellers</Text>
           </View>
-          {summary.count > 0 ? (
+          {summary.rated > 0 ? (
             <View style={styles.ratingRow}>
               <Stars rating={summary.average} size={12} />
               <Text style={styles.ratingText}>
-                {summary.average} · {summary.count} review{summary.count > 1 ? "s" : ""}
+                {summary.average} · {summary.rated} review{summary.rated > 1 ? "s" : ""}
+              </Text>
+            </View>
+          ) : summary.total > 0 ? (
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingText}>
+                Words from {summary.total} traveller{summary.total > 1 ? "s" : ""}
               </Text>
             </View>
           ) : null}

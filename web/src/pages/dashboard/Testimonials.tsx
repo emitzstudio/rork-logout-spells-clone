@@ -21,6 +21,7 @@ import {
   type ReviewWithJourney,
 } from "@/data/bookingOps";
 import { inviteErrorCode, inviteErrorCopy } from "@/data/reviewInvites";
+import { reviewSource } from "@/data/reviews";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -86,6 +87,9 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
      without it, publishing is locked here AND in the database. */
   const fromReviewLink = review.invitation_id !== null || review.collection_id !== null;
   const consentLocked = fromReviewLink && !review.consent_to_publish;
+  /* 0068: words copied from Google or a trip group are labelled, so staff
+     always know which stories arrived through the site and which were kept. */
+  const source = reviewSource(review.source);
 
   const act = (status: ReviewStatus, message: string): void => {
     moderate.mutate({ id: review.id, status }, {
@@ -110,8 +114,17 @@ function ReviewCard({ item, index }: { item: ReviewWithJourney; index: number })
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Stars rating={review.rating} />
+            {review.rating > 0 ? (
+              <Stars rating={review.rating} />
+            ) : (
+              <span className="font-sans text-[10px] uppercase tracking-[0.16em] text-cream/40">No star rating</span>
+            )}
             <ReviewStatusBadge status={review.status} />
+            {source !== "logout_spells" && (
+              <span className="rounded-full border border-cream/12 bg-cream/[0.03] px-1.5 py-px font-sans text-[9px] font-medium uppercase tracking-[0.16em] text-cream/55">
+                {source === "google" ? "Google review" : "WhatsApp group"}
+              </span>
+            )}
             {review.verified && (
               <span className="flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/[0.06] px-1.5 py-px font-sans text-[9px] font-medium uppercase tracking-[0.16em] text-emerald-300/85">
                 <BadgeCheck className="h-2.5 w-2.5" /> Verified
