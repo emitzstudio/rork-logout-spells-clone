@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFName, PDFPage, PDFString, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { buildCinematicStarboy } from "./starboy-cinematic";
 
 const W = 595.28;
 const H = 841.89;
@@ -158,7 +159,8 @@ type FinalSpec = {
   closeThanks: string;
   closeHand: string;
 };
-type TripSpec = {
+export type TripSpec = {
+  style?: "starboy-cinematic";
   fileName: string;
   docTitle: string;
   docSubject: string;
@@ -187,6 +189,10 @@ const rupee = (amount: string) => (serifHasRupee || sansHasRupee ? `\u20B9${amou
 
 /* ----------------------------- Trip builder ------------------------------ */
 async function buildTrip(spec: TripSpec): Promise<void> {
+  if (spec.style === "starboy-cinematic") {
+    await buildCinematicStarboy(spec, process.argv.includes("--publish"));
+    return;
+  }
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   doc.setTitle(spec.docTitle);

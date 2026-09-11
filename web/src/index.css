@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/barlow-condensed-bold-v1.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Inherited tokens are scoped to Starboy; the rest of the brand keeps its defaults. */
+@layer components {
+  [data-spell-theme="starboy"] {
+    --spell-accent: 100% 37.65% 29.8%;
+    --spell-accent-light: 100% 53.73% 46.27%;
+    --spell-accent-hi: 100% 76.47% 68.24%;
+    --spell-ink: 98.04% 96.08% 94.12%;
+    --spell-canvas: 3.529% 3.529% 3.529%;
+    --spell-display: "Barlow Condensed";
+    @apply bg-[#090909];
+  }
+  [data-spell-theme="starboy"] :focus-visible { @apply outline-[#ff8976]; }
+  [data-spell-theme="starboy"] ::selection { @apply bg-[#ed402d]/40 text-white; }
+  [data-spell-theme="starboy"] .heading-serif { @apply font-bold uppercase; }
+  [data-spell-theme="starboy"] .text-gold-gradient { @apply bg-none text-gold; }
+  [data-spell-theme="starboy"] .btn-gold { @apply rounded-none bg-[#ed402d] font-semibold text-white hover:bg-[#c92e20] hover:shadow-none; }
+  [data-spell-theme="starboy"] .btn-ghost-gold { @apply rounded-none; }
+  [data-spell-theme="starboy"] .card-glass { @apply border-white/10 bg-[#141414] bg-none; }
+  [data-spell-theme="starboy"] header { @apply bg-[#090909]/95; }
+  [data-spell-theme="starboy"] footer { @apply bg-[#090909]; }
+  [data-spell-theme="starboy"] [role="dialog"] { @apply bg-[#111]; }
+  .starboy-shared .font-serif { @apply font-bold not-italic; }
+  .starboy-shared .rounded-2xl, .starboy-shared .rounded-xl { @apply rounded-none; }
+  .starboy-shared .btn-gold, .starboy-shared .btn-ghost-gold { border-radius: 0 !important; }
+  .starboy-experience h1 { @apply leading-[0.85]; }
+  .starboy-experience h2, .starboy-experience h3 { @apply leading-[0.98]; }
+  .starboy-prose strong { @apply font-semibold text-white; }
+  .starboy-prose .space-y-4 p { @apply text-[14px] leading-[1.85] text-white/70; }
+  .starboy-prose .space-y-4 p + p { @apply mt-5; }
+  #journey .starboy-prose .space-y-4 p:has(strong) { @apply border-b border-white/10 pb-4; }
+  #journey .starboy-prose .space-y-4 p > strong:first-child { @apply mb-2 block text-[12px] tracking-[0.05em]; }
+}
+
 /* ============================================
    LOGOUT SPELLS - Design System
    Brand palette (unchanged from original site):

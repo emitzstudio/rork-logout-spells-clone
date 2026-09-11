@@ -190,7 +190,8 @@ const AppShell = () => {
   const isReviewInvite = location.pathname.startsWith("/review/");
   /* The traveller space + auth also skip the portal - returning travellers land straight in. */
   const isAccount = isAccountArea(location.pathname);
-  const skipPortal = isFormPage || isAccount || isReviewInvite;
+  const isStarboy = /^\/(?:live|spell|spells)\/the-starboy-spell\/?$/.test(location.pathname);
+  const skipPortal = isFormPage || isAccount || isReviewInvite || isStarboy;
   /* M12 - maintenance mode rests the PUBLIC site only. The console, sign-in
      and the traveller space stay reachable (the founder must always be able
      to flip the switch back). Fail-open: defaults keep the site live. */
@@ -199,7 +200,7 @@ const AppShell = () => {
 
   return (
     <ApplyProvider>
-      {!isDashboard && <StarBackdrop />}
+      {!isDashboard && !isStarboy && <StarBackdrop />}
       {underMaintenance ? (
         <MaintenanceScreen />
       ) : (

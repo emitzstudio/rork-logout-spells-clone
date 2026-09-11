@@ -15,25 +15,26 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ['"Cormorant Garamond"', "Georgia", "serif"],
+        serif: ['var(--spell-display, "Cormorant Garamond")', "Georgia", "serif"],
+        concert: ['"Barlow Condensed"', '"Arial Narrow"', "sans-serif"],
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         hand: ['"Caveat"', "cursive"],
       },
       colors: {
         gold: {
-          DEFAULT: "#B8963E",
-          light: "#CFA85A",
-          hi: "#F0DFAE",
+          DEFAULT: "rgb(var(--spell-accent, 184 150 62) / <alpha-value>)",
+          light: "rgb(var(--spell-accent-light, 207 168 90) / <alpha-value>)",
+          hi: "rgb(var(--spell-accent-hi, 240 223 174) / <alpha-value>)",
         },
         cream: {
-          DEFAULT: "#F5F0E8",
+          DEFAULT: "rgb(var(--spell-ink, 245 240 232) / <alpha-value>)",
           dark: "#EDE8DF",
           muted: "#C8C1B4",
         },
         charcoal: {
           DEFAULT: "#1C1C1A",
           soft: "#222220",
-          deep: "#0A0806",
+          deep: "rgb(var(--spell-canvas, 10 8 6) / <alpha-value>)",
         },
         tan: "#8B7956",
         border: "hsl(var(--border))",

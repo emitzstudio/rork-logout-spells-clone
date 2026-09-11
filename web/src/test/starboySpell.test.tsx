@@ -1,7 +1,10 @@
 import sql from "../../../backend/migrations/0065_starboy_spell.sql?raw";
 import photoSql from "../../../backend/migrations/0066_starboy_weeknd_photography.sql?raw";
 import uploadedPhotoSql from "../../../backend/migrations/0067_starboy_uploaded_photography.sql?raw";
+import cinematicSql from "../../../backend/migrations/0070_starboy_cinematic.sql?raw";
 import brochure from "../../../pdf-build/starboy-grimoire.json";
+import StarboyExperience from "@/components/spell/StarboyExperience";
+import { MemoryRouter } from "react-router-dom";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -20,7 +23,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 const content = JSON.parse(sql.split("$starboy$")[1]) as Partial<SpellRow> & { departure: Partial<ActiveDepartureRow> };
 const originalContent = structuredClone(content);
-const patches = [...JSON.parse(photoSql.split("$weeknd$")[1]), ...JSON.parse(uploadedPhotoSql.split("$upload$")[1])] as { path: string[]; value: unknown }[];
+const patches = [...JSON.parse(photoSql.split("$weeknd$")[1]), ...JSON.parse(uploadedPhotoSql.split("$upload$")[1]), ...JSON.parse(cinematicSql.split("$cinematic$")[1])] as { path: string[]; value: unknown }[];
 for (const patch of patches) {
   let target = content as Record<string, unknown>;
   for (const key of patch.path.slice(0, -1)) target = target[key] as Record<string, unknown>;
@@ -41,9 +44,9 @@ const spell = mapSpell(row, departure, []);
 const draft = spell.draft!;
 
 describe("Starboy TBA itinerary", () => {
-  it("uses the user-selected lossless PNG without changing trip terms or misattributing the photo", () => {
-    expect(spell.image).toContain("starboy-weeknd-live-20260911-v3.png");
-    expect(draft.mobileHero?.url).toContain("starboy-weeknd-mobile-20260911-v3.png");
+  it("uses the red-lit upload and AI extension without changing trip terms or misattributing the photo", () => {
+    expect(spell.image).toContain("starboy-weeknd-stage-v4.webp");
+    expect(draft.mobileHero?.url).toContain("starboy-weeknd-portrait-v4.jpeg");
     expect(draft.itinerary[2].image?.url).toBe(spell.image);
     expect(draft.gallery[4].url).toBe(spell.image);
     const journey = renderToStaticMarkup(createElement(SpellJourney, { draft }));
@@ -51,10 +54,20 @@ describe("Starboy TBA itinerary", () => {
     expect(journey).toContain("not the Bangkok event or an endorsement");
     expect(JSON.stringify(content)).not.toMatch(/Nicolas Padovani|CC BY 2\.0|Québec|flickr\.com/);
     expect(content.departure).toEqual(originalContent.departure);
-    expect(brochure.cover.img).toContain("weeknd-cover-v3.png");
-    expect(brochure.days[2].img).toContain("weeknd-band-v3.png");
+    expect(brochure.cover.img).toContain("weeknd-landscape-v4.jpg");
+    expect(brochure.days[2].img).toContain("weeknd-landscape-v4.jpg");
     expect(brochure.days[2].imageCredit?.text).toContain("supplied by Logout Spells");
-    expect(brochure.fileName).toContain("Grimoire-Weeknd-v3.pdf");
+    expect(brochure.fileName).toContain("Grimoire-Weeknd-v4.pdf");
+  });
+  it("renders all supplied activities in the cinematic presentation, with the existing PDF and disclosure", () => {
+    const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft, onBook: () => {} })));
+    expect(html).toContain('aria-label="The Starboy Spell"');
+    expect(html).toContain('id="journey"');
+    expect(html).toContain('id="price"');
+    expect(html).toContain(brochure.fileName);
+    expect(html).toContain("Background extended with AI");
+    for (const day of brochure.days) for (const point of day.points) expect(html).toContain(point.title.replace(/&/g, "&amp;"));
+    expect(html.replace(/<[^>]*>/g, "")).not.toMatch(/₹0|30%|Sold out|0 seats/);
   });
   it("keeps preview links inert and only enables safe web links in published rich text", () => {
     const body = "[Photo](https://example.com/photo) [Bad](javascript:evil) [Data](data:text/html,evil)";

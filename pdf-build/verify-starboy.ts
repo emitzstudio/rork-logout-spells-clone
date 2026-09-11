@@ -38,7 +38,7 @@ for (let index = 0; index < doc.countPages(); index++) {
     const expected = [day.eyebrow, day.titleA + day.titleB, ...day.points.flatMap((point: {title: string; body: string}, i: number) => [String(i + 1).padStart(2, "0"), point.title, point.body]), day.ending ?? "", day.imageCredit?.text ?? "", day.imageCredit?.note ?? "", day.footer];
     assert.equal(compact(text), compact(expected.join(" ")), `Day ${index}: missing, added or reordered text`);
     assert(compact(text).includes(compact(`${index + 8} OCTOBER`)), `Day ${index}: calendar date`);
-    const numbers = lines.filter((line) => line.bbox.x > 75 && line.bbox.x < 105 && line.bbox.y > 350 && line.bbox.y < 740);
+    const numbers = lines.filter((line) => line.bbox.x >= 42 && line.bbox.x < 65 && /^0[1-6]$/.test(line.text));
     assert.deepEqual(numbers.map((line) => line.text), supplied[index - 1]!.map((_, i) => String(i + 1).padStart(2, "0")));
   }
   if (index === 3) {
@@ -64,6 +64,10 @@ for (const phrase of ["THE STARBOY", "9 - 15 OCTOBER 2026", "7 DAYS", "PRICES", 
 assert(!/₹|30%|GST|TCS|Scan to reserve|Pay the|4-Star|6 nights/i.test(texts.join(" ")), "Invented commercial terms");
 assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)), "Public copy differs");
 assert(!/Nicolas Padovani|CC BY 2\.0|Québec 2018/.test(texts.join(" ")), "Previous photo's attribution must not be assigned to the upload");
-assert(readFileSync("raw/starboy-weeknd-user-20260911.png").equals(readFileSync("../web/public/starboy-weeknd-live-20260911-v3.png")), "Uploaded photo must be preserved without recompression");
+assert(readFileSync("raw/starboy-weeknd-red-user-v4.jpeg").equals(readFileSync("../web/public/starboy-weeknd-portrait-v4.jpeg")), "Original mobile photo must be preserved without recompression");
+assert(texts[3].includes("Background extended with AI"), "Disclose the AI extension");
+const coverCopy = Object.values(spec.cover).filter((value): value is string => typeof value === "string" && !value.startsWith("img2/"));
+for (const phrase of coverCopy) assert(compact(texts[0]).includes(compact(phrase)), `Cover missing ${phrase}`);
+for (const phrase of [spec.final.cardNote, spec.final.announcement.body, ...spec.final.lists.left, ...spec.final.lists.right, spec.final.closeThanks, spec.final.closeHand]) assert(compact(texts[8]).includes(compact(phrase)), `Closing missing ${phrase}`);
 console.log(`PASS: all 22 supplied stops, dates, included/optional labels, TBA pricing, clickable inquiry link, no payment QR; ${bytes.length} bytes`);
 doc.destroy();

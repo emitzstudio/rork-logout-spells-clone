@@ -7,6 +7,7 @@ import Page from "@/components/site/Layout";
 import LoadError from "@/components/site/LoadError";
 import BookingFlow from "@/components/spell/BookingFlow";
 import SpellHero from "@/components/spell/SpellHero";
+import StarboyExperience from "@/components/spell/StarboyExperience";
 import {
   BookingStrip,
   SpellAbout,
@@ -133,7 +134,11 @@ export default function SpellPage() {
         ]),
       ]}
       back={false}
+      theme={spell.slug === "the-starboy-spell" ? "starboy" : undefined}
     >
+      {spell.slug === "the-starboy-spell" ? (
+        <StarboyExperience draft={draft} onBook={openBooking} />
+      ) : <>
       <SpellHero draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <BookingStrip draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
       <SpellAbout draft={draft} />
@@ -148,6 +153,7 @@ export default function SpellPage() {
       <SpellAudience draft={draft} />
       <SpellFaqs draft={draft} />
       <SpellFinalCta onBook={openBooking} />
+      </>}
 
       {/* The two doors - Inquire or the full Book Now journey. */}
       <BookingFlow

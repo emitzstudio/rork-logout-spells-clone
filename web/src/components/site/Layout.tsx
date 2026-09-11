@@ -31,6 +31,8 @@ interface PageProps {
    * treatment (hero back links, shell chrome) to avoid duplicates.
    */
   back?: PageBackConfig | false;
+  /** Presentation-only, scoped to one spell; booking and content remain shared. */
+  theme?: "starboy";
   children: React.ReactNode;
 }
 
@@ -52,6 +54,7 @@ export default function Page({
   noindex,
   jsonLd,
   back,
+  theme,
   children,
 }: PageProps) {
   const location = useLocation();
@@ -81,8 +84,8 @@ export default function Page({
   }, [location.pathname, location.hash]);
 
   return (
-    <div className="min-h-screen text-cream">
-      <Cursor />
+    <div data-spell-theme={theme} className="min-h-screen text-cream">
+      {theme !== "starboy" && <Cursor />}
       <Nav />
       <motion.main
         className="relative"

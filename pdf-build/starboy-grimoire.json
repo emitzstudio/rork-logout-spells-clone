@@ -1,9 +1,10 @@
 {
-  "fileName": "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-Weeknd-v3.pdf",
+  "style": "starboy-cinematic",
+  "fileName": "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-Weeknd-v4.pdf",
   "docTitle": "Logout Spells · The Starboy Spell · 9-15 October 2026",
   "docSubject": "Bangkok & Phuket · seven-day itinerary · prices TBA",
   "cover": {
-    "img": "img2/starboy-weeknd-cover-v3.png",
+    "img": "img2/starboy-weeknd-landscape-v4.jpg",
     "eyebrow": "BANGKOK NIGHTS. ISLAND DAYS.",
     "titleLines": [
       {"text":"THE STARBOY","size":65,"tr":4,"y":445},
@@ -20,7 +21,7 @@
   },
   "days":[
     {
-      "img":"img2/starboy-bangkok-night-band.jpg",
+      "img":"img2/starboy-bangkok-night-cinematic-v4.jpg",
       "eyebrow":"DAY 01 · 9 OCTOBER · BANGKOK",
       "titleA":"Dispensary & Art Museum", "titleB":" / Drag Show",
       "intro":"", "items":[], "pointTitleSize":8,
@@ -31,7 +32,7 @@
       "footer":"02 · DAY ONE"
     },
     {
-      "img":"img2/starboy-skyline-band.jpg",
+      "img":"img2/starboy-skyline-cinematic-v4.jpg",
       "eyebrow":"DAY 02 · 10 OCTOBER · BANGKOK",
       "titleA":"BKK Shopping", "titleB":" & Night Out", "intro":"", "items":[],
       "points":[
@@ -44,7 +45,7 @@
       "footer":"03 · DAY TWO"
     },
     {
-      "img":"img2/starboy-weeknd-band-v3.png", "fadeH":48,
+      "img":"img2/starboy-weeknd-landscape-v4.jpg", "fadeH":48,
       "eyebrow":"DAY 03 · 11 OCTOBER · BANGKOK",
       "titleA":"Cooking", "titleB":" & Concert", "intro":"", "items":[],
       "points":[
@@ -52,11 +53,11 @@
         {"title":"THE WEEKND CONCERT","body":"Included · The night at the heart of the spell."}
       ],
       "ending":"THE WEEKND · LIVE ON STAGE",
-      "imageCredit":{"text":"Cover & concert image supplied by Logout Spells.","note":"Illustrative performance photo; not the Bangkok event or an endorsement."},
+      "imageCredit":{"text":"Photo supplied by Logout Spells. Background extended with AI.","note":"Illustrative performance photo; not the Bangkok event or an endorsement."},
       "footer":"04 · DAY THREE"
     },
     {
-      "img":"img2/starboy-phuket-beach-band.jpg",
+      "img":"img2/starboy-phuket-beach-cinematic-v4.jpg",
       "eyebrow":"DAY 04 · 12 OCTOBER · BANGKOK TO PHUKET",
       "titleA":"Spa", "titleB":" & Phuket", "intro":"", "items":[],
       "points":[
@@ -67,7 +68,7 @@
       "footer":"05 · DAY FOUR"
     },
     {
-      "img":"img2/starboy-phi-phi-band.jpg",
+      "img":"img2/starboy-phi-phi-cinematic-v4.jpg",
       "eyebrow":"DAY 05 · 13 OCTOBER · PHI PHI",
       "titleA":"Phi Phi", "titleB":" Island", "intro":"", "items":[],
       "points":[
@@ -76,7 +77,7 @@
       "footer":"06 · DAY FIVE"
     },
     {
-      "img":"img2/starboy-phuket-beach-band.jpg",
+      "img":"img2/starboy-phuket-beach-cinematic-v4.jpg",
       "eyebrow":"DAY 06 · 14 OCTOBER · PHUKET",
       "titleA":"Adventure", "titleB":" Day", "intro":"", "items":[],
       "points":[
@@ -87,7 +88,7 @@
       "footer":"07 · DAY SIX"
     },
     {
-      "img":"img2/starboy-old-town-band.jpg",
+      "img":"img2/starboy-old-town-cinematic-v4.jpg",
       "eyebrow":"DAY 07 · 15 OCTOBER · PHUKET",
       "titleA":"Phuket", "titleB":" Old Town", "intro":"", "items":[],
       "points":[
@@ -103,7 +104,7 @@
     }
   ],
   "final":{
-    "img":"img2/starboy-final.jpg",
+    "img":"img2/starboy-weeknd-landscape-v4.jpg",
     "subline":"THE STARBOY SPELL · 9 - 15 OCTOBER 2026",
     "cards":[],
     "announcement":{"url":"https://z57wkqd89o09lsi6kc7v1-web.rork.live/live/the-starboy-spell","label":"EXPLORE THE STARBOY SPELL","body":"Open the website to send an inquiry. No payment is collected and no seat is reserved by an inquiry."},
