@@ -1288,9 +1288,9 @@ const vof: TripSpec = {
 
 /* ================================ JIBHI ================================== */
 const jibhi: TripSpec = {
-  fileName: "Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf",
+  fileName: "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf",
   docTitle: "Logout Spells · The Spell to the Himalayas · Jibhi with Kavya Lilhare",
-  docSubject: "2 - 5 October 2026 · 4 days · Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village · itinerary and booking",
+  docSubject: "1 - 4 October 2026 · 4 days · Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village · itinerary and booking",
   cover: {
     img: "img2/final/jb-cover.jpg",
     eyebrow: "THE SPELL TO THE HIMALAYAS",
@@ -1298,7 +1298,7 @@ const jibhi: TripSpec = {
     sub: "A slow escape into the Himachal hills.",
     subY: 372,
     ruleY: 349,
-    dateLine: "2 - 5 OCTOBER 2026 · 4 DAYS",
+    dateLine: "1 - 4 OCTOBER 2026 · 4 DAYS",
     dateY: 322,
     locLine: "HIMACHAL PRADESH · DELHI TO DELHI",
     locY: 301,

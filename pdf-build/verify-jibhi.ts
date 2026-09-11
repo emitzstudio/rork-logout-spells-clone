@@ -6,12 +6,12 @@ import * as mupdf from "mupdf";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
 
-const fileName = "Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf";
+const fileName = "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf";
 const bytes = readFileSync(fileName);
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
 const compact = (text: string): string => text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9₹]/g, "");
 const expectedPages: string[][] = [
-  ["THE SPELL TO THE HIMALAYAS", "JIBHI", "2 - 5 OCTOBER 2026", "4 DAYS", "FORESTS", "WATERFALLS", "MOUNTAINS", "A slow escape into the Himachal hills", "Pine forests", "Mountain cafés", "Quiet riversides", "the kind of days you wish lasted longer", "Come for the mountains", "Stay for the feeling"],
+  ["THE SPELL TO THE HIMALAYAS", "JIBHI", "1 - 4 OCTOBER 2026", "4 DAYS", "FORESTS", "WATERFALLS", "MOUNTAINS", "A slow escape into the Himachal hills", "Pine forests", "Mountain cafés", "Quiet riversides", "the kind of days you wish lasted longer", "Come for the mountains", "Stay for the feeling"],
   ["MEET THE CREATOR", "Kavya Lilhare", "@KAVYA.LILHARE", "the creator joining you on this Himalayan escape", "02 · THE CREATOR"],
   ["DAY 01", "Jibhi", "PINE FORESTS & LITTLE HIDEAWAYS", "JIBHI WATERFALL", "MINI THAILAND", "café hopping", "TODAY'S MOOD", "Waterfalls · Pine Forests · Cafés · Slow Evenings", "03 · DAY ONE"],
   ["DAY 02", "Shoja & Jalori", "ABOVE THE TREELINE", "THE TREK", "Choose one beautiful trek from Jalori Pass", "TODAY'S MOOD", "Mountain Roads · Forest Trails · Big Views · Adventure", "04 · DAY TWO"],
@@ -52,7 +52,9 @@ for (const stale of ["DAY 00", "30%", "₹3,600", "₹4,200", "Dorm style", "Ser
 assert.equal(compact(textByPage[6] ?? "").split("bookingamount").length - 1, 3, "Both cards and QR instructions must state a booking amount");
 assert.equal((textByPage[6] ?? "").match(/₹4,000/g)?.length, 4, "₹4,000 must appear on both cards and in both booking instructions");
 
+assert(!allText.includes(compact("2 - 5 October 2026")), "Previous dates remain in the PDF");
 const pdf = await PDFDocument.load(bytes);
+assert(pdf.getSubject()?.includes("1 - 4 October 2026"), "PDF metadata dates differ");
 const resources = pdf.getPage(1).node.Resources();
 assert(resources, "Creator page must have image resources");
 const objects = resources.lookup(PDFName.of("XObject"), PDFDict);
@@ -73,7 +75,7 @@ assert.equal(renderedQr?.data, referenceQr.data, "Payment QR changed or cannot b
 pixmap.destroy();
 finalPage.destroy();
 assert(bytes.equals(readFileSync(`../web/public/brochures/${fileName}`)), "Published copy differs");
-const previous = mupdf.Document.openDocument(readFileSync("Logout-Spells-Jibhi-Kavya.pdf"), "application/pdf");
+const previous = mupdf.Document.openDocument(readFileSync("Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf"), "application/pdf");
 for (let index = 1; index < doc.countPages(); index++) {
   const oldPage = previous.loadPage(index);
   const newPage = doc.loadPage(index);
@@ -86,5 +88,5 @@ for (let index = 1; index < doc.countPages(); index++) {
   newPage.destroy();
 }
 previous.destroy();
-console.log(`PASS: 2-5 October 2026 cover, six unchanged pages, supplied portrait, clickable Instagram, booking figures, unchanged scannable QR and matching publish copy (${bytes.length} bytes)`);
+console.log(`PASS: 1-4 October 2026 cover, six unchanged pages, supplied portrait, clickable Instagram, booking figures, unchanged scannable QR and matching publish copy (${bytes.length} bytes)`);
 doc.destroy();

@@ -1,4 +1,4 @@
-/** Read-only live checks. Requires refreshSupabaseToken; never submits a reservation. */
+/** Read-only live checks. Run with Bun from web/ to load public config; never submits a reservation. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -6,13 +6,8 @@ import { chromium } from "playwright";
 const ref = "ultwonqxcgoadthneqqn";
 const site = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
 const id = "b7e83d15-2c4a-4f09-9d61-84f2a6c9e3d0";
-const keyResponse = await fetch(`https://api.supabase.com/v1/projects/${ref}/api-keys`, {
-  headers: { Authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}` },
-});
-assert(keyResponse.ok, `Key lookup failed: ${keyResponse.status}`);
-const keys = await keyResponse.json();
-const key = keys.find((entry) => entry.name === "anon" || entry.type === "publishable")?.api_key;
-assert(key, "Public API key missing");
+const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+assert(key, "Public API key missing; run with Bun from web/");
 async function readPublic(path) {
   const response = await fetch(`https://${ref}.supabase.co/rest/v1/${path}`, { headers: { apikey: key } });
   assert(response.ok, `Public read failed: ${response.status}`);
@@ -21,7 +16,7 @@ async function readPublic(path) {
 const [spell] = await readPublic(`spells?id=eq.${id}&select=*`);
 const migration = readFileSync(new URL("../../backend/migrations/0061_jibhi_kavya_brochure_parity.sql", import.meta.url), "utf8");
 const expected = JSON.parse(migration.split("$page$")[1]);
-const dateMigration = readFileSync(new URL("../../backend/migrations/0062_jibhi_october_dates.sql", import.meta.url), "utf8");
+const dateMigration = readFileSync(new URL("../../backend/migrations/0063_jibhi_october_date_revision.sql", import.meta.url), "utf8");
 const dates = JSON.parse(dateMigration.split("$dates$")[1]);
 expected.faqs.find((faq) => faq.id === "faq-jibhi-dates").answer = dates.faqAnswer;
 expected.pricing.brochureUrl = dates.brochureUrl;
@@ -50,12 +45,12 @@ for (const url of imageUrls) {
   const response = await fetch(url);
   assert(response.ok && response.headers.get("content-type")?.startsWith("image/"), `Image failed: ${url}`);
 }
-for (const name of ["jibhi-kavya-host-20260910.jpg", "jibhi-river-20260910.jpg", "brochures/Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf"]) {
+for (const name of ["jibhi-kavya-host-20260910.jpg", "jibhi-river-20260910.jpg", "brochures/Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf"]) {
   const response = await fetch(`${site}/${name}`);
   assert(response.ok);
   assert(Buffer.from(await response.arrayBuffer()).equals(readFileSync(new URL(`../public/${name}`, import.meta.url))), `Deployed ${name} differs`);
 }
-console.log(`PASS: live Jibhi matches every migrated section; 2-5 October 2026 departure; capacity and Vietnam unchanged; ${imageUrls.size} images OK; portrait, river and brochure byte-identical.`);
+console.log(`PASS: live Jibhi matches every migrated section; 1-4 October 2026 departure; capacity and Vietnam unchanged; ${imageUrls.size} images OK; portrait, river and brochure byte-identical.`);
 
 if (process.argv.includes("--api-only")) process.exit(0);
 const browser = await chromium.launch({ headless: true });
@@ -88,7 +83,7 @@ try {
     assert.equal(await brochure.getAttribute("href"), spell.page.pricing.brochureUrl);
     await brochure.scrollIntoViewIfNeeded();
     await page.waitForTimeout(900);
-    await page.screenshot({ path: `/tmp/jibhi-price-${width}.png` });
+    await page.screenshot({ path: `../pdf-build/.cache/jibhi-price-${width}.png` });
     await page.locator("#price button").click();
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: /Book Now/ }).click();
@@ -100,7 +95,7 @@ try {
     assert(!summary.includes("30%"));
     assert(summary.includes(dates.date_label), "Summary must show the October dates");
     assert(summary.includes("any applicable taxes"));
-    await page.screenshot({ path: `/tmp/jibhi-request-${width}.png` });
+    await page.screenshot({ path: `../pdf-build/.cache/jibhi-request-${width}.png` });
     await dialog.getByRole("button", { name: "Looks right", exact: true }).click();
     await dialog.locator("#lead-name").fill("Test Traveller");
     await dialog.locator("#lead-email").fill("test@example.com");

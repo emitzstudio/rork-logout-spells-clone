@@ -1,5 +1,5 @@
 import sql from "../../../backend/migrations/0061_jibhi_kavya_brochure_parity.sql?raw";
-import dateSql from "../../../backend/migrations/0062_jibhi_october_dates.sql?raw";
+import dateSql from "../../../backend/migrations/0063_jibhi_october_date_revision.sql?raw";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -48,17 +48,17 @@ describe("Jibhi brochure parity", () => {
     expect(saved.host).toEqual(page.host);
     expect(draft.nights).toBe(3);
     expect(draft.maxSeats).toBe(0);
-    expect(spell.dates).toBe("2-5 October 2026");
+    expect(spell.dates).toBe("1-4 October 2026");
     expect(draft.dates).toBe(spell.dates);
   });
 
   it("keeps the announced dates consistent in the mapper, FAQ and booking dates", () => {
-    expect(dates.start_date).toBe("2026-10-02");
-    expect(dates.end_date).toBe("2026-10-05");
+    expect(dates.start_date).toBe("2026-10-01");
+    expect(dates.end_date).toBe("2026-10-04");
     const parsed = bookingService.tripDates(spell);
-    expect(parsed.start).toContain("2026-10-02");
-    expect(parsed.end).toContain("2026-10-05");
-    expect(parsed.label).toBe("2-5 Oct 2026");
+    expect(parsed.start).toContain("2026-10-01");
+    expect(parsed.end).toContain("2026-10-04");
+    expect(parsed.label).toBe("1-4 Oct 2026");
     expect(draft.faqs.find((faq) => faq.id === "faq-jibhi-dates")?.answer).toBe(dates.faqAnswer);
     expect(JSON.stringify(page)).not.toMatch(/dates.*being finalised|Dates announced soon|Dates TBC/i);
     expect(mapSpell(row, undefined, []).dates).toBe("Dates TBC");
@@ -67,7 +67,7 @@ describe("Jibhi brochure parity", () => {
   it("preserves explicit years and legacy labels without accepting impossible date ranges", () => {
     expect(parseSpellDates("2-5 October 2025")?.start.getFullYear()).toBe(2025);
     expect(parseSpellDates("Oct 2-5")?.start.getMonth()).toBe(9);
-    expect(parseSpellDates("2-5 Oct 2026")?.end.getDate()).toBe(5);
+    expect(parseSpellDates("1-4 Oct 2026")?.end.getDate()).toBe(4);
     for (const label of ["Dates TBC", "5-2 October 2026", "0-5 October 2026", "30-31 February 2026", "2-5 Unknown 2026"]) {
       expect(parseSpellDates(label)).toBeNull();
     }
@@ -98,7 +98,7 @@ describe("Jibhi brochure parity", () => {
     for (const text of ["₹14,000", "₹16,000", "₹4,000", "Remaining ₹10,000", "Remaining ₹12,000", "Download brochure (PDF)"]) {
       expect(html).toContain(text);
     }
-    expect(html).toContain('href="https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf"');
+    expect(html).toContain('href="https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf"');
     const hostHtml = renderToStaticMarkup(createElement(SpellHost, { draft }));
     expect(hostHtml).toContain('href="https://www.instagram.com/kavya.lilhare/?hl=en"');
     expect(hostHtml.indexOf("</button>")).toBeLessThan(hostHtml.indexOf('<a href="https://www.instagram.com/'));
@@ -127,7 +127,7 @@ describe("Jibhi brochure parity", () => {
     });
     const calls = vi.mocked(supabase.rpc).mock.calls;
     const payload = calls[calls.length - 1]?.[1] as { _note: string };
-    expect(payload._note).toContain("Departure: 2-5 October 2026");
+    expect(payload._note).toContain("Departure: 1-4 October 2026");
     expect(payload._note).toContain(publishedRequestTerms(draft, 2)!.join("\n"));
     expect(payload._note).not.toContain("30%");
     expect(payload._note).not.toContain("GST (5%)");
@@ -157,6 +157,6 @@ describe("brochure links", () => {
     for (const value of ["javascript:alert(1)", "//evil.com/x.pdf", "http://example.com/x.pdf", "https://example.com/x.html", "/brochures/../x.pdf"]) {
       expect(brochureLink({ ...draft.pricing!, brochureUrl: value })).toBeNull();
     }
-    expect(brochureLink({ ...draft.pricing!, brochureUrl: "/brochures/Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf" })).toBe("/brochures/Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf");
+    expect(brochureLink({ ...draft.pricing!, brochureUrl: "/brochures/Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf" })).toBe("/brochures/Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf");
   });
 });
