@@ -1,14 +1,15 @@
-/** Verifies the concise Vietnam PDF against the supplied points, with no added itinerary copy. */
+/** Verifies the numbered Vietnam itinerary, one-line captions and unchanged non-itinerary pages. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as mupdf from "mupdf";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
 
-const fileName = "Logout-Spells-Vietnam-6-12-Nov-2026-Concise.pdf";
+const fileName = "Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf";
+const previousFileName = "Logout-Spells-Vietnam-6-12-Nov-2026-Concise.pdf";
 const bytes = readFileSync(fileName);
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
-const previousBytes = readFileSync("../web/public/brochures/Logout-Spells-Vietnam.pdf");
+const previousBytes = readFileSync(`../web/public/brochures/${previousFileName}`);
 const previous = mupdf.Document.openDocument(previousBytes, "application/pdf");
 const compact = (text: string): string => text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9₹]/g, "");
 
@@ -42,6 +43,71 @@ const days: { header: string; title: string; points: string[]; ending?: string; 
     points: ["Breakfast at the hotel", "Check-out from the hotel", "Free time for optional activities", "Departure transfer", "Transfer to Da Nang Airport", "Departure from Vietnam"],
   },
 ];
+const descriptions: string[][] = [
+  [
+    "Touch down in Hanoi, where your Vietnam spell begins.",
+    "Leave the airport behind and head to your hotel.",
+    "Check in, put your bags down and settle into your stay.",
+    "Ease into the day with breakfast at your hotel.",
+    "Wander the Old Quarter and take in Hanoi's everyday rhythm.",
+    "Pause for a taste of Vietnam's coffee culture.",
+    "Gather over dinner and get to know your fellow travellers.",
+    "Settle in for your first night in Hanoi.",
+  ],
+  [
+    "Start with breakfast before heading out to the bay.",
+    "Leave Hanoi for the waters of Halong Bay.",
+    "Step aboard and let the cruise begin.",
+    "Watch the limestone scenery unfold from the water.",
+    "Head back to Hanoi after your day on the bay.",
+    "Rest in Hanoi after a day out on the water.",
+  ],
+  [
+    "Begin with breakfast before your Ninh Binh day.",
+    "Trade Hanoi's city streets for Ninh Binh's scenery.",
+    "Take in the landscape from the saddle.",
+    "Glide through Ninh Binh and enjoy the views from the water.",
+    "Discover the caves along your Ninh Binh journey.",
+    "Make your way back to Hanoi after the day's exploring.",
+    "Spend one more night in Hanoi before heading south.",
+  ],
+  [
+    "Enjoy breakfast before saying goodbye to Hanoi.",
+    "Pack your bags and check out of your Hanoi stay.",
+    "Head to the airport for the next part of your journey.",
+    "Fly south from Hanoi to Da Nang.",
+    "Continue from Da Nang towards Hoi An.",
+    "Check in and settle into the next part of your stay.",
+    "Rest for the night in Da Nang.",
+  ],
+  [
+    "Start with breakfast before a day in the hills.",
+    "Head towards Ba Na Hills for your hilltop day.",
+    "Rise above the landscape on the cable car.",
+    "Walk across the Golden Bridge, held by its giant stone hands.",
+    "Take in the hilltop surroundings before heading back.",
+    "Make your way back to Hoi An after Ba Na Hills.",
+    "Settle in for the night in Hoi An.",
+  ],
+  [
+    "Fuel up with breakfast before your island day.",
+    "Head out for your journey to the Cham Islands.",
+    "Discover the Cham Islands on your planned tour.",
+    "Take in the sea air and the island surroundings.",
+    "Return to Hoi An after your island escape.",
+    "Unwind with a spa session, if you feel like it.",
+    "Browse and shop if you would like a little extra exploring.",
+    "Spend your final night in Hoi An.",
+  ],
+  [
+    "Enjoy one last hotel breakfast before departure.",
+    "Pack up your belongings and check out of your stay.",
+    "Spend your free time as you choose before leaving.",
+    "Begin your departure transfer as the trip draws to a close.",
+    "Continue to Da Nang Airport for your onward flight.",
+    "Say goodbye to Vietnam and take the memories with you.",
+  ],
+];
 const inclusions: string[] = [
   "Domestic flight: Hanoi to Da Nang",
   "6 nights: 3 in Hanoi & 3 in Da Nang",
@@ -56,7 +122,7 @@ const inclusions: string[] = [
 const expectedPages: string[][] = [
   ["VIETNAM", "7 DAYS / 6 NIGHTS", "6 - 12 NOVEMBER 2026", "GROUP SIZE", "10-15 Pax", "STAY", "4-Star Hotels", "TRIP TYPE", "Private"],
   ["MEET THE CREATOR", "Meet Naksi", "@NAKSIMANICPIXIE", "YOUR HOST IN VIETNAM"],
-  ...days.map((day) => [day.header, day.title, ...day.points, day.ending ?? "", day.footer]),
+  ...days.map((day, dayIndex) => [day.header, day.title, ...day.points.flatMap((point, pointIndex) => [String(pointIndex + 1).padStart(2, "0"), point.toUpperCase(), descriptions[dayIndex]![pointIndex]!]), day.ending ?? "", day.footer]),
   ["THE LOGOUT SPELLS CIRCLE"],
   ["THE VIETNAM SPELL · 6 - 12 NOVEMBER 2026 · HANOI TO DA NANG", "EARLY BIRD", "₹65,000", "NORMAL PRICE", "₹70,000", "₹18,000", "5% GST & 2% TCS APPLICABLE", "WHAT'S INCLUDED", ...inclusions, "NOT INCLUDED", "International flights to Hanoi & back from Da Nang", "Vietnam e-visa"],
 ];
@@ -83,15 +149,25 @@ for (const [index, phrases] of expectedPages.entries()) {
     assert(x >= 25 && x + w <= 570.3 && y >= 20 && y + h <= 822, `Page ${index + 1}: text outside safe area: ${line.text}`);
   }
   if (index >= 2 && index <= 8) {
-    // Compare the entire page, not just expected phrases: extra activities or prose must fail.
     assert.equal(compact(text), compact(phrases.join(" ")), `Day ${index - 1}: extra, missing or reordered copy`);
-    const body = lines.filter((line) => line.bbox.y > 370 && line.bbox.y < 700);
-    assert.equal(body.length, days[index - 2]!.points.length, `Day ${index - 1}: bullet count`);
-    for (const [lineIndex, line] of body.entries()) {
-      assert.equal(line.text, days[index - 2]!.points[lineIndex], `Day ${index - 1}: bullet wording changed`);
-      if (lineIndex > 0) {
-        const previousLine = body[lineIndex - 1]!;
-        assert(line.bbox.y - previousLine.bbox.y - previousLine.bbox.h >= 8, `Day ${index - 1}: crowded bullets`);
+    const day = days[index - 2]!;
+    const captions = descriptions[index - 2]!;
+    assert.equal(captions.length, day.points.length, `Day ${index - 1}: description count`);
+    const body = lines.filter((line) => line.bbox.x >= 121 && line.bbox.x <= 123 && line.bbox.y > 350 && line.bbox.y < 740);
+    const numbers = lines.filter((line) => line.bbox.x > 75 && line.bbox.x < 105 && line.bbox.y > 350 && line.bbox.y < 740);
+    assert.equal(body.length, day.points.length * 2, `Day ${index - 1}: one heading and one description line per point`);
+    assert.deepEqual(numbers.map((line) => line.text), day.points.map((_, pointIndex) => String(pointIndex + 1).padStart(2, "0")), `Day ${index - 1}: sequential circle numbers`);
+    for (const [pointIndex, point] of day.points.entries()) {
+      const heading = body[pointIndex * 2]!;
+      const description = body[pointIndex * 2 + 1]!;
+      assert.equal(compact(heading.text), compact(point), `Day ${index - 1}: supplied heading changed`);
+      assert.equal(heading.text, heading.text.toUpperCase(), `Day ${index - 1}: heading is not uppercase`);
+      assert.equal(description.text, captions[pointIndex], `Day ${index - 1}: description changed or wrapped`);
+      assert(heading.bbox.w <= 393 && description.bbox.w <= 393, `Day ${index - 1}: text outside timeline column`);
+      assert(description.bbox.y - heading.bbox.y - heading.bbox.h >= 2, `Day ${index - 1}: heading overlaps description`);
+      if (pointIndex > 0) {
+        const previousDescription = body[pointIndex * 2 - 1]!;
+        assert(heading.bbox.y - previousDescription.bbox.y - previousDescription.bbox.h >= 15, `Day ${index - 1}: crowded timeline rows`);
       }
     }
   }
@@ -126,8 +202,14 @@ const render = (document: mupdf.Document, index: number, scale: number): Buffer 
   page.destroy();
   return result;
 };
-for (const index of [1, 9]) {
-  assert(render(doc, index, 1).equals(render(previous, index, 1)), `Page ${index + 1}: creator or memories page changed`);
+for (const index of [0, 1, 9, 10]) {
+  assert(render(doc, index, 1).equals(render(previous, index, 1)), `Page ${index + 1}: cover, creator, memories or booking page changed`);
+}
+for (let index = 2; index <= 8; index++) {
+  const currentImage = PNG.sync.read(render(doc, index, 1));
+  const previousImage = PNG.sync.read(render(previous, index, 1));
+  const scenicBytes = currentImage.width * 235 * 4;
+  assert(currentImage.data.subarray(0, scenicBytes).equals(previousImage.data.subarray(0, scenicBytes)), `Day ${index - 1}: scenic image changed`);
 }
 assert.equal((texts[10] ?? "").match(/₹18,000/g)?.length, 4, "Booking figures changed");
 const reference = PNG.sync.read(readFileSync("qr-clean.png"));
@@ -137,8 +219,9 @@ const rendered = PNG.sync.read(render(doc, 10, 2));
 const renderedQr = jsQR(new Uint8ClampedArray(rendered.data), rendered.width, rendered.height);
 assert.equal(renderedQr?.data, referenceQr.data, "Payment QR changed or cannot be scanned");
 assert(bytes.equals(readFileSync(`../web/public/brochures/${fileName}`)), "Publish copy differs");
-assert(previousBytes.equals(readFileSync("Logout-Spells-Vietnam.pdf")), "Previous brochure not retained intact");
-console.log(`PASS: exact bullet-only itinerary, nine inclusions, unchanged creator/memories/prices/exclusions/QR, prior PDF retained, identical publish copy (${bytes.length} bytes)`);
+assert(previousBytes.equals(readFileSync(previousFileName)), "Previous concise brochure not retained intact");
+assert(readFileSync("Logout-Spells-Vietnam.pdf").equals(readFileSync("../web/public/brochures/Logout-Spells-Vietnam.pdf")), "Previous detailed brochure not retained intact");
+console.log(`PASS: 49 numbered points and one-line descriptions, nine inclusions, unchanged cover/creator/memories/booking/scenery/QR, prior PDFs retained, identical publish copy (${bytes.length} bytes)`);
 if (process.argv.includes("--live")) {
   const response = await fetch(`https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${fileName}`);
   assert.equal(response.status, 200, "Live PDF unavailable");

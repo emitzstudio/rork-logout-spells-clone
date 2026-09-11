@@ -66,8 +66,8 @@ type DaySpec = {
   spotlight?: DaySpotlight;
   /** When set, the day is drawn as a full time-of-day plan instead of the numbered highlights. */
   schedule?: DaySchedule;
-  /** Concise, supplied points only: no intro, mood, time blocks or meals strip. */
-  points?: string[];
+  /** Numbered supplied headings, each with one short line; no extra activities or day sections. */
+  points?: DayItem[];
   ending?: string;
 };
 /** Minimal portrait-focused page: the creator behind the spell. */
@@ -585,18 +585,30 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       // Draw separately to prevent the serif font's ff ligature from corrupting Coffee.
       const firstWidth = drawTracked(p, day.titleA, { x: titleX, y: 526, font: serifMed, size: titleSize, color: CREAM, tr: 0 });
       drawTracked(p, day.titleB, { x: titleX + firstWidth, y: 526, font: serifSemiItal, size: titleSize, color: GOLD_LIGHT, tr: 0 });
-      hline(p, 82, W - 82, 492, GOLD, 0.35);
-      let y = 452;
-      for (const point of day.points) {
-        const lines = wrap(sansReg, point, 11.5, W - 200);
-        p.drawCircle({ x: 87, y: y + 3.8, size: 2.1, color: GOLD_LIGHT });
-        for (const line of lines) {
-          dt(p, line, { x: 105, y, font: sansReg, size: 11.5, color: CREAM, opacity: 0.94 });
-          y -= 17;
-        }
-        y -= 15;
+      const spineX = 92;
+      const textX = 122;
+      const bodyW = 392;
+      const firstY = 466;
+      const rowStep = Math.min(62, 336 / Math.max(1, day.points.length - 1));
+      const lastY = firstY - rowStep * (day.points.length - 1);
+      if (lastY - 15 < (day.ending ? 138 : 100)) throw new Error(`${day.footer}: numbered points run into the footer`);
+      if (day.points.length > 1) {
+        p.drawLine({ start: { x: spineX, y: firstY + 3 }, end: { x: spineX, y: lastY + 3 }, thickness: 0.7, color: GOLD, opacity: 0.28 });
       }
-      if (y < 122) throw new Error(`${day.footer}: bullet list runs into the footer`);
+      for (const [index, point] of day.points.entries()) {
+        const titleY = firstY - index * rowStep;
+        const discY = titleY + 3;
+        const title = point.title.toUpperCase();
+        if (trackW(sansSemi, title, 10, 1.7) > bodyW) throw new Error(`${day.footer}: point heading is too wide: ${point.title}`);
+        if (!point.body.trim() || point.body.includes("\n") || sansReg.widthOfTextAtSize(point.body, 9.5) > bodyW) {
+          throw new Error(`${day.footer}: description must fit one line: ${point.title}`);
+        }
+        p.drawCircle({ x: spineX, y: discY, size: 12.5, color: CHARCOAL_SOFT, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.5 });
+        const number = String(index + 1).padStart(2, "0");
+        dt(p, number, { x: spineX - serifSemi.widthOfTextAtSize(number, 13.5) / 2, y: discY - 4.6, font: serifSemi, size: 13.5, color: GOLD_LIGHT });
+        drawTracked(p, title, { x: textX, y: titleY, font: sansSemi, size: 10, color: CREAM, tr: 1.7 });
+        dt(p, point.body, { x: textX, y: titleY - 15, font: sansReg, size: 9.5, color: MUTED, opacity: 0.95 });
+      }
       if (day.ending) drawTracked(p, day.ending, { cx: W / 2, y: 112, font: sansSemi, size: 8.5, color: GOLD_LIGHT, tr: 3 });
       footerLabel(p, day.footer);
       continue;
@@ -1711,12 +1723,12 @@ const ziro: TripSpec = {
 /* =============================== VIETNAM ================================= */
 /* Rerouted again 2026-09-10 (founder): Hanoi in, Da Nang out. Early bird ₹65,000 / normal ₹70,000,
  * flat ₹18,000 booking amount. Hosted by Naksi (@naksimanicpixie): her creator page sits right after the
- * cover, so the day footers count from 03. The latest concise brief supplies every day point and
- * inclusion verbatim, including the Hoi An stays on Days 5-6 and the separate Da Nang stay summary.
+ * cover, so the day footers count from 03. Supplied points use the reference's numbered-circle style
+ * with a short description each. Hoi An stays on Days 5-6 and the separate Da Nang summary are retained.
  * Scenic imagery only: the original vn-* set plus two scenic vn4-* bands (the Ninh Binh karsts, a Da Nang
  * beach morning). */
 const vietnam: TripSpec = {
-  fileName: "Logout-Spells-Vietnam-6-12-Nov-2026-Concise.pdf",
+  fileName: "Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf",
   docTitle: "Logout Spells · The Vietnam Spell · 6 - 12 November 2026 · Hanoi to Da Nang",
   docSubject: "6 - 12 November 2026 · Hanoi, Halong Bay, Ninh Binh, Hoi An, Ba Na Hills, Cham Islands · day-by-day itinerary and booking",
   memoriesFile: "img/spell-memories/sources.json",
@@ -1774,14 +1786,14 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Arrival in Hanoi",
-        "Airport transfer to the hotel",
-        "Hotel check-in",
-        "Breakfast at the hotel",
-        "Explore the Hanoi Old Quarter",
-        "Vietnamese coffee experience",
-        "Welcome Dinner",
-        "Overnight stay in Hanoi",
+        { title: "Arrival in Hanoi", body: "Touch down in Hanoi, where your Vietnam spell begins." },
+        { title: "Airport transfer to the hotel", body: "Leave the airport behind and head to your hotel." },
+        { title: "Hotel check-in", body: "Check in, put your bags down and settle into your stay." },
+        { title: "Breakfast at the hotel", body: "Ease into the day with breakfast at your hotel." },
+        { title: "Explore the Hanoi Old Quarter", body: "Wander the Old Quarter and take in Hanoi's everyday rhythm." },
+        { title: "Vietnamese coffee experience", body: "Pause for a taste of Vietnam's coffee culture." },
+        { title: "Welcome Dinner", body: "Gather over dinner and get to know your fellow travellers." },
+        { title: "Overnight stay in Hanoi", body: "Settle in for your first night in Hanoi." },
       ],
       footer: "03 · DAY ONE",
     },
@@ -1793,12 +1805,12 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Breakfast at the hotel",
-        "Transfer to Halong Bay",
-        "Board the Halong Bay Cruise",
-        "Enjoy the cruise experience",
-        "Return transfer to Hanoi",
-        "Overnight stay in Hanoi",
+        { title: "Breakfast at the hotel", body: "Start with breakfast before heading out to the bay." },
+        { title: "Transfer to Halong Bay", body: "Leave Hanoi for the waters of Halong Bay." },
+        { title: "Board the Halong Bay Cruise", body: "Step aboard and let the cruise begin." },
+        { title: "Enjoy the cruise experience", body: "Watch the limestone scenery unfold from the water." },
+        { title: "Return transfer to Hanoi", body: "Head back to Hanoi after your day on the bay." },
+        { title: "Overnight stay in Hanoi", body: "Rest in Hanoi after a day out on the water." },
       ],
       footer: "04 · DAY TWO",
     },
@@ -1810,13 +1822,13 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Breakfast at the hotel",
-        "Transfer to Ninh Binh",
-        "Cycling experience",
-        "Boat ride through Ninh Binh",
-        "Explore the caves",
-        "Return to Hanoi",
-        "Overnight stay in Hanoi",
+        { title: "Breakfast at the hotel", body: "Begin with breakfast before your Ninh Binh day." },
+        { title: "Transfer to Ninh Binh", body: "Trade Hanoi's city streets for Ninh Binh's scenery." },
+        { title: "Cycling experience", body: "Take in the landscape from the saddle." },
+        { title: "Boat ride through Ninh Binh", body: "Glide through Ninh Binh and enjoy the views from the water." },
+        { title: "Explore the caves", body: "Discover the caves along your Ninh Binh journey." },
+        { title: "Return to Hanoi", body: "Make your way back to Hanoi after the day's exploring." },
+        { title: "Overnight stay in Hanoi", body: "Spend one more night in Hanoi before heading south." },
       ],
       footer: "05 · DAY THREE",
     },
@@ -1828,13 +1840,13 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Breakfast at the hotel",
-        "Check-out from Hanoi hotel",
-        "Transfer to Hanoi Airport",
-        "Flight from Hanoi to Da Nang",
-        "Transfer from Da Nang to Hoi An",
-        "Check-in at the hotel",
-        "Overnight stay in Da Nang",
+        { title: "Breakfast at the hotel", body: "Enjoy breakfast before saying goodbye to Hanoi." },
+        { title: "Check-out from Hanoi hotel", body: "Pack your bags and check out of your Hanoi stay." },
+        { title: "Transfer to Hanoi Airport", body: "Head to the airport for the next part of your journey." },
+        { title: "Flight from Hanoi to Da Nang", body: "Fly south from Hanoi to Da Nang." },
+        { title: "Transfer from Da Nang to Hoi An", body: "Continue from Da Nang towards Hoi An." },
+        { title: "Check-in at the hotel", body: "Check in and settle into the next part of your stay." },
+        { title: "Overnight stay in Da Nang", body: "Rest for the night in Da Nang." },
       ],
       footer: "06 · DAY FOUR",
     },
@@ -1846,13 +1858,13 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Breakfast at the hotel",
-        "Transfer to Ba Na Hills",
-        "Cable car",
-        "Golden Bridge",
-        "Explore the hilltop",
-        "Return to Hoi An",
-        "Overnight stay in Hoi An",
+        { title: "Breakfast at the hotel", body: "Start with breakfast before a day in the hills." },
+        { title: "Transfer to Ba Na Hills", body: "Head towards Ba Na Hills for your hilltop day." },
+        { title: "Cable car", body: "Rise above the landscape on the cable car." },
+        { title: "Golden Bridge", body: "Walk across the Golden Bridge, held by its giant stone hands." },
+        { title: "Explore the hilltop", body: "Take in the hilltop surroundings before heading back." },
+        { title: "Return to Hoi An", body: "Make your way back to Hoi An after Ba Na Hills." },
+        { title: "Overnight stay in Hoi An", body: "Settle in for the night in Hoi An." },
       ],
       footer: "07 · DAY FIVE",
     },
@@ -1864,14 +1876,14 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Breakfast at the hotel",
-        "Transfer for Cham Islands",
-        "Cham Islands tour",
-        "Enjoy the island experience",
-        "Return to Hoi An",
-        "Optional: Spa sessions",
-        "Optional: Shopping",
-        "Overnight stay in Hoi An",
+        { title: "Breakfast at the hotel", body: "Fuel up with breakfast before your island day." },
+        { title: "Transfer for Cham Islands", body: "Head out for your journey to the Cham Islands." },
+        { title: "Cham Islands tour", body: "Discover the Cham Islands on your planned tour." },
+        { title: "Enjoy the island experience", body: "Take in the sea air and the island surroundings." },
+        { title: "Return to Hoi An", body: "Return to Hoi An after your island escape." },
+        { title: "Optional: Spa sessions", body: "Unwind with a spa session, if you feel like it." },
+        { title: "Optional: Shopping", body: "Browse and shop if you would like a little extra exploring." },
+        { title: "Overnight stay in Hoi An", body: "Spend your final night in Hoi An." },
       ],
       footer: "08 · DAY SIX",
     },
@@ -1884,12 +1896,12 @@ const vietnam: TripSpec = {
       intro: "",
       items: [],
       points: [
-        "Breakfast at the hotel",
-        "Check-out from the hotel",
-        "Free time for optional activities",
-        "Departure transfer",
-        "Transfer to Da Nang Airport",
-        "Departure from Vietnam",
+        { title: "Breakfast at the hotel", body: "Enjoy one last hotel breakfast before departure." },
+        { title: "Check-out from the hotel", body: "Pack up your belongings and check out of your stay." },
+        { title: "Free time for optional activities", body: "Spend your free time as you choose before leaving." },
+        { title: "Departure transfer", body: "Begin your departure transfer as the trip draws to a close." },
+        { title: "Transfer to Da Nang Airport", body: "Continue to Da Nang Airport for your onward flight." },
+        { title: "Departure from Vietnam", body: "Say goodbye to Vietnam and take the memories with you." },
       ],
       ending: "END OF THE SPELL",
       footer: "09 · DAY SEVEN",
