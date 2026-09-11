@@ -34,6 +34,10 @@ const WHITE = rgb(1, 1, 1);
 /* -------------------------------- Specs --------------------------------- */
 type DayItem = { title: string; body: string };
 type DayStop = { time: string; title: string; body: string };
+/** One time-of-day block of an operational day plan: a gold label over its own bullet list. */
+type DaySection = { label: string; lines: string[] };
+/** A full day plan: balanced two-column sections, then the meals strip and any operational note. */
+type DaySchedule = { sections: DaySection[]; meals: string[]; note?: string };
 /** The one day a spell is built around: gold frame and tag, an hour-by-hour schedule and a good-to-know box. */
 type DaySpotlight = {
   badge: string;
@@ -60,6 +64,8 @@ type DaySpec = {
   fadeH?: number;
   /** When set, the schedule replaces the numbered items and the page is dressed as the highlight of the spell. */
   spotlight?: DaySpotlight;
+  /** When set, the day is drawn as a full time-of-day plan instead of the numbered highlights. */
+  schedule?: DaySchedule;
 };
 /** Minimal portrait-focused page: the creator behind the spell. */
 type CreatorSpec = {
@@ -666,6 +672,100 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     } else if (day.create) {
       metaLine("CREATE", day.create, CREAM, iy - 4);
       cursor = iy - 28;
+    }
+
+    /* Full day plan: sections balanced over two columns, then the meals strip. */
+    if (day.schedule) {
+      const sch = day.schedule;
+      const colW = 222;
+      const leftX = 64;
+      const rightX = 310;
+      const bulletX = 11;
+      const textW = colW - bulletX - 2;
+      const labelSize = 7.2;
+      const bodySize = 8;
+
+      type Block = { label: string; bullets: string[][]; lineCount: number };
+      const blocks: Block[] = sch.sections.map((section) => {
+        const bullets = section.lines.map((line) => wrap(sansReg, line, bodySize, textW));
+        return { label: section.label, bullets, lineCount: bullets.reduce((total, bullet) => total + bullet.length, 0) };
+      });
+
+      /* Split in reading order at the point that keeps both columns closest in height. */
+      const heights = blocks.map((block) => 22 + block.lineCount * 11);
+      const total = heights.reduce((sum, height) => sum + height, 0);
+      let split = 1;
+      let bestScore = Number.POSITIVE_INFINITY;
+      let running = 0;
+      for (let index = 1; index < blocks.length; index++) {
+        running += heights[index - 1] ?? 0;
+        const score = Math.max(running, total - running);
+        if (score < bestScore) {
+          bestScore = score;
+          split = index;
+        }
+      }
+
+      /* The meals strip is anchored near the footer, so the columns breathe into whatever
+         space the day leaves: leading stretches to fill the page instead of stranding it. */
+      const stripX = leftX;
+      const stripW = rightX + colW - leftX;
+      const noteLines = sch.note ? wrap(sansReg, sch.note, 7.8, stripW - 36) : [];
+      const stripH = 30 + (noteLines.length > 0 ? noteLines.length * 10.6 + 8 : 0);
+      const handH = day.note ? 34 : 0;
+      const stripTop = 104 + handH + stripH;
+
+      const columnTop = cursor + 6;
+      const available = columnTop - (stripTop + 18);
+      const columnLines = [blocks.slice(0, split), blocks.slice(split)].map((items) => ({
+        blocks: items.length,
+        lines: items.reduce((sum, block) => sum + block.lineCount, 0),
+      }));
+      const bodyLead = Math.max(
+        9.8,
+        Math.min(13.6, ...columnLines.map((col) => (col.lines > 0 ? (available - col.blocks * 22) / col.lines : Number.POSITIVE_INFINITY))),
+      );
+      const blockGap = Math.max(8, Math.min(20, ...columnLines.map((col) => (col.blocks > 1 ? (available - 14 * col.blocks - col.lines * bodyLead) / (col.blocks - 1) : 20))));
+
+      const drawColumn = (x: number, items: Block[], top: number): number => {
+        let y = top;
+        for (const [index, block] of items.entries()) {
+          drawTracked(p, block.label, { x, y, font: sansSemi, size: labelSize, color: GOLD, tr: 2.4 });
+          const labelW = trackW(sansSemi, block.label, labelSize, 2.4);
+          hline(p, x + labelW + 8, x + colW, y + 2.4, GOLD, 0.22);
+          y -= 14;
+          for (const bullet of block.bullets) {
+            p.drawCircle({ x: x + 3.4, y: y + 2.8, size: 1.5, color: GOLD_LIGHT, opacity: 0.85 });
+            for (const line of bullet) {
+              dt(p, line, { x: x + bulletX, y, font: sansReg, size: bodySize, color: MUTED, opacity: 0.92 });
+              y -= bodyLead;
+            }
+          }
+          if (index < items.length - 1) y -= blockGap;
+        }
+        return y;
+      };
+
+      const leftEnd = drawColumn(leftX, blocks.slice(0, split), columnTop);
+      const rightEnd = drawColumn(rightX, blocks.slice(split), columnTop);
+      if (Math.min(leftEnd, rightEnd) < stripTop + 8) throw new Error(`${day.footer}: the day plan runs into the meals strip`);
+      roundRect(p, stripX, stripTop, stripW, stripH, 10, { fill: CHARCOAL, fillOpacity: 0.62, border: GOLD, borderOpacity: 0.38, borderWidth: 0.7 });
+      drawTracked(p, "MEALS", { x: stripX + 18, y: stripTop - 19, font: sansSemi, size: 7.2, color: GOLD, tr: 2.6 });
+      dt(p, sch.meals.join("  \u00B7  "), { x: stripX + 74, y: stripTop - 19, font: sansMed, size: 8.2, color: CREAM, opacity: 0.92 });
+      let noteY = stripTop - 34;
+      for (const line of noteLines) {
+        dt(p, line, { x: stripX + 18, y: noteY, font: sansReg, size: 7.8, color: MUTED, opacity: 0.88 });
+        noteY -= 10.6;
+      }
+
+      if (day.note) {
+        const handW = hand.widthOfTextAtSize(day.note, 16);
+        dt(p, day.note, { x: W / 2 - handW / 2, y: stripTop - stripH - 26, font: hand, size: 16, color: GOLD_LIGHT, rotate: -2 });
+        sparkle(p, W / 2 + handW / 2 + 13, stripTop - stripH - 20, 3, GOLD_LIGHT, 0.85);
+      }
+
+      footerLabel(p, day.footer);
+      continue;
     }
 
     const positions: { discY: number; titleY: number; bodyLines: string[] }[] = [];
@@ -1575,8 +1675,8 @@ const ziro: TripSpec = {
  * beach morning). */
 const vietnam: TripSpec = {
   fileName: "Logout-Spells-Vietnam.pdf",
-  docTitle: "Logout Spells · The Vietnam Spell · 7 Days from Hanoi to Da Nang",
-  docSubject: "Vietnam · Hanoi, Ha Long Bay, Ninh Binh, Hoi An, Ba Na Hills, Cham Islands · trip itinerary and booking",
+  docTitle: "Logout Spells · The Vietnam Spell · 6 - 12 November 2026 · Hanoi to Da Nang",
+  docSubject: "6 - 12 November 2026 · Hanoi, Halong Bay, Ninh Binh, Hoi An, Ba Na Hills, Cham Islands · day-by-day itinerary and booking",
   memoriesFile: "img/spell-memories/sources.json",
   cover: {
     img: "img2/final/vn-cover.jpg",
@@ -1586,14 +1686,14 @@ const vietnam: TripSpec = {
     sub: "Where the old streets, the bay and the lanterns slow you down.",
     subY: 372,
     ruleY: 349,
-    dateLine: "7 DAYS · HANOI TO DA NANG",
+    dateLine: "6 - 12 NOVEMBER 2026 · 7 DAYS",
     dateY: 322,
-    locLine: "HANOI · HA LONG BAY · NINH BINH · HOI AN · BA NA HILLS · CHAM ISLANDS",
+    locLine: "HANOI · HALONG BAY · NINH BINH · HOI AN · BA NA HILLS · CHAM ISLANDS",
     locY: 305,
     poem1: "Seven days. Old streets, emerald water and lantern nights.",
     poem2: "Slow mornings. Green views. Stories worth carrying home.",
     poemY: 274,
-    para: "Leave the usual behind and follow Vietnam from the capital to the coast: coffee in Hanoi's Old Quarter, a day on Ha Long Bay, the caves and karsts of Ninh Binh, lantern-lit Hoi An, Ba Na Hills above the clouds and a slow island day to close the spell.",
+    para: "Leave the usual behind and follow Vietnam from the capital to the coast: coffee in Hanoi's Old Quarter, a night on the water in Halong Bay, the caves and karsts of Ninh Binh, lantern-lit Hoi An, Ba Na Hills above the clouds and a slow island day to close the spell.",
     paraY: 224,
     ital1: "This isn't about ticking places off a list.",
     ital2: "It's about slow mornings, sea breezes and letting the country set the pace.",
@@ -1621,129 +1721,354 @@ const vietnam: TripSpec = {
   days: [
     {
       img: "img2/final/vn-d2.jpg",
-      eyebrow: "DAY 01 · HANOI",
+      eyebrow: "DAY 01 · 6 NOV · ARRIVAL IN HANOI",
       titleA: "Where the Spell ",
       titleB: "Begins",
-      intro: "Touch down in Vietnam and ease into the energy of Hanoi. Explore the atmospheric Old Quarter, wander through its buzzing streets and settle into the city with a proper Vietnamese coffee.",
-      items: [
-        { title: "TOUCH DOWN", body: "Land in Hanoi, meet the circle and settle in. The spell begins here." },
-        { title: "THE OLD QUARTER", body: "Wander the atmospheric lanes and buzzing streets, and let the city set the pace." },
-        {
-          title: "A PROPER VIETNAMESE COFFEE",
-          body: "Settle into the city over a proper Vietnamese coffee. No rushing. No packed schedule. Just your first taste of Vietnam.",
-        },
-      ],
+      intro: "Old Quarter · Vietnamese coffee · welcome dinner.",
+      items: [],
       vibe: "Old streets · Coffee · Exploring · First-night energy",
-      chip: "STAY · HANOI",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING / AFTERNOON",
+            lines: [
+              "Arrival at Noi Bai International Airport, Hanoi",
+              "Meet-and-greet assistance at the airport",
+              "Private airport transfer to the hotel",
+              "Hotel check-in and room allocation",
+              "Freshen up and relax after the journey",
+              "Breakfast at the hotel, depending on arrival time",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Head out to explore Hanoi Old Quarter",
+              "Walk through the historic streets and local neighbourhoods",
+              "Explore the famous 36 Streets area",
+              "Visit local shops, cafes and street-food spots",
+              "Stop for an authentic Vietnamese coffee experience",
+              "Free time for photographs and exploring",
+            ],
+          },
+          {
+            label: "EVENING",
+            lines: [
+              "Return to the hotel and freshen up",
+              "Welcome dinner at a local Vietnamese restaurant",
+              "Group introduction and start of the Vietnam experience",
+            ],
+          },
+          { label: "NIGHT", lines: ["Return to hotel", "Overnight stay in Hanoi"] },
+        ],
+        meals: ["Breakfast", "Welcome dinner"],
+      },
       note: "no rushing. no packed schedule.",
       footer: "03 · DAY ONE",
     },
     {
       img: "img2/final/vn-d1.jpg",
-      eyebrow: "DAY 02 · HA LONG BAY",
+      eyebrow: "DAY 02 · 7 NOV · HALONG BAY",
       titleA: "Into the ",
       titleB: "Emerald",
-      intro: "Today, we leave the city behind. Set sail across the legendary waters of Ha Long Bay, surrounded by towering limestone islands and dramatic landscapes.",
-      items: [
-        { title: "SET SAIL", body: "Out across the legendary waters, between towering limestone islands and dramatic landscapes." },
-        { title: "CRUISE & UNWIND", body: "A day to cruise, unwind, take photos and simply enjoy being somewhere completely different." },
-        { title: "BACK TO HANOI", body: "The bay by day, the city by night: back to Hanoi in the evening." },
-      ],
+      intro: "Cruise · limestone islands · bay views.",
+      items: [],
       vibe: "Cruise · Islands · Ocean views · Slow moments",
-      chip: "STAY · HANOI",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING",
+            lines: [
+              "Breakfast at the hotel",
+              "Check out / prepare for the day trip",
+              "Private transfer from Hanoi to Halong Bay, approx. 2.5 to 3 hour drive",
+              "Arrival at the cruise harbour",
+              "Check-in and boarding",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Welcome drink and cruise briefing",
+              "Begin the Halong Bay cruise",
+              "Cruise through the spectacular limestone islands and karst formations",
+              "Enjoy lunch onboard",
+              "Relax on the cruise deck and take in the bay views",
+              "Explore the designated cave / island attraction included with the cruise",
+              "Optional kayaking or local boat experience, subject to cruise itinerary and weather",
+              "Enjoy sunset views from the cruise",
+            ],
+          },
+          {
+            label: "EVENING",
+            lines: [
+              "Dinner onboard",
+              "Free time to relax on the cruise",
+              "Optional onboard activities such as squid fishing, music / entertainment or relaxing on the deck",
+            ],
+          },
+          { label: "NIGHT", lines: ["Overnight stay onboard the Halong Bay cruise"] },
+        ],
+        meals: ["Breakfast"],
+        note: "Important: for a genuine cruise experience, this itinerary works best with a 1-night Halong Bay cruise, rather than returning to Hanoi the same evening.",
+      },
       note: "bring the good camera today",
       footer: "04 · DAY TWO",
     },
     {
       img: "img2/final/vn4-d3.jpg",
-      eyebrow: "DAY 03 · INTO THE WILD",
+      eyebrow: "DAY 03 · 8 NOV · NINH BINH",
       titleA: "Ninh ",
       titleB: "Binh",
-      intro: "Trade city streets for Vietnam's stunning countryside. Today belongs to Ninh Binh: towering limestone formations, emerald rice fields and a day that feels slower, greener and a little more magical.",
-      items: [
-        { title: "THE CAVES", body: "Incredible caves hidden among the karsts, the heart of the Ninh Binh day." },
-        { title: "CYCLING", body: "Scenic routes through the countryside, at whatever pace the circle agrees on." },
-        { title: "BOAT RIDES", body: "Peaceful boat rides between the towering limestone formations." },
-      ],
+      intro: "Cycling · boat ride · caves · countryside.",
+      items: [],
       vibe: "Ninh Binh · Caves · Cycling · Boat rides",
-      chip: "STAY · HANOI",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING",
+            lines: [
+              "Breakfast onboard",
+              "Cruise through Halong Bay",
+              "Check out from the cruise",
+              "Transfer back towards Hanoi / Ninh Binh",
+              "Continue to Ninh Binh",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Arrive in Ninh Binh",
+              "Enjoy a relaxed cycling experience through the countryside",
+              "Ride through rice fields and traditional Vietnamese villages",
+              "Stop for photographs and local scenery",
+              "Continue to the boat pier",
+              "Board a traditional boat for a scenic Ninh Binh river journey",
+              "Cruise through the limestone landscape",
+              "Pass through natural caves and tunnels",
+              "Explore the surrounding karst formations",
+            ],
+          },
+          {
+            label: "EVENING",
+            lines: [
+              "Finish the boat experience",
+              "Early dinner / local meal",
+              "Transfer back to Hanoi",
+              "Arrive at the hotel",
+              "Check-in and relax",
+            ],
+          },
+          { label: "NIGHT", lines: ["Overnight stay in Hanoi"] },
+        ],
+        meals: ["Breakfast"],
+      },
       note: "slower, greener, a little more magical",
       footer: "05 · DAY THREE",
     },
     {
       img: "img2/final/vn-d4.jpg",
-      eyebrow: "DAY 04 · HANOI · DA NANG · HOI AN",
+      eyebrow: "DAY 04 · 9 NOV · HANOI TO DA NANG TO HOI AN",
       titleA: "City Lights to ",
       titleB: "Lantern Nights",
-      intro: "Fly south towards Da Nang and make your way to the charming streets of Hoi An. Spend the evening discovering the ancient town, wandering through its atmospheric lanes and taking in the famous lantern-lit surroundings.",
-      items: [
-        { title: "FLY SOUTH", body: "Leave the capital behind on the flight to Da Nang, the coast city that is home for the rest of the spell." },
-        { title: "THE ROAD TO HOI AN", body: "Settle into Da Nang, then the short coastal drive to the charming streets of Hoi An." },
-        { title: "THE ANCIENT TOWN", body: "Spend the evening discovering the ancient town, wandering through its atmospheric lanes." },
-        { title: "LANTERN NIGHTS", body: "As the light fades the town lights its lanterns: the famous lantern-lit surroundings, then back to Da Nang." },
-      ],
+      intro: "Flight · transfer · Hoi An evening.",
+      items: [],
       vibe: "Coastal · Charming · Lanterns · Hoi An nights",
-      chip: "STAY · DA NANG",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING",
+            lines: [
+              "Breakfast at the hotel",
+              "Check out from Hanoi hotel",
+              "Private transfer to Noi Bai International Airport",
+              "Airport assistance",
+              "Domestic flight from Hanoi to Da Nang",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Arrive at Da Nang International Airport",
+              "Meet the local representative",
+              "Private transfer from Da Nang to Hoi An, approx. 45 to 60 minute drive",
+              "Hotel check-in",
+              "Freshen up and relax",
+            ],
+          },
+          {
+            label: "EVENING",
+            lines: [
+              "Head out to explore Hoi An Ancient Town",
+              "Walk through the atmospheric old streets",
+              "Explore local cafes, shops and markets",
+              "See the famous lantern-lit streets",
+              "Free time for shopping and photographs",
+              "Optional local dinner in Hoi An",
+            ],
+          },
+          { label: "NIGHT", lines: ["Return to hotel", "Overnight stay in Da Nang"] },
+        ],
+        meals: ["Breakfast"],
+      },
       note: "lanterns beat streetlights",
       footer: "06 · DAY FOUR",
     },
     {
       img: "img2/final/vn-d5.jpg",
-      eyebrow: "DAY 05 · ABOVE THE CLOUDS",
+      eyebrow: "DAY 05 · 10 NOV · BA NA HILLS",
       titleA: "Ba Na ",
       titleB: "Hills",
-      intro: "Today takes us into the mountains. The whole day belongs to Ba Na Hills: the spectacular mountain setting, the famous cable car journey and the iconic Golden Bridge above the clouds.",
-      items: [
-        { title: "BA NA HILLS", body: "Up into the spectacular mountain setting above Da Nang. The day starts and ends in the hills." },
-        { title: "THE CABLE CAR", body: "The famous cable car journey up through the clouds to the top." },
-        { title: "THE GOLDEN BRIDGE", body: "The iconic span held aloft by two giant stone hands." },
-        { title: "THE VIEWS", body: "Incredible views, fun photographs and Vietnam from a completely different perspective." },
-      ],
+      intro: "Cable car · Golden Bridge · mountain views.",
+      items: [],
       vibe: "Ba Na Hills · Cable car · Golden Bridge · Clouds",
-      chip: "STAY · DA NANG",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING",
+            lines: [
+              "Breakfast at the hotel",
+              "Private transfer from Hoi An to Ba Na Hills",
+              "Arrive at Ba Na Hills",
+              "Begin the cable car journey up the mountains",
+              "Enjoy panoramic views during the ride",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Visit the iconic Golden Bridge",
+              "Explore the surrounding mountain viewpoints",
+              "Continue exploring Ba Na Hills",
+              "Visit the French-inspired village area",
+              "Explore Fantasy Park, subject to time and ticket inclusions",
+              "Free time for photographs and sightseeing",
+              "Lunch at Ba Na Hills",
+            ],
+          },
+          {
+            label: "EVENING",
+            lines: [
+              "Take the cable car back down",
+              "Private transfer back to Hoi An",
+              "Return to hotel",
+              "Freshen up and relax",
+            ],
+          },
+          { label: "NIGHT", lines: ["Overnight stay in Da Nang"] },
+        ],
+        meals: ["Breakfast"],
+      },
       note: "held up by two giant hands",
       footer: "07 · DAY FIVE",
     },
     {
       img: "img2/final/vn-d3.jpg",
-      eyebrow: "DAY 06 · CHAM ISLANDS",
+      eyebrow: "DAY 06 · 11 NOV · CHAM ISLANDS",
       titleA: "Slow Days. ",
       titleB: "Sea Breezes.",
-      intro: "Today, we head out for a Cham Island tour and spend the day by the sea. Enjoy the island, take in the blue waters, relax on the beach and soak up the coastal vibe at your own pace.",
-      items: [
-        { title: "THE CHAM ISLAND TOUR", body: "Out to the island for the day: blue water, the beach and the coastal vibe at your own pace." },
-        {
-          title: "EVENING · IF TIME ALLOWS",
-          body: "Back in Da Nang, explore a Vietnamese spa or massage session, do some shopping, grab a coffee or simply chill around the city. No packed schedule. Just a slow day by the coast.",
-        },
-      ],
+      intro: "Island tour · beach time · spa · shopping.",
+      items: [],
       vibe: "Island day · Beach · Slow moments · Spa · Shopping · Chill",
-      chip: "STAY · DA NANG",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING",
+            lines: [
+              "Breakfast at the hotel",
+              "Transfer from Hoi An to the departure point",
+              "Board the boat / speedboat towards Cham Islands",
+              "Enjoy the journey across the sea",
+              "Arrive at Cham Islands",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Explore the islands with the Cham Islands tour",
+              "Visit local island areas",
+              "Enjoy the beach and coastal scenery",
+              "Free time to relax by the sea",
+              "Optional swimming / snorkelling depending on weather and tour conditions",
+              "Lunch / local island meal",
+              "Relax and enjoy the island atmosphere",
+            ],
+          },
+          {
+            label: "EVENING",
+            lines: [
+              "Return by boat to the mainland",
+              "Transfer back to Hoi An",
+              "Freshen up at the hotel",
+              "Free evening",
+            ],
+          },
+          {
+            label: "LATER EVENING",
+            lines: [
+              "Optional spa session",
+              "Optional shopping in Hoi An",
+              "Explore cafes, boutiques and local markets",
+              "Free time for dinner and nightlife",
+            ],
+          },
+          { label: "NIGHT", lines: ["Overnight stay in Da Nang"] },
+        ],
+        meals: ["Breakfast"],
+      },
       note: "just a slow day by the coast",
       footer: "08 · DAY SIX",
     },
     {
       img: "img2/final/vn4-d7.jpg",
       fadeH: 88,
-      eyebrow: "DAY 07 · ONE LAST DAY",
+      eyebrow: "DAY 07 · 12 NOV · DEPARTURE",
       titleA: "Before We Say ",
       titleB: "Goodbye",
-      intro: "Our final day in Vietnam is completely flexible. Wake up slowly. Grab one last Vietnamese coffee. Explore a little more. Or simply enjoy your last few hours by the coast. Four optional ideas:",
-      items: [
-        { title: "SPA & WELLNESS", body: "One last massage before heading home." },
-        { title: "SHOPPING", body: "Pick up souvenirs, gifts and your final Vietnam finds." },
-        { title: "CAFÉS & FOOD", body: "Discover a few last cafés or grab one final Vietnamese meal." },
-        { title: "BEACH & RELAX", body: "Do absolutely nothing. You've earned it." },
-      ],
+      intro: "Slow morning · free time · airport transfer.",
+      items: [],
       vibe: "Optional · Flexible · Zero pressure · Your choice",
-      chip: "DEPARTURE FROM DA NANG",
+      schedule: {
+        sections: [
+          {
+            label: "MORNING",
+            lines: ["Breakfast at the hotel", "Check out", "Store luggage with the hotel"],
+          },
+          {
+            label: "FREE TIME",
+            lines: [
+              "Relaxed morning in Hoi An",
+              "Last-minute shopping",
+              "Cafe hopping",
+              "Souvenir shopping",
+              "Explore nearby streets",
+              "Optional spa session",
+              "Free time for photographs",
+            ],
+          },
+          {
+            label: "AFTERNOON",
+            lines: [
+              "Collect luggage",
+              "Transfer to Da Nang International Airport",
+              "Airport assistance",
+              "Check-in for departure",
+            ],
+          },
+          {
+            label: "DEPARTURE",
+            lines: ["Board your flight", "Depart Vietnam with the spell officially complete"],
+          },
+        ],
+        meals: ["Breakfast"],
+      },
       note: "until the next spell.",
       footer: "09 · DAY SEVEN",
     },
   ],
   final: {
     img: "img2/final/vn-night.jpg",
-    subline: "THE VIETNAM SPELL · 7 DAYS · HANOI TO DA NANG",
+    subline: "THE VIETNAM SPELL · 6 - 12 NOVEMBER 2026 · HANOI TO DA NANG",
     cards: [
       {
         label: "EARLY BIRD",
@@ -1773,8 +2098,8 @@ const vietnam: TripSpec = {
     lists: {
       left: [
         "Domestic flight: Hanoi to Da Nang",
-        "6 nights in city hotels: three in Hanoi, three in Da Nang",
-        "Ha Long Bay day cruise",
+        "6 nights: 2 in Hanoi, 1 on the Halong Bay cruise & 3 in Da Nang",
+        "Halong Bay cruise with lunch & dinner onboard",
         "Ninh Binh day: caves, cycling & boat rides",
         "Ba Na Hills cable car & the Golden Bridge",
         "Cham Island tour & beach day",
