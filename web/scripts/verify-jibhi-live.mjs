@@ -21,6 +21,10 @@ async function readPublic(path) {
 const [spell] = await readPublic(`spells?id=eq.${id}&select=*`);
 const migration = readFileSync(new URL("../../backend/migrations/0061_jibhi_kavya_brochure_parity.sql", import.meta.url), "utf8");
 const expected = JSON.parse(migration.split("$page$")[1]);
+const dateMigration = readFileSync(new URL("../../backend/migrations/0062_jibhi_october_dates.sql", import.meta.url), "utf8");
+const dates = JSON.parse(dateMigration.split("$dates$")[1]);
+expected.faqs.find((faq) => faq.id === "faq-jibhi-dates").answer = dates.faqAnswer;
+expected.pricing.brochureUrl = dates.brochureUrl;
 for (const [section, value] of Object.entries(expected)) assert.deepEqual(spell.page[section], value, `Live ${section} differs`);
 assert.equal(spell.price_minor, 1400000);
 assert.equal(spell.duration_days, 4);
@@ -28,7 +32,7 @@ assert.equal(spell.nights, 3);
 assert.equal(spell.host_name, "Kavya Lilhare");
 assert.deepEqual(spell.inclusions, expected.included.map((item) => item.text));
 const [departure] = await readPublic(`spell_departures?spell_id=eq.${id}&select=id,date_label,start_date,end_date,seats_total,seats_booked,price_minor`);
-assert.deepEqual(departure, { id: "b7e83d15-2c4a-4f09-9d61-84f2a6c9e3d1", date_label: "Dates announced soon", start_date: null, end_date: null, seats_total: 0, seats_booked: 0, price_minor: null });
+assert.deepEqual(departure, { id: "b7e83d15-2c4a-4f09-9d61-84f2a6c9e3d1", date_label: dates.date_label, start_date: dates.start_date, end_date: dates.end_date, seats_total: 0, seats_booked: 0, price_minor: null });
 const [vietnam] = await readPublic("spells?slug=eq.the-vietnam-spell&select=price_minor,host_name,page");
 assert.equal(vietnam.price_minor, 6500000);
 assert.equal(vietnam.host_name, "Naksi");
@@ -46,12 +50,12 @@ for (const url of imageUrls) {
   const response = await fetch(url);
   assert(response.ok && response.headers.get("content-type")?.startsWith("image/"), `Image failed: ${url}`);
 }
-for (const name of ["jibhi-kavya-host-20260910.jpg", "jibhi-river-20260910.jpg", "brochures/Logout-Spells-Jibhi-Kavya.pdf"]) {
+for (const name of ["jibhi-kavya-host-20260910.jpg", "jibhi-river-20260910.jpg", "brochures/Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf"]) {
   const response = await fetch(`${site}/${name}`);
   assert(response.ok);
   assert(Buffer.from(await response.arrayBuffer()).equals(readFileSync(new URL(`../public/${name}`, import.meta.url))), `Deployed ${name} differs`);
 }
-console.log(`PASS: live Jibhi matches every migrated section; TBC departure unchanged; Vietnam unchanged; ${imageUrls.size} images OK; portrait, river and brochure byte-identical.`);
+console.log(`PASS: live Jibhi matches every migrated section; 2-5 October 2026 departure; capacity and Vietnam unchanged; ${imageUrls.size} images OK; portrait, river and brochure byte-identical.`);
 
 if (process.argv.includes("--api-only")) process.exit(0);
 const browser = await chromium.launch({ headless: true });
@@ -70,8 +74,11 @@ try {
     await portal.waitFor({ state: "detached" });
     await page.getByRole("button", { name: "Read about the host", exact: true }).waitFor();
     const text = await page.locator("body").innerText();
-    for (const value of ["Kavya Lilhare", "Shoja & Jalori", "Tirthan Valley", "Tirthan River", "Bahu Village", "₹14,000", "₹16,000", "₹4,000", "Remaining ₹10,000", "Remaining ₹12,000"]) assert(text.includes(value), `Missing ${value} at ${width}`);
+    for (const value of [dates.date_label, "Kavya Lilhare", "Shoja & Jalori", "Tirthan Valley", "Tirthan River", "Bahu Village", "₹14,000", "₹16,000", "₹4,000", "Remaining ₹10,000", "Remaining ₹12,000"]) assert(text.includes(value), `Missing ${value} at ${width}`);
     assert(!/30%|Day 0\b|two nights|dorm|Serolsar|Raghupur|bonfire/i.test(text));
+    assert(!/Dates TBC|Dates announced soon|dates.*being finalised/i.test(text));
+    await page.getByRole("button", { name: "When does it run?", exact: true }).click();
+    await page.getByText(dates.faqAnswer, { exact: true }).waitFor();
     const host = page.getByRole("button", { name: "Read about the host", exact: true });
     await host.scrollIntoViewIfNeeded();
     await host.click();
@@ -91,6 +98,7 @@ try {
     const summary = await dialog.innerText();
     for (const value of ["₹28,000", "₹32,000", "₹8,000", "₹20,000", "₹24,000"]) assert(summary.includes(value), `Summary missing ${value}`);
     assert(!summary.includes("30%"));
+    assert(summary.includes(dates.date_label), "Summary must show the October dates");
     assert(summary.includes("any applicable taxes"));
     await page.screenshot({ path: `/tmp/jibhi-request-${width}.png` });
     await dialog.getByRole("button", { name: "Looks right", exact: true }).click();
@@ -99,7 +107,9 @@ try {
     await dialog.locator("#lead-phone").fill("9876543210");
     await dialog.getByRole("button", { name: "Review my request", exact: true }).click();
     await dialog.getByText("Step 4 · Booking review", { exact: true }).waitFor();
-    assert(!(await dialog.innerText()).includes("30%"));
+    const review = await dialog.innerText();
+    assert(!review.includes("30%"));
+    assert(review.includes(dates.date_label), "Review must show the October dates");
     // Deliberately close rather than send a live test inquiry.
     await dialog.getByRole("button", { name: "Close", exact: true }).click();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

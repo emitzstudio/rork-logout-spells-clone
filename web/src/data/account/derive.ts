@@ -402,8 +402,22 @@ const MONTHS: Record<string, number> = {
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
-/** Parses collection date strings like "Sep 18-23" into concrete dates. */
+/** Parses published ranges such as "2-5 October 2026" and legacy "Sep 18-23" labels. */
 export const parseSpellDates = (dates: string): { start: Date; end: Date } | null => {
+  const dated = /^(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})$/.exec(dates.trim());
+  if (dated) {
+    const month = MONTHS[dated[3].slice(0, 3).toLowerCase()];
+    if (month === undefined) return null;
+    const startDay = Number(dated[1]);
+    const endDay = Number(dated[2]);
+    const year = Number(dated[4]);
+    if (year < 1000 || startDay < 1 || endDay < startDay) return null;
+    const start = new Date(year, month, startDay, 8);
+    const end = new Date(year, month, endDay, 18);
+    if (start.getMonth() !== month || end.getMonth() !== month || start.getDate() !== startDay || end.getDate() !== endDay) return null;
+    // An explicitly published year must never roll forward as a recurring circle.
+    return { start, end };
+  }
   const match = /^([A-Za-z]{3,9})\s+(\d{1,2})\s*[---]\s*(\d{1,2})$/.exec(dates.trim());
   if (!match) return null;
   const month = MONTHS[match[1].slice(0, 3).toLowerCase()];

@@ -2586,6 +2586,27 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0062 — Jibhi dates: 2-5 October 2026 (2026-09-11)
+
+- **0062_jibhi_october_dates — APPLIED** on the founder's instruction to add
+  2-5 October to the website and PDF. The existing departure now has
+  `date_label = '2-5 October 2026'`, `start_date = '2026-10-02'` and
+  `end_date = '2026-10-05'`. Capacity, booked seats, status and prices are unchanged.
+- Only the dates FAQ and brochure link change in the page document. The dated
+  PDF is `/brochures/Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf`; the new filename
+  avoids stale cached downloads. Cover date and document subject updated;
+  all six non-cover pages are pixel-identical to the previous Kavya brochure.
+- Website date parsing now understands explicit-year ranges, so builder saves,
+  calendar derivation and booking fallbacks retain the published dates. Legacy
+  month-first labels are unchanged; explicit years do not roll forward.
+- Validation: website build and 167 tests pass. PDF margins, date, portrait,
+  Instagram and unchanged payment QR pass. Live anonymous API and 390px/1440px
+  browser checks pass, including date FAQ, dated brochure link, and dates in
+  two-traveller summary/review. Published PDF is byte-identical (2,019,294 bytes).
+  No inquiry was submitted; no other trip content or payment gate was changed.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

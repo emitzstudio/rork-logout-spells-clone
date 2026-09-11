@@ -6,12 +6,12 @@ import * as mupdf from "mupdf";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
 
-const fileName = "Logout-Spells-Jibhi-Kavya.pdf";
+const fileName = "Logout-Spells-Jibhi-Kavya-2-5-Oct-2026.pdf";
 const bytes = readFileSync(fileName);
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
 const compact = (text: string): string => text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9₹]/g, "");
 const expectedPages: string[][] = [
-  ["THE SPELL TO THE HIMALAYAS", "JIBHI", "4 DAYS", "FORESTS", "WATERFALLS", "MOUNTAINS", "A slow escape into the Himachal hills", "Pine forests", "Mountain cafés", "Quiet riversides", "the kind of days you wish lasted longer", "Come for the mountains", "Stay for the feeling"],
+  ["THE SPELL TO THE HIMALAYAS", "JIBHI", "2 - 5 OCTOBER 2026", "4 DAYS", "FORESTS", "WATERFALLS", "MOUNTAINS", "A slow escape into the Himachal hills", "Pine forests", "Mountain cafés", "Quiet riversides", "the kind of days you wish lasted longer", "Come for the mountains", "Stay for the feeling"],
   ["MEET THE CREATOR", "Kavya Lilhare", "@KAVYA.LILHARE", "the creator joining you on this Himalayan escape", "02 · THE CREATOR"],
   ["DAY 01", "Jibhi", "PINE FORESTS & LITTLE HIDEAWAYS", "JIBHI WATERFALL", "MINI THAILAND", "café hopping", "TODAY'S MOOD", "Waterfalls · Pine Forests · Cafés · Slow Evenings", "03 · DAY ONE"],
   ["DAY 02", "Shoja & Jalori", "ABOVE THE TREELINE", "THE TREK", "Choose one beautiful trek from Jalori Pass", "TODAY'S MOOD", "Mountain Roads · Forest Trails · Big Views · Adventure", "04 · DAY TWO"],
@@ -73,5 +73,18 @@ assert.equal(renderedQr?.data, referenceQr.data, "Payment QR changed or cannot b
 pixmap.destroy();
 finalPage.destroy();
 assert(bytes.equals(readFileSync(`../web/public/brochures/${fileName}`)), "Published copy differs");
-console.log(`PASS: supplied portrait, clickable Instagram, booking figures, unchanged scannable QR and matching publish copy (${bytes.length} bytes)`);
+const previous = mupdf.Document.openDocument(readFileSync("Logout-Spells-Jibhi-Kavya.pdf"), "application/pdf");
+for (let index = 1; index < doc.countPages(); index++) {
+  const oldPage = previous.loadPage(index);
+  const newPage = doc.loadPage(index);
+  const oldPixels = oldPage.toPixmap(mupdf.Matrix.scale(1, 1), mupdf.ColorSpace.DeviceRGB, false, true);
+  const newPixels = newPage.toPixmap(mupdf.Matrix.scale(1, 1), mupdf.ColorSpace.DeviceRGB, false, true);
+  assert(Buffer.from(oldPixels.asPNG()).equals(Buffer.from(newPixels.asPNG())), `Non-cover page ${index + 1} changed`);
+  oldPixels.destroy();
+  newPixels.destroy();
+  oldPage.destroy();
+  newPage.destroy();
+}
+previous.destroy();
+console.log(`PASS: 2-5 October 2026 cover, six unchanged pages, supplied portrait, clickable Instagram, booking figures, unchanged scannable QR and matching publish copy (${bytes.length} bytes)`);
 doc.destroy();
