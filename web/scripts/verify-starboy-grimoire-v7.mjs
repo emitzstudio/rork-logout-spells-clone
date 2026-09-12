@@ -6,9 +6,9 @@ import { chromium } from "playwright";
 
 const origin = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
 // Each edition uses its own exclusive pre-change baseline.
-const version = process.argv.includes("--v10") ? 10 : process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
-const oldPath = `/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version - 1}.pdf`;
-const newPath = version === 10 ? "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v10.pdf" : `/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version}.pdf`;
+const version = process.argv.includes("--v11") ? 11 : process.argv.includes("--v10") ? 10 : process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
+const oldPath = `/brochures/Logout-Spells-${version > 10 ? "Blinding-Nights" : "Starboy"}-9-15-Oct-2026-Grimoire-v${version - 1}.pdf`;
+const newPath = `/brochures/Logout-Spells-${version >= 10 ? "Blinding-Nights" : "Starboy"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 const formUrl = "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand";
 const siteArg = process.argv.find((arg) => arg.startsWith("--site="));
 const site = siteArg ? new URL(siteArg.slice(7)).origin : origin;
@@ -92,13 +92,13 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${site}/live/the-starboy-spell`, { waitUntil: "domcontentloaded" });
-    await page.getByRole("region", { name: version === 10 ? "The Blinding Nights Spell" : "The Starboy Spell", exact: true }).getByRole("link", { name: "Download itinerary (PDF)", exact: true }).waitFor();
-    if (version === 10) {
+    await page.getByRole("region", { name: version >= 10 ? "The Blinding Nights Spell" : "The Starboy Spell", exact: true }).getByRole("link", { name: "Download itinerary (PDF)", exact: true }).waitFor();
+    if (version >= 10) {
       const h1 = (await page.locator("h1").first().innerText()).toLowerCase().replace(/\s+/g, " ");
       assert(h1.includes("blinding nights") && !h1.includes("starboy"), "Visible hero must use the new name");
       assert((await page.title()).includes("The Blinding Nights Spell"));
       assert(!(await page.locator("#story").innerText()).includes("The Starboy Spell"));
-      await page.screenshot({ path: new URL(`blinding-nights-v10-${new URL(site).hostname}-${width}.png`, cache).pathname });
+      await page.screenshot({ path: new URL(`blinding-nights-v${version}-${new URL(site).hostname}-${width}.png`, cache).pathname });
     }
     assert.deepEqual(await page.locator('a[href*=".pdf"]').evaluateAll((links) => links.map((link) => link.getAttribute("href"))), Array(3).fill(origin + newPath));
     assert((await page.locator("#price").innerText()).includes("85,000"));

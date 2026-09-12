@@ -29,9 +29,10 @@ assert(!(draft && process.argv.includes("--publish")), "Never publish a draft");
 assert(!process.argv.includes("--cinematic"), "The Weeknd-themed PDF is retired; use the Grimoire edition");
 const historicalV8 = process.argv.includes("--v8");
 const historicalV9 = process.argv.includes("--v9");
-assert(!(historicalV8 && historicalV9), "Choose one historical edition");
-const version = historicalV8 ? 8 : historicalV9 ? 9 : 10;
-spec.fileName = version < 10 ? `Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version}.pdf` : "Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v10.pdf";
+const historicalV10 = process.argv.includes("--v10");
+assert([historicalV8, historicalV9, historicalV10].filter(Boolean).length <= 1, "Choose one historical edition");
+const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : 11;
+spec.fileName = `Logout-Spells-${version < 10 ? "Starboy" : "Blinding-Nights"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 spec.docSubject = historicalV8 ? "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000" : "Bangkok & Phuket · 7 days / 6 nights · XO and all-inclusive Starboy packages · Early-bird prices";
 spec.cover.locLine = "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET · THAILAND";
 spec.cover.ital2 = "INR 85,000 per person · 7 days / 6 nights";
@@ -41,7 +42,7 @@ for (const [index, day] of spell.page.itinerary.entries()) {
   spec.days[index].titleB = "";
   spec.days[index].eyebrow = `DAY ${String(index + 1).padStart(2, "0")} · ${index + 9} OCTOBER · ${printable(day.locationTag).toUpperCase()}`;
 }
-if (version === 10) {
+if (version >= 10) {
   spec.docTitle = "Logout Spells · The Blinding Nights Spell · 9-15 October 2026";
   spec.docSubject = "The Blinding Nights Spell · Bangkok & Phuket · 7 days / 6 nights";
   spec.cover.titleLines = [
@@ -63,8 +64,8 @@ const bodies = spell.page.itinerary.map((day) => printable(day.body));
 const edition = { price: spell.price_minor / 100, bodies };
 const bytes = process.argv.includes("--verify-existing")
   ? readFileSync(spec.fileName)
-  : Buffer.from(await buildGrimoireStarboy(spec, edition, historicalV8 ? undefined : packages, version === 10 ? {
-    cleanCover: true, omitPackagePage: true, arrivalImage: "img2/blinding-nights-art-gallery-v10.jpg",
+  : Buffer.from(await buildGrimoireStarboy(spec, edition, historicalV8 ? undefined : packages, version >= 10 ? {
+    cleanCover: true, omitPackagePage: true, arrivalImage: "img2/blinding-nights-art-gallery-v10.jpg", finalPriceBoxes: version >= 11,
   } : undefined));
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
 assert.equal(doc.countPages(), version === 9 ? 10 : 9);
@@ -125,7 +126,11 @@ else {
   assert(!/85,000|80,000|1,50,000|1,40,000|Early bird|GST|TCS|supplied by|extended with AI|Illustrative performance/i.test(texts[0]));
   assert(!compact(texts.join(" ")).includes(compact("One Spell. Two Ways.")));
   assert(!compact(texts.join(" ")).includes(compact("The Starboy Spell")));
-  assert(compact(texts[finalIndex]).includes(compact(packages.exclusionsNote)));
+  if (version === 10) assert(compact(texts[finalIndex]).includes(compact(packages.exclusionsNote)));
+  else {
+    for (const term of ["EARLY BIRD", "INR 80,000", "REGULAR", "INR 85,000", "Interested in an all inclusive package"]) assert(compact(texts[finalIndex]).includes(compact(term)));
+    for (const removed of ["BOTH PACKAGES INCLUDE THE EXPERIENCES BELOW", packages.exclusionsNote]) assert(!compact(texts[finalIndex]).includes(compact(removed)));
+  }
 }
 assert(texts[finalIndex].includes("5% GST + 2% TCS will be applicable."));
 assert(texts[finalIndex].includes("These taxes are not included in the trip price."));
@@ -145,5 +150,5 @@ if (!process.argv.includes("--verify-existing")) {
   }
 }
 if (process.argv.includes("--publish")) assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)));
-console.log(`PASS: Grimoire v${version}, seven complete itinerary days, 10 inclusions, 7 ${historicalV8 ? "" : "XO-only "}exclusions, ${version === 10 ? "renamed cover without prices and no package page" : historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing final-page taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
+console.log(`PASS: Grimoire v${version}, seven complete itinerary days, 10 inclusions, 7 ${historicalV8 ? "" : "XO-only "}exclusions, ${version >= 11 ? "early-bird/regular final-page price boxes and all-inclusive inquiry text" : version === 10 ? "renamed cover without prices and no package page" : historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing final-page taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
 doc.destroy();

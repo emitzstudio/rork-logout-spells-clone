@@ -66,7 +66,7 @@ const dayLayouts: DayLayout[] = [
  * Full dashboard paragraphs are preserved; no website code, links or data are changed.
  * Returns validated-in-memory bytes so publishing can happen after content validation.
  */
-export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string }): Promise<Uint8Array> {
+export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string; finalPriceBoxes?: boolean }): Promise<Uint8Array> {
   assert.equal(spec.days.length, 7);
   assert.equal(dashboard.bodies.length, 7);
   assert(spec.final.announcement && spec.final.lists);
@@ -321,18 +321,35 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   text(p, titleA, titleX, 730, 44, serif, CREAM);
   text(p, titleB, titleX + width(titleA, 44, serif), 730, 44, italic, GOLD_LIGHT);
   center(p, f.subline, 704, 8.5, semi, GOLD_LIGHT, 2.2);
-  box(p, 64, 689, W - 128, 138, 14, true, 0.8);
-  if (packages) {
-    center(p, "BOTH PACKAGES INCLUDE THE EXPERIENCES BELOW", 673, 7.4, semi, GOLD_LIGHT, 1);
-    paragraph(p, packages.exclusionsNote, 0, 655, 9.5, sans, 425, 13, CREAM, true);
+  if (revision?.finalPriceBoxes) {
+    const cardWidth = (W - 128 - 14) / 2;
+    const prices = [{ label: "EARLY BIRD", amount: 80000 }, { label: "REGULAR", amount: 85000 }];
+    for (const [index, price] of prices.entries()) {
+      const x = 64 + index * (cardWidth + 14);
+      const cardCenter = (value: string, y: number, size: number, face: PDFFont, color: Ink, tracking = 0): void => {
+        text(p, value, x + (cardWidth - width(value, size, face, tracking)) / 2, y, size, face, color, tracking);
+      };
+      box(p, x, 689, cardWidth, 63, 11, true, index === 0 ? 0.85 : 0.45);
+      cardCenter(price.label, 674, 7.4, semi, GOLD_LIGHT, 1.8);
+      cardCenter(`INR ${price.amount.toLocaleString("en-IN")}`, 646, 27, bold, CREAM);
+      cardCenter("PER PERSON", 633, 6.8, semi, MUTED, 1.4);
+    }
+    center(p, "Interested in an all inclusive package", 610, 13, italic, GOLD_HI);
   } else {
-    center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 651, 34, bold, CREAM);
-    center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 635, 7.2, semi, MUTED, 1.4);
+    box(p, 64, 689, W - 128, 138, 14, true, 0.8);
+    if (packages) {
+      center(p, "BOTH PACKAGES INCLUDE THE EXPERIENCES BELOW", 673, 7.4, semi, GOLD_LIGHT, 1);
+      paragraph(p, packages.exclusionsNote, 0, 655, 9.5, sans, 425, 13, CREAM, true);
+    } else {
+      center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 651, 34, bold, CREAM);
+      center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 635, 7.2, semi, MUTED, 1.4);
+    }
   }
-  center(p, "5% GST + 2% TCS will be applicable.", 615, 9.5, semi, GOLD_HI);
-  center(p, "These taxes are not included in the trip price.", 601, 8.8, sans, MUTED);
-  center(p, "INR 20,000 booking amount", 581, 11, semi, CREAM);
-  center(p, "Balance payable before departure.", 566, 9.3, sans, MUTED);
+  const termsOffset = revision?.finalPriceBoxes ? 17 : 0;
+  center(p, "5% GST + 2% TCS will be applicable.", 615 - termsOffset, 9.5, semi, GOLD_HI);
+  center(p, "These taxes are not included in the trip price.", 601 - termsOffset, 8.8, sans, MUTED);
+  center(p, "INR 20,000 booking amount", 581 - termsOffset + (revision?.finalPriceBoxes ? 4 : 0), 11, semi, CREAM);
+  center(p, "Balance payable before departure.", 566 - termsOffset + (revision?.finalPriceBoxes ? 5 : 0), 9.3, sans, MUTED);
   const leftX = 64;
   const rightX = 316;
   const colW = 213;
