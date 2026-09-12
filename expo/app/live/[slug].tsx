@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { ArrowLeft } from "lucide-react-native";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import BookingFlow from "@/components/BookingFlow";
 import { GhostButton, GoldButton, PressableScale } from "@/components/Buttons";
 import FloatingSymbol from "@/components/FloatingSymbol";
 import GradientText from "@/components/GradientText";
@@ -38,16 +37,11 @@ export default function SpellPageScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { recordSpellView } = useAccount();
-  const [bookingOpen, setBookingOpen] = useState<boolean>(false);
 
   const spell = slug ? getBySlug(slug) : undefined;
   const visible = spell !== undefined && isPublic(spell);
 
-  /**
-   * Decision X — a spell with an attached PUBLISHED form routes its Inquire
-   * door to that form on the website (in the in-app browser); responses land
-   * in the founder's inbox exactly like on the web.
-   */
+  /** Prefetch the saved published form so the request button opens it directly. */
   const formQuery = useQuery({
     queryKey: ["spell-form", spell?.formId ?? "none"],
     queryFn: async () => {
@@ -59,13 +53,36 @@ export default function SpellPageScreen() {
         .eq("id", formId)
         .eq("status", "published")
         .maybeSingle();
-      if (error || !data) return null;
+      if (error) throw new Error("We couldn’t load this spell’s form. Please try again.");
       return data;
     },
     enabled: visible && typeof spell?.formId === "string" && spell.formId !== "",
     staleTime: 60_000,
   });
-  const attachedForm = formQuery.data ?? null;
+  const requestForm = useMutation({
+    mutationFn: async () => {
+      if (!visible || !spell?.formId) {
+        throw new Error("Requests for this spell aren’t available yet. Please check back soon.");
+      }
+      let form = formQuery.data;
+      if (!form) {
+        const result = await formQuery.refetch();
+        if (result.error) throw new Error("We couldn’t load this spell’s form. Please try again.");
+        form = result.data;
+      }
+      if (!form?.slug) {
+        throw new Error("Requests for this spell aren’t available yet. Please check back soon.");
+      }
+      try {
+        await WebBrowser.openBrowserAsync(`${SITE_URL}/forms/${encodeURIComponent(form.slug)}`);
+      } catch {
+        throw new Error("We couldn’t open the form. Please try again.");
+      }
+    },
+  });
+  const openRequestForm = (): void => {
+    if (!requestForm.isPending) requestForm.mutate();
+  };
 
   /* Signed-in travellers see this spell surface in "recently viewed". */
   useEffect(() => {
@@ -143,30 +160,31 @@ export default function SpellPageScreen() {
         <View style={styles.topBarSpacer} />
       </View>
 
+      {requestForm.isPending && (
+        <View style={styles.formStatus} accessibilityLiveRegion="polite">
+          <LoadingRing label="Opening the form…" />
+        </View>
+      )}
+      {requestForm.isError && (
+        <View style={styles.formStatus} accessibilityLiveRegion="polite">
+          <Text style={styles.formError}>{requestForm.error.message}</Text>
+          <View style={styles.formActions}>
+            {spell.formId && <GhostButton label="Try again" onPress={openRequestForm} />}
+            <GhostButton label="Dismiss" onPress={() => requestForm.reset()} />
+          </View>
+        </View>
+      )}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 48 }]}
       >
         {/* Full-bleed native page — the website's spell page order, no card frame. */}
-        <SpellPageBody draft={draft} width={width} onBook={() => setBookingOpen(true)} />
+        <SpellPageBody draft={draft} width={width} onBook={openRequestForm} />
         <Text style={styles.caption}>
           Logout Spells · Disappear for a while <Text style={styles.captionStar}>✦</Text>
         </Text>
       </ScrollView>
 
-      <BookingFlow
-        open={bookingOpen}
-        spell={spell}
-        onClose={() => setBookingOpen(false)}
-        onInquireViaForm={
-          attachedForm
-            ? () => {
-                setBookingOpen(false);
-                void WebBrowser.openBrowserAsync(`${SITE_URL}/forms/${attachedForm.slug}`);
-              }
-            : null
-        }
-      />
     </View>
   );
 }
@@ -196,6 +214,23 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingTop: 2,
+  },
+  formStatus: {
+    padding: 16,
+    gap: 12,
+    backgroundColor: Colors.charcoalDeep,
+  },
+  formError: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    lineHeight: 21,
+    color: Colors.cream,
+    textAlign: "center",
+  },
+  formActions: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
   },
   caption: {
     marginTop: 30,

@@ -726,7 +726,7 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
       )}
       <Reveal delay={0.2} className="mt-9 flex flex-wrap items-center justify-center gap-4">
         <button type="button" onClick={onBook} className="btn-gold !rounded-full !px-10">
-          {isTba ? "Inquire about this spell" : FINAL_CTA.button} <ArrowRight size={16} />
+          {FINAL_CTA.button} <ArrowRight size={16} />
         </button>
         {brochure && (
           <a href={brochure} target="_blank" rel="noopener noreferrer" className="btn-ghost-gold !rounded-full !px-8">

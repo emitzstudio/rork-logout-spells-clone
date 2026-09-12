@@ -54,7 +54,7 @@ export type BuilderSectionId =
 /** The closing invitation - fixed copy, identical on every spell page. */
 export const FINAL_CTA = {
   heading: "Ready to Logout?",
-  button: "Join this spell",
+  button: "Request your spot",
 } as const;
 
 export interface DraftImage {

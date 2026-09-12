@@ -2,10 +2,9 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import FormDialog from "@/components/dashboard/forms/FormDialog";
+import RequestSpotDialog from "@/components/spell/RequestSpotDialog";
 import Page from "@/components/site/Layout";
 import LoadError from "@/components/site/LoadError";
-import BookingFlow from "@/components/spell/BookingFlow";
 import SpellHero from "@/components/spell/SpellHero";
 import StarboyExperience from "@/components/spell/StarboyExperience";
 import {
@@ -26,15 +25,13 @@ import {
 import { useAccount } from "@/data/account/AccountProvider";
 import { draftFromSpell } from "@/data/builder";
 import type { SpellDraft } from "@/data/builder";
-import { useFormStore } from "@/data/formStore";
 import { isPublic, useSpellStore } from "@/data/spellStore";
 import { isUuid, supabase } from "@/integrations/supabase/client";
 import { breadcrumbJsonLd, tripJsonLd } from "@/lib/seo";
 
 /**
  * The public Spell page - rendered dynamically from the local CMS at full,
- * natural editorial scale. "Join this Spell" opens the two-door flow:
- * a light Inquiry, or the full Book Now payment journey.
+ * natural editorial scale. Every request CTA opens the spell's saved form directly.
  */
 /** Spell ids whose view was already counted this session. */
 const viewedSpellIds = new Set<string>();
@@ -42,13 +39,9 @@ const viewedSpellIds = new Set<string>();
 export default function SpellPage() {
   const { slug } = useParams<{ slug: string }>();
   const { getBySlug, ready, failed, retry } = useSpellStore();
-  const { getFormById } = useFormStore();
   const { recordSpellView } = useAccount();
 
-  /** The two-door booking flow (choice → inquire / pay). */
-  const [flowOpen, setFlowOpen] = useState<boolean>(false);
-  /** The attached interest form - the Inquire door when one exists. */
-  const [formOpen, setFormOpen] = useState<boolean>(false);
+  const [requestedSpellId, setRequestedSpellId] = useState<string | null>(null);
 
   const spell = slug ? getBySlug(slug) : undefined;
   const visible = spell !== undefined && isPublic(spell);
@@ -101,14 +94,8 @@ export default function SpellPage() {
   const seoDescription = `${spell.name} is a ${days}${tripType}${where}. ${spell.hook}`.trim();
   const heroImage = draft.hero?.url ?? draft.mobileHero?.url ?? (spell.image !== "" ? spell.image : null);
 
-  // A spell with an attached (and published) form routes its Inquire door
-  // through THAT form - submissions land in the founder's response inbox.
-  const attachedForm = spell.formId ? getFormById(spell.formId) : undefined;
-  const bookingForm =
-    attachedForm !== undefined && attachedForm.status === "published" ? attachedForm : null;
-
   const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
-  const openBooking = (): void => setFlowOpen(true);
+  const openBooking = (): void => setRequestedSpellId(spell.id);
 
   return (
     /* SpellHero carries the back orb inside its badge row - no second orb (M11.5). */
@@ -155,28 +142,12 @@ export default function SpellPage() {
       <SpellFinalCta onBook={openBooking} />
       </>}
 
-      {/* The two doors - Inquire or the full Book Now journey. */}
-      <BookingFlow
-        open={flowOpen}
+      <RequestSpotDialog
+        key={spell.id}
+        open={requestedSpellId === spell.id}
         spell={spell}
-        onClose={() => setFlowOpen(false)}
-        onInquireViaForm={
-          bookingForm
-            ? () => {
-                setFlowOpen(false);
-                setFormOpen(true);
-              }
-            : null
-        }
+        onClose={() => setRequestedSpellId(null)}
       />
-      {bookingForm && (
-        <FormDialog
-          open={formOpen}
-          form={bookingForm}
-          spell={spell}
-          onClose={() => setFormOpen(false)}
-        />
-      )}
     </Page>
   );
 }

@@ -384,8 +384,8 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
         </div>
         <BookingFormPicker value={draft.formId ?? null} onChange={(formId) => patch({ formId })} />
         <p className="mt-2 font-sans text-[11px] text-cream/35">
-          Visitors who tap “Join this spell” fill this form instead of the standard booking dialog.
-          One form can serve many spells.
+          Visitors who tap “Request your spot” open this published form directly.
+          Attach a form to accept requests. One form can serve many spells.
         </p>
       </div>
 

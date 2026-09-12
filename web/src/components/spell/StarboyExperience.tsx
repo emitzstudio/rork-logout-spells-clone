@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { RichBody } from "@/components/dashboard/builder/RichText";
 import { SpellAudience, SpellFaqs, SpellHost, SpellPricing, SpellStay } from "@/components/spell/SpellSections";
-import { BUILDER_ICONS, dayHasContent, quickEffectiveValue, type SpellDraft } from "@/data/builder";
+import { BUILDER_ICONS, FINAL_CTA, dayHasContent, quickEffectiveValue, type SpellDraft } from "@/data/builder";
 import { brochureLink } from "@/data/publishedPricing";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft
           </h1>
           <p className="mt-5 max-w-[320px] text-sm leading-relaxed text-cream/80 md:max-w-[420px] md:text-base">{draft.hook}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" onClick={onBook} className={action}>Inquire about the spell <ArrowRight size={16} /></button>
+            <button type="button" onClick={onBook} className={action}>{FINAL_CTA.button} <ArrowRight size={16} /></button>
             <a href="#journey" className="inline-flex min-h-12 items-center gap-3 border border-white/25 px-5 text-xs uppercase tracking-[0.12em] transition-colors hover:bg-white/10">The itinerary <ArrowDown size={15} /></a>
             {brochure && <a href={brochure} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-3 border border-[#ff604c]/60 px-5 text-xs uppercase tracking-[0.12em] text-[#ffb0a5] transition-colors hover:bg-white/10"><Download size={16} aria-hidden /> Download itinerary (PDF)</a>}
           </div>
@@ -114,7 +114,7 @@ export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft
     <SpellAudience draft={draft} />
     <div className="starboy-shared"><SpellFaqs draft={draft} /></div>
     <section className="relative overflow-hidden border-t border-white/10 bg-[radial-gradient(ellipse_at_bottom,#4c1710,transparent_70%)]">
-      <div className={cn(container, "py-20 text-center md:py-28")}><p className={kicker}>City lights. Concert nights. Island skies.</p><h2 className={cn(title, "mx-auto mt-6 max-w-3xl text-6xl md:text-[100px]")}>Take the night.<br /><span className="text-gold">Keep the memories.</span></h2><div className="mt-9 flex flex-wrap justify-center gap-4"><button type="button" onClick={onBook} className={action}>Inquire about the spell <ArrowRight size={16} /></button>{brochure && <a href={brochure} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-3 border border-white/25 px-6 text-xs uppercase tracking-[0.1em] hover:bg-white/10"><Download size={16} aria-hidden /> Download itinerary (PDF)</a>}</div><Link to="/live" className="mt-8 inline-flex min-h-11 items-center gap-2 text-xs text-white/60 hover:text-white">Explore all live spells <ArrowRight size={14} /></Link></div>
+      <div className={cn(container, "py-20 text-center md:py-28")}><p className={kicker}>City lights. Concert nights. Island skies.</p><h2 className={cn(title, "mx-auto mt-6 max-w-3xl text-6xl md:text-[100px]")}>Take the night.<br /><span className="text-gold">Keep the memories.</span></h2><div className="mt-9 flex flex-wrap justify-center gap-4"><button type="button" onClick={onBook} className={action}>{FINAL_CTA.button} <ArrowRight size={16} /></button>{brochure && <a href={brochure} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-3 border border-white/25 px-6 text-xs uppercase tracking-[0.1em] hover:bg-white/10"><Download size={16} aria-hidden /> Download itinerary (PDF)</a>}</div><Link to="/live" className="mt-8 inline-flex min-h-11 items-center gap-2 text-xs text-white/60 hover:text-white">Explore all live spells <ArrowRight size={14} /></Link></div>
     </section>
   </div>;
 }

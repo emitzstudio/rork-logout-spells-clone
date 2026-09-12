@@ -58,7 +58,7 @@ export default function FormDialog({ open, form, spell, onClose }: FormDialogPro
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label={spell ? `Join the ${spell.name}` : form.title}
+            aria-label={spell ? `Request your spot · ${spell.name}` : form.title}
             className="relative w-full max-w-[620px] overflow-hidden rounded-2xl border border-gold/25 bg-[#14130f] shadow-[0_40px_100px_rgba(0,0,0,0.65)]"
           >
             <span
@@ -69,7 +69,7 @@ export default function FormDialog({ open, form, spell, onClose }: FormDialogPro
             {/* Slim header - the form brings its own title */}
             <div className="relative flex items-center justify-between gap-4 border-b border-cream/[0.06] px-5 py-3.5">
               <p className="eyebrow !text-[10px]">
-                {spell ? `Join the ${spell.name}` : "Application"}
+                {spell ? `Request your spot · ${spell.name}` : "Application"}
               </p>
               <button
                 type="button"

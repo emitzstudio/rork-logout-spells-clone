@@ -178,7 +178,7 @@ describe("Historical Starboy TBA content compatibility", () => {
   it("renders the brochure with TBA pricing and no invented deposit or sold-out badge", () => {
     const pricing = renderToStaticMarkup(createElement(SpellPricing, { draft, onBook: () => {} }));
     expect(pricing).toContain("TBA");
-    expect(pricing).toContain("Inquire about this spell");
+    expect(pricing).toContain("Request your spot");
     expect(pricing).toContain(STARBOY_BROCHURE_PATH);
     expect(pricing).not.toMatch(/₹0|30%|Book with|Booking amount/);
     const strip = renderToStaticMarkup(createElement(BookingStrip, { draft, seatsLeft: 0, onBook: () => {} }));
