@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as mupdf from "mupdf";
-import { STARBOY_BROCHURE_PATH } from "../web/src/data/starboyBrochure";
 import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-template";
 import type { TripSpec } from "./trips";
 import packages from "./starboy-packages-v9.json";
@@ -29,8 +28,10 @@ const draft = process.argv.includes("--draft");
 assert(!(draft && process.argv.includes("--publish")), "Never publish a draft");
 assert(!process.argv.includes("--cinematic"), "The Weeknd-themed PDF is retired; use the Grimoire edition");
 const historicalV8 = process.argv.includes("--v8");
-const version = historicalV8 ? 8 : 9;
-spec.fileName = historicalV8 ? "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v8.pdf" : STARBOY_BROCHURE_PATH.split("/").pop()!;
+const historicalV9 = process.argv.includes("--v9");
+assert(!(historicalV8 && historicalV9), "Choose one historical edition");
+const version = historicalV8 ? 8 : historicalV9 ? 9 : 10;
+spec.fileName = version < 10 ? `Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version}.pdf` : "Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v10.pdf";
 spec.docSubject = historicalV8 ? "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000" : "Bangkok & Phuket · 7 days / 6 nights · XO and all-inclusive Starboy packages · Early-bird prices";
 spec.cover.locLine = "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET · THAILAND";
 spec.cover.ital2 = "INR 85,000 per person · 7 days / 6 nights";
@@ -39,6 +40,16 @@ for (const [index, day] of spell.page.itinerary.entries()) {
   spec.days[index].titleA = printable(day.title);
   spec.days[index].titleB = "";
   spec.days[index].eyebrow = `DAY ${String(index + 1).padStart(2, "0")} · ${index + 9} OCTOBER · ${printable(day.locationTag).toUpperCase()}`;
+}
+if (version === 10) {
+  spec.docTitle = "Logout Spells · The Blinding Nights Spell · 9-15 October 2026";
+  spec.docSubject = "The Blinding Nights Spell · Bangkok & Phuket · 7 days / 6 nights";
+  spec.cover.titleLines = [
+    { text: "THE BLINDING", size: 58, tr: 3, y: 445 },
+    { text: "NIGHTS SPELL", size: 58, tr: 3, y: 380 },
+  ];
+  spec.days[0].titleA = "Arrival, Art Museum / Drag Show, Party Underground";
+  spec.final.subline = spec.final.subline.replace("THE STARBOY SPELL", "THE BLINDING NIGHTS SPELL");
 }
 spec.final.announcement = {
   url: "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand",
@@ -52,9 +63,11 @@ const bodies = spell.page.itinerary.map((day) => printable(day.body));
 const edition = { price: spell.price_minor / 100, bodies };
 const bytes = process.argv.includes("--verify-existing")
   ? readFileSync(spec.fileName)
-  : Buffer.from(await buildGrimoireStarboy(spec, edition, historicalV8 ? undefined : packages));
+  : Buffer.from(await buildGrimoireStarboy(spec, edition, historicalV8 ? undefined : packages, version === 10 ? {
+    cleanCover: true, omitPackagePage: true, arrivalImage: "img2/blinding-nights-art-gallery-v10.jpg",
+  } : undefined));
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
-assert.equal(doc.countPages(), historicalV8 ? 9 : 10);
+assert.equal(doc.countPages(), version === 9 ? 10 : 9);
 const finalIndex = doc.countPages() - 1;
 const texts: string[] = [];
 for (let index = 0; index < doc.countPages(); index++) {
@@ -77,7 +90,7 @@ for (let index = 0; index < doc.countPages(); index++) {
       assert(found >= cursor, `Dashboard paragraph missing or reordered on day ${index}: ${paragraph}`);
       cursor = found + expected.length;
     }
-    assert(compact(text).includes(compact(spell.page.itinerary[index - 1].title)), `Dashboard title missing on day ${index}`);
+    assert(compact(text).includes(compact(spec.days[index - 1].titleA)), `Approved title missing on day ${index}`);
   }
   if (index === finalIndex) {
     for (const item of [...spec.final.lists.left, ...spec.final.lists.right]) assert(compact(text).includes(compact(item)), `Missing inclusion/exclusion: ${item}`);
@@ -89,8 +102,8 @@ for (let index = 0; index < doc.countPages(); index++) {
   page.destroy();
   console.log(`PASS: PDF page ${index + 1} current text and safe margins`);
 }
-assert(texts[0].includes("85,000"));
-if (!historicalV8) {
+if (version < 10) assert(texts[0].includes("85,000"));
+if (version === 9) {
   for (const tier of packages.packages) {
     assert(texts[8].includes(tier.label));
     for (const amount of [tier.price, tier.earlyBird]) {
@@ -106,7 +119,14 @@ if (!historicalV8) {
 }
 assert(compact(texts[0]).includes(compact("6 NIGHTS")));
 assert(!/TBA|30%|65,000|65000|91,?000/.test(texts.join(" ")), "Do not show obsolete terms, a calculated balance or a calculated total");
-assert(texts[0].includes("5% GST + 2% TCS extra; not included in the price."));
+if (version < 10) assert(texts[0].includes("5% GST + 2% TCS extra; not included in the price."));
+else {
+  assert(compact(texts[0]).includes(compact("The Blinding Nights Spell")));
+  assert(!/85,000|80,000|1,50,000|1,40,000|Early bird|GST|TCS|supplied by|extended with AI|Illustrative performance/i.test(texts[0]));
+  assert(!compact(texts.join(" ")).includes(compact("One Spell. Two Ways.")));
+  assert(!compact(texts.join(" ")).includes(compact("The Starboy Spell")));
+  assert(compact(texts[finalIndex]).includes(compact(packages.exclusionsNote)));
+}
 assert(texts[finalIndex].includes("5% GST + 2% TCS will be applicable."));
 assert(texts[finalIndex].includes("These taxes are not included in the trip price."));
 assert(texts[finalIndex].includes("INR 20,000 booking amount"));
@@ -114,7 +134,7 @@ assert(texts[finalIndex].includes("Balance payable before departure."));
 assert(!texts[finalIndex].includes("Open the website"));
 assert(texts[3].includes("Background extended with AI"));
 assert(compact(texts[7]).includes(compact("END OF THE SPELL")));
-assert(texts[0].includes("Background extended with AI"));
+if (version < 10) assert(texts[0].includes("Background extended with AI"));
 if (!process.argv.includes("--verify-existing")) {
   if (draft) {
     mkdirSync(".cache", { recursive: true });
@@ -125,5 +145,5 @@ if (!process.argv.includes("--verify-existing")) {
   }
 }
 if (process.argv.includes("--publish")) assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)));
-console.log(`PASS: Grimoire v${version}, seven unchanged dashboard days, 10 inclusions, 7 ${historicalV8 ? "" : "XO-only "}exclusions, ${historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
+console.log(`PASS: Grimoire v${version}, seven complete itinerary days, 10 inclusions, 7 ${historicalV8 ? "" : "XO-only "}exclusions, ${version === 10 ? "renamed cover without prices and no package page" : historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing final-page taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
 doc.destroy();

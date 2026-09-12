@@ -66,7 +66,7 @@ const dayLayouts: DayLayout[] = [
  * Full dashboard paragraphs are preserved; no website code, links or data are changed.
  * Returns validated-in-memory bytes so publishing can happen after content validation.
  */
-export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition): Promise<Uint8Array> {
+export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string }): Promise<Uint8Array> {
   assert.equal(spec.days.length, 7);
   assert.equal(dashboard.bodies.length, 7);
   assert(spec.final.announcement && spec.final.lists);
@@ -192,7 +192,9 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   center(cover, spec.cover.poem1, 229, 13, italic, CREAM);
   center(cover, spec.cover.poem2, 209, 13, italic, CREAM);
   paragraph(cover, spec.cover.para, 0, 177, 9.3, sans, 398, 14.5, MUTED, true);
-  if (packages) {
+  if (revision?.cleanCover) {
+    center(cover, spec.cover.ital1, 132, 12.5, italic, GOLD_HI);
+  } else if (packages) {
     center(cover, spec.cover.ital1, 132, 12.5, italic, GOLD_HI);
     center(cover, "XO INR 85,000 · Starboy INR 1,50,000 per person", 116, 10, semi, CREAM);
     center(cover, "Early bird: XO INR 80,000 · Starboy INR 1,40,000 per person", 102, 8.8, semi, GOLD_HI);
@@ -200,8 +202,10 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     center(cover, spec.cover.ital1, 125, 12.5, italic, GOLD_HI);
     center(cover, spec.cover.ital2, 106, 12.5, italic, GOLD_HI);
   }
-  center(cover, "5% GST + 2% TCS extra; not included in the price.", 91, 8, sans, MUTED);
-  credit(cover, 72);
+  if (!revision?.cleanCover) {
+    center(cover, "5% GST + 2% TCS extra; not included in the price.", 91, 8, sans, MUTED);
+    credit(cover, 72);
+  }
   center(cover, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 36, 7, semi, MUTED, 2.5);
 
   for (const [index, day] of spec.days.entries()) {
@@ -212,7 +216,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     const order = [0, ...layout.stops.flatMap((stop) => stop.paragraphs), ...layout.closing];
     assert.deepEqual(order, paragraphs.map((_, i) => i), `Every paragraph must remain in order on day ${index + 1}`);
     const p = page();
-    await photo(p, `img2/${layout.image}`, 235);
+    await photo(p, index === 0 && revision ? revision.arrivalImage : `img2/${layout.image}`, 235);
     fade(p, H, 60, 0.35, 0);
     const fadeH = index === 2 ? 45 : 95;
     fade(p, H - 235 + fadeH, fadeH, 0, 1);
@@ -273,7 +277,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     footer(p, day.footer);
   }
 
-  if (packages) {
+  if (packages && !revision?.omitPackagePage) {
     const p = page();
     await photo(p, "img2/starboy-final.jpg", H);
     p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.88 });

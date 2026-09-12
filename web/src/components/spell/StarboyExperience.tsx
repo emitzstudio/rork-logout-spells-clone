@@ -19,12 +19,14 @@ function Reveal({ children, className }: { children: ReactNode; className?: stri
 
 /** Concert-poster presentation of the live CMS draft. No pricing or inquiry logic is duplicated. */
 export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft; onBook: () => void }) {
+  const name = draft.name.trim() || "The Blinding Nights Spell";
+  const headline = name.replace(/^The\s+/i, "").replace(/\s+Spell$/i, "");
   const days = draft.itinerary.filter(dayHasContent);
   const brochure = brochureLink(draft.pricing);
   const info = draft.quickInfo.filter((card) => quickEffectiveValue(card, draft) !== "");
   const highlights = draft.tripHighlights.filter((item) => item.title.trim() || item.description.trim());
   return <div className="starboy-experience bg-[#090909] text-cream">
-    <section aria-label="The Starboy Spell" className="relative isolate min-h-[850px] overflow-hidden bg-black md:min-h-[800px] lg:min-h-[900px]">
+    <section aria-label={name} className="relative isolate min-h-[850px] overflow-hidden bg-black md:min-h-[800px] lg:min-h-[900px]">
       <picture className="absolute inset-0 -z-20 block">
         <source media="(max-width: 767px)" srcSet={draft.mobileHero?.url ?? draft.hero?.url} />
         <img src={draft.hero?.url} alt="The Weeknd performing under red stage lights; background extended with AI" fetchPriority="high" className="h-[610px] w-full object-cover object-[center_15%] md:h-full md:object-[65%_center]" />
@@ -38,9 +40,9 @@ export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft
         </div>
         <div className="mb-auto mt-[270px] max-w-[620px] md:mb-0 md:mt-auto md:pb-14">
           <p className={cn(kicker, "mb-5")}>Bangkok nights. Island days.</p>
-          <h1 aria-label={draft.name || "The Starboy Spell"} className={cn(title, "text-[80px] sm:text-[112px] lg:text-[150px]")}>
+          <h1 aria-label={name} className={cn(title, headline.length > 8 ? "text-[72px] sm:text-[96px] lg:text-[110px]" : "text-[80px] sm:text-[112px] lg:text-[150px]")}>
             <span className="mb-2 block text-[20px] tracking-[0.4em] text-white/75 md:text-[27px]">The</span>
-            Starboy<span className="block text-[#ff604c]">Spell<span className="ml-4 align-middle font-sans text-[12px] font-normal tracking-[0.12em] text-white/60">/ 2026</span></span>
+            <span className="block">{headline}</span><span className="block text-[#ff604c]">Spell<span className="ml-4 align-middle font-sans text-[12px] font-normal tracking-[0.12em] text-white/60">/ 2026</span></span>
           </h1>
           <p className="mt-5 max-w-[320px] text-sm leading-relaxed text-cream/80 md:max-w-[420px] md:text-base">{draft.hook}</p>
           <div className="mt-6 flex flex-wrap gap-3">

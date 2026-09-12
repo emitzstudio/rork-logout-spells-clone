@@ -140,6 +140,31 @@ describe("Starboy XO and Starboy packages", () => {
   });
 });
 
+describe("Blinding Nights spell name", () => {
+  const renamed = { ...draft, name: "The Blinding Nights Spell" };
+
+  it("uses the saved name visibly and accessibly without hardcoded Starboy branding", () => {
+    const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft: renamed, onBook: () => {} })));
+    const hero = html.split("</section>")[0];
+    expect(hero).toContain('aria-label="The Blinding Nights Spell"');
+    expect(hero).toContain(">Blinding Nights</span>");
+    expect(hero).not.toContain("Starboy");
+    expect(hero).toContain("Download itinerary (PDF)");
+  });
+
+  it("keeps the name through CMS save, cards and reload without changing the slug or itinerary", () => {
+    const saved = spellFromDraft({ draft: renamed, slug: spell.slug, status: "published", existing: spell });
+    const payload = spellWritePayload(saved, renamed, row.published_at);
+    const reloaded = mapSpell({ ...row, ...payload } as SpellRow, departure, []);
+    expect(reloaded.name).toBe(renamed.name);
+    expect(reloaded.draft?.name).toBe(renamed.name);
+    expect(reloaded.slug).toBe("the-starboy-spell");
+    expect(reloaded.draft?.itinerary).toEqual(draft.itinerary);
+    expect(reloaded.draft?.pricing).toEqual(draft.pricing);
+    expect(tripJsonLd({ name: reloaded.name, description: reloaded.hook, path: `/live/${reloaded.slug}`, image: reloaded.image, location: reloaded.location, priceInr: 0, seatsTotal: 0, soldOut: false }).name).toBe(renamed.name);
+  });
+});
+
 describe("Historical Starboy TBA content compatibility", () => {
   it("uses the red-lit upload and AI extension without changing trip terms or misattributing the photo", () => {
     expect(spell.image).toContain("starboy-weeknd-stage-v4.webp");
