@@ -66,7 +66,7 @@ const dayLayouts: DayLayout[] = [
  * Full dashboard paragraphs are preserved; no website code, links or data are changed.
  * Returns validated-in-memory bytes so publishing can happen after content validation.
  */
-export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string; finalPriceBoxes?: boolean }): Promise<Uint8Array> {
+export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string; finalPriceBoxes?: boolean; conversionFinal?: { starboyPdfUrl: string } }): Promise<Uint8Array> {
   assert.equal(spec.days.length, 7);
   assert.equal(dashboard.bodies.length, 7);
   assert(spec.final.announcement && spec.final.lists);
@@ -314,6 +314,101 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   fade(p, H, 110, 0.55, 0);
   fade(p, 420, 420, 0, 0.88);
   box(p, 16, H - 16, W - 32, H - 32, 10, false, 0.26);
+  if (revision?.conversionFinal) {
+    const link = (url: string, rect: number[], label: string) => {
+      const parsed = new URL(url);
+      assert(parsed.protocol === "https:" && !parsed.username && !parsed.password);
+      return doc.context.register(doc.context.obj({ Type: "Annot", Subtype: "Link", Rect: rect, Border: [0, 0, 0], Contents: PDFString.of(label), H: "P", A: { Type: "Action", S: "URI", URI: PDFString.of(url) } }));
+    };
+    const arrow = (x: number, y: number, color: Ink) => {
+      p.drawLine({ start: { x: x - 12, y }, end: { x, y }, color, thickness: 1.3 });
+      p.drawLine({ start: { x: x - 5, y: y + 5 }, end: { x, y }, color, thickness: 1.3 });
+      p.drawLine({ start: { x: x - 5, y: y - 5 }, end: { x, y }, color, thickness: 1.3 });
+    };
+    p.drawImage(logo, { x: W / 2 - 12, y: 795, width: 24, height: 24 });
+    const a = "Your Spell ";
+    const b = "Awaits";
+    const x = (W - width(a, 38, serif) - width(b, 38, italic)) / 2;
+    text(p, a, x, 756, 38, serif, CREAM);
+    text(p, b, x + width(a, 38, serif), 756, 38, italic, GOLD_LIGHT);
+    center(p, f.subline, 735, 8, semi, GOLD_LIGHT, 1.8);
+    center(p, "EXCLUSIVE · XO PACKAGE", 713, 8.3, semi, CREAM, 2.1);
+    const cardWidth = (W - 128 - 14) / 2;
+    for (const [index, tier] of [{ label: "EARLY BIRD", price: "INR 80,000" }, { label: "REGULAR", price: "INR 85,000" }].entries()) {
+      const left = 64 + index * (cardWidth + 14);
+      const cardCenter = (value: string, y: number, size: number, face: PDFFont, color: Ink, tracking = 0) => text(p, value, left + (cardWidth - width(value, size, face, tracking)) / 2, y, size, face, color, tracking);
+      box(p, left, 701, cardWidth, 63, 11, true, index ? 0.45 : 0.85);
+      cardCenter(tier.label, 685, 7.4, semi, GOLD_LIGHT, 1.8);
+      cardCenter(tier.price, 658, 27, bold, CREAM);
+      cardCenter("PER PERSON", 645, 6.8, semi, MUTED, 1.4);
+    }
+    center(p, "5% GST + 2% TCS will be applicable.", 625, 8.2, sans, MUTED);
+
+    box(p, 64, 612, W - 128, 112, 12, true, 0.95);
+    box(p, 68, 608, W - 136, 104, 9, false, 0.25);
+    center(p, "BOOK YOUR SPOT FOR JUST", 593, 9, semi, GOLD_HI, 2.3);
+    center(p, "INR 20,000", 542, 52, bold, GOLD_HI);
+    center(p, "Pay ₹20,000 now to secure your spot.", 524, 10, semi, CREAM);
+    center(p, "Pay the remaining amount later, before departure.", 509, 9.2, sans, MUTED);
+
+    const leftX = 64;
+    const rightX = 316;
+    const colW = 213;
+    text(p, "INCLUDED IN BOTH PACKAGES", leftX, 481, 7.8, semi, GOLD_LIGHT, 0.8);
+    text(p, "EXCLUSIONS · XO PACKAGE ONLY", rightX, 481, 7.7, semi, MUTED, 0.7);
+    rule(p, leftX, leftX + colW, 470);
+    rule(p, rightX, rightX + colW, 470);
+    function conversionList(items: string[], left: number, included: boolean): number {
+      let y = 455;
+      for (const item of items) {
+        p.drawCircle({ x: left + 4, y: y + 2.8, size: 4, color: included ? GOLD : SOFT, borderColor: GOLD, borderWidth: 0.5 });
+        if (included) {
+          p.drawLine({ start: { x: left + 2, y: y + 3 }, end: { x: left + 3.5, y: y + 1.5 }, color: CREAM, thickness: 0.8 });
+          p.drawLine({ start: { x: left + 3.5, y: y + 1.5 }, end: { x: left + 6, y: y + 4.5 }, color: CREAM, thickness: 0.8 });
+        } else {
+          p.drawLine({ start: { x: left + 2, y: y + 1 }, end: { x: left + 6, y: y + 5 }, color: MUTED, thickness: 0.7 });
+          p.drawLine({ start: { x: left + 2, y: y + 5 }, end: { x: left + 6, y: y + 1 }, color: MUTED, thickness: 0.7 });
+        }
+        y = paragraph(p, item, left + 16, y, 8.4, sans, colW - 16, 11.3, included ? CREAM : MUTED) - 4;
+      }
+      return y;
+    }
+    const listBottom = Math.min(conversionList(f.lists!.left, leftX, true), conversionList(f.lists!.right, rightX, false));
+    assert(listBottom >= 243, `Inclusions overlap the all-inclusive alternative: ${listBottom}`);
+    rule(p, 64, W - 64, 240, 0.3);
+    center(p, "Interested in an all inclusive package?", 227, 9.3, italic, MUTED);
+    center(p, "Want an all inclusive package?", 213, 9, sans, CREAM);
+    const lead = "Then book our ";
+    const packageLabel = "Starboy Package";
+    const leadW = width(lead, 10, sans);
+    const labelW = width(packageLabel, 17, bold);
+    const sentenceX = (W - leadW - labelW - 19) / 2;
+    text(p, lead, sentenceX, 194, 10, sans, CREAM);
+    const packageX = sentenceX + leadW;
+    text(p, packageLabel, packageX, 194, 17, bold, GOLD_HI);
+    text(p, ".", packageX + labelW, 194, 10, sans, CREAM);
+    rule(p, packageX, packageX + labelW, 190, 0.95);
+    arrow(packageX + labelW + 19, 199, GOLD_LIGHT);
+    const starboyLink = link(revision.conversionFinal.starboyPdfUrl, [packageX - 3, 186, packageX + labelW + 25, 212], "Starboy Package PDF (placeholder URL)");
+
+    center(p, "REQUEST YOUR SPOT", 173, 8.2, semi, GOLD_LIGHT, 2.1);
+    center(p, "Ready to join The Blinding Nights Spell?", 159, 9, sans, CREAM);
+    center(p, "Click below to request your spot.", 147, 8.5, sans, MUTED);
+    // A solid gold face, inset highlight and arrow distinguish the action from price cards.
+    p.drawRectangle({ x: 64, y: 82, width: W - 128, height: 56, color: GOLD_LIGHT, borderColor: GOLD_HI, borderWidth: 1.3 });
+    p.drawRectangle({ x: 68, y: 86, width: W - 136, height: 48, borderColor: DEEP, borderWidth: 0.5, borderOpacity: 0.3 });
+    center(p, "APPLY NOW", 109, 24, bold, DEEP, 1.8);
+    arrow(481, 116, DEEP);
+    center(p, "Request your spot · Takes you to the application form", 92, 8.2, sans, DEEP);
+    const applyLink = link(f.announcement!.url, [64, 82, W - 64, 138], "Apply now - existing application form");
+    p.node.set(PDFName.of("Annots"), doc.context.obj([starboyLink, applyLink]));
+
+    center(p, "UNTIL THE NEXT SPELL", 67, 6.4, semi, GOLD, 2.8);
+    center(p, f.closeThanks, 53, 10, italic, MUTED);
+    center(p, "GOOD PEOPLE · WILD PLACES · REAL STORIES", 41, 6, semi, MUTED, 1.8);
+    center(p, f.closeHand, 26, 11, hand, GOLD_LIGHT);
+    return doc.save();
+  }
   p.drawImage(logo, { x: W / 2 - 16, y: H - 66, width: 32, height: 32 });
   const titleA = "Your Spell ";
   const titleB = "Awaits";

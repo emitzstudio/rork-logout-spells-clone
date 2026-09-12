@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const origin = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
 // Each edition uses its own exclusive pre-change baseline.
-const version = process.argv.includes("--v11") ? 11 : process.argv.includes("--v10") ? 10 : process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
+const version = process.argv.includes("--v12") ? 12 : process.argv.includes("--v11") ? 11 : process.argv.includes("--v10") ? 10 : process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
 const oldPath = `/brochures/Logout-Spells-${version > 10 ? "Blinding-Nights" : "Starboy"}-9-15-Oct-2026-Grimoire-v${version - 1}.pdf`;
 const newPath = `/brochures/Logout-Spells-${version >= 10 ? "Blinding-Nights" : "Starboy"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 const formUrl = "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand";
@@ -46,6 +46,12 @@ const rows = Object.fromEntries(await Promise.all(tables.map(async (table) => [t
 const starboy = rows.spells.find((row) => row.id === targetId);
 assert.equal(starboy?.slug, "the-starboy-spell");
 assert.equal(starboy.status, "published");
+if (version >= 12) {
+  const form = rows.forms.find((row) => row.id === starboy.form_id);
+  assert.equal(form?.id, "d2d97a47-7da8-4047-b764-93068f8df89b");
+  assert.equal(form.status, "published");
+  assert.equal(`https://www.logoutspells.com/forms/${form.slug}`, formUrl, "PDF must use the explicitly connected form");
+}
 const files = publicFiles();
 if (process.argv.includes("--snapshot")) {
   assert.equal(starboy.page.pricing.brochureUrl, origin + oldPath, `Snapshot must precede v${version} distribution`);
@@ -92,6 +98,8 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${site}/live/the-starboy-spell`, { waitUntil: "domcontentloaded" });
+    const enter = page.getByRole("button", { name: "Enter Logout Spells", exact: true });
+    if (await enter.isVisible()) { await enter.click(); await enter.waitFor({ state: "hidden" }); }
     await page.getByRole("region", { name: version >= 10 ? "The Blinding Nights Spell" : "The Starboy Spell", exact: true }).getByRole("link", { name: "Download itinerary (PDF)", exact: true }).waitFor();
     if (version >= 10) {
       const h1 = (await page.locator("h1").first().innerText()).toLowerCase().replace(/\s+/g, " ");
