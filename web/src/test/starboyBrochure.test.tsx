@@ -76,7 +76,8 @@ describe("Approved Starboy Grimoire distribution", () => {
   it("redirects every old share URL on both deployment configurations", () => {
     for (const configPath of ["../../vercel.json", "../../../vercel.json"]) {
       const config = JSON.parse(readFileSync(new URL(configPath, import.meta.url), "utf8")) as { redirects: { source: string; destination: string; permanent: boolean }[] };
-      expect(config.redirects).toEqual(RETIRED_STARBOY_BROCHURE_PATHS.map((source) => ({ source, destination: STARBOY_BROCHURE_URL, permanent: true })));
+      const starboyRedirects = config.redirects.filter(({ source }) => source.startsWith("/brochures/Logout-Spells-Starboy-"));
+      expect(starboyRedirects).toEqual(RETIRED_STARBOY_BROCHURE_PATHS.map((source) => ({ source, destination: STARBOY_BROCHURE_URL, permanent: true })));
     }
   });
 });

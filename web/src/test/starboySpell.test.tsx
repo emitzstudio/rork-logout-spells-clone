@@ -2,6 +2,8 @@ import sql from "../../../backend/migrations/0065_starboy_spell.sql?raw";
 import photoSql from "../../../backend/migrations/0066_starboy_weeknd_photography.sql?raw";
 import uploadedPhotoSql from "../../../backend/migrations/0067_starboy_uploaded_photography.sql?raw";
 import cinematicSql from "../../../backend/migrations/0070_starboy_cinematic.sql?raw";
+import packagesSql from "../../../backend/migrations/0079_starboy_packages.sql?raw";
+import type { PriceTier } from "@/data/builder";
 // Historical copy stays covered for compatibility; downloads always resolve to the approved edition.
 import brochure from "../../../pdf-build/starboy-grimoire.json";
 import { STARBOY_BROCHURE_PATH, STARBOY_BROCHURE_URL } from "@/data/starboyBrochure";
@@ -84,6 +86,57 @@ describe("Starboy PDF dashboard persistence", () => {
     expect(html).toContain(STARBOY_BROCHURE_PATH);
     const live = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft, onBook: () => {} })));
     expect(live.split("</section>")[0]).toContain("Download itinerary (PDF)");
+  });
+});
+
+describe("Starboy XO and Starboy packages", () => {
+  const packages = JSON.parse(packagesSql.split("$packages$")[1]) as {
+    tiers: PriceTier[]; note: string; aboutAfter: string;
+    faqAnswers: Record<string, string>; exclusions: Record<string, string>;
+  };
+  const packageDraft = {
+    ...draft,
+    price: "85000",
+    pricing: { ...draft.pricing!, tiers: packages.tiers, note: packages.note },
+  };
+
+  it("renders both named per-person prices and the international-flight upgrade", () => {
+    const html = renderToStaticMarkup(createElement(SpellPricing, { draft: packageDraft, onBook: () => {} }));
+    for (const text of ["XO package", "₹85,000", "Starboy package", "₹1,50,000", "Flights + all activities", "international flights and all itinerary activities", "Request your spot"]) expect(html).toContain(text);
+    expect(html.indexOf("XO package")).toBeLessThan(html.indexOf("Starboy package"));
+    expect(html).not.toMatch(/TBA|Booking amount|30%|Sold out/);
+  });
+
+  it("preserves both tiers, the base price and brochure through CMS save and reload", () => {
+    const payload = spellWritePayload({ ...spell, price: 85000, draft: packageDraft }, packageDraft, row.published_at);
+    const reloaded = mapSpell({ ...row, ...payload } as SpellRow, departure, []).draft!;
+    expect(reloaded.pricing).toEqual(packageDraft.pricing);
+    expect(reloaded.price).toBe("85000");
+    expect(reloaded.itinerary).toEqual(draft.itinerary);
+    expect(reloaded.included).toEqual(draft.included);
+    expect(brochureLink(reloaded.pricing)).toBe(brochureLink(draft.pricing));
+    expect(publishedRequestTerms(reloaded, 1)).toBeNull();
+  });
+
+  it("also displays both prices in the dashboard preview without changing downloads", () => {
+    const preview = renderToStaticMarkup(createElement(SpellPageBody, { draft: packageDraft, device: "mobile" }));
+    const live = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft: packageDraft, onBook: () => {} })));
+    for (const html of [preview, live]) for (const text of ["XO package", "Starboy package", "₹85,000", "₹1,50,000"]) expect(html).toContain(text);
+    expect(live.split(`href="${brochureLink(packageDraft.pricing)}"`)).toHaveLength(4);
+    expect(live.match(/Request your spot/g)).toHaveLength(3);
+  });
+
+  it("clarifies XO extras without promising visas, insurance, extra meals or a deposit", () => {
+    expect(packages.aboutAfter).toContain("XO package: ₹85,000");
+    expect(packages.aboutAfter).toContain("Starboy package: ₹1,50,000");
+    for (const text of Object.values(packages.exclusions)) {
+      expect(text).toContain("in XO");
+      expect(text).toContain("included in Starboy");
+    }
+    expect(packages.note).toContain("Visa, insurance and meals not mentioned remain excluded from both packages");
+    expect(packages.faqAnswers["faq-starboy-price"]).not.toContain("TBA");
+    expect(packages.faqAnswers["faq-starboy-price"]).toContain("does not collect payment or reserve a seat");
+    expect(packages.tiers.every((tier) => tier.bookingAmount === 0)).toBe(true);
   });
 });
 
