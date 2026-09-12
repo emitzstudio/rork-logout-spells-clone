@@ -3,7 +3,8 @@
  * Six A4 base pages (cover, stay, three days, booking), charcoal + gold brand system.
  * The Content Spell adds one memories / reviews page before booking.
  * Run: bun run index.ts            ->  every edition
- *      bun run index.ts content    ->  only the Content Spell (keys: bir content)
+ *      bun run index.ts content    ->  only the Content Spell
+ *      bun run index.ts bir-september -> dated Bir Grimoire (18-21 September), no overwrite
  *
  * Editions:
  *   bir      The Bir Spell, 11-13 September 2026            -> Logout-Spells-Bir-Sept-2026.pdf
@@ -105,6 +106,8 @@ type EditionSpec = {
   days: DaySpec[];
   final: FinalSpec;
   memoriesFile?: string;
+  /** Dated approved editions must never overwrite an existing PDF. */
+  immutable?: boolean;
 };
 
 /* ------------------------------- Helpers -------------------------------- */
@@ -125,6 +128,9 @@ const rupee = (amount: string) => (serifHasRupee || sansHasRupee ? `\u20B9${amou
 
 /* ----------------------------- Edition builder --------------------------- */
 async function buildEdition(spec: EditionSpec): Promise<void> {
+  if (spec.immutable && (existsSync(spec.fileName) || (process.argv.includes("--publish") && existsSync(`../web/public/brochures/${spec.fileName}`)))) {
+    throw new Error(`Preserving immutable edition: ${spec.fileName}. Publish the verified copy or choose a new version.`);
+  }
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   doc.setTitle(spec.docTitle);
@@ -772,11 +778,11 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
 
   /* -------------------------------- Output --------------------------------- */
   const bytes = await doc.save();
-  writeFileSync(spec.fileName, bytes);
+  writeFileSync(spec.fileName, bytes, { flag: spec.immutable ? "wx" : "w" });
   console.log("PDF written:", spec.fileName, (bytes.length / 1024).toFixed(0), "KB,", doc.getPageCount(), "pages");
   if (process.argv.includes("--publish")) {
     const publicPath = `../web/public/brochures/${spec.fileName}`;
-    writeFileSync(publicPath, bytes);
+    writeFileSync(publicPath, bytes, { flag: spec.immutable ? "wx" : "w" });
     console.log("Share copy written:", publicPath);
   }
 }
@@ -932,6 +938,23 @@ const bir: EditionSpec = {
   },
 };
 
+/* Date-only revision: three existing Bir days, with Monday included in the overall return range. */
+const birSeptember: EditionSpec = {
+  ...bir,
+  fileName: "Logout-Spells-Bir-18-21-Sept-2026-Grimoire-v1.pdf",
+  docTitle: "Logout Spells · The Bir Spell · 18-21 September 2026",
+  immutable: true,
+  cover: { ...bir.cover, dateLine: "18 - 21 SEPTEMBER 2026" },
+  days: bir.days.map((day) => ({
+    ...day,
+    eyebrow: day.eyebrow
+      .replace("11 SEPTEMBER", "18 SEPTEMBER")
+      .replace("12 SEPTEMBER", "19 SEPTEMBER")
+      .replace("13 SEPTEMBER", "20 SEPTEMBER"),
+  })),
+  final: { ...bir.final, subline: "BIR · 18 - 21 SEPTEMBER 2026 · ONLY 15 SPOTS" },
+};
+
 /* ============ THE CONTENT SPELL WITH ANSHIKA · 25-27 SEPT 2026 ============ */
 /* September revision: the original six designed pages remain unchanged.
  * A seventh page of previous spells and review excerpts precedes booking. */
@@ -1020,11 +1043,11 @@ const content: EditionSpec = {
 };
 
 /* -------------------------------- Build --------------------------------- */
-const editions: Record<string, EditionSpec> = { bir, content };
+const editions: Record<string, EditionSpec> = { bir, content, "bir-september": birSeptember };
 const only = process.argv.slice(2).filter((arg) => arg !== "--publish");
 const unknown = only.filter((key) => !(key in editions));
 if (unknown.length > 0) throw new Error(`unknown edition(s): ${unknown.join(", ")} (known: ${Object.keys(editions).join(", ")})`);
 console.log("rupee glyph:", { serifHasRupee, sansHasRupee });
 for (const [key, spec] of Object.entries(editions)) {
-  if (only.length === 0 || only.includes(key)) await buildEdition(spec);
+  if ((only.length === 0 && !spec.immutable) || only.includes(key)) await buildEdition(spec);
 }
