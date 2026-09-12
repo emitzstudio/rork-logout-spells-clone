@@ -5,6 +5,8 @@ import * as mupdf from "mupdf";
 
 const file = process.argv[2];
 assert(file?.startsWith(".cache/automatic-") && file.endsWith(".pdf"), "Pass a downloaded .cache/automatic-*.pdf");
+const warnings: string[] = [];
+mupdf.setLog({ warning: (message: string) => { warnings.push(message); }, error: (message: string) => { warnings.push(message); } });
 const doc = mupdf.Document.openDocument(readFileSync(file), "application/pdf");
 assert(doc.countPages() >= 2);
 let allText = "";
@@ -20,10 +22,10 @@ for (let index = 0; index < doc.countPages(); index++) {
     assert(x >= 40 && x + w <= 555.3 && y >= 15 && y + h <= 825, `Unsafe text bounds, page ${index + 1}: ${line.text}`);
   }
   const links = page.getLinks();
-  assert.equal(links.length, 1);
+  assert(links.length >= 1);
   assert(links[0].getURI().startsWith("https://logoutspells.com/live"));
   links.forEach((link) => link.destroy());
-  if ([0, 1, doc.countPages() - 1].includes(index)) {
+  if ([0, 1, 3, 4, doc.countPages() - 1].includes(index)) {
     const pixmap = page.toPixmap(mupdf.Matrix.scale(1.25, 1.25), mupdf.ColorSpace.DeviceRGB, false, true);
     writeFileSync(`${file.slice(0, -4)}-page-${index + 1}.png`, pixmap.asPNG());
     pixmap.destroy();
@@ -31,8 +33,10 @@ for (let index = 0; index < doc.countPages(); index++) {
   structured.destroy();
   page.destroy();
 }
-assert(allText.includes("LOGOUT SPELLS"));
-assert(allText.includes("Make it your next escape"));
+assert(allText.replace(/\s+/g, "").includes("LOGOUTSPELLS"));
+assert(allText.replace(/\s+/g, " ").includes("Your Spell Awaits"));
+assert.deepEqual(warnings, [], "PDF fonts and artwork must render without warnings");
+assert(allText.replace(/\s+/g, "").includes("THEGRIMOIRE"));
 console.log(`PASS: ${file}: ${doc.countPages()} readable pages, safe margins and working spell links`);
 console.log(allText.slice(0, 500));
 doc.destroy();

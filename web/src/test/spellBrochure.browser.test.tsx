@@ -26,15 +26,15 @@ test("a new spell downloads a real PDF, then uses the latest edited content on t
   await expect.element(screen.getByRole("button", { name: "Download brochure (PDF)" })).toBeEnabled();
   expect(captured.blobs).toHaveLength(1);
   expect(captured.blobs[0].type).toBe("application/pdf");
-  expect(captured.names).toEqual(["Logout-Spells-the-test-spell-Brochure.pdf"]);
-  expect((await PDFDocument.load(await captured.blobs[0].arrayBuffer())).getTitle()).toBe("The Test Spell — Brochure");
+  expect(captured.names).toEqual(["Logout-Spells-the-test-spell-Grimoire.pdf"]);
+  expect((await PDFDocument.load(await captured.blobs[0].arrayBuffer())).getTitle()).toBe("The Test Spell — Grimoire");
   expect(document.querySelector('a[download]')).toBeNull();
 
   await screen.rerender(<SpellBrochureAction draft={{ ...draft, name: "Edited Spell" }} />);
   await screen.getByRole("button", { name: "Download brochure (PDF)" }).click();
   await expect.element(screen.getByRole("button", { name: "Download brochure (PDF)" })).toBeEnabled();
   expect(captured.blobs).toHaveLength(2);
-  expect((await PDFDocument.load(await captured.blobs[1].arrayBuffer())).getTitle()).toBe("Edited Spell — Brochure");
+  expect((await PDFDocument.load(await captured.blobs[1].arrayBuffer())).getTitle()).toBe("Edited Spell — Grimoire");
 });
 
 test("font failures show a recoverable error and retry produces a PDF", async () => {

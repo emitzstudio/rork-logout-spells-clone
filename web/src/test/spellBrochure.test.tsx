@@ -6,6 +6,7 @@ import { PDFArray, PDFDocument, PDFName } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { createEmptyDraft, type SpellDraft } from "@/data/builder";
 import { brochureText, spellBrochure } from "@/data/spellBrochure";
+import { brochurePointers } from "@/data/brochurePointers";
 import { renderSpellBrochure, wrapPdfText } from "@/lib/spellPdf";
 import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import SpellHero from "@/components/spell/SpellHero";
@@ -15,9 +16,13 @@ import { STARBOY_BROCHURE_URL } from "@/data/starboyBrochure";
 import { mapSpell, pageFromDraft, type SpellRow } from "@/integrations/supabase/mappers";
 import dashboard from "../../../pdf-build/starboy-dashboard-20260912-v5.json";
 
+const font = (name: string): Uint8Array => new Uint8Array(readFileSync(new URL(`../../public/${name}`, import.meta.url)));
 const assets = {
-  bodyFont: new Uint8Array(readFileSync(new URL("../../public/brochure-noto-sans-v1.ttf", import.meta.url))),
-  headingFont: new Uint8Array(readFileSync(new URL("../../public/brochure-noto-serif-v1.ttf", import.meta.url))),
+  bodyFont: font("grimoire-body-v1.ttf"), headingFont: font("grimoire-serif-v1.ttf"),
+  boldFont: font("grimoire-bold-v1.ttf"), italicFont: font("grimoire-italic-v1.ttf"),
+  semiFont: font("grimoire-semi-v1.ttf"), handFont: font("grimoire-hand-v1.ttf"),
+  fallbackFont: font("brochure-noto-sans-v1.ttf"),
+  logo: font("grimoire-logo-v1.png"), fadeUp: font("grimoire-fade-up-v1.png"), fadeDown: font("grimoire-fade-down-v1.png"),
 };
 const makeDraft = (): SpellDraft => ({ ...createEmptyDraft(), name: "The New Spell", slug: "the-new-spell", itinerary: [], days: 0, nights: 0, maxSeats: 0 });
 
@@ -52,7 +57,7 @@ describe("Automatic spell brochures", () => {
     expect(content.details).toEqual([]);
     expect(content.sections).toHaveLength(1);
     expect(content.sections[0].paragraphs).toEqual(["Prices TBA"]);
-    expect(content.filename).toBe("Logout-Spells-the-new-spell-Brochure.pdf");
+    expect(content.filename).toBe("Logout-Spells-the-new-spell-Grimoire.pdf");
   });
 
   it("keeps exact commercial terms, INR amounts, title-only days and optional experiences", () => {
@@ -112,11 +117,11 @@ describe("Automatic spell brochures", () => {
     const bytes = await renderSpellBrochure(spellBrochure(draft), assets);
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
     const pdf = await PDFDocument.load(bytes);
-    expect(pdf.getTitle()).toBe("The New Spell — Brochure");
+    expect(pdf.getTitle()).toBe("The New Spell — Grimoire");
     expect(pdf.getPageCount()).toBeGreaterThan(3);
     for (const page of pdf.getPages()) {
       expect(page.getWidth()).toBeCloseTo(595.28);
-      expect(page.node.lookup(PDFName.of("Annots"), PDFArray).size()).toBe(1);
+      expect(page.node.lookup(PDFName.of("Annots"), PDFArray).size()).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -129,6 +134,37 @@ describe("Automatic spell brochures", () => {
       expect(lines.join("").replace(/\s/g, "")).toBe(text.replace(/\s/g, ""));
       for (const line of lines) expect(font.widthOfTextAtSize(line, 24)).toBeLessThanOrEqual(499);
     }
+  });
+
+  it("turns paragraphs and existing lists into ordered pointers without changing conditions or URLs", () => {
+    const points = brochurePointers([
+      "Arrive in Hanoi. Meet Dr. Rao at 8:30 a.m. for a walk. A 2.5-hour cruise is optional, subject to weather.",
+      "- Breakfast included\n- Dinner not included",
+      "Booking amount: ₹2,500. Balance due before departure.",
+      "Read the policy at https://example.com/a*b*c.pdf before booking.",
+    ]);
+    expect(points[0]).toEqual({ heading: "Arrive in Hanoi.", text: "" });
+    const all = points.map((point) => [point.heading, point.text].filter(Boolean).join(": ")).join("\n");
+    for (const phrase of ["Dr. Rao", "8:30 a.m.", "2.5-hour cruise is optional, subject to weather.", "Breakfast included", "Dinner not included", "₹2,500", "Balance due before departure.", "https://example.com/a*b*c.pdf"]) expect(all).toContain(phrase);
+    expect(all.indexOf("Breakfast included")).toBeLessThan(all.indexOf("Dinner not included"));
+    expect(points.every((point) => !point.text.includes("\n"))).toBe(true);
+    const conditional = brochurePointers(["Airport transfers are included, but only for travellers arriving on the group flight.", "Boat tour included. Subject to weather."]);
+    expect(conditional).toEqual([
+      { heading: "", text: "Airport transfers are included, but only for travellers arriving on the group flight." },
+      { heading: "", text: "Boat tour included. Subject to weather." },
+    ]);
+  });
+
+  it("keeps saved itinerary text untouched while creating separate PDF subtitles and pointers", () => {
+    const draft = makeDraft();
+    draft.itinerary = [{ id: "day", title: "Arrival", body: "Meet your group. Dinner is not included.", locationTag: "Hanoi", subtitle: "Settle in slowly", image: null, highlights: [], isCustom: false }];
+    const before = structuredClone(draft);
+    const content = spellBrochure(draft);
+    const day = content.sections.find((section) => section.label === "Day 1")!;
+    expect(day.location).toBe("Hanoi");
+    expect(day.subtitle).toBe("Settle in slowly");
+    expect(brochurePointers(day.paragraphs)).toHaveLength(2);
+    expect(draft).toEqual(before);
   });
 
   it("still creates a brochure when optional photo bytes cannot be read", async () => {

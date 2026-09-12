@@ -8,6 +8,8 @@ export interface BrochureSection {
   title: string;
   paragraphs: string[];
   imageUrl?: string;
+  location?: string;
+  subtitle?: string;
 }
 
 /** Portable content for the PDF renderer; never written back to the CMS. */
@@ -19,6 +21,9 @@ export interface SpellBrochure {
   pageUrl: string;
   filename: string;
   sections: BrochureSection[];
+  gallery: string[];
+  prices: { label: string; amount: string; notes: string[] }[];
+  bookingNotes: string[];
 }
 
 /** Converts the editor's lightweight markup to readable PDF text, retaining safe link destinations. */
@@ -58,7 +63,10 @@ export function spellBrochure(draft: SpellDraft): SpellBrochure {
   let dayNumber = 0;
   for (const day of draft.itinerary.filter(dayHasContent)) {
     const label = day.isCustom ? "Optional experience" : `Day ${++dayNumber}`;
-    add(label, day.title || label, [day.locationTag, day.subtitle, day.body, ...day.highlights.map((item) => item.text.trim() ? `• ${item.text}` : "")], day.image?.url, true);
+    add(label, day.title || label, [day.body, ...day.highlights.map((item) => item.text.trim() ? `• ${item.text}` : "")], day.image?.url, true);
+    const section = sections[sections.length - 1];
+    section.location = brochureText(day.locationTag);
+    section.subtitle = brochureText(day.subtitle);
   }
   add("The highlights", "Moments to look forward to", draft.tripHighlights.map((item) => clean([item.title, item.description]).join(" — ")));
   if (stayHasContent(draft)) {
@@ -87,7 +95,14 @@ export function spellBrochure(draft: SpellDraft): SpellBrochure {
     details: clean([draft.location, draft.dates, draft.days > 0 ? `${draft.days} days${draft.nights > 0 ? ` / ${draft.nights} nights` : ""}` : ""]),
     coverUrl: draft.hero?.url ?? draft.cover?.url ?? draft.mobileHero?.url,
     pageUrl: absoluteUrl(draft.slug.trim() ? `/live/${encodeURIComponent(draft.slug.trim())}` : "/live"),
-    filename: `Logout-Spells-${filenameBase}-Brochure.pdf`,
+    filename: `Logout-Spells-${filenameBase}-Grimoire.pdf`,
     sections,
+    gallery: draft.gallery.map((image) => image.url).filter(Boolean),
+    prices: tiers.length > 0 ? tiers.map((tier) => ({
+      label: brochureText(tier.label || "Per person"),
+      amount: formatINR(tier.price),
+      notes: clean([tier.badge, tier.availability, tier.bookingAmount > 0 ? `Booking amount: ${formatINR(tier.bookingAmount)}` : "", tier.remainingNote ?? draft.pricing?.remainingNote ?? ""]),
+    })) : [{ label: "Per person", amount: Number.isFinite(price) && price > 0 ? formatINR(price) : "Prices TBA", notes: [] }],
+    bookingNotes: clean([draft.pricing?.taxNote ?? "", tiers.length === 0 ? draft.pricing?.remainingNote ?? "" : "", draft.pricing?.note ?? ""]),
   };
 }
