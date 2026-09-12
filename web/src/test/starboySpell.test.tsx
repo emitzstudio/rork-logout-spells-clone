@@ -11,8 +11,10 @@ import { describe, expect, it, vi } from "vitest";
 import { RichBody } from "@/components/dashboard/builder/RichText";
 import { BookingStrip, SpellHost, SpellJourney, SpellPricing, SpellStay } from "@/components/spell/SpellSections";
 import { bookingService } from "@/data/booking";
-import { publishedRequestTerms, brochureLink } from "@/data/publishedPricing";
-import { mapSpell, pageFromDraft } from "@/integrations/supabase/mappers";
+import { spellFromDraft } from "@/data/publish";
+import { SpellPageBody } from "@/components/dashboard/builder/SpellPreview";
+import { publishedRequestTerms, brochureLink, withBrochureUrl } from "@/data/publishedPricing";
+import { mapSpell, pageFromDraft, spellWritePayload } from "@/integrations/supabase/mappers";
 import type { ActiveDepartureRow, SpellRow } from "@/integrations/supabase/mappers";
 import { supabase } from "@/integrations/supabase/client";
 import { tripJsonLd } from "@/lib/seo";
@@ -42,6 +44,46 @@ const departure: ActiveDepartureRow = {
 };
 const spell = mapSpell(row, departure, []);
 const draft = spell.draft!;
+
+describe("Starboy PDF dashboard persistence", () => {
+  it("retains the brochure and latest edited content through save, payload and reload", () => {
+    const edited = structuredClone(draft);
+    edited.about.body = "Dashboard-edited story";
+    edited.itinerary[0].body = "Dashboard-edited day";
+    edited.price = "85000";
+    const saved = spellFromDraft({ draft: edited, slug: spell.slug, status: "published", existing: spell });
+    const payload = spellWritePayload(saved, saved.draft!, row.published_at);
+    const reloaded = mapSpell({ ...row, ...payload } as SpellRow, departure, []).draft!;
+    expect(reloaded.about.body).toBe(edited.about.body);
+    expect(reloaded.itinerary[0].body).toBe(edited.itinerary[0].body);
+    expect(reloaded.price).toBe("85000");
+    expect(brochureLink(reloaded.pricing)).toBe(brochureLink(draft.pricing));
+    const html = renderToStaticMarkup(createElement(SpellPricing, { draft: reloaded, onBook: () => {} }));
+    expect(html).toContain("85,000");
+    expect(html).toContain(brochure.fileName);
+    expect(html).not.toContain(">TBA</p>");
+    expect(reloaded.pricing?.note).toBe(draft.pricing?.note);
+  });
+  it("keeps an existing brochure for older drafts and allows explicit removal", () => {
+    const old = { ...draft, pricing: undefined };
+    const saved = spellFromDraft({ draft: old, slug: spell.slug, status: "published", existing: spell });
+    expect(saved.draft?.pricing).toEqual(draft.pricing);
+    const cleared = { ...draft, pricing: withBrochureUrl(draft.pricing, "") };
+    const removed = spellFromDraft({ draft: cleared, slug: spell.slug, status: "published", existing: spell });
+    expect(brochureLink(removed.draft?.pricing)).toBeNull();
+  });
+  it("revives valid brochure links even without a legacy tiers array", () => {
+    const changed = { ...row, page: { ...(row.page as object), pricing: { brochureUrl: draft.pricing!.brochureUrl } } };
+    expect(brochureLink(mapSpell(changed, departure, []).draft?.pricing)).toBe(brochureLink(draft.pricing));
+  });
+  it("shows the tierless PDF in the dashboard preview and clearly labels it in the hero", () => {
+    const html = renderToStaticMarkup(createElement(SpellPageBody, { draft, device: "mobile" }));
+    expect(html).toContain("Download brochure (PDF)");
+    expect(html).toContain(brochure.fileName);
+    const live = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft, onBook: () => {} })));
+    expect(live.split("</section>")[0]).toContain("Download itinerary (PDF)");
+  });
+});
 
 describe("Starboy TBA itinerary", () => {
   it("uses the red-lit upload and AI extension without changing trip terms or misattributing the photo", () => {

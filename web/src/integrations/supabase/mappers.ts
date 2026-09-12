@@ -77,13 +77,12 @@ const reviveImage = (raw: unknown): DraftImage | null => {
 const reviveImages = (raw: unknown): DraftImage[] =>
   Array.isArray(raw) ? raw.map(reviveImage).filter((i): i is DraftImage => i !== null) : [];
 
-/** Revives the optional tiered pricing block; anything malformed reads as "one price". */
+/** Revives valid price tiers and independent PDF links, including legacy brochure-only blocks. */
 const revivePricing = (raw: unknown): PricingBlock | undefined => {
   if (typeof raw !== "object" || raw === null) return undefined;
   const doc = raw as Partial<PricingBlock> & { tiers?: unknown };
-  if (!Array.isArray(doc.tiers)) return undefined;
   const tiers: PriceTier[] = [];
-  for (const [index, item] of doc.tiers.entries()) {
+  for (const [index, item] of (Array.isArray(doc.tiers) ? doc.tiers : []).entries()) {
     if (typeof item !== "object" || item === null) continue;
     const tier = item as Partial<PriceTier>;
     const price = Number(tier.price);

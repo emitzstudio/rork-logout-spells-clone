@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { brochureLink } from "@/data/publishedPricing";
 import { AlertCircle, ArrowLeft, Check, Eye, Save, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -674,8 +675,15 @@ function SpellBuilderEditor() {
    * Save - writes the spell into the local CMS with the chosen Visibility.
    * Setting a live spell back to Draft here is what unpublishes it.
    */
+  const validBrochure = (): boolean => {
+    if (!draft.pricing?.brochureUrl?.trim() || brochureLink(draft.pricing)) return true;
+    showToast("Please enter a valid PDF link in Basic Information before saving");
+    jumpToSection("basic");
+    return false;
+  };
+
   const handleSaveDraft = (): void => {
-    if (saving || publishState !== null) return;
+    if (saving || publishState !== null || !validBrochure()) return;
     setSaving(true);
     const existing = savedIdRef.current ? (getById(savedIdRef.current) ?? null) : null;
     const slug = uniqueSlug(draftSlugBase(draft), existing?.id);
@@ -711,7 +719,7 @@ function SpellBuilderEditor() {
 
   /** Publish - validate everything, run the ritual, land in the local CMS. */
   const handlePublish = (): void => {
-    if (publishState !== null) return;
+    if (publishState !== null || !validBrochure()) return;
     if (missingSections.length > 0) {
       setPublishAttempted(true);
       jumpToSection(missingSections[0]);

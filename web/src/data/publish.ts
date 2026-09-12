@@ -188,7 +188,8 @@ export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs
     inclusions: inclusions.length > 0 ? inclusions : (existing?.inclusions ?? []),
     formId: draft.formId ?? null,
     changes: [change, ...(existing?.changes ?? [])].slice(0, 4),
-    draft: { ...draft, name, slug, status: status === "published" ? "published" : "draft" },
+    // Older editor drafts can predate a brochure upload. Only an explicit pricing edit replaces it.
+    draft: { ...draft, pricing: draft.pricing ?? existing?.draft?.pricing, name, slug, status: status === "published" ? "published" : "draft" },
   };
 };
 

@@ -35,6 +35,7 @@ import {
   stayHasContent,
 } from "@/data/builder";
 import type { ItineraryDay, PreviewDevice, SpellDraft } from "@/data/builder";
+import { brochureLink } from "@/data/publishedPricing";
 import { CATEGORY_META, URGENCY_META, formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -610,9 +611,9 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
       {/* Where we'll stay */}
       {stayHasContent(draft) && <PreviewStay stay={draft.stay} symbol={symbol} />}
 
-      {/* Price & booking - tiered spells only */}
-      {draft.pricing !== undefined && tiers.length > 0 && (
-        <PreviewPricing pricing={draft.pricing} tiers={tiers} isMobile={isMobile} />
+      {/* Price & brochure, including trips without price tiers. */}
+      {draft.pricing !== undefined && (tiers.length > 0 || brochureLink(draft.pricing)) && (
+        <PreviewPricing pricing={draft.pricing} tiers={tiers} price={Number(draft.price)} isMobile={isMobile} />
       )}
 
       {/* What's included / not included */}

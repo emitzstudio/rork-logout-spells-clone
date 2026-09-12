@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, Instagram, MapPin, RefreshCw, Star, X } from "lucide-react";
+import { Check, ChevronDown, Download, Instagram, MapPin, RefreshCw, Star, X } from "lucide-react";
 import { useState } from "react";
 
 import { RichBody } from "@/components/dashboard/builder/RichText";
@@ -15,6 +15,7 @@ import type {
   StayBlock,
   TripHighlight,
 } from "@/data/builder";
+import { brochureLink } from "@/data/publishedPricing";
 import { formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -246,14 +247,17 @@ interface PreviewPricingProps {
   pricing: PricingBlock;
   /** Priced tiers, lead first (see pricingTiers). */
   tiers: PriceTier[];
+  price?: number;
   isMobile: boolean;
 }
 
-/** The tiered price cards - only spells selling seats at more than one price carry them. */
-export function PreviewPricing({ pricing, tiers, isMobile }: PreviewPricingProps) {
+/** Mirrors public pricing and the brochure link, even when prices are still TBA. */
+export function PreviewPricing({ pricing, tiers, price = 0, isMobile }: PreviewPricingProps) {
+  const brochure = brochureLink(pricing);
   return (
     <div className={blockClass}>
       <p className={eyebrowClass}>Price & booking</p>
+      {tiers.length === 0 && <p className="mt-4 text-center font-serif text-xl text-cream">{price > 0 ? `${formatINR(price)} per person` : "Prices TBA"}</p>}
       <div className={cn("mt-4 grid gap-3", tiers.length > 1 && !isMobile && "grid-cols-2")}>
         {tiers.map((tier) => (
           <div
@@ -297,6 +301,7 @@ export function PreviewPricing({ pricing, tiers, isMobile }: PreviewPricingProps
       {pricing.note.trim() !== "" && (
         <p className="mt-3 text-center font-sans text-[8.5px] leading-snug text-cream/45">{pricing.note}</p>
       )}
+      {brochure && <a href={brochure} target="_blank" rel="noopener noreferrer" className="mx-auto mt-4 flex min-h-11 w-fit items-center gap-2 rounded-full border border-gold/40 px-4 text-xs text-gold-light hover:bg-gold/10"><Download size={14} aria-hidden /> Download brochure (PDF)</a>}
     </div>
   );
 }

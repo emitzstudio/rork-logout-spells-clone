@@ -1,0 +1,511 @@
+{
+  "spell": {
+    "id": "b1092026-a117-4c3d-9051-151020260001",
+    "slug": "the-starboy-spell",
+    "name": "The Starboy Spell",
+    "hook": "Bangkok nights. The Weeknd. Then the sea takes over in Phuket",
+    "category": "celebration",
+    "status": "published",
+    "urgency": "new",
+    "featured": true,
+    "location": "Bangkok & Phuket",
+    "region": "Bangkok & Phuket",
+    "duration_days": 7,
+    "nights": 6,
+    "price_minor": 8500000,
+    "currency": "INR",
+    "host_name": "",
+    "host_role": "",
+    "hero_url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-weeknd-stage-v4.webp",
+    "mobile_hero_url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-weeknd-portrait-v4.jpeg",
+    "cover_url": "",
+    "hero_as_cover": true,
+    "gradient": "from-[#3a2a14] via-[#241a0d] to-[#0a0806]",
+    "symbol": "✧",
+    "inclusions": [
+      "🎶 THE WEEKND concert tickets, standing or seating based on availability",
+      "✈️ Internal flight from Bangkok to Phuket",
+      "6 nights accommodation in party villas / 3 to 4 star hotels",
+      "MEALS : 🍳 6 breakfasts, 1 lunch and 1 dinner",
+      "🚐 All internal transfers, including airport pick ups and drop offs",
+      "🍜 BKK food crawl",
+      "💆‍♀️ Traditional Thai massage",
+      "🏝️ Phi Phi Island tour",
+      "🌅 Café Del Mar drop and entry",
+      "🏮 Phuket Old Town Market visit"
+    ],
+    "page": {
+      "faqs": [
+        {
+          "id": "faq-starboy-dates",
+          "answer": "The Starboy Spell runs from 9-15 October 2026: seven days through Bangkok and Phuket, Thailand.",
+          "question": "When and where does it run?"
+        },
+        {
+          "id": "faq-starboy-price",
+          "answer": "Prices, taxes and booking terms are TBA. You can send an inquiry now; no payment is collected and no seat is reserved by an inquiry.",
+          "question": "What is the price and booking amount?"
+        },
+        {
+          "id": "faq-starboy-included",
+          "answer": "The Weeknd concert on Day 3 and the Phi Phi island hopping tour on Day 5 are marked included. Thai cooking and the ATV ride are optional. Other activity costs, flights, transfers and meals have not yet been specified as inclusions.",
+          "question": "Which experiences are marked included?"
+        },
+        {
+          "id": "faq-starboy-details",
+          "answer": "Host, accommodation names, room arrangements and group size are to be announced. The villa stop is part of the itinerary, not a confirmed property or accommodation package.",
+          "question": "Who is hosting, and where will we stay?"
+        },
+        {
+          "id": "faq-starboy-concert",
+          "answer": "The itinerary places The Weeknd concert on Day 3. Venue, ticket category, timings and final event arrangements will be shared by the team. The performance image supplied by Logout Spells has an AI-extended background. It is illustrative, not a photograph of the Bangkok event, and does not imply an endorsement.",
+          "question": "What are the concert arrangements?"
+        },
+        {
+          "id": "faq-starboy-venues",
+          "answer": "Individual venues may have age, ID and entry requirements. Local laws and venue rules apply; the team will share the practical details before travel.",
+          "question": "Are there entry requirements for nightlife stops?"
+        }
+      ],
+      "host": {
+        "name": "",
+        "tags": [],
+        "about": "",
+        "image": null,
+        "quote": "",
+        "title": "",
+        "instagram": ""
+      },
+      "stay": {
+        "name": "Party Villas / 4 Star Hotels ",
+        "images": [],
+        "rating": 0,
+        "mapLabel": "",
+        "amenities": [],
+        "highlights": [],
+        "longDescription": "",
+        "shortDescription": "TBA"
+      },
+      "about": {
+        "body": "**The Starboy Spell** is seven days from Bangkok's art, street food and late-night energy to Phuket's beaches, Phi Phi island hopping and Old Town discoveries.\n\n**9-15 October 2026 · Bangkok & Phuket, Thailand**\n\nStart with a luxury Art Gallery tour, a drag show and underground clubs. Wander Iconsiam, Song What Road and Chinatown before a rooftop night. Thai cooking class if you're feeling extra cultural (optional)  **The Weeknd concert tickets are included**. Then reset with a spa day and fly to Phuket for beachside evenings, **included Phi Phi island hopping**, ATV riding if you need extra adventure and one last Old Town wander.\n\n**Priced 85,000, includes the tickets, the internal flights, activities and all transfers** ",
+        "image": null,
+        "quote": "Turn up the night. Slow down by the water.",
+        "layout": "full",
+        "heading": "After hours, beyond the ordinary."
+      },
+      "gallery": [
+        {
+          "id": "img-starboy-gallery1",
+          "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-bangkok-night-20260911.jpg",
+          "name": "Bangkok nights"
+        },
+        {
+          "id": "img-starboy-gallery2",
+          "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-phi-phi-20260911.jpg",
+          "name": "Phi Phi island scenery"
+        },
+        {
+          "id": "img-starboy-gallery3",
+          "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-phuket-beach-20260911.jpg",
+          "name": "Phuket coastline"
+        },
+        {
+          "id": "img-starboy-gallery4",
+          "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-old-town-20260911.jpg",
+          "name": "Phuket Old Town"
+        },
+        {
+          "id": "img-starboy-gallery-weeknd",
+          "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-weeknd-stage-v4.webp",
+          "name": "The Weeknd live on stage · Image supplied by Logout Spells; background extended with AI"
+        }
+      ],
+      "version": 1,
+      "audience": [
+        {
+          "id": "aud-mty2vt1f-gpcjf",
+          "icon": "heart",
+          "title": "WEEKEND FANS",
+          "description": ""
+        }
+      ],
+      "included": [
+        {
+          "id": "li-starboy-i1",
+          "icon": "star",
+          "text": "🎶 THE WEEKND concert tickets, standing or seating based on availability"
+        },
+        {
+          "id": "li-mty2n8by-1tbw0",
+          "icon": "sparkles",
+          "text": "✈️ Internal flight from Bangkok to Phuket"
+        },
+        {
+          "id": "li-mty2imdc-jndla",
+          "icon": "sparkles",
+          "text": "6 nights accommodation in party villas / 3 to 4 star hotels"
+        },
+        {
+          "id": "li-mty2mamk-kync1",
+          "icon": "sparkles",
+          "text": "MEALS : 🍳 6 breakfasts, 1 lunch and 1 dinner"
+        },
+        {
+          "id": "li-mty2mkgu-sz887",
+          "icon": "sparkles",
+          "text": "🚐 All internal transfers, including airport pick ups and drop offs"
+        },
+        {
+          "id": "li-mty2mqlz-w3txj",
+          "icon": "sparkles",
+          "text": " 🍜 BKK food crawl"
+        },
+        {
+          "id": "li-mty2mzou-iipa1",
+          "icon": "sparkles",
+          "text": " 💆‍♀️ Traditional Thai massage"
+        },
+        {
+          "id": "li-starboy-i2",
+          "icon": "compass",
+          "text": " 🏝️ Phi Phi Island tour"
+        },
+        {
+          "id": "li-mty2nk0s-wam9w",
+          "icon": "sparkles",
+          "text": " 🌅 Café Del Mar drop and entry"
+        },
+        {
+          "id": "li-mty2npzl-v9450",
+          "icon": "sparkles",
+          "text": "🏮 Phuket Old Town Market visit"
+        }
+      ],
+      "itinerary": [
+        {
+          "id": "day-starboy-1",
+          "body": "\nWe’re kicking things off the Bangkok way!\n\nFirst stop: **the dispensary** 🌿 followed by a little dose of local culture at an **art museum**. And if art is not your thing and you'd wanna get cheeky, then start your evening evening with a **Drag Show** 💋✨ \n\nOnce the sun goes down, it’s time to get dressed, grab your crew and dive into Bangkok’s underground nightlife. We’re heading to **Bacarrat or Apt 101** for drinks, music and a proper first night out.\n\n**Culture by day. Chaos by night.** Sounds like a good start to us. ;)\n\n\n\n",
+          "image": {
+            "id": "img-starboy-day1",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-bangkok-night-20260911.jpg",
+            "name": "Bangkok skyline at night"
+          },
+          "title": "Arrival ,Art/ Drag Show, Party Underground",
+          "isCustom": false,
+          "subtitle": "Friday, 9 October 2026",
+          "highlights": [
+            {
+              "id": "hl-mty2273x-nq7e0",
+              "text": "Check-in ",
+              "emoji": ""
+            },
+            {
+              "id": "hl-mty22pa4-okwc9",
+              "text": "Ice break the logout way 🌿 f",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-1a",
+              "text": "Art museum/ drag show",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-1b",
+              "text": "Underground clubs Bacarrat or Apt 101",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Bangkok"
+        },
+        {
+          "id": "day-starboy-2",
+          "body": "Today is for doing what we do best: **shopping, eating and pretending we’re not tired.**\n\nWe’re starting with some serious retail therapy at **ICONSIAM**  because obviously one cannot come to Bangkok and not shop. 🛍️\n\nThen it’s back to the villa for a little reset before we head out again.\n\nNext up: **Song Wat Road** for that cool, artsy Bangkok energy, followed by a proper **Chinatown food crawl**. Come hungry. Leave happy. 🍜🥢\n\nAnd because we refuse to end the night quietly, we’re taking it to the sky at **Akara Sky Hanuman** for rooftop drinks, city views and a little more dancing. 🌃🥂\n\nBasically: shop till you drop, eat till you can’t, then party non stop!!",
+          "image": {
+            "id": "img-starboy-day2",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-skyline-20260911.jpg",
+            "name": "Bangkok city skyline"
+          },
+          "title": "BKK Shopping , Food Crawl and Night Out",
+          "isCustom": false,
+          "subtitle": "Saturday, 10 October 2026",
+          "highlights": [
+            {
+              "id": "hl-starboy-2a",
+              "text": "Iconsiam Mall for shopping",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-2b",
+              "text": "Chinatown food crawl",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-2c",
+              "text": "Akara Skyhanuman rooftop Club",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Bangkok"
+        },
+        {
+          "id": "day-starboy-3",
+          "body": "*Okay. This is the one.*\n\nSleep in, slow morning, good food and absolutely no pressure to do anything too ambitious because TONIGHT IS CONCERT NIGHT.\n\nFor anyone who wants to get a little more hands on with Thai culture, we have an **optional Thai cooking experience** 🍜🌶️\n\nThen it’s time to get ready.\n\n**Outfits? Planned.\nCamera roll? Empty.\nEnergy? Questionable.\nExcitement? VERY REAL.**\n\n**Because tonight we’re going to see THE WEEKND LIVE. 🖤🌙**\n\nConcert night. Bangkok. The Weeknd. You know the drill.\n\nGet ready to scream every lyric.",
+          "image": {
+            "id": "img-starboy-day3",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-weeknd-stage-v4.webp",
+            "name": "The Weeknd performing under red stage lights. Background extended with AI; not the Bangkok event or an endorsement."
+          },
+          "title": "WEEDKEND DAY",
+          "isCustom": false,
+          "subtitle": "Sunday, 11 October 2026",
+          "highlights": [
+            {
+              "id": "hl-starboy-3a",
+              "text": "Thai cooking · Optional",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-3b",
+              "text": "The Weeknd concert · Included",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Bangkok"
+        },
+        {
+          "id": "day-starboy-4",
+          "body": "After last night’s concert chaos, we’re taking things slow today.\n\nTime for a proper **Thai massage + spa day** because our bodies have officially filed a complaint. 💆‍♀️✨\n\nOnce we’re feeling brand new, we’re packing up and **flying to Phuket!**\n\nAnd obviously, we’re not wasting a second once we get there.\n\nWe’re heading straight for a beachside dinner + drinks 🌊🍸 with sunset skies, salty hair and that “okay, this is exactly where we’re supposed to be” feeling.\n\nBangkok was a vibe. Phuket is about to be a whole mood.",
+          "image": {
+            "id": "img-starboy-day4",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-phuket-beach-20260911.jpg",
+            "name": "Phuket beach"
+          },
+          "title": " Spa day, Bbye BKK, Hello BEACHES 🌴🧖‍♀️🍹",
+          "isCustom": false,
+          "subtitle": "Monday, 12 October 2026",
+          "highlights": [
+            {
+              "id": "hl-starboy-4a",
+              "text": "Thai massage · Spa day",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-4b",
+              "text": "Fly to Phuket",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-4c",
+              "text": "Beachside dinner & drinks",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Bangkok to Phuket"
+        },
+        {
+          "id": "day-starboy-5",
+          "body": "Today we’re trading city streets for turquoise water and tiny islands.\n\nWe’re off on our **Phi Phi Island Hopping Tour** 🛥️🌊\n\nThink crystal clear water, beach stops, boat rides, swimming, sunshine and approximately 8000 photos that will all look like a travel campaign.\n\nThis is your main character on a boat day.\n\nSunscreen? YES.\nSwimwear? YES.\nCamera? OBVIOUSLY.\nLeaving the water? Unfortunately, eventually.\n\nIsland hopping, but make it iconic.",
+          "image": {
+            "id": "img-starboy-day5",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-phi-phi-20260911.jpg",
+            "name": "Phi Phi island scenery"
+          },
+          "title": "Phi Phi Island",
+          "isCustom": false,
+          "subtitle": "Tuesday, 13 October 2026",
+          "highlights": [
+            {
+              "id": "hl-starboy-5a",
+              "text": "Phi Phi shopping tour · Included",
+              "emoji": ""
+            },
+            {
+              "id": "hl-mty2qa72-7hwc3",
+              "text": "Lunch included",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Phi Phi"
+        },
+        {
+          "id": "day-starboy-6",
+          "body": "We’re calling this one Adventure Day.\n\nFor the adrenaline buddies, there’s an **optional ATV ride 🏎️💨** because apparently relaxing on a beach for an entire day is too easy.\n\nThen we slow things down and head to **Café del Mar for lunch, drinks and that dreamy Phuket sunset moment. 🌅🍹**\n\nAnd just when you thought we were done...\n\nPATONG STREET.\n\nNightlife, music, dancing and absolutely no promises about what time we’re getting home. 🪩\n\nGo fast. Watch the sunset. Dance till late.",
+          "image": {
+            "id": "img-starboy-day6",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-phuket-beach-20260911.jpg",
+            "name": "The Phuket coastline"
+          },
+          "title": "Adventure + Chaos 🏎️🌅🪩",
+          "isCustom": false,
+          "subtitle": "Wednesday, 14 October 2026",
+          "highlights": [
+            {
+              "id": "hl-starboy-6a",
+              "text": "ATV ride · Optional",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-6b",
+              "text": "Cafe del Mar · Lunch & sunset",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-6c",
+              "text": "Patong Street",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Phuket"
+        },
+        {
+          "id": "day-starboy-7",
+          "body": "Our last day calls for a little slow living.\n\nWe’re wandering through **Phuket Old Town Market**, grabbing cute little things we definitely didn’t plan on buying, discovering local Thai brands and hunting down the perfect souvenirs. 🛍️🎀\n\nThen it’s time for café hopping, one last iced Thai tea, one last wander and approximately 47 final photos because nobody is emotionally ready to leave yet. ☕️📸\n\nWe’ll squeeze in a little more shopping, pick up those “I got this in Thailand” pieces and then...\n\n**Head to the airport. ✈️**\n\nSeven days. Two cities. Islands, concerts, rooftops, street food, beach days and probably way too many photos.\n\nUntil the next adventure. 🤍",
+          "image": {
+            "id": "img-starboy-day7",
+            "url": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/starboy-old-town-20260911.jpg",
+            "name": "Phuket Old Town clock tower and streets"
+          },
+          "title": "SLOW GOODBYES 🥐",
+          "isCustom": false,
+          "subtitle": "Thursday, 15 October 2026",
+          "highlights": [
+            {
+              "id": "hl-starboy-7a",
+              "text": "Old Town market & cafés",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-7b",
+              "text": "Local Thai brands & souvenirs",
+              "emoji": ""
+            },
+            {
+              "id": "hl-starboy-7c",
+              "text": "Head to the airport",
+              "emoji": ""
+            }
+          ],
+          "locationTag": "Phuket"
+        }
+      ],
+      "quickInfo": [
+        {
+          "id": "duration",
+          "icon": "clock",
+          "label": "Duration",
+          "value": "7 days · 9-15 October 2026"
+        },
+        {
+          "id": "location",
+          "icon": "map-pin",
+          "label": "Location",
+          "value": "Bangkok & Phuket, Thailand"
+        },
+        {
+          "id": "highlight",
+          "icon": "sparkles",
+          "label": "Highlight",
+          "value": "The Weeknd concert & Phi Phi island hopping"
+        },
+        {
+          "id": "vibe",
+          "icon": "leaf",
+          "label": "Vibe",
+          "value": "City lights, late nights & island days"
+        },
+        {
+          "id": "perfectFor",
+          "icon": "heart",
+          "label": "Perfect for",
+          "value": "Music lovers, night owls & island wanderers"
+        }
+      ],
+      "notIncluded": [
+        {
+          "id": "li-mty20e2j-22hmx",
+          "icon": "compass",
+          "text": "International Flights "
+        },
+        {
+          "id": "li-mty20k4b-v2eb0",
+          "icon": "compass",
+          "text": "Visa/Insurance "
+        },
+        {
+          "id": "li-mty1zzkz-5gtvc",
+          "icon": "compass",
+          "text": "Drag show/Art musuem tickets · Optional"
+        },
+        {
+          "id": "li-starboy-o1",
+          "icon": "feast",
+          "text": "Thai cooking · Optional"
+        },
+        {
+          "id": "li-starboy-o2",
+          "icon": "compass",
+          "text": "ATV ride · Optional"
+        },
+        {
+          "id": "li-mty24n0b-fsx8i",
+          "icon": "compass",
+          "text": "Entry to all clubs"
+        },
+        {
+          "id": "li-mty2him7-a4wry",
+          "icon": "compass",
+          "text": "Meals not mentioned"
+        }
+      ],
+      "tripHighlights": [
+        {
+          "id": "th-starboy-1",
+          "emoji": "",
+          "title": "The night at the heart of it",
+          "accent": true,
+          "description": "The Weeknd concert on Day 3, marked included in this itinerary."
+        },
+        {
+          "id": "th-starboy-2",
+          "emoji": "",
+          "title": "Bangkok after hours",
+          "accent": false,
+          "description": "Art, drag, underground clubs, Chinatown flavours and rooftop views."
+        },
+        {
+          "id": "th-starboy-3",
+          "emoji": "",
+          "title": "Let the islands take over",
+          "accent": false,
+          "description": "Phi Phi island hopping, Phuket's coastline and lunch to sunset at Cafe del Mar."
+        },
+        {
+          "id": "th-starboy-4",
+          "emoji": "",
+          "title": "One last Old Town wander",
+          "accent": false,
+          "description": "Cafés, local Thai brands and souvenirs before the airport."
+        }
+      ]
+    },
+    "views": 0,
+    "created_by": null,
+    "published_at": "2026-09-11T18:55:37.416968+00:00",
+    "created_at": "2026-09-11T18:55:37.416968+00:00",
+    "updated_at": "2026-09-12T07:58:04.283335+00:00",
+    "form_id": "d2d97a47-7da8-4047-b764-93068f8df89b"
+  },
+  "departure": {
+    "id": "b1092026-a117-4c3d-9051-151020260002",
+    "spell_id": "b1092026-a117-4c3d-9051-151020260001",
+    "date_label": "9-15 October 2026",
+    "start_date": null,
+    "end_date": null,
+    "seats_total": 10,
+    "seats_booked": 0,
+    "price_minor": null,
+    "status": "scheduled",
+    "created_at": "2026-09-11T18:55:37.416968+00:00",
+    "updated_at": "2026-09-12T07:58:04.465817+00:00"
+  }
+}

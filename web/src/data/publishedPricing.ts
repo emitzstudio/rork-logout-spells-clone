@@ -16,6 +16,11 @@ export function brochureLink(pricing: PricingBlock | undefined): string | null {
   }
 }
 
+/** Update only the brochure reference, retaining tiers and all existing commercial terms. */
+export function withBrochureUrl(pricing: PricingBlock | undefined, brochureUrl: string): PricingBlock {
+  return { tiers: [], remainingNote: "", taxNote: "", note: "", ...pricing, brochureUrl };
+}
+
 /** Published amounts for an offline quote request, not an online payment calculation. */
 export function publishedRequestTerms(draft: SpellDraft | undefined, seats: number): string[] | null {
   if (draft?.pricing?.requestMode !== "published-terms") return null;

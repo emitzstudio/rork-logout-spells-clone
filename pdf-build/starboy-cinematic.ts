@@ -10,8 +10,14 @@ const white = rgb(0.9804, 0.9608, 0.9412);
 const red = rgb(1, 0.3765, 0.298);
 const muted = rgb(0.72, 0.7, 0.69);
 
+/** Optional current dashboard copy; the original numbered v4 edition remains reproducible. */
+export interface StarboyDashboardEdition {
+  price: number;
+  bodies: string[];
+}
+
 /** Isolated nine-page concert edition. Shared travel brochures never enter this renderer. */
-export async function buildCinematicStarboy(spec: TripSpec, publish: boolean): Promise<void> {
+export async function buildCinematicStarboy(spec: TripSpec, publish: boolean, dashboard?: StarboyDashboardEdition): Promise<void> {
   if (spec.days.length !== 7 || !spec.final.announcement || spec.creator || spec.memoriesFile) throw new Error("Cinematic renderer expects the seven-day, inquiry-only Starboy edition.");
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
@@ -102,7 +108,7 @@ export async function buildCinematicStarboy(spec: TripSpec, publish: boolean): P
     if (!day.points) throw new Error(`Missing supplied points on day ${index + 1}`);
     const p = page();
     const concert = index === 2;
-    const imageH = concert ? 430 : day.points.length === 1 ? 500 : day.points.length === 2 ? 450 : day.points.length === 3 ? 390 : 290;
+    const imageH = dashboard ? 330 : concert ? 430 : day.points.length === 1 ? 500 : day.points.length === 2 ? 450 : day.points.length === 3 ? 390 : 290;
     const imageBottom = H - imageH;
     await photo(p, day.img, 0, imageBottom, W, imageH, concert ? 0.77 : 0.5, concert ? 0.1 : 0.5);
     fade(p, imageBottom - 1, concert ? 100 : 70);
@@ -113,6 +119,20 @@ export async function buildCinematicStarboy(spec: TripSpec, publish: boolean): P
     fitted(p, (day.titleA + day.titleB).toUpperCase(), 42, titleY, 39, W - 84);
     rule(p, titleY - 22, 42, 64, red, 0.85);
     const firstY = titleY - 61;
+    if (dashboard) {
+      let y = firstY + 8;
+      for (const block of dashboard.bodies[index].split(/\n\s*\n/).filter(Boolean)) {
+        y = paragraph(p, block, 42, y, W - 84, 10.2, white, 15.5) - 8;
+      }
+      if (y < (concert ? 135 : 96)) throw new Error(`Dashboard day ${index + 1} overlaps the footer: ${y}`);
+      if (day.imageCredit) {
+        paragraph(p, day.imageCredit.text, 42, 106, W - 84, 7, muted, 11);
+        paragraph(p, day.imageCredit.note, 42, 88, W - 84, 6.8, muted, 10);
+      }
+      if (index === 6) text(p, "END OF THE SPELL", 42, 80, 12, display, red, 1.1);
+      footer(p, day.footer);
+      continue;
+    }
     const step = Math.min(63, (firstY - 123) / Math.max(1, day.points.length - 1));
     for (const [i, point] of day.points.entries()) {
       const y = firstY - i * step;
@@ -133,6 +153,29 @@ export async function buildCinematicStarboy(spec: TripSpec, publish: boolean): P
 
   const f = spec.final;
   const last = page();
+  if (dashboard) {
+    await photo(last, f.img, 0, 615, W, H - 615, 0.65, 0.1);
+    fade(last, 612, 100);
+    text(last, f.subline, 42, 595, 8.5, semi, red, 1.2);
+    text(last, "THE SPELL / PER PERSON", 42, 566, 10, semi, white, 1.2);
+    text(last, `INR ${dashboard.price.toLocaleString("en-IN")}`, 42, 510, 58, display, red);
+    rule(last, 488);
+    text(last, f.leftHeading, 42, 463, 9, semi, red, 1.2);
+    text(last, f.rightHeading, 318, 463, 9, semi, red, 1.2);
+    for (const [column, items] of [f.lists?.left ?? [], f.lists?.right ?? []].entries()) {
+      let y = 440;
+      const x = column === 0 ? 42 : 318;
+      const maxW = column === 0 ? 246 : 235;
+      for (const item of items) y = paragraph(last, item, x, y, maxW, 9.3, white, 13) - 9;
+      if (y < 132) throw new Error(`Dashboard inclusions overflow: ${y}`);
+    }
+    last.drawRectangle({ x: 42, y: 96, width: W - 84, height: 33, color: red });
+    text(last, "VIEW TRIP & CONTACT THE TEAM", 58, 107, 10, semi, black, 1.2);
+    const link = pdf.context.register(pdf.context.obj({ Type: "Annot", Subtype: "Link", Rect: [42, 96, W - 42, 129], Border: [0, 0, 0], A: { Type: "Action", S: "URI", URI: PDFString.of(f.announcement!.url) } }));
+    last.node.set(PDFName.of("Annots"), pdf.context.obj([link]));
+    text(last, "Updated from the dashboard · 12 September 2026", 42, 76, 8, body, muted);
+    footer(last, "09 · THE STARBOY SPELL");
+  } else {
   await photo(last, f.img, 0, 520, W, H - 520, 0.65, 0.1);
   fade(last, 518, 160);
   text(last, f.subline, 42, 498, 8.5, semi, red, 1.2);
@@ -152,6 +195,7 @@ export async function buildCinematicStarboy(spec: TripSpec, publish: boolean): P
   text(last, f.closeThanks, 44, 96, 12, display, white);
   text(last, f.closeHand, 44, 76, 15, display, red);
   footer(last, "09 · THE STARBOY SPELL");
+  }
 
   const bytes = await pdf.save();
   writeFileSync(spec.fileName, bytes);

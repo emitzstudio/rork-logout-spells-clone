@@ -3,6 +3,7 @@ import { Check, ChevronDown, CircleDashed, ClipboardList, Plus, Sparkles, Star }
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import BrochureField from "@/components/dashboard/builder/BrochureField";
 import DateRangeField from "@/components/dashboard/builder/DateRangeField";
 import {
   SegmentedField,
@@ -274,6 +275,8 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
           helper="Small circles cast stronger spells."
         />
       </div>
+
+      <BrochureField pricing={draft.pricing} onChange={(pricing) => patch({ pricing })} />
 
       {/* Category */}
       <div>
