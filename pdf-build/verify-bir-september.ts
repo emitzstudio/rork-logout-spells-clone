@@ -6,27 +6,36 @@ import * as mupdf from "mupdf";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
 
-const originalName = "Logout-Spells-Bir-Sept-2026.pdf";
-const currentName = "Logout-Spells-Bir-18-21-Sept-2026-Grimoire-v1.pdf";
+const is18To20 = process.argv.includes("--18-20");
+const range = is18To20 ? "18 - 20" : "18 - 21";
+const originalName = is18To20
+  ? "../web/public/brochures/Logout-Spells-The-Bir-Spell-11-13-Sept-2026.pdf"
+  : "Logout-Spells-Bir-Sept-2026.pdf";
+const currentName = is18To20
+  ? "Logout-Spells-The-Bir-Spell-18-20-Sept-2026-v1.pdf"
+  : "Logout-Spells-Bir-18-21-Sept-2026-Grimoire-v1.pdf";
 const original = readFileSync(originalName);
 const current = readFileSync(currentName);
 const hash = (bytes: Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
 const compact = (text: string): string => text.normalize("NFKC").replace(/\s+/g, "");
-assert.equal(hash(original), "e6339dfcb6992a2b730e242ecf63d231b8caed81a3735f219107d03089b5b797", "Original Bir PDF must remain unchanged");
+assert.equal(hash(original), is18To20
+  ? "8100d41660bde53bb380fd5042fb8c1a647d65ea474a0a84f9fad03d48b69273"
+  : "e6339dfcb6992a2b730e242ecf63d231b8caed81a3735f219107d03089b5b797", "Original Bir PDF must remain unchanged");
+assert.equal(hash(readFileSync("Logout-Spells-Bir-18-21-Sept-2026-Grimoire-v1.pdf")), "c8aed003dcbc26e03d0a7c32240df8c0c8bedb9381211314f51e11abc637175d", "Previously approved 18–21 edition must remain unchanged");
 const oldDoc = mupdf.Document.openDocument(original, "application/pdf");
 const newDoc = mupdf.Document.openDocument(current, "application/pdf");
 assert.equal(oldDoc.countPages(), 6);
 assert.equal(newDoc.countPages(), 6);
-assert.equal(newDoc.getMetaData("info:Title"), "Logout Spells · The Bir Spell · 18-21 September 2026");
+assert.equal(newDoc.getMetaData("info:Title"), `Logout Spells · The Bir Spell · ${range.replaceAll(" ", "")} September 2026`);
 for (const key of ["info:Author", "info:Subject"]) assert.equal(newDoc.getMetaData(key), oldDoc.getMetaData(key));
 
 // These are the five date-bearing text lines; all other pixels must match the original.
 const revisions: Record<number, { oldText: string; newText: string; baseline: number }> = {
-  0: { oldText: "11 - 13 SEPTEMBER 2026", newText: "18 - 21 SEPTEMBER 2026", baseline: 322 },
+  0: { oldText: "11 - 13 SEPTEMBER 2026", newText: `${range} SEPTEMBER 2026`, baseline: 322 },
   2: { oldText: "DAY 01 · FRIDAY, 11 SEPTEMBER · BIR", newText: "DAY 01 · FRIDAY, 18 SEPTEMBER · BIR", baseline: 572 },
   3: { oldText: "DAY 02 · SATURDAY, 12 SEPTEMBER · BIR", newText: "DAY 02 · SATURDAY, 19 SEPTEMBER · BIR", baseline: 572 },
   4: { oldText: "DAY 03 · SUNDAY, 13 SEPTEMBER · BAIJNATH", newText: "DAY 03 · SUNDAY, 20 SEPTEMBER · BAIJNATH", baseline: 572 },
-  5: { oldText: "BIR · 11 - 13 SEPTEMBER 2026 · ONLY 15 SPOTS", newText: "BIR · 18 - 21 SEPTEMBER 2026 · ONLY 15 SPOTS", baseline: 704 },
+  5: { oldText: "BIR · 11 - 13 SEPTEMBER 2026 · ONLY 15 SPOTS", newText: `BIR · ${range} SEPTEMBER 2026 · ONLY 15 SPOTS`, baseline: 704 },
 };
 type TextLine = { text: string; bbox: { x: number; y: number; w: number; h: number } };
 function lines(page: mupdf.Page): TextLine[] {
@@ -76,7 +85,7 @@ for (let index = 0; index < 6; index++) {
     }
   }
   if (revision) assert(changed > 0, `Date wasn't visually changed on page ${index + 1}`);
-  writeFileSync(`.cache/bir-september-review-p${index + 1}.png`, pixels.asPNG());
+  writeFileSync(`.cache/bir-september${is18To20 ? "-18-20" : ""}-review-p${index + 1}.png`, pixels.asPNG());
   oldPixels.destroy();
   pixels.destroy();
   oldPage.destroy();

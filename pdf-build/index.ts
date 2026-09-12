@@ -5,6 +5,7 @@
  * Run: bun run index.ts            ->  every edition
  *      bun run index.ts content    ->  only the Content Spell
  *      bun run index.ts bir-september -> dated Bir Grimoire (18-21 September), no overwrite
+ *      bun run index.ts bir-september-18-20 -> dates-only 18-20 September edition, no overwrite
  *
  * Editions:
  *   bir      The Bir Spell, 11-13 September 2026            -> Logout-Spells-Bir-Sept-2026.pdf
@@ -955,6 +956,15 @@ const birSeptember: EditionSpec = {
   final: { ...bir.final, subline: "BIR · 18 - 21 SEPTEMBER 2026 · ONLY 15 SPOTS" },
 };
 
+/** Dates-only 18–20 September revision of the original public Bir brochure. */
+const birSeptember18To20: EditionSpec = {
+  ...birSeptember,
+  fileName: "Logout-Spells-The-Bir-Spell-18-20-Sept-2026-v1.pdf",
+  docTitle: "Logout Spells · The Bir Spell · 18-20 September 2026",
+  cover: { ...bir.cover, dateLine: "18 - 20 SEPTEMBER 2026" },
+  final: { ...bir.final, subline: "BIR · 18 - 20 SEPTEMBER 2026 · ONLY 15 SPOTS" },
+};
+
 /* ============ THE CONTENT SPELL WITH ANSHIKA · 25-27 SEPT 2026 ============ */
 /* September revision: the original six designed pages remain unchanged.
  * A seventh page of previous spells and review excerpts precedes booking. */
@@ -1043,7 +1053,7 @@ const content: EditionSpec = {
 };
 
 /* -------------------------------- Build --------------------------------- */
-const editions: Record<string, EditionSpec> = { bir, content, "bir-september": birSeptember };
+const editions: Record<string, EditionSpec> = { bir, content, "bir-september": birSeptember, "bir-september-18-20": birSeptember18To20 };
 const only = process.argv.slice(2).filter((arg) => arg !== "--publish");
 const unknown = only.filter((key) => !(key in editions));
 if (unknown.length > 0) throw new Error(`unknown edition(s): ${unknown.join(", ")} (known: ${Object.keys(editions).join(", ")})`);

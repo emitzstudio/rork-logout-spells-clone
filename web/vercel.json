@@ -2,6 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
+      "source": "/brochures/Logout-Spells-The-Bir-Spell-11-13-Sept-2026.pdf",
+      "destination": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/Logout-Spells-The-Bir-Spell-18-20-Sept-2026-v1.pdf",
+      "permanent": true
+    },
+    {
       "source": "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire.pdf",
       "destination": "https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v8.pdf",
       "permanent": true
