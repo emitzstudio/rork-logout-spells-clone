@@ -1,5 +1,5 @@
 /** The approved Starboy edition, shared by downloads, redirects and build checks. */
-export const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf";
+export const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v7.pdf";
 export const STARBOY_BROCHURE_URL = `https://z57wkqd89o09lsi6kc7v1-web.rork.live${STARBOY_BROCHURE_PATH}`;
 
 /** Superseded public editions. Keep these paths reserved for redirects, never PDF files. */
@@ -11,13 +11,19 @@ export const RETIRED_STARBOY_BROCHURE_PATHS: readonly string[] = [
   "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Dashboard-v5.pdf",
 ];
 
-/** Only replaces known retired Starboy references; unrelated and invalid inputs stay untouched. */
+/** Earlier Grimoire assets remain immutable, but saved download references use the latest terms. */
+export const SUPERSEDED_STARBOY_BROCHURE_PATHS: readonly string[] = [
+  ...RETIRED_STARBOY_BROCHURE_PATHS,
+  "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf",
+];
+
+/** Only replaces known superseded Starboy references; unrelated and invalid inputs stay untouched. */
 export function replaceRetiredStarboyBrochure(value: string): string {
   const trimmed = value.trim();
-  if (RETIRED_STARBOY_BROCHURE_PATHS.includes(trimmed)) return STARBOY_BROCHURE_PATH;
+  if (SUPERSEDED_STARBOY_BROCHURE_PATHS.includes(trimmed)) return STARBOY_BROCHURE_PATH;
   try {
     const url = new URL(trimmed);
-    if (url.protocol === "https:" && !url.username && !url.password && RETIRED_STARBOY_BROCHURE_PATHS.includes(decodeURIComponent(url.pathname))) {
+    if (url.protocol === "https:" && !url.username && !url.password && SUPERSEDED_STARBOY_BROCHURE_PATHS.includes(decodeURIComponent(url.pathname))) {
       return STARBOY_BROCHURE_URL;
     }
   } catch {

@@ -37,6 +37,11 @@ for (const [index, day] of spell.page.itinerary.entries()) {
   spec.days[index].titleB = "";
   spec.days[index].eyebrow = `DAY ${String(index + 1).padStart(2, "0")} · ${index + 9} OCTOBER · ${printable(day.locationTag).toUpperCase()}`;
 }
+spec.final.announcement = {
+  url: "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand",
+  label: "OPEN THE INQUIRY FORM",
+  body: "Fill in the form to inquire. No payment is collected and no seat is reserved by submitting the form.",
+};
 spec.final.leftHeading = "WHAT'S INCLUDED";
 spec.final.rightHeading = "NOT INCLUDED / OPTIONAL";
 spec.final.lists = { left: spell.page.included.map((i) => printable(i.text)), right: spell.page.notIncluded.map((i) => printable(i.text)) };
@@ -82,19 +87,25 @@ for (let index = 0; index < doc.countPages(); index++) {
 }
 assert(texts[0].includes("85,000") && texts[8].includes("85,000"));
 assert(compact(texts[0]).includes(compact("6 NIGHTS")));
-assert(!/TBA|30%|GST|TCS/.test(texts.join(" ")), "Do not carry obsolete pricing or invent payment terms");
+assert(!/TBA|30%|65,000|65000|91,?000/.test(texts.join(" ")), "Do not show obsolete terms, a calculated balance or a calculated total");
+assert(texts[0].includes("5% GST + 2% TCS extra; not included in the price."));
+assert(texts[8].includes("5% GST + 2% TCS will be added to INR 85,000."));
+assert(texts[8].includes("These taxes are not included in the trip price."));
+assert(texts[8].includes("INR 20,000 booking amount"));
+assert(texts[8].includes("Balance payable before departure."));
+assert(!texts[8].includes("Open the website"));
 assert(texts[3].includes("Background extended with AI"));
 assert(compact(texts[7]).includes(compact("END OF THE SPELL")));
 assert(texts[0].includes("Background extended with AI"));
 if (!process.argv.includes("--verify-existing")) {
   if (draft) {
     mkdirSync(".cache", { recursive: true });
-    writeFileSync(".cache/starboy-grimoire-v6-draft.pdf", bytes);
+    writeFileSync(".cache/starboy-grimoire-v7-draft.pdf", bytes);
   } else {
     saveGrimoireCopy(spec.fileName, bytes);
     if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${spec.fileName}`, bytes);
   }
 }
 if (process.argv.includes("--publish")) assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)));
-console.log(`PASS: approved Grimoire edition, all seven dashboard day descriptions, 10 inclusions, 7 exclusions, INR 85,000 and 6 nights; ${bytes.length} bytes. Retired themed PDFs are never published.`);
+console.log(`PASS: approved Grimoire edition, all seven dashboard day descriptions, 10 inclusions, 7 exclusions, INR 85,000 plus 5% GST and 2% TCS, INR 20,000 booking amount, balance before departure, form link and 6 nights; ${bytes.length} bytes. Retired themed PDFs are never published.`);
 doc.destroy();

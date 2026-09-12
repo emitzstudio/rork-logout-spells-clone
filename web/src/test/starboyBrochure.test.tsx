@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -7,7 +8,7 @@ import dashboard from "../../../pdf-build/starboy-dashboard-20260912-v5.json";
 import StarboyExperience from "@/components/spell/StarboyExperience";
 import { SpellPageBody } from "@/components/dashboard/builder/SpellPreview";
 import { brochureLink, withBrochureUrl } from "@/data/publishedPricing";
-import { RETIRED_STARBOY_BROCHURE_PATHS, STARBOY_BROCHURE_PATH, STARBOY_BROCHURE_URL, replaceRetiredStarboyBrochure } from "@/data/starboyBrochure";
+import { RETIRED_STARBOY_BROCHURE_PATHS, SUPERSEDED_STARBOY_BROCHURE_PATHS, STARBOY_BROCHURE_PATH, STARBOY_BROCHURE_URL, replaceRetiredStarboyBrochure } from "@/data/starboyBrochure";
 import { mapSpell, pageFromDraft } from "@/integrations/supabase/mappers";
 import type { ActiveDepartureRow, SpellRow } from "@/integrations/supabase/mappers";
 
@@ -20,7 +21,7 @@ const departure = { ...dashboard.departure, seats_on_hold: 0 } as ActiveDepartur
 const currentDraft = mapSpell(currentRow, departure, []).draft!;
 
 describe("Approved Starboy Grimoire distribution", () => {
-  it("uses v6 in all three live download buttons and the dashboard preview", () => {
+  it("uses v7 in all three live download buttons and the dashboard preview", () => {
     const live = renderToStaticMarkup(<MemoryRouter><StarboyExperience draft={currentDraft} onBook={() => {}} /></MemoryRouter>);
     const downloads = [...live.matchAll(/href="([^"]+\.pdf)"/g)].map((match) => match[1]);
     expect(downloads).toEqual(Array(3).fill(STARBOY_BROCHURE_URL));
@@ -37,7 +38,7 @@ describe("Approved Starboy Grimoire distribution", () => {
     }
   });
 
-  it.each(RETIRED_STARBOY_BROCHURE_PATHS)("upgrades cached and saved references without changing trip details: %s", (retired) => {
+  it.each(SUPERSEDED_STARBOY_BROCHURE_PATHS)("upgrades cached and saved references without changing trip details: %s", (retired) => {
     expect(brochureLink(withBrochureUrl(undefined, retired))).toBe(STARBOY_BROCHURE_PATH);
     const oldAbsolute = `https://z57wkqd89o09lsi6kc7v1-web.rork.live${retired}`;
     const staleRow = { ...currentRow, page: { ...dashboard.spell.page, pricing: { ...currentPricing, brochureUrl: oldAbsolute } } } as SpellRow;
@@ -63,7 +64,10 @@ describe("Approved Starboy Grimoire distribution", () => {
     const published = readFileSync(new URL(`../../public${STARBOY_BROCHURE_PATH}`, import.meta.url));
     const original = readFileSync(new URL(`../../../pdf-build/${STARBOY_BROCHURE_PATH.split("/").pop()}`, import.meta.url));
     expect(published.equals(original)).toBe(true);
-    expect(published.length).toBe(2696144);
+    expect(published.length).toBe(2702530);
+    expect(createHash("sha256").update(published).digest("hex")).toBe("dd050080498ce3886c030abd3750048414e23f94838e83c9c6ab554e73a5c140");
+    const previous = readFileSync(new URL("../../public/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf", import.meta.url));
+    expect(createHash("sha256").update(previous).digest("hex")).toBe("885983151e549ecde4d1bc68183f8a56d836b50caa2267519bb602027b8cefab");
     for (const retired of RETIRED_STARBOY_BROCHURE_PATHS) expect(existsSync(new URL(`../../public${retired}`, import.meta.url))).toBe(false);
   });
 

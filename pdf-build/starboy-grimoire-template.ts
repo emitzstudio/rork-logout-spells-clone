@@ -193,6 +193,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   paragraph(cover, spec.cover.para, 0, 177, 9.3, sans, 398, 14.5, MUTED, true);
   center(cover, spec.cover.ital1, 125, 12.5, italic, GOLD_HI);
   center(cover, spec.cover.ital2, 106, 12.5, italic, GOLD_HI);
+  center(cover, "5% GST + 2% TCS extra; not included in the price.", 91, 8, sans, MUTED);
   credit(cover, 72);
   center(cover, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 36, 7, semi, MUTED, 2.5);
 
@@ -279,10 +280,13 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   text(p, titleA, titleX, 730, 44, serif, CREAM);
   text(p, titleB, titleX + width(titleA, 44, serif), 730, 44, italic, GOLD_LIGHT);
   center(p, f.subline, 704, 8.5, semi, GOLD_LIGHT, 2.2);
-  box(p, W / 2 - 128, 675, 256, 110, 14, true, 0.8);
-  center(p, "THE STARBOY SPELL", 651, 8, semi, GOLD_LIGHT, 2.6);
-  center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 611, 34, bold, CREAM);
-  center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 587, 7.2, semi, MUTED, 1.4);
+  box(p, 64, 689, W - 128, 138, 14, true, 0.8);
+  center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 651, 34, bold, CREAM);
+  center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 635, 7.2, semi, MUTED, 1.4);
+  center(p, "5% GST + 2% TCS will be added to INR 85,000.", 615, 9.5, semi, GOLD_HI);
+  center(p, "These taxes are not included in the trip price.", 601, 8.8, sans, MUTED);
+  center(p, "INR 20,000 booking amount", 581, 11, semi, CREAM);
+  center(p, "Balance payable before departure.", 566, 9.3, sans, MUTED);
   const leftX = 64;
   const rightX = 316;
   const colW = 213;

@@ -3,7 +3,7 @@ import { render } from "vitest-browser-react";
 import BrochureField from "@/components/dashboard/builder/BrochureField";
 import { PreviewPricing } from "@/components/dashboard/builder/PreviewSections";
 import type { PricingBlock } from "@/data/builder";
-import { RETIRED_STARBOY_BROCHURE_PATHS, STARBOY_BROCHURE_PATH } from "@/data/starboyBrochure";
+import { SUPERSEDED_STARBOY_BROCHURE_PATHS, STARBOY_BROCHURE_PATH } from "@/data/starboyBrochure";
 
 function Harness() {
   const [pricing, setPricing] = useState<PricingBlock | undefined>(undefined);
@@ -26,10 +26,10 @@ test("brochure field adds, validates, previews, replaces and removes the PDF", a
   expect(screen.getByRole("alert").all()).toHaveLength(0);
 });
 
-test("retired Starboy links use the approved Grimoire in the editor and preview", async () => {
+test("superseded Starboy links use the approved Grimoire in the editor and preview", async () => {
   const screen = await render(<Harness />);
   const field = screen.getByRole("textbox", { name: "Brochure PDF link" });
-  for (const retired of RETIRED_STARBOY_BROCHURE_PATHS) {
+  for (const retired of SUPERSEDED_STARBOY_BROCHURE_PATHS) {
     await field.fill(retired);
     await expect.element(field).toHaveValue(STARBOY_BROCHURE_PATH);
     await expect.element(screen.getByRole("link", { name: "Open current PDF" })).toHaveAttribute("href", STARBOY_BROCHURE_PATH);

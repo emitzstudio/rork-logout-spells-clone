@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
-import { RETIRED_STARBOY_BROCHURE_PATHS, STARBOY_BROCHURE_PATH, STARBOY_BROCHURE_URL } from "../src/data/starboyBrochure.ts";
+import { RETIRED_STARBOY_BROCHURE_PATHS } from "../src/data/starboyBrochure.ts";
+// Historical v6 rollout check: never reinterpret its exclusive baseline as a later edition.
+// Current pricing/form edition is checked by verify-starboy-grimoire-v7.mjs.
+const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf";
+const STARBOY_BROCHURE_URL = `https://z57wkqd89o09lsi6kc7v1-web.rork.live${STARBOY_BROCHURE_PATH}`;
 
 const siteArg = process.argv.find((arg) => arg.startsWith("--site="));
 const site = siteArg ? new URL(siteArg.slice(7)).origin : new URL(STARBOY_BROCHURE_URL).origin;

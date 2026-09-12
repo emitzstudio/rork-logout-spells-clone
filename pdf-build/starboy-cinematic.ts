@@ -19,7 +19,7 @@ export interface StarboyDashboardEdition {
 /** Archival renderer only. Public Starboy downloads use the approved Grimoire edition. */
 export async function buildCinematicStarboy(spec: TripSpec, publish: boolean, dashboard?: StarboyDashboardEdition): Promise<void> {
   if (publish) throw new Error("Weeknd-themed Starboy PDFs are retired. Publish the Grimoire with bun run starboy-dashboard.ts --publish.");
-  if (!/^[a-zA-Z0-9_-]+\.pdf$/.test(spec.fileName) || spec.fileName.includes("Grimoire-v6")) throw new Error("The archival renderer cannot write public paths or the approved Grimoire filename.");
+  if (!/^[a-zA-Z0-9_-]+\.pdf$/.test(spec.fileName) || /Grimoire-v\d+\.pdf$/.test(spec.fileName)) throw new Error("The archival renderer cannot write public paths or the approved Grimoire filename.");
   if (spec.days.length !== 7 || !spec.final.announcement || spec.creator || spec.memoriesFile) throw new Error("Cinematic renderer expects the seven-day, inquiry-only Starboy edition.");
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
