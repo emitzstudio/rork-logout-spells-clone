@@ -265,7 +265,7 @@ export default function PreviousSpellScreen() {
                 <View key={shotItem.id} style={styles.shotWrap}>
                   <Image
                     source={{ uri: shotItem.src }}
-                    style={[styles.shot, shotItem.tall === true ? styles.shotTall : null]}
+                    style={[styles.shot, shotItem.tall === true ? styles.shotTall : shotItem.wide === true ? styles.shotWide : null]}
                     contentFit="cover"
                     transition={300}
                   />
@@ -589,6 +589,9 @@ const styles = StyleSheet.create({
   },
   shotTall: {
     height: 280,
+  },
+  shotWide: {
+    height: 140,
   },
   shotCaption: {
     fontFamily: Fonts.serifItalic,

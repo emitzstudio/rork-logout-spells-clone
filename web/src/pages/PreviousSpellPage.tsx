@@ -578,7 +578,7 @@ export default function PreviousSpellPage() {
       <section id="gallery" aria-label="Gallery" className="scroll-mt-24 overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
-            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : "One photo a day"}
+            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : past.slug === "udaipur-spell-with-anshika" ? "From our Udaipur circle" : "One photo a day"}
             title={
               <>
                 The <span className="italic text-gold-gradient">Gallery</span>
@@ -586,7 +586,7 @@ export default function PreviousSpellPage() {
             }
           />
           <Reveal delay={0.1}>
-            <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 no-scrollbar md:mx-0 md:block md:columns-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
+            <div className="-mx-5 mt-10 flex items-start snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-3 no-scrollbar md:mx-0 md:block md:columns-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
               {past.gallery.map((photo) => (
                 <figure
                   key={photo.id}
