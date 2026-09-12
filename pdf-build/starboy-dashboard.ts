@@ -4,6 +4,7 @@ import * as mupdf from "mupdf";
 import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-template";
 import type { TripSpec } from "./trips";
 import packages from "./starboy-packages-v9.json";
+import premium from "./starboy-premium-v1.json";
 
 interface Day { title: string; subtitle: string; body: string; locationTag: string }
 interface DashboardSnapshot {
@@ -31,11 +32,11 @@ const historicalV8 = process.argv.includes("--v8");
 const historicalV9 = process.argv.includes("--v9");
 const historicalV10 = process.argv.includes("--v10");
 const historicalV11 = process.argv.includes("--v11");
-assert([historicalV8, historicalV9, historicalV10, historicalV11].filter(Boolean).length <= 1, "Choose one historical edition");
-const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : 12;
-// Replace this placeholder with the supplied Starboy PDF URL in the next immutable edition.
-// The URL is embedded as a real URI annotation in the exported PDF, not a preview-only link.
-const starboyPackagePdfUrl = "https://example.com/starboy-package.pdf";
+const historicalV12 = process.argv.includes("--v12");
+assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12].filter(Boolean).length <= 1, "Choose one historical edition");
+const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : 13;
+// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF.
+const starboyPackagePdfUrl = version < 13 ? "https://example.com/starboy-package.pdf" : `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${premium.fileName}`;
 spec.fileName = `Logout-Spells-${version < 10 ? "Starboy" : "Blinding-Nights"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 spec.docSubject = historicalV8 ? "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000" : "Bangkok & Phuket · 7 days / 6 nights · XO and all-inclusive Starboy packages · Early-bird prices";
 spec.cover.locLine = "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET · THAILAND";

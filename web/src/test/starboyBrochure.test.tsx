@@ -21,7 +21,7 @@ const departure = { ...dashboard.departure, seats_on_hold: 0 } as ActiveDepartur
 const currentDraft = mapSpell(currentRow, departure, []).draft!;
 
 describe("Approved Starboy Grimoire distribution", () => {
-  it("uses v12 in all three live download buttons and the dashboard preview", () => {
+  it("uses v13 in all three live download buttons and the dashboard preview", () => {
     const live = renderToStaticMarkup(<MemoryRouter><StarboyExperience draft={currentDraft} onBook={() => {}} /></MemoryRouter>);
     const downloads = [...live.matchAll(/href="([^"]+\.pdf)"/g)].map((match) => match[1]);
     expect(downloads).toEqual(Array(3).fill(STARBOY_BROCHURE_URL));
@@ -60,12 +60,14 @@ describe("Approved Starboy Grimoire distribution", () => {
     expect(brochureLink(withBrochureUrl(pricing, `https://user:password@example.com${RETIRED_STARBOY_BROCHURE_PATHS[0]}`))).toBeNull();
   });
 
-  it("keeps the approved PDF byte-identical, preserves v6/v7/v8/v9/v10/v11 and excludes retired themed editions", () => {
+  it("keeps the approved PDF byte-identical, preserves v6/v7/v8/v9/v10/v11/v12 and excludes retired themed editions", () => {
     const published = readFileSync(new URL(`../../public${STARBOY_BROCHURE_PATH}`, import.meta.url));
     const original = readFileSync(new URL(`../../../pdf-build/${STARBOY_BROCHURE_PATH.split("/").pop()}`, import.meta.url));
     expect(published.equals(original)).toBe(true);
-    expect(published.length).toBe(2804275);
-    expect(createHash("sha256").update(published).digest("hex")).toBe("07d2a2881e8d4baa9989bb5ab7a3bc94e3529dd2f717f765a73ec74385a5c858");
+    expect(published.length).toBe(2804360);
+    expect(createHash("sha256").update(published).digest("hex")).toBe("19f3e1abb56e654d495c0c7f5900f0f0c80869a500972d4fd52d8c1ae97870c6");
+    const v12 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v12.pdf", import.meta.url));
+    expect(createHash("sha256").update(v12).digest("hex")).toBe("07d2a2881e8d4baa9989bb5ab7a3bc94e3529dd2f717f765a73ec74385a5c858");
     const v11 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v11.pdf", import.meta.url));
     expect(createHash("sha256").update(v11).digest("hex")).toBe("7418e02bee533c9024dd7f214a1abbe2dd81039c7d21e4bdf596182882fa8141");
     const v10 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v10.pdf", import.meta.url));
@@ -79,6 +81,16 @@ describe("Approved Starboy Grimoire distribution", () => {
     const previous = readFileSync(new URL("../../public/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf", import.meta.url));
     expect(createHash("sha256").update(previous).digest("hex")).toBe("885983151e549ecde4d1bc68183f8a56d836b50caa2267519bb602027b8cefab");
     for (const retired of RETIRED_STARBOY_BROCHURE_PATHS) expect(existsSync(new URL(`../../public${retired}`, import.meta.url))).toBe(false);
+  });
+
+  it("publishes a separate premium Starboy PDF without replacing it with the XO edition", () => {
+    const path = "/brochures/Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf";
+    const published = readFileSync(new URL(`../../public${path}`, import.meta.url));
+    const source = readFileSync(new URL(`../../../pdf-build/${path.split("/").pop()}`, import.meta.url));
+    expect(published.equals(source)).toBe(true);
+    expect(createHash("sha256").update(published).digest("hex")).toBe("8953dabba2d435fe0ae9b0852aab83f1754b08d9b9c669141b0f8ec9842622b9");
+    expect(replaceRetiredStarboyBrochure(path)).toBe(path);
+    expect(replaceRetiredStarboyBrochure(`https://z57wkqd89o09lsi6kc7v1-web.rork.live${path}`)).toBe(`https://z57wkqd89o09lsi6kc7v1-web.rork.live${path}`);
   });
 
   it("redirects every old share URL on both deployment configurations", () => {

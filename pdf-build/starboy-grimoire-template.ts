@@ -5,6 +5,7 @@ import fontkit from "@pdf-lib/fontkit";
 import type { TripSpec } from "./trips";
 import type { StarboyDashboardEdition } from "./starboy-cinematic";
 import type packageEdition from "./starboy-packages-v9.json";
+import type premiumEdition from "./starboy-premium-v1.json";
 
 const W = 595.28;
 const H = 841.89;
@@ -66,7 +67,7 @@ const dayLayouts: DayLayout[] = [
  * Full dashboard paragraphs are preserved; no website code, links or data are changed.
  * Returns validated-in-memory bytes so publishing can happen after content validation.
  */
-export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string; finalPriceBoxes?: boolean; conversionFinal?: { starboyPdfUrl: string } }): Promise<Uint8Array> {
+export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string; finalPriceBoxes?: boolean; conversionFinal?: { starboyPdfUrl: string }; premium?: typeof premiumEdition }): Promise<Uint8Array> {
   assert.equal(spec.days.length, 7);
   assert.equal(dashboard.bodies.length, 7);
   assert(spec.final.announcement && spec.final.lists);
@@ -174,6 +175,26 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   }
   const logo = await image("logo-mark.png");
   const cover = page();
+  if (revision?.premium) {
+    await photo(cover, "img2/starboy-final.jpg", H);
+    cover.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.34 });
+    fade(cover, H, 410, 0.96, 0);
+    fade(cover, 475, 475, 0, 1);
+    box(cover, 22, H - 22, W - 44, H - 44, 3, false, 0.68);
+    box(cover, 28, H - 28, W - 56, H - 56, 1, false, 0.18);
+    cover.drawImage(logo, { x: W / 2 - 22, y: 758, width: 44, height: 44 });
+    center(cover, "LOGOUT SPELLS", 735, 10, semi, GOLD_HI, 4.4);
+    center(cover, "THE PREMIUM ALL INCLUSIVE EXPERIENCE", 678, 8.4, semi, GOLD_HI, 2.4);
+    center(cover, "STARBOY", 597, 84, serif, CREAM, 5.5);
+    center(cover, "PACKAGE", 562, 22, serif, GOLD_HI, 10);
+    ornament(cover, 532);
+    center(cover, "THE BLINDING NIGHTS SPELL", 219, 27, serif, CREAM, 0.9);
+    center(cover, "9 to 15 OCTOBER 2026", 181, 11, semi, GOLD_HI, 2.7);
+    center(cover, "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET", 158, 8, semi, MUTED, 1.8);
+    center(cover, "Our most premium way to experience", 111, 14, italic, CREAM);
+    center(cover, "The Blinding Nights Spell.", 92, 14, italic, CREAM);
+    center(cover, "Everything you need, included.", 62, 10, sans, GOLD_HI);
+  } else {
   await photo(cover, "img2/starboy-grimoire-cover-v6.jpg", H);
   fade(cover, H, 180, 0.8, 0);
   box(cover, 16, H - 16, W - 32, H - 32, 10, false, 0.26);
@@ -207,6 +228,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     credit(cover, 72);
   }
   center(cover, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 36, 7, semi, MUTED, 2.5);
+  }
 
   for (const [index, day] of spec.days.entries()) {
     const layout = dayLayouts[index];
@@ -264,7 +286,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
       p.drawCircle({ x: 92, y: row.top + 3, size: 12.5, color: SOFT, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.5 });
       const number = String(i + 1).padStart(2, "0");
       text(p, number, 92 - width(number, 13.5, serif) / 2, row.top - 1.6, 13.5, serif, GOLD_LIGHT);
-      text(p, row.stop.title, 122, row.top, headingSize, semi, CREAM, 1.8);
+      text(p, revision?.premium ? row.stop.title.replace(" · OPTIONAL", " · INCLUDED") : row.stop.title, 122, row.top, headingSize, semi, CREAM, 1.8);
       row.lines.forEach((line, j) => text(p, line, 122, row.top - 17 - j * leading, bodySize, sans, MUTED));
     }
     y += gap - 6;
@@ -274,7 +296,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     assert(y >= bottom, `Day ${index + 1} closing overlaps its footer`);
     if (index === 2) credit(p, 87);
     if (index === 6) center(p, "END OF THE SPELL", 85, 8, semi, GOLD_LIGHT, 3);
-    footer(p, day.footer);
+    footer(p, revision?.premium ? "STARBOY PACKAGE · ALL INCLUSIVE" : day.footer);
   }
 
   if (packages && !revision?.omitPackagePage) {
@@ -314,6 +336,61 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   fade(p, H, 110, 0.55, 0);
   fade(p, 420, 420, 0, 0.88);
   box(p, 16, H - 16, W - 32, H - 32, 10, false, 0.26);
+  if (revision?.premium) {
+    const premium = revision.premium;
+    p.drawImage(logo, { x: W / 2 - 13, y: 790, width: 26, height: 26 });
+    center(p, "YOUR STARBOY SPELL AWAITS", 755, 30, serif, CREAM, 0.5);
+    center(p, "THE BLINDING NIGHTS SPELL · 9 to 15 OCTOBER 2026", 733, 7.6, semi, GOLD_LIGHT, 1.5);
+    center(p, "STARBOY PACKAGE · PREMIUM ALL INCLUSIVE", 710, 8, semi, GOLD_HI, 1.7);
+    const cardWidth = (W - 128 - 16) / 2;
+    for (const [index, tier] of [{ label: "EARLY BIRD", amount: premium.earlyBird }, { label: "REGULAR", amount: premium.regular }].entries()) {
+      const left = 64 + index * (cardWidth + 16);
+      const cardCenter = (value: string, y: number, size: number, face: PDFFont, color: Ink, tracking = 0) => text(p, value, left + (cardWidth - width(value, size, face, tracking)) / 2, y, size, face, color, tracking);
+      box(p, left, 695, cardWidth, 70, 5, true, index ? 0.45 : 0.9);
+      cardCenter(tier.label, 679, 7.4, semi, GOLD_LIGHT, 1.9);
+      cardCenter(`INR ${tier.amount.toLocaleString("en-IN")}`, 650, 30, bold, CREAM);
+      cardCenter("PER PERSON", 635, 7, semi, MUTED, 1.4);
+    }
+    box(p, 64, 609, W - 128, 117, 5, true, 0.95);
+    box(p, 69, 604, W - 138, 107, 2, false, 0.25);
+    center(p, "BOOK YOUR SPOT FOR JUST", 589, 8.8, semi, GOLD_HI, 2.4);
+    center(p, `INR ${premium.deposit.toLocaleString("en-IN")}`, 535, 56, bold, GOLD_HI);
+    center(p, "Pay ₹20,000 now to secure your spot.", 517, 10, semi, CREAM);
+    center(p, "Pay the remaining amount later, before departure.", 502, 9.2, sans, MUTED);
+    center(p, "5% GST + 2% TCS will be applicable.", 477, 8.3, sans, MUTED);
+    center(p, "INCLUSIVE OF ALL", 451, 10, semi, GOLD_HI, 2.8);
+    center(p, "Everything you need, included.", 434, 12, italic, CREAM);
+    rule(p, 64, W - 64, 422, 0.5);
+    const columns = [premium.inclusions.slice(0, 7), premium.inclusions.slice(7)];
+    const ends = columns.map((items, column) => {
+      const left = column === 0 ? 64 : 314;
+      let y = 404;
+      for (const item of items) {
+        sparkle(p, left + 3, y + 3, 3);
+        y = paragraph(p, item, left + 14, y, 8.8, sans, 203, 12, CREAM) - 5;
+      }
+      return y;
+    });
+    assert(Math.min(...ends) >= 204, `Starboy inclusions overlap CTA: ${ends}`);
+    rule(p, 64, W - 64, 200, 0.4);
+    center(p, "REQUEST YOUR SPOT", 182, 8.5, semi, GOLD_LIGHT, 2.8);
+    center(p, "Ready to experience The Blinding Nights Spell with everything included?", 164, 8.7, sans, CREAM);
+    p.drawRectangle({ x: 64, y: 82, width: W - 128, height: 66, color: GOLD_LIGHT, borderColor: GOLD_HI, borderWidth: 1.2 });
+    p.drawRectangle({ x: 69, y: 87, width: W - 138, height: 56, borderColor: DEEP, borderWidth: 0.5, borderOpacity: 0.3 });
+    center(p, "APPLY NOW", 115, 27, bold, DEEP, 2);
+    center(p, "Request your spot", 96, 9, sans, DEEP);
+    p.drawLine({ start: { x: 475, y: 121 }, end: { x: 490, y: 121 }, color: DEEP, thickness: 1.4 });
+    p.drawLine({ start: { x: 484, y: 127 }, end: { x: 490, y: 121 }, color: DEEP, thickness: 1.4 });
+    p.drawLine({ start: { x: 484, y: 115 }, end: { x: 490, y: 121 }, color: DEEP, thickness: 1.4 });
+    const url = new URL(f.announcement!.url);
+    assert(url.protocol === "https:" && !url.username && !url.password);
+    const annotation = doc.context.register(doc.context.obj({ Type: "Annot", Subtype: "Link", Rect: [64, 82, W - 64, 148], Border: [0, 0, 0], Contents: PDFString.of("Apply now - existing application form"), H: "P", A: { Type: "Action", S: "URI", URI: PDFString.of(url.href) } }));
+    p.node.set(PDFName.of("Annots"), doc.context.obj([annotation]));
+    center(p, "UNTIL THE NEXT SPELL", 62, 6.5, semi, GOLD, 2.6);
+    center(p, f.closeThanks, 46, 11, italic, MUTED);
+    center(p, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 29, 6.2, semi, MUTED, 1.8);
+    return doc.save();
+  }
   if (revision?.conversionFinal) {
     const link = (url: string, rect: number[], label: string) => {
       const parsed = new URL(url);
@@ -389,7 +466,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     text(p, ".", packageX + labelW, 194, 10, sans, CREAM);
     rule(p, packageX, packageX + labelW, 190, 0.95);
     arrow(packageX + labelW + 19, 199, GOLD_LIGHT);
-    const starboyLink = link(revision.conversionFinal.starboyPdfUrl, [packageX - 3, 186, packageX + labelW + 25, 212], "Starboy Package PDF (placeholder URL)");
+    const starboyLink = link(revision.conversionFinal.starboyPdfUrl, [packageX - 3, 186, packageX + labelW + 25, 212], new URL(revision.conversionFinal.starboyPdfUrl).hostname === "example.com" ? "Starboy Package PDF (placeholder URL)" : "Starboy Package - premium all inclusive PDF");
 
     center(p, "REQUEST YOUR SPOT", 173, 8.2, semi, GOLD_LIGHT, 2.1);
     center(p, "Ready to join The Blinding Nights Spell?", 159, 9, sans, CREAM);

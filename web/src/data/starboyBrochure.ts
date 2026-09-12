@@ -1,5 +1,5 @@
 /** The approved Blinding Nights edition; historical Starboy identifiers keep existing links compatible. */
-export const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v12.pdf";
+export const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v13.pdf";
 export const STARBOY_BROCHURE_URL = `https://z57wkqd89o09lsi6kc7v1-web.rork.live${STARBOY_BROCHURE_PATH}`;
 
 /** Superseded public editions. Keep these paths reserved for redirects, never PDF files. */
@@ -20,6 +20,7 @@ export const SUPERSEDED_STARBOY_BROCHURE_PATHS: readonly string[] = [
   "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v9.pdf",
   "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v10.pdf",
   "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v11.pdf",
+  "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v12.pdf",
 ];
 
 /** Only replaces known superseded Starboy references; unrelated and invalid inputs stay untouched. */

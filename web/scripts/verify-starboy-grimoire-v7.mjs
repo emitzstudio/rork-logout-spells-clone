@@ -6,7 +6,7 @@ import { chromium } from "playwright";
 
 const origin = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
 // Each edition uses its own exclusive pre-change baseline.
-const version = process.argv.includes("--v12") ? 12 : process.argv.includes("--v11") ? 11 : process.argv.includes("--v10") ? 10 : process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
+const version = process.argv.includes("--v13") ? 13 : process.argv.includes("--v12") ? 12 : process.argv.includes("--v11") ? 11 : process.argv.includes("--v10") ? 10 : process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
 const oldPath = `/brochures/Logout-Spells-${version > 10 ? "Blinding-Nights" : "Starboy"}-9-15-Oct-2026-Grimoire-v${version - 1}.pdf`;
 const newPath = `/brochures/Logout-Spells-${version >= 10 ? "Blinding-Nights" : "Starboy"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 const formUrl = "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand";
@@ -54,7 +54,8 @@ if (version >= 12) {
 }
 const files = publicFiles();
 if (process.argv.includes("--snapshot")) {
-  assert.equal(starboy.page.pricing.brochureUrl, origin + oldPath, `Snapshot must precede v${version} distribution`);
+  const reviewedSavedPath = version === 13 ? "/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v11.pdf" : oldPath;
+  assert.equal(starboy.page.pricing.brochureUrl, origin + reviewedSavedPath, `Snapshot must precede v${version} distribution`);
   assert(!files[newPath], `Snapshot must precede publication of v${version}`);
   await assertLivePdf(origin + oldPath, files[oldPath]);
   mkdirSync(cache, { recursive: true });
@@ -84,7 +85,8 @@ assert.deepEqual(normalize(rows), normalize(expected), "Only the approved spell-
 console.log("PASS: approved name/link changes only; prices, itinerary, other spells, departures, galleries, forms and reviews preserved");
 const pdf = readFileSync(new URL(`.${newPath}`, publicRoot));
 assert(pdf.equals(readFileSync(new URL(`../../pdf-build/${newPath.split("/").pop()}`, import.meta.url))));
-assert.deepEqual(files, { ...before.files, [newPath]: hash(pdf) }, `Only the new immutable v${version} PDF may be added; all existing public files must stay identical`);
+const extraFiles = version === 13 ? { "/brochures/Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf": hash(readFileSync(new URL("brochures/Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf", publicRoot))) } : {};
+assert.deepEqual(files, { ...before.files, ...extraFiles, [newPath]: hash(pdf) }, `Only the new immutable v${version} PDF may be added; all existing public files must stay identical`);
 await assertLivePdf(origin + newPath, hash(pdf));
 console.log(`PASS: new v${version} PDF is live byte-identically; v${version - 1} and all other public assets unchanged`);
 if (process.argv.includes("--api-only")) process.exit(0);
