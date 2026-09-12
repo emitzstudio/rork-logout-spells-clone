@@ -578,7 +578,7 @@ export default function PreviousSpellPage() {
       <section id="gallery" aria-label="Gallery" className="scroll-mt-24 overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
-            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : past.slug === "udaipur-spell-with-anshika" ? "From our Udaipur circle" : "One photo a day"}
+            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : past.slug === "udaipur-spell-with-anshika" ? "From our Udaipur circle" : past.slug === "all-girls-spell-to-bir" ? "From our All Girls Bir circle" : "One photo a day"}
             title={
               <>
                 The <span className="italic text-gold-gradient">Gallery</span>
