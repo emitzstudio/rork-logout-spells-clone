@@ -5,14 +5,16 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 
 const origin = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
-const oldPath = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf";
-const newPath = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v7.pdf";
+// Keep historical v7 checks available; --v8 uses its own exclusive pre-change baseline.
+const version = process.argv.includes("--v8") ? 8 : 7;
+const oldPath = `/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version - 1}.pdf`;
+const newPath = `/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 const formUrl = "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand";
 const siteArg = process.argv.find((arg) => arg.startsWith("--site="));
 const site = siteArg ? new URL(siteArg.slice(7)).origin : origin;
 const publicRoot = new URL("../public/", import.meta.url);
 const cache = new URL("../../pdf-build/.cache/", import.meta.url);
-const baseline = new URL("starboy-grimoire-v7-before-20260912.json", cache);
+const baseline = new URL(`starboy-grimoire-v${version}-before-20260912.json`, cache);
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const api = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -46,12 +48,12 @@ assert.equal(starboy?.slug, "the-starboy-spell");
 assert.equal(starboy.status, "published");
 const files = publicFiles();
 if (process.argv.includes("--snapshot")) {
-  assert.equal(starboy.page.pricing.brochureUrl, origin + oldPath, "Snapshot must precede v7 distribution");
-  assert(!files[newPath], "Snapshot must precede publication of v7");
+  assert.equal(starboy.page.pricing.brochureUrl, origin + oldPath, `Snapshot must precede v${version} distribution`);
+  assert(!files[newPath], `Snapshot must precede publication of v${version}`);
   await assertLivePdf(origin + oldPath, files[oldPath]);
   mkdirSync(cache, { recursive: true });
   writeFileSync(baseline, JSON.stringify({ rows, files }), { flag: "wx" });
-  console.log(`PASS: exclusive v7 baseline saved; existing v6 verified; reviewed updated_at=${starboy.updated_at}`);
+  console.log(`PASS: exclusive v${version} baseline saved; existing v${version - 1} verified; reviewed updated_at=${starboy.updated_at}`);
   process.exit(0);
 }
 const before = JSON.parse(readFileSync(baseline, "utf8"));
@@ -67,9 +69,9 @@ assert.deepEqual(normalize(rows), normalize(expected), "Only the Starboy brochur
 console.log("PASS: website content, prices, all other spells, departures, galleries and reviews unchanged");
 const pdf = readFileSync(new URL(`.${newPath}`, publicRoot));
 assert(pdf.equals(readFileSync(new URL(`../../pdf-build/${newPath.split("/").pop()}`, import.meta.url))));
-assert.deepEqual(files, { ...before.files, [newPath]: hash(pdf) }, "Only the new immutable v7 PDF may be added; all existing public files must stay identical");
+assert.deepEqual(files, { ...before.files, [newPath]: hash(pdf) }, `Only the new immutable v${version} PDF may be added; all existing public files must stay identical`);
 await assertLivePdf(origin + newPath, hash(pdf));
-console.log("PASS: new v7 PDF is live byte-identically; v6 and all other public assets unchanged");
+console.log(`PASS: new v${version} PDF is live byte-identically; v${version - 1} and all other public assets unchanged`);
 if (process.argv.includes("--api-only")) process.exit(0);
 
 const browser = await chromium.launch({ headless: true });
@@ -95,7 +97,7 @@ try {
     assert(await page.getByRole("button", { name: "Begin", exact: true }).isVisible() || await page.locator("main input").count() > 0, "The inquiry form must be usable");
     assert.equal(page.url(), formUrl);
     assert.deepEqual(errors, []);
-    console.log(`PASS: ${site} ${width}px, all 3 downloads use v7, itinerary preserved, inquiry form loads without submission`);
+    console.log(`PASS: ${site} ${width}px, all 3 downloads use v${version}, itinerary preserved, inquiry form loads without submission`);
     await context.close();
   }
 } finally {

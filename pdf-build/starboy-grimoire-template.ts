@@ -283,7 +283,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   box(p, 64, 689, W - 128, 138, 14, true, 0.8);
   center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 651, 34, bold, CREAM);
   center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 635, 7.2, semi, MUTED, 1.4);
-  center(p, "5% GST + 2% TCS will be added to INR 85,000.", 615, 9.5, semi, GOLD_HI);
+  center(p, "5% GST + 2% TCS will be applicable.", 615, 9.5, semi, GOLD_HI);
   center(p, "These taxes are not included in the trip price.", 601, 8.8, sans, MUTED);
   center(p, "INR 20,000 booking amount", 581, 11, semi, CREAM);
   center(p, "Balance payable before departure.", 566, 9.3, sans, MUTED);

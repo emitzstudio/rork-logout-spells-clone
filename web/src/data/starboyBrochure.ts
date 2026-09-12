@@ -1,5 +1,5 @@
 /** The approved Starboy edition, shared by downloads, redirects and build checks. */
-export const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v7.pdf";
+export const STARBOY_BROCHURE_PATH = "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v8.pdf";
 export const STARBOY_BROCHURE_URL = `https://z57wkqd89o09lsi6kc7v1-web.rork.live${STARBOY_BROCHURE_PATH}`;
 
 /** Superseded public editions. Keep these paths reserved for redirects, never PDF files. */
@@ -15,6 +15,7 @@ export const RETIRED_STARBOY_BROCHURE_PATHS: readonly string[] = [
 export const SUPERSEDED_STARBOY_BROCHURE_PATHS: readonly string[] = [
   ...RETIRED_STARBOY_BROCHURE_PATHS,
   "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf",
+  "/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v7.pdf",
 ];
 
 /** Only replaces known superseded Starboy references; unrelated and invalid inputs stay untouched. */

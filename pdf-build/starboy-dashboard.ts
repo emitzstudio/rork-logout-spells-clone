@@ -89,7 +89,7 @@ assert(texts[0].includes("85,000") && texts[8].includes("85,000"));
 assert(compact(texts[0]).includes(compact("6 NIGHTS")));
 assert(!/TBA|30%|65,000|65000|91,?000/.test(texts.join(" ")), "Do not show obsolete terms, a calculated balance or a calculated total");
 assert(texts[0].includes("5% GST + 2% TCS extra; not included in the price."));
-assert(texts[8].includes("5% GST + 2% TCS will be added to INR 85,000."));
+assert(texts[8].includes("5% GST + 2% TCS will be applicable."));
 assert(texts[8].includes("These taxes are not included in the trip price."));
 assert(texts[8].includes("INR 20,000 booking amount"));
 assert(texts[8].includes("Balance payable before departure."));
@@ -100,7 +100,7 @@ assert(texts[0].includes("Background extended with AI"));
 if (!process.argv.includes("--verify-existing")) {
   if (draft) {
     mkdirSync(".cache", { recursive: true });
-    writeFileSync(".cache/starboy-grimoire-v7-draft.pdf", bytes);
+    writeFileSync(".cache/starboy-grimoire-v8-draft.pdf", bytes);
   } else {
     saveGrimoireCopy(spec.fileName, bytes);
     if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${spec.fileName}`, bytes);
