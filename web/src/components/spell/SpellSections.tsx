@@ -18,6 +18,7 @@ import {
 } from "@/data/builder";
 import type { ItineraryDay, SpellDraft } from "@/data/builder";
 import { brochureLink } from "@/data/publishedPricing";
+import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import { formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -644,7 +645,12 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
   const tiers = pricingTiers(draft);
   const pricing = draft.pricing;
   const brochure = brochureLink(pricing);
-  if (pricing === undefined || (tiers.length === 0 && !brochure)) return null;
+  if (pricing === undefined || (tiers.length === 0 && !brochure)) return <Section id="brochure">
+    <div className="flex flex-col items-center gap-7 rounded-2xl border border-gold/20 bg-gold/[0.04] px-6 py-9 text-center sm:flex-row sm:justify-between sm:px-9 sm:text-left">
+      <div><p className="eyebrow">Your spell, to keep</p><h2 className="mt-3 font-serif text-3xl text-cream">Take the details with you.</h2><p className="mt-2 text-sm text-cream/55">The itinerary and trip details, together in one PDF.</p></div>
+      <SpellBrochureAction draft={draft} className="btn-ghost-gold shrink-0 !rounded-full !px-6" />
+    </div>
+  </Section>;
   const isTba = tiers.length === 0 && !(Number(draft.price) > 0);
 
   return (
@@ -728,11 +734,7 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
         <button type="button" onClick={onBook} className="btn-gold !rounded-full !px-10">
           {FINAL_CTA.button} <ArrowRight size={16} />
         </button>
-        {brochure && (
-          <a href={brochure} target="_blank" rel="noopener noreferrer" className="btn-ghost-gold !rounded-full !px-8">
-            Download brochure (PDF) <ArrowRight size={16} aria-hidden />
-          </a>
-        )}
+        <SpellBrochureAction draft={draft} className="btn-ghost-gold !rounded-full !px-8" />
       </Reveal>
     </Section>
   );

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, Download, Instagram, MapPin, RefreshCw, Star, X } from "lucide-react";
+import { Check, ChevronDown, Instagram, MapPin, RefreshCw, Star, X } from "lucide-react";
 import { useState } from "react";
 
 import { RichBody } from "@/components/dashboard/builder/RichText";
@@ -11,11 +11,11 @@ import type {
   HostBlock,
   ListItem,
   PriceTier,
-  PricingBlock,
+  SpellDraft,
   StayBlock,
   TripHighlight,
 } from "@/data/builder";
-import { brochureLink } from "@/data/publishedPricing";
+import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import { formatINR } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
@@ -244,16 +244,16 @@ export function PreviewStay({ stay, symbol }: PreviewStayProps) {
 /* ---------------------------- Price & booking ----------------------------- */
 
 interface PreviewPricingProps {
-  pricing: PricingBlock;
+  draft: SpellDraft;
   /** Priced tiers, lead first (see pricingTiers). */
   tiers: PriceTier[];
-  price?: number;
   isMobile: boolean;
 }
 
 /** Mirrors public pricing and the brochure link, even when prices are still TBA. */
-export function PreviewPricing({ pricing, tiers, price = 0, isMobile }: PreviewPricingProps) {
-  const brochure = brochureLink(pricing);
+export function PreviewPricing({ draft, tiers, isMobile }: PreviewPricingProps) {
+  const pricing = draft.pricing ?? { tiers: [], taxNote: "", remainingNote: "", note: "" };
+  const price = Number(draft.price);
   return (
     <div className={blockClass}>
       <p className={eyebrowClass}>Price & booking</p>
@@ -301,7 +301,7 @@ export function PreviewPricing({ pricing, tiers, price = 0, isMobile }: PreviewP
       {pricing.note.trim() !== "" && (
         <p className="mt-3 text-center font-sans text-[8.5px] leading-snug text-cream/45">{pricing.note}</p>
       )}
-      {brochure && <a href={brochure} target="_blank" rel="noopener noreferrer" className="mx-auto mt-4 flex min-h-11 w-fit items-center gap-2 rounded-full border border-gold/40 px-4 text-xs text-gold-light hover:bg-gold/10"><Download size={14} aria-hidden /> Download brochure (PDF)</a>}
+      <div className="mt-4 flex justify-center"><SpellBrochureAction draft={draft} className="rounded-full border border-gold/40 px-4 text-xs text-gold-light hover:bg-gold/10" /></div>
     </div>
   );
 }

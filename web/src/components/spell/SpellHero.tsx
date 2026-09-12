@@ -11,6 +11,7 @@ import type { LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 
 import { PageBackOrb } from "@/components/site/PageBack";
+import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import { CATEGORY_FAMILY, FINAL_CTA, dayHasContent, hostHasContent } from "@/data/builder";
 import type { SpellDraft } from "@/data/builder";
 import { CATEGORY_META, URGENCY_META, formatINR } from "@/data/spells";
@@ -233,6 +234,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
               className="absolute inset-y-0 left-0 w-1/3 -translate-x-[180%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/45 to-transparent transition-transform duration-700 ease-out group-hover/cta:translate-x-[420%]"
             />
           </button>
+          <SpellBrochureAction draft={draft} className="rounded-full border border-gold/45 bg-charcoal-deep/40 px-6 py-4 font-sans text-[12px] uppercase tracking-[0.12em] text-gold-light transition-colors hover:bg-gold/10 active:scale-[0.97]" />
           {hasJourney && (
             <button
               type="button"

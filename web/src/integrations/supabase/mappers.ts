@@ -101,7 +101,9 @@ const revivePricing = (raw: unknown): PricingBlock | undefined => {
     });
   }
   const brochure = brochureLink({ tiers: [], remainingNote: "", taxNote: "", note: "", brochureUrl: typeof doc.brochureUrl === "string" ? doc.brochureUrl : undefined });
-  if (tiers.length === 0 && brochure === null) return undefined;
+  const hasTerms = [doc.remainingNote, doc.taxNote, doc.note].some((value) => typeof value === "string" && value.trim() !== "");
+  // Automatic brochures still need single-price/TBA terms after a custom link is cleared.
+  if (tiers.length === 0 && brochure === null && !hasTerms) return undefined;
   return {
     tiers,
     ...(doc.requestMode === "published-terms" ? { requestMode: "published-terms" as const } : {}),
