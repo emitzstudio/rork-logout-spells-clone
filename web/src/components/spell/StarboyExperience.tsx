@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowLeft, ArrowRight, Check, Disc3, Download } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, Check, Disc3, Download, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { RichBody } from "@/components/dashboard/builder/RichText";
@@ -109,7 +109,7 @@ export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft
     <SpellStay draft={draft} />
     <div className="starboy-shared"><SpellPricing draft={draft} onBook={onBook} /></div>
     <section className={cn(container, "grid gap-12 border-t border-white/10 py-16 md:grid-cols-2")}>
-      {[{ heading: "Marked included", items: draft.included }, { heading: "Optional / not included", items: draft.notIncluded }].map((column) => <div key={column.heading}><h2 className={kicker}>{column.heading}</h2><ul className="mt-6 space-y-4">{column.items.filter((item) => item.text.trim()).map((item) => <li key={item.id} className="flex items-start gap-3 text-sm text-white/80"><Check size={16} className="mt-0.5 shrink-0 text-gold" aria-hidden />{item.text}</li>)}</ul></div>)}
+      {[{ heading: "Marked included", items: draft.included, icon: Check }, { heading: "Optional / not included", items: draft.notIncluded, icon: X }].map(({ heading, items, icon: Icon }) => <div key={heading}><h2 className={kicker}>{heading}</h2><ul className="mt-6 space-y-4">{items.filter((item) => item.text.trim()).map((item) => <li key={item.id} className="flex items-start gap-3 text-sm text-white/80"><Icon size={16} className="mt-0.5 shrink-0 text-gold" aria-hidden />{item.text}</li>)}</ul></div>)}
     </section>
     <SpellAudience draft={draft} />
     <div className="starboy-shared"><SpellFaqs draft={draft} /></div>

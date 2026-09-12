@@ -111,6 +111,15 @@ describe("Starboy TBA itinerary", () => {
     for (const day of brochure.days) for (const point of day.points) expect(html).toContain(point.title.replace(/&/g, "&amp;"));
     expect(html.replace(/<[^>]*>/g, "")).not.toMatch(/₹0|30%|Sold out|0 seats/);
   });
+  it("uses crosses for exclusions and keeps ticks for included items", () => {
+    const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft, onBook: () => {} })));
+    const included = html.split("Marked included</h2>")[1]?.split("</ul>")[0] ?? "";
+    const excluded = html.split("Optional / not included</h2>")[1]?.split("</ul>")[0] ?? "";
+    expect(included.match(/lucide-check/g)).toHaveLength(draft.included.filter((item) => item.text.trim()).length);
+    expect(included).not.toContain("lucide-x");
+    expect(excluded.match(/lucide-x/g)).toHaveLength(draft.notIncluded.filter((item) => item.text.trim()).length);
+    expect(excluded).not.toContain("lucide-check");
+  });
   it("keeps preview links inert and only enables safe web links in published rich text", () => {
     const body = "[Photo](https://example.com/photo) [Bad](javascript:evil) [Data](data:text/html,evil)";
     const live = renderToStaticMarkup(createElement(RichBody, { body, full: true }));
