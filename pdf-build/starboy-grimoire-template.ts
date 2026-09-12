@@ -4,6 +4,7 @@ import { PDFDocument, PDFFont, PDFImage, PDFPage, PDFName, PDFString, rgb } from
 import fontkit from "@pdf-lib/fontkit";
 import type { TripSpec } from "./trips";
 import type { StarboyDashboardEdition } from "./starboy-cinematic";
+import type packageEdition from "./starboy-packages-v9.json";
 
 const W = 595.28;
 const H = 841.89;
@@ -65,7 +66,7 @@ const dayLayouts: DayLayout[] = [
  * Full dashboard paragraphs are preserved; no website code, links or data are changed.
  * Returns validated-in-memory bytes so publishing can happen after content validation.
  */
-export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition): Promise<Uint8Array> {
+export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition): Promise<Uint8Array> {
   assert.equal(spec.days.length, 7);
   assert.equal(dashboard.bodies.length, 7);
   assert(spec.final.announcement && spec.final.lists);
@@ -191,8 +192,14 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   center(cover, spec.cover.poem1, 229, 13, italic, CREAM);
   center(cover, spec.cover.poem2, 209, 13, italic, CREAM);
   paragraph(cover, spec.cover.para, 0, 177, 9.3, sans, 398, 14.5, MUTED, true);
-  center(cover, spec.cover.ital1, 125, 12.5, italic, GOLD_HI);
-  center(cover, spec.cover.ital2, 106, 12.5, italic, GOLD_HI);
+  if (packages) {
+    center(cover, spec.cover.ital1, 132, 12.5, italic, GOLD_HI);
+    center(cover, "XO INR 85,000 · Starboy INR 1,50,000 per person", 116, 10, semi, CREAM);
+    center(cover, "Early bird: XO INR 80,000 · Starboy INR 1,40,000 per person", 102, 8.8, semi, GOLD_HI);
+  } else {
+    center(cover, spec.cover.ital1, 125, 12.5, italic, GOLD_HI);
+    center(cover, spec.cover.ital2, 106, 12.5, italic, GOLD_HI);
+  }
   center(cover, "5% GST + 2% TCS extra; not included in the price.", 91, 8, sans, MUTED);
   credit(cover, 72);
   center(cover, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 36, 7, semi, MUTED, 2.5);
@@ -266,6 +273,36 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     footer(p, day.footer);
   }
 
+  if (packages) {
+    const p = page();
+    await photo(p, "img2/starboy-final.jpg", H);
+    p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.88 });
+    box(p, 16, H - 16, W - 32, H - 32, 10, false, 0.26);
+    p.drawImage(logo, { x: W / 2 - 18, y: 778, width: 36, height: 36 });
+    center(p, "CHOOSE YOUR EXPERIENCE", 752, 8, semi, GOLD_LIGHT, 3);
+    center(p, "One Spell. Two Ways.", 704, 42, italic, CREAM);
+    center(p, "9 - 15 OCTOBER 2026 · 7 DAYS / 6 NIGHTS", 678, 8, semi, MUTED, 1.8);
+    for (const [index, tier] of packages.packages.entries()) {
+      const top = 650 - index * 211;
+      box(p, 58, top, W - 116, 191, 14, true, index ? 0.95 : 0.45);
+      text(p, tier.tagline, 80, top - 25, 7.3, semi, GOLD_LIGHT, 1.8);
+      text(p, tier.label, 80, top - 57, 30, serif, CREAM);
+      text(p, `Regular: INR ${tier.price.toLocaleString("en-IN")} per person`, 80, top - 80, 10, sans, MUTED);
+      rule(p, 80, W - 80, top - 94, 0.25);
+      text(p, "EARLY BIRD", 80, top - 117, 8, semi, GOLD_LIGHT, 1.5);
+      text(p, `INR ${tier.earlyBird.toLocaleString("en-IN")}`, 218, top - 120, 27, bold, GOLD_HI);
+      text(p, "per person", 402, top - 118, 8.5, sans, MUTED);
+      const end = paragraph(p, tier.description, 80, top - 145, 9.2, sans, W - 160, 13.5, CREAM);
+      assert(end >= top - 185, `Package description exceeds its card: ${tier.label}`);
+    }
+    paragraph(p, packages.optionalNote, 0, 205, 9.2, sans, 435, 14, MUTED, true);
+    center(p, "5% GST + 2% TCS will be applicable.", 154, 9.5, semi, GOLD_HI);
+    center(p, "These taxes are not included in the trip price.", 139, 8.8, sans, MUTED);
+    center(p, "INR 20,000 booking amount", 110, 11, semi, CREAM);
+    center(p, "Balance payable before departure.", 94, 9.3, sans, MUTED);
+    footer(p, "09 · THE PACKAGES");
+  }
+
   const f = spec.final;
   const p = page();
   await photo(p, "img2/starboy-final.jpg", H);
@@ -281,8 +318,13 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   text(p, titleB, titleX + width(titleA, 44, serif), 730, 44, italic, GOLD_LIGHT);
   center(p, f.subline, 704, 8.5, semi, GOLD_LIGHT, 2.2);
   box(p, 64, 689, W - 128, 138, 14, true, 0.8);
-  center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 651, 34, bold, CREAM);
-  center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 635, 7.2, semi, MUTED, 1.4);
+  if (packages) {
+    center(p, "BOTH PACKAGES INCLUDE THE EXPERIENCES BELOW", 673, 7.4, semi, GOLD_LIGHT, 1);
+    paragraph(p, packages.exclusionsNote, 0, 655, 9.5, sans, 425, 13, CREAM, true);
+  } else {
+    center(p, `INR ${dashboard.price.toLocaleString("en-IN")}`, 651, 34, bold, CREAM);
+    center(p, "PER PERSON · 7 DAYS / 6 NIGHTS", 635, 7.2, semi, MUTED, 1.4);
+  }
   center(p, "5% GST + 2% TCS will be applicable.", 615, 9.5, semi, GOLD_HI);
   center(p, "These taxes are not included in the trip price.", 601, 8.8, sans, MUTED);
   center(p, "INR 20,000 booking amount", 581, 11, semi, CREAM);
@@ -290,8 +332,8 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   const leftX = 64;
   const rightX = 316;
   const colW = 213;
-  text(p, "WHAT'S INCLUDED", leftX, 538, 8.5, semi, GOLD_LIGHT, 2);
-  text(p, "NOT INCLUDED / OPTIONAL", rightX, 538, 8.2, semi, MUTED, 1.1);
+  text(p, packages ? "INCLUDED IN BOTH PACKAGES" : "WHAT'S INCLUDED", leftX, 538, packages ? 7.8 : 8.5, semi, GOLD_LIGHT, packages ? 0.8 : 2);
+  text(p, packages ? "EXCLUSIONS · XO PACKAGE ONLY" : "NOT INCLUDED / OPTIONAL", rightX, 538, packages ? 7.7 : 8.2, semi, MUTED, packages ? 0.7 : 1.1);
   rule(p, leftX, leftX + colW, 525);
   rule(p, rightX, rightX + colW, 525);
   function list(items: string[], x: number, included: boolean): number {

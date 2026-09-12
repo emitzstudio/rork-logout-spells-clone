@@ -5,8 +5,8 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 
 const origin = "https://z57wkqd89o09lsi6kc7v1-web.rork.live";
-// Keep historical v7 checks available; --v8 uses its own exclusive pre-change baseline.
-const version = process.argv.includes("--v8") ? 8 : 7;
+// Each edition uses its own exclusive pre-change baseline.
+const version = process.argv.includes("--v9") ? 9 : process.argv.includes("--v8") ? 8 : 7;
 const oldPath = `/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version - 1}.pdf`;
 const newPath = `/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 const formUrl = "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand";
@@ -41,7 +41,7 @@ async function assertLivePdf(url, digest) {
   assert.equal(bytes.subarray(0, 5).toString(), "%PDF-", `Invalid PDF: ${url}`);
   assert.equal(hash(bytes), digest, `PDF bytes differ: ${url}`);
 }
-const tables = ["spells", "spell_departures", "previous_spells", "reviews"];
+const tables = ["spells", "spell_departures", "previous_spells", "reviews", ...(version >= 9 ? ["forms"] : [])];
 const rows = Object.fromEntries(await Promise.all(tables.map(async (table) => [table, await readRows(table)])));
 const starboy = rows.spells.find((row) => row.id === targetId);
 assert.equal(starboy?.slug, "the-starboy-spell");
@@ -60,9 +60,10 @@ const before = JSON.parse(readFileSync(baseline, "utf8"));
 const expected = structuredClone(before.rows);
 expected.spells.find((row) => row.id === targetId).page.pricing.brochureUrl = origin + newPath;
 const normalize = (data) => ({ ...data, spells: data.spells.map((row) => {
-  if (row.id !== targetId) return row;
   const copy = { ...row };
-  delete copy.updated_at;
+  // Visitors may advance view counters independently of a brochure publication.
+  if (version >= 9) delete copy.views;
+  if (version >= 9 || row.id === targetId) delete copy.updated_at;
   return copy;
 }) });
 assert.deepEqual(normalize(rows), normalize(expected), "Only the Starboy brochure URL and its timestamp may change");

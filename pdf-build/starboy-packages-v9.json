@@ -1,0 +1,20 @@
+{
+  "packages": [
+    {
+      "label": "XO package",
+      "price": 85000,
+      "earlyBird": 80000,
+      "tagline": "THE ORIGINAL EXPERIENCE",
+      "description": "The Weeknd concert, Bangkok-Phuket internal flight, six nights, listed meals, transfers and the included experiences on the next page."
+    },
+    {
+      "label": "Starboy package",
+      "price": 150000,
+      "earlyBird": 140000,
+      "tagline": "ALL-INCLUSIVE",
+      "description": "Everything in XO, plus international flights and all itinerary activities. The exclusions listed on the next page apply only to XO, not Starboy."
+    }
+  ],
+  "exclusionsNote": "Exclusions apply to the XO package only. The Starboy package is all-inclusive, including international flights and all itinerary activities.",
+  "optionalNote": "Activities marked optional in the itinerary are optional extras for XO. They are included in the Starboy package."
+}

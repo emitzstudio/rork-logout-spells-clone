@@ -4,6 +4,7 @@ import * as mupdf from "mupdf";
 import { STARBOY_BROCHURE_PATH } from "../web/src/data/starboyBrochure";
 import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-template";
 import type { TripSpec } from "./trips";
+import packages from "./starboy-packages-v9.json";
 
 interface Day { title: string; subtitle: string; body: string; locationTag: string }
 interface DashboardSnapshot {
@@ -27,8 +28,10 @@ const spec = JSON.parse(readFileSync("starboy-grimoire.json", "utf8")) as TripSp
 const draft = process.argv.includes("--draft");
 assert(!(draft && process.argv.includes("--publish")), "Never publish a draft");
 assert(!process.argv.includes("--cinematic"), "The Weeknd-themed PDF is retired; use the Grimoire edition");
-spec.fileName = STARBOY_BROCHURE_PATH.split("/").pop()!;
-spec.docSubject = "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000";
+const historicalV8 = process.argv.includes("--v8");
+const version = historicalV8 ? 8 : 9;
+spec.fileName = historicalV8 ? "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v8.pdf" : STARBOY_BROCHURE_PATH.split("/").pop()!;
+spec.docSubject = historicalV8 ? "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000" : "Bangkok & Phuket · 7 days / 6 nights · XO and all-inclusive Starboy packages · Early-bird prices";
 spec.cover.locLine = "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET · THAILAND";
 spec.cover.ital2 = "INR 85,000 per person · 7 days / 6 nights";
 assert.equal(spell.page.itinerary.length, 7);
@@ -49,9 +52,10 @@ const bodies = spell.page.itinerary.map((day) => printable(day.body));
 const edition = { price: spell.price_minor / 100, bodies };
 const bytes = process.argv.includes("--verify-existing")
   ? readFileSync(spec.fileName)
-  : Buffer.from(await buildGrimoireStarboy(spec, edition));
+  : Buffer.from(await buildGrimoireStarboy(spec, edition, historicalV8 ? undefined : packages));
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
-assert.equal(doc.countPages(), 9);
+assert.equal(doc.countPages(), historicalV8 ? 9 : 10);
+const finalIndex = doc.countPages() - 1;
 const texts: string[] = [];
 for (let index = 0; index < doc.countPages(); index++) {
   const page = doc.loadPage(index);
@@ -75,7 +79,7 @@ for (let index = 0; index < doc.countPages(); index++) {
     }
     assert(compact(text).includes(compact(spell.page.itinerary[index - 1].title)), `Dashboard title missing on day ${index}`);
   }
-  if (index === 8) {
+  if (index === finalIndex) {
     for (const item of [...spec.final.lists.left, ...spec.final.lists.right]) assert(compact(text).includes(compact(item)), `Missing inclusion/exclusion: ${item}`);
     const links = page.getLinks();
     assert.deepEqual(links.map((l) => l.getURI()), [spec.final.announcement!.url]);
@@ -85,27 +89,41 @@ for (let index = 0; index < doc.countPages(); index++) {
   page.destroy();
   console.log(`PASS: PDF page ${index + 1} current text and safe margins`);
 }
-assert(texts[0].includes("85,000") && texts[8].includes("85,000"));
+assert(texts[0].includes("85,000"));
+if (!historicalV8) {
+  for (const tier of packages.packages) {
+    assert(texts[8].includes(tier.label));
+    for (const amount of [tier.price, tier.earlyBird]) {
+      assert(texts[0].includes(amount.toLocaleString("en-IN")));
+      assert(texts[8].includes(amount.toLocaleString("en-IN")));
+    }
+  }
+  assert(compact(texts[8]).includes(compact(packages.optionalNote)));
+  assert(compact(texts[finalIndex]).includes(compact(packages.exclusionsNote)));
+  assert(texts[finalIndex].includes("EXCLUSIONS · XO PACKAGE ONLY"));
+  assert(compact(texts[8]).includes(compact("ALL-INCLUSIVE")));
+  assert(!texts[finalIndex].includes("NOT INCLUDED / OPTIONAL"));
+}
 assert(compact(texts[0]).includes(compact("6 NIGHTS")));
 assert(!/TBA|30%|65,000|65000|91,?000/.test(texts.join(" ")), "Do not show obsolete terms, a calculated balance or a calculated total");
 assert(texts[0].includes("5% GST + 2% TCS extra; not included in the price."));
-assert(texts[8].includes("5% GST + 2% TCS will be applicable."));
-assert(texts[8].includes("These taxes are not included in the trip price."));
-assert(texts[8].includes("INR 20,000 booking amount"));
-assert(texts[8].includes("Balance payable before departure."));
-assert(!texts[8].includes("Open the website"));
+assert(texts[finalIndex].includes("5% GST + 2% TCS will be applicable."));
+assert(texts[finalIndex].includes("These taxes are not included in the trip price."));
+assert(texts[finalIndex].includes("INR 20,000 booking amount"));
+assert(texts[finalIndex].includes("Balance payable before departure."));
+assert(!texts[finalIndex].includes("Open the website"));
 assert(texts[3].includes("Background extended with AI"));
 assert(compact(texts[7]).includes(compact("END OF THE SPELL")));
 assert(texts[0].includes("Background extended with AI"));
 if (!process.argv.includes("--verify-existing")) {
   if (draft) {
     mkdirSync(".cache", { recursive: true });
-    writeFileSync(".cache/starboy-grimoire-v8-draft.pdf", bytes);
+    writeFileSync(`.cache/starboy-grimoire-v${version}-draft.pdf`, bytes);
   } else {
     saveGrimoireCopy(spec.fileName, bytes);
     if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${spec.fileName}`, bytes);
   }
 }
 if (process.argv.includes("--publish")) assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)));
-console.log(`PASS: approved Grimoire edition, all seven dashboard day descriptions, 10 inclusions, 7 exclusions, INR 85,000 plus 5% GST and 2% TCS, INR 20,000 booking amount, balance before departure, form link and 6 nights; ${bytes.length} bytes. Retired themed PDFs are never published.`);
+console.log(`PASS: Grimoire v${version}, seven unchanged dashboard days, 10 inclusions, 7 ${historicalV8 ? "" : "XO-only "}exclusions, ${historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
 doc.destroy();

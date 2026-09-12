@@ -21,7 +21,7 @@ const departure = { ...dashboard.departure, seats_on_hold: 0 } as ActiveDepartur
 const currentDraft = mapSpell(currentRow, departure, []).draft!;
 
 describe("Approved Starboy Grimoire distribution", () => {
-  it("uses v8 in all three live download buttons and the dashboard preview", () => {
+  it("uses v9 in all three live download buttons and the dashboard preview", () => {
     const live = renderToStaticMarkup(<MemoryRouter><StarboyExperience draft={currentDraft} onBook={() => {}} /></MemoryRouter>);
     const downloads = [...live.matchAll(/href="([^"]+\.pdf)"/g)].map((match) => match[1]);
     expect(downloads).toEqual(Array(3).fill(STARBOY_BROCHURE_URL));
@@ -60,12 +60,14 @@ describe("Approved Starboy Grimoire distribution", () => {
     expect(brochureLink(withBrochureUrl(pricing, `https://user:password@example.com${RETIRED_STARBOY_BROCHURE_PATHS[0]}`))).toBeNull();
   });
 
-  it("keeps the approved PDF byte-identical, preserves v6/v7 and excludes retired themed editions", () => {
+  it("keeps the approved PDF byte-identical, preserves v6/v7/v8 and excludes retired themed editions", () => {
     const published = readFileSync(new URL(`../../public${STARBOY_BROCHURE_PATH}`, import.meta.url));
     const original = readFileSync(new URL(`../../../pdf-build/${STARBOY_BROCHURE_PATH.split("/").pop()}`, import.meta.url));
     expect(published.equals(original)).toBe(true);
-    expect(published.length).toBe(2702332);
-    expect(createHash("sha256").update(published).digest("hex")).toBe("aa6f70da95a2004558d92f33ef71b908641cc7fd9dc9c8e540941aa26d885b64");
+    expect(published.length).toBe(2730203);
+    expect(createHash("sha256").update(published).digest("hex")).toBe("b92cb7c948ffd249abb6ff3b2aa03adedf1d0a67aadb3f848b5b466e2bd13678");
+    const v8 = readFileSync(new URL("../../public/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v8.pdf", import.meta.url));
+    expect(createHash("sha256").update(v8).digest("hex")).toBe("aa6f70da95a2004558d92f33ef71b908641cc7fd9dc9c8e540941aa26d885b64");
     const v7 = readFileSync(new URL("../../public/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v7.pdf", import.meta.url));
     expect(createHash("sha256").update(v7).digest("hex")).toBe("dd050080498ce3886c030abd3750048414e23f94838e83c9c6ab554e73a5c140");
     const previous = readFileSync(new URL("../../public/brochures/Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf", import.meta.url));
