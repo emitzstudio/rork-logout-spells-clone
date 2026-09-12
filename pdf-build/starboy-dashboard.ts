@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as mupdf from "mupdf";
-import { buildCinematicStarboy } from "./starboy-cinematic";
+import { STARBOY_BROCHURE_PATH } from "../web/src/data/starboyBrochure";
 import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-template";
 import type { TripSpec } from "./trips";
 
@@ -23,13 +23,11 @@ assert.equal(departure.date_label, "9-15 October 2026");
 assert(spell.page.itinerary[0].subtitle.includes("9 October 2026"));
 assert(spell.page.itinerary[6].subtitle.includes("15 October 2026"));
 const spec = JSON.parse(readFileSync("starboy-grimoire.json", "utf8")) as TripSpec;
-const grimoire = process.argv.includes("--grimoire");
+// --grimoire remains accepted for older commands; it is now the only public edition.
 const draft = process.argv.includes("--draft");
-assert(!draft || grimoire, "Draft mode is only for the isolated Grimoire edition");
 assert(!(draft && process.argv.includes("--publish")), "Never publish a draft");
-spec.fileName = grimoire
-  ? "Logout-Spells-Starboy-9-15-Oct-2026-Grimoire-v6.pdf"
-  : "Logout-Spells-Starboy-9-15-Oct-2026-Dashboard-v5.pdf";
+assert(!process.argv.includes("--cinematic"), "The Weeknd-themed PDF is retired; use the Grimoire edition");
+spec.fileName = STARBOY_BROCHURE_PATH.split("/").pop()!;
 spec.docSubject = "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000";
 spec.cover.locLine = "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET · THAILAND";
 spec.cover.ital2 = "INR 85,000 per person · 7 days / 6 nights";
@@ -44,13 +42,9 @@ spec.final.rightHeading = "NOT INCLUDED / OPTIONAL";
 spec.final.lists = { left: spell.page.included.map((i) => printable(i.text)), right: spell.page.notIncluded.map((i) => printable(i.text)) };
 const bodies = spell.page.itinerary.map((day) => printable(day.body));
 const edition = { price: spell.price_minor / 100, bodies };
-let bytes: Buffer;
-if (grimoire) {
-  bytes = Buffer.from(await buildGrimoireStarboy(spec, edition));
-} else {
-  await buildCinematicStarboy(spec, process.argv.includes("--publish"), edition);
-  bytes = readFileSync(spec.fileName);
-}
+const bytes = process.argv.includes("--verify-existing")
+  ? readFileSync(spec.fileName)
+  : Buffer.from(await buildGrimoireStarboy(spec, edition));
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
 assert.equal(doc.countPages(), 9);
 const texts: string[] = [];
@@ -66,17 +60,13 @@ for (let index = 0; index < doc.countPages(); index++) {
     assert(x >= 25 && x + w <= 570.3 && y >= 20 && y + h <= 822, `Out of bounds on page ${index + 1}: ${line.text}`);
   }
   if (index > 0 && index < 8) {
-    if (grimoire) {
-      let cursor = 0;
-      const normalized = compact(text);
-      for (const paragraph of bodies[index - 1].split(/\n\s*\n/).filter((part) => part.trim())) {
-        const expected = compact(paragraph);
-        const found = normalized.indexOf(expected, cursor);
-        assert(found >= cursor, `Dashboard paragraph missing or reordered on day ${index}: ${paragraph}`);
-        cursor = found + expected.length;
-      }
-    } else {
-      assert(compact(text).includes(compact(bodies[index - 1])), `Dashboard body missing on day ${index}`);
+    let cursor = 0;
+    const normalized = compact(text);
+    for (const paragraph of bodies[index - 1].split(/\n\s*\n/).filter((part) => part.trim())) {
+      const expected = compact(paragraph);
+      const found = normalized.indexOf(expected, cursor);
+      assert(found >= cursor, `Dashboard paragraph missing or reordered on day ${index}: ${paragraph}`);
+      cursor = found + expected.length;
     }
     assert(compact(text).includes(compact(spell.page.itinerary[index - 1].title)), `Dashboard title missing on day ${index}`);
   }
@@ -94,9 +84,9 @@ assert(texts[0].includes("85,000") && texts[8].includes("85,000"));
 assert(compact(texts[0]).includes(compact("6 NIGHTS")));
 assert(!/TBA|30%|GST|TCS/.test(texts.join(" ")), "Do not carry obsolete pricing or invent payment terms");
 assert(texts[3].includes("Background extended with AI"));
-if (grimoire) {
-  assert(compact(texts[7]).includes(compact("END OF THE SPELL")));
-  assert(texts[0].includes("Background extended with AI"));
+assert(compact(texts[7]).includes(compact("END OF THE SPELL")));
+assert(texts[0].includes("Background extended with AI"));
+if (!process.argv.includes("--verify-existing")) {
   if (draft) {
     mkdirSync(".cache", { recursive: true });
     writeFileSync(".cache/starboy-grimoire-v6-draft.pdf", bytes);
@@ -106,5 +96,5 @@ if (grimoire) {
   }
 }
 if (process.argv.includes("--publish")) assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)));
-console.log(`PASS: all seven dashboard day descriptions, 10 inclusions, 7 exclusions, INR 85,000 and 6 nights; previous PDFs retained. ${grimoire ? "Grimoire" : "Cinematic"} edition: ${bytes.length} bytes`);
+console.log(`PASS: approved Grimoire edition, all seven dashboard day descriptions, 10 inclusions, 7 exclusions, INR 85,000 and 6 nights; ${bytes.length} bytes. Retired themed PDFs are never published.`);
 doc.destroy();

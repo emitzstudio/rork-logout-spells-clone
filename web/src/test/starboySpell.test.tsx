@@ -2,7 +2,9 @@ import sql from "../../../backend/migrations/0065_starboy_spell.sql?raw";
 import photoSql from "../../../backend/migrations/0066_starboy_weeknd_photography.sql?raw";
 import uploadedPhotoSql from "../../../backend/migrations/0067_starboy_uploaded_photography.sql?raw";
 import cinematicSql from "../../../backend/migrations/0070_starboy_cinematic.sql?raw";
+// Historical copy stays covered for compatibility; downloads always resolve to the approved edition.
 import brochure from "../../../pdf-build/starboy-grimoire.json";
+import { STARBOY_BROCHURE_PATH, STARBOY_BROCHURE_URL } from "@/data/starboyBrochure";
 import StarboyExperience from "@/components/spell/StarboyExperience";
 import { MemoryRouter } from "react-router-dom";
 import { createElement } from "react";
@@ -60,7 +62,7 @@ describe("Starboy PDF dashboard persistence", () => {
     expect(brochureLink(reloaded.pricing)).toBe(brochureLink(draft.pricing));
     const html = renderToStaticMarkup(createElement(SpellPricing, { draft: reloaded, onBook: () => {} }));
     expect(html).toContain("85,000");
-    expect(html).toContain(brochure.fileName);
+    expect(html).toContain(STARBOY_BROCHURE_PATH);
     expect(html).not.toContain(">TBA</p>");
     expect(reloaded.pricing?.note).toBe(draft.pricing?.note);
   });
@@ -79,13 +81,13 @@ describe("Starboy PDF dashboard persistence", () => {
   it("shows the tierless PDF in the dashboard preview and clearly labels it in the hero", () => {
     const html = renderToStaticMarkup(createElement(SpellPageBody, { draft, device: "mobile" }));
     expect(html).toContain("Download brochure (PDF)");
-    expect(html).toContain(brochure.fileName);
+    expect(html).toContain(STARBOY_BROCHURE_PATH);
     const live = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft, onBook: () => {} })));
     expect(live.split("</section>")[0]).toContain("Download itinerary (PDF)");
   });
 });
 
-describe("Starboy TBA itinerary", () => {
+describe("Historical Starboy TBA content compatibility", () => {
   it("uses the red-lit upload and AI extension without changing trip terms or misattributing the photo", () => {
     expect(spell.image).toContain("starboy-weeknd-stage-v4.webp");
     expect(draft.mobileHero?.url).toContain("starboy-weeknd-portrait-v4.jpeg");
@@ -106,7 +108,7 @@ describe("Starboy TBA itinerary", () => {
     expect(html).toContain('aria-label="The Starboy Spell"');
     expect(html).toContain('id="journey"');
     expect(html).toContain('id="price"');
-    expect(html).toContain(brochure.fileName);
+    expect(html).toContain(STARBOY_BROCHURE_PATH);
     expect(html).toContain("Background extended with AI");
     for (const day of brochure.days) for (const point of day.points) expect(html).toContain(point.title.replace(/&/g, "&amp;"));
     expect(html.replace(/<[^>]*>/g, "")).not.toMatch(/₹0|30%|Sold out|0 seats/);
@@ -140,7 +142,11 @@ describe("Starboy TBA itinerary", () => {
     expect(draft.stay.name).toBe("");
     expect(bookingService.tripDates(spell).start).toContain("2026-10-09");
     expect(bookingService.tripDates(spell).end).toContain("2026-10-15");
-    expect(pageFromDraft(draft)).toEqual(content.page);
+    const historicalPage = content.page as Record<string, unknown>;
+    expect(pageFromDraft(draft)).toEqual({
+      ...historicalPage,
+      pricing: { ...(historicalPage.pricing as object), brochureUrl: STARBOY_BROCHURE_URL },
+    });
   });
   it("preserves every PDF stop, caption and day order on the site", () => {
     expect(draft.itinerary).toHaveLength(7);
@@ -173,7 +179,7 @@ describe("Starboy TBA itinerary", () => {
     const pricing = renderToStaticMarkup(createElement(SpellPricing, { draft, onBook: () => {} }));
     expect(pricing).toContain("TBA");
     expect(pricing).toContain("Inquire about this spell");
-    expect(pricing).toContain(brochure.fileName);
+    expect(pricing).toContain(STARBOY_BROCHURE_PATH);
     expect(pricing).not.toMatch(/₹0|30%|Book with|Booking amount/);
     const strip = renderToStaticMarkup(createElement(BookingStrip, { draft, seatsLeft: 0, onBook: () => {} }));
     expect(strip).toContain("Price on request");

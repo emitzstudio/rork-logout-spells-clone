@@ -11,7 +11,6 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFName, PDFPage, PDFString, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { buildCinematicStarboy } from "./starboy-cinematic";
 
 const W = 595.28;
 const H = 841.89;
@@ -190,7 +189,8 @@ const rupee = (amount: string) => (serifHasRupee || sansHasRupee ? `\u20B9${amou
 /* ----------------------------- Trip builder ------------------------------ */
 async function buildTrip(spec: TripSpec): Promise<void> {
   if (spec.style === "starboy-cinematic") {
-    await buildCinematicStarboy(spec, process.argv.includes("--publish"));
+    // Keep historical trip inputs, but never regenerate or publish the retired theme.
+    await import("./starboy-dashboard");
     return;
   }
   const doc = await PDFDocument.create();

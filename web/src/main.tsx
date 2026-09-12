@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 
 import App from "./App.tsx";
+import BrochureRedirect from "./components/site/BrochureRedirect";
+import { RETIRED_STARBOY_BROCHURE_PATHS } from "./data/starboyBrochure";
 import { missingSupabaseConfig } from "./integrations/supabase/client";
 import "./index.css";
 
@@ -37,5 +39,7 @@ const ConfigurationError = () => (
 );
 
 createRoot(document.getElementById("root")!).render(
-  missingSupabaseConfig.length > 0 ? <ConfigurationError /> : <App />,
+  RETIRED_STARBOY_BROCHURE_PATHS.includes(window.location.pathname)
+    ? <BrochureRedirect />
+    : missingSupabaseConfig.length > 0 ? <ConfigurationError /> : <App />,
 );

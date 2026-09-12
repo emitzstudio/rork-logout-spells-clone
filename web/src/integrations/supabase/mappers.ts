@@ -14,6 +14,7 @@ import type { DraftImage, PriceTier, PricingBlock, SpellDraft } from "@/data/bui
 import type { FormQuestion, FormResponse, LogoutForm, ResponseAnswer } from "@/data/forms";
 import type { Interest } from "@/data/interests";
 import { brochureLink } from "@/data/publishedPricing";
+import { replaceRetiredStarboyBrochure } from "@/data/starboyBrochure";
 import type {
   CommunityMoment,
   PastChapter,
@@ -104,7 +105,7 @@ const revivePricing = (raw: unknown): PricingBlock | undefined => {
   return {
     tiers,
     ...(doc.requestMode === "published-terms" ? { requestMode: "published-terms" as const } : {}),
-    ...(typeof doc.brochureUrl === "string" ? { brochureUrl: doc.brochureUrl } : {}),
+    ...(typeof doc.brochureUrl === "string" ? { brochureUrl: replaceRetiredStarboyBrochure(doc.brochureUrl) } : {}),
     remainingNote: typeof doc.remainingNote === "string" ? doc.remainingNote : "",
     taxNote: typeof doc.taxNote === "string" ? doc.taxNote : "",
     note: typeof doc.note === "string" ? doc.note : "",
@@ -126,7 +127,10 @@ export const pageFromDraft = (draft: SpellDraft): Record<string, unknown> => ({
   tripHighlights: draft.tripHighlights,
   faqs: draft.faqs,
   /* Pricing may contain published tiers or a brochure-only TBA announcement. */
-  ...(draft.pricing ? { pricing: draft.pricing } : {}),
+  ...(draft.pricing ? { pricing: {
+    ...draft.pricing,
+    ...(typeof draft.pricing.brochureUrl === "string" ? { brochureUrl: replaceRetiredStarboyBrochure(draft.pricing.brochureUrl) } : {}),
+  } } : {}),
 });
 
 /** Rebuilds the builder draft from columns + the v1 page document. */

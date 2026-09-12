@@ -1,10 +1,11 @@
 import { pricingTiers } from "@/data/builder";
 import type { PricingBlock, SpellDraft } from "@/data/builder";
 import { formatINR } from "@/data/spells";
+import { replaceRetiredStarboyBrochure } from "@/data/starboyBrochure";
 
 /** Accept only HTTPS PDFs or the site's brochure directory, never executable URLs. */
 export function brochureLink(pricing: PricingBlock | undefined): string | null {
-  const value = pricing?.brochureUrl?.trim() ?? "";
+  const value = replaceRetiredStarboyBrochure(pricing?.brochureUrl ?? "").trim();
   if (/^\/brochures\/[a-zA-Z0-9_-]+\.pdf$/.test(value)) return value;
   try {
     const url = new URL(value);
@@ -18,7 +19,7 @@ export function brochureLink(pricing: PricingBlock | undefined): string | null {
 
 /** Update only the brochure reference, retaining tiers and all existing commercial terms. */
 export function withBrochureUrl(pricing: PricingBlock | undefined, brochureUrl: string): PricingBlock {
-  return { tiers: [], remainingNote: "", taxNote: "", note: "", ...pricing, brochureUrl };
+  return { tiers: [], remainingNote: "", taxNote: "", note: "", ...pricing, brochureUrl: replaceRetiredStarboyBrochure(brochureUrl) };
 }
 
 /** Published amounts for an offline quote request, not an online payment calculation. */

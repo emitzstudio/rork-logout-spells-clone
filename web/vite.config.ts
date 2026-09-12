@@ -3,6 +3,7 @@ import path from "path";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+import { RETIRED_STARBOY_BROCHURE_PATHS } from "./src/data/starboyBrochure";
 
 import {
   STATIC_SITEMAP_PATHS,
@@ -102,6 +103,19 @@ const seoFiles = (siteUrl: string, supabaseUrl: string, anonKey: string): Plugin
   },
 });
 
+/** Retired public PDFs must not return through a later build or an old generation script. */
+const brochureDistribution = (): Plugin => ({
+  name: "logout-brochure-distribution",
+  apply: "build",
+  buildStart() {
+    for (const retired of RETIRED_STARBOY_BROCHURE_PATHS) {
+      if (existsSync(path.resolve(__dirname, "public", retired.slice(1)))) {
+        this.error(`Retired Starboy PDF found in public assets: ${retired}. Distribute the approved Grimoire only.`);
+      }
+    }
+  },
+});
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), ["VITE_", "EXPO_PUBLIC_"]);
@@ -133,7 +147,7 @@ export default defineConfig(({ mode }) => {
         overlay: false,
       },
     },
-    plugins: [react(), seoHtml(siteUrl, supabaseOrigin), seoFiles(siteUrl, supabaseUrl, anonKey)],
+    plugins: [react(), brochureDistribution(), seoHtml(siteUrl, supabaseOrigin), seoFiles(siteUrl, supabaseUrl, anonKey)],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
