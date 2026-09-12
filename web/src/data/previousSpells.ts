@@ -25,6 +25,8 @@ export interface PastGalleryShot {
   tall?: boolean;
   /** Preserve the framing of 3:2 landscape group photographs. */
   wide?: boolean;
+  /** Full 2:3 portrait framing, distinct from the existing 3:4 tall frame. */
+  portrait?: boolean;
 }
 
 /** One line of the itinerary recap - "what we actually did". */

@@ -265,7 +265,7 @@ export default function PreviousSpellScreen() {
                 <View key={shotItem.id} style={styles.shotWrap}>
                   <Image
                     source={{ uri: shotItem.src }}
-                    style={[styles.shot, shotItem.tall === true ? styles.shotTall : shotItem.wide === true ? styles.shotWide : null]}
+                    style={[styles.shot, shotItem.portrait === true ? styles.shotPortrait : shotItem.tall === true ? styles.shotTall : shotItem.wide === true ? styles.shotWide : null]}
                     contentFit="cover"
                     transition={300}
                   />
@@ -586,6 +586,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(245,240,232,0.08)",
+  },
+  shotPortrait: {
+    height: 315,
   },
   shotTall: {
     height: 280,

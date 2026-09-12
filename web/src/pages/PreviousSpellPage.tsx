@@ -578,7 +578,7 @@ export default function PreviousSpellPage() {
       <section id="gallery" aria-label="Gallery" className="scroll-mt-24 overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
-            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : past.slug === "udaipur-spell-with-anshika" ? "From our Udaipur circle" : past.slug === "all-girls-spell-to-bir" ? "From our All Girls Bir circle" : "One photo a day"}
+            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : past.slug === "udaipur-spell-with-anshika" ? "From our Udaipur circle" : past.slug === "all-girls-spell-to-bir" ? "From our All Girls Bir circle" : past.slug === "meghas-storytelling-spell" ? "From our Darjeeling circle" : "One photo a day"}
             title={
               <>
                 The <span className="italic text-gold-gradient">Gallery</span>
@@ -592,7 +592,7 @@ export default function PreviousSpellPage() {
                   key={photo.id}
                   className="group relative w-[78%] shrink-0 snap-center overflow-hidden rounded-[14px] border border-cream/[0.07] md:mb-5 md:w-auto md:break-inside-avoid"
                 >
-                  <div className={cn("relative", photo.tall ? "aspect-[3/4]" : photo.wide ? "aspect-[3/2]" : "aspect-[4/3]")}>
+                  <div className={cn("relative", photo.portrait ? "aspect-[2/3]" : photo.tall ? "aspect-[3/4]" : photo.wide ? "aspect-[3/2]" : "aspect-[4/3]")}>
                     <img
                       src={photo.src}
                       alt={photo.caption}
