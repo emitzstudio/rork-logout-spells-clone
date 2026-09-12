@@ -23,6 +23,8 @@ export interface PastGalleryShot {
   caption: string;
   /** Taller frame in the gallery strip. */
   tall?: boolean;
+  /** Preserve the framing of 3:2 landscape group photographs. */
+  wide?: boolean;
 }
 
 /** One line of the itinerary recap - "what we actually did". */

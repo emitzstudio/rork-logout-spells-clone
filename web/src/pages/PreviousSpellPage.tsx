@@ -575,10 +575,10 @@ export default function PreviousSpellPage() {
 
       {/* Gallery - only rendered once real photographs exist. */}
       {past.gallery.length > 0 && (
-      <section aria-label="Gallery" className="overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
+      <section id="gallery" aria-label="Gallery" className="scroll-mt-24 overflow-hidden bg-charcoal-deep/30 px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-6xl">
           <SectionHeading
-            eyebrow="One photo a day"
+            eyebrow={past.slug === "shubhangis-bir-spell" ? "From Shubhangi's Bir trip" : "One photo a day"}
             title={
               <>
                 The <span className="italic text-gold-gradient">Gallery</span>
@@ -592,7 +592,7 @@ export default function PreviousSpellPage() {
                   key={photo.id}
                   className="group relative w-[78%] shrink-0 snap-center overflow-hidden rounded-[14px] border border-cream/[0.07] md:mb-5 md:w-auto md:break-inside-avoid"
                 >
-                  <div className={cn("relative", photo.tall ? "aspect-[3/4]" : "aspect-[4/3]")}>
+                  <div className={cn("relative", photo.tall ? "aspect-[3/4]" : photo.wide ? "aspect-[3/2]" : "aspect-[4/3]")}>
                     <img
                       src={photo.src}
                       alt={photo.caption}
