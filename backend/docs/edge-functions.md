@@ -3,7 +3,8 @@
 > **Status: M7A (2026-08-13) — `create-booking`, `payment-webhook` and
 > `cancel-booking` are DEPLOYED, all GATED** (pricing 501 · provider 501/503 ·
 > staff-only 403 — verified live; none can move seats or money until decisions
-> C/F land in phase 7B). Functions are written in Deno TypeScript under
+> C/F land in phase 7B). **0087 (2026-09-13) — `sheets-sync` DEPLOYED**, gated
+> on the Google service-account secret. Functions are written in Deno TypeScript under
 > `backend/functions/<name>/index.ts` and deploy into the company Supabase project —
 > they run on Supabase's infrastructure with zero dev-tool runtime dependency.
 
@@ -94,6 +95,50 @@ record, audit events, traveller notification ("refunds reach the original
 payment method within 7–10 working days"), a manual-refund flag when the money
 was recorded manually, and a staff outbox nudge to work the waitlist
 (allocation is manual — decision G).
+
+### `sheets-sync` — DEPLOYED (0087, 2026-09-13) · staff JWT or internal Vault bearer · gated on the Google key
+The Google Sheet mirror for form responses. One function, five actions:
+
+| action | caller | what it does |
+| --- | --- | --- |
+| `status` | console (staff) | is `GOOGLE_SERVICE_ACCOUNT_JSON` set, and which service-account email to share sheets with |
+| `connect` `{formId, sheet}` | console (staff) | validates the link, picks a tab (linked `gid` → existing “Responses” → lone empty first tab → new “Responses” tab), saves `form_sheet_links`, files a job per existing response and drains inline |
+| `disconnect` `{formId}` | console (staff) | deletes the link and its jobs — the sheet keeps every row |
+| `sync` `{formId}` | console (staff) **or** database trigger | drains that form's queue; from the console it also re-queues exhausted failures (“Sync now” after fixing a share) |
+| `sweep` | database cron only | drains every form with an open job |
+
+**Auth.** Console calls carry the staff Supabase session (`requireUser` +
+`isStaffUser`). Database calls (the `form_responses` AFTER INSERT trigger and
+the five-minute `pg_cron` sweep, both via `pg_net`) carry the random bearer the
+migration minted into Vault in `x-sheets-sync-key`; the function reads it back
+through the service-role-only `sheets_sync_secret()` RPC and compares in
+constant time. Anonymous, traveller and wrong-key calls answer 401.
+
+**Pipeline per run.** Take a 90-second lease on the link → claim ≤ 200 jobs
+(`claim_sheet_sync_jobs`, `SKIP LOCKED`) → read the sheet's header row →
+reconcile columns (`_shared/sheetColumns.ts`: Submitted At · the form's
+switched-on questions in order · orphaned answered questions · Submitted via ·
+Source on enquiry forms · Submission ID; new questions append at the end,
+renamed questions follow the form unless the founder edited the cell,
+founder-moved columns are matched by text, foreign columns are preserved and
+never written) → skip responses whose Submission ID already sits in the sheet
+→ one `values:append` with `RAW` input (no traveller text can become a
+formula) → settle jobs → loop while the queue is non-empty (≤ 12 batches per
+invocation). A Google failure marks the claimed jobs `failed` with the reason,
+sets the link to `error` with founder-facing copy (share with `<email>`, API
+not enabled, not found, rate-limited) and the sweep retries on a growing
+backoff up to 8 attempts.
+
+**Google side.** A service account (Sheets API scope) authenticates with a
+WebCrypto-signed RS256 JWT → OAuth token, cached in-process. The founder
+shares each sheet with the service-account email as an Editor, exactly like
+sharing with a colleague. Timestamps are written as Indian wall-clock text
+(`13 Sep 2026, 4:12 PM IST`).
+
+**Gate.** Until the `GOOGLE_SERVICE_ACCOUNT_JSON` secret is set (secrets
+widget → `syncEdgeFunctionSecrets`), `status` reports `configured: false`,
+every other action answers `503 GOOGLE_NOT_CONFIGURED`, and the console panel
+explains that Sheets isn't switched on yet. Nothing else changes.
 
 ### Admin manual operations — not Edge Functions · LIVE (M7A, verified)
 Four audited, admin-gated SQL RPCs (0007 §16 + 0007b) form the complete

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import GoogleSheetPanel from "@/components/dashboard/forms/GoogleSheetPanel";
 import type { FormResponse } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
 import { downloadResponsesExcel } from "@/data/responsesExport";
@@ -327,6 +328,11 @@ export default function FormResponses() {
               </button>
             </motion.div>
           </div>
+
+          {/* Google Sheet mirror (0087) - live rows, no download needed */}
+          <motion.div {...fadeUp(0.15)} className="mt-5">
+            <GoogleSheetPanel formId={form.id} compact />
+          </motion.div>
 
           {/* Responses */}
           {formResponses.length === 0 ? (

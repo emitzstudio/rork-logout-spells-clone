@@ -2607,6 +2607,58 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0087 — Google Sheets mirror for form responses (2026-09-13)
+
+- **0087_google_sheets_sync — APPLIED** in four `runMigration` batches
+  (`sheets-sync-ext-pg-net`, `sheets-sync-ext-pg-cron`, `sheets-sync-schema`,
+  `sheets-sync-cron-sweep`). Source of record:
+  [`backend/migrations/0087_google_sheets_sync.sql`](../migrations/0087_google_sheets_sync.sql).
+  **Additive only** — no drop, rename, delete, type change or column alteration.
+- **Extensions (2)**: `pg_net` (schema `extensions`) for asynchronous HTTP from
+  SQL; `pg_cron` (schema `pg_catalog`) for the retry sweep. Both were available
+  on the instance and uninstalled before this migration.
+- **Tables (2)**, RLS enabled, staff-SELECT-only policies, zero client write grants:
+  `form_sheet_links` (one Google Sheet per form: spreadsheet id/url/title, tab,
+  the ordered column layout as `jsonb`, status, last sync, counts, a short
+  `lock_until` lease) and `form_sheet_sync_jobs` (the queue: one job per
+  form × response, `pending → processing → done | failed`, attempts, backoff via
+  `updated_at`). Both cascade from `forms`; jobs also cascade from `form_responses`.
+- **Vault (2)**: `sheets_sync_secret` — a 32-byte random internal bearer minted
+  inside the migration (never typed by anyone) — and `sheets_sync_url` (the
+  function URL). Both are read only by the trigger, the cron job and
+  `sheets_sync_secret()`.
+- **Functions (4)**: `sheets_sync_secret()` (SECURITY DEFINER, EXECUTE for
+  `service_role` only — how the Edge Function verifies database-originated calls);
+  `claim_sheet_sync_jobs(uuid, int)` (`FOR UPDATE SKIP LOCKED` claim of pending /
+  backed-off failed / abandoned processing jobs, ≤ 8 attempts, service_role only);
+  `enqueue_form_sheet_backfill(uuid)` (files or resets a job for every response
+  of a form at connect time, service_role only); `enqueue_sheet_sync()` (trigger
+  body — files the job and pings the function through `net.http_post` with the
+  Vault bearer; **every step is wrapped in its own exception block** so the public
+  submit path can never fail because of the mirror; EXECUTE revoked from clients).
+- **Triggers (3)**: `form_responses_sheet_sync` — AFTER INSERT on
+  `form_responses` (no-op for forms without a link); `set_*_updated_at` on both
+  new tables (shared `set_updated_at()`).
+- **Cron (1)**: `sheets-sync-sweep` — `*/5 * * * *`, pings the function with
+  `{"action":"sweep"}` **only when an open job exists** (`WHERE EXISTS`), so a
+  quiet queue costs nothing.
+- **Edge Function**: `sheets-sync` DEPLOYED (see
+  [edge-functions.md](./edge-functions.md#sheets-sync)). Gated on the
+  `GOOGLE_SERVICE_ACCOUNT_JSON` secret — until it is set, `status` answers
+  `configured: false` and every other action returns `503 GOOGLE_NOT_CONFIGURED`;
+  no form can be connected and nothing changes.
+- **Existing data**: 19 forms and 317 responses were untouched. No link exists
+  yet, so the new trigger is a no-op on every current submission.
+- Validation: live checks — Vault entries present (64-char secret), trigger
+  attached, cron job active, grants exactly `service_role` for the three RPCs;
+  a rolled-back smoke transaction showed one job filed per insert and one
+  authenticated `net.http_post` queued; `pg_net` reached the function with the
+  Vault bearer (200); unauthenticated, wrong-key and anon-JWT calls answer 401.
+  Website: 250 unit tests pass (18 new for the column reconciliation and link
+  parsing), typecheck and build pass.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

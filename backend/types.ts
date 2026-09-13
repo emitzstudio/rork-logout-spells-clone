@@ -747,6 +747,126 @@ export type Database = {
           },
         ]
       }
+      form_sheet_links: {
+        Row: {
+          columns: Json
+          created_at: string
+          created_by: string | null
+          form_id: string
+          last_error: string
+          last_synced_at: string | null
+          lock_until: string | null
+          sheet_id: number
+          sheet_title: string
+          spreadsheet_id: string
+          spreadsheet_title: string
+          spreadsheet_url: string
+          status: string
+          synced_count: number
+          updated_at: string
+        }
+        Insert: {
+          columns?: Json
+          created_at?: string
+          created_by?: string | null
+          form_id: string
+          last_error?: string
+          last_synced_at?: string | null
+          lock_until?: string | null
+          sheet_id?: number
+          sheet_title?: string
+          spreadsheet_id: string
+          spreadsheet_title?: string
+          spreadsheet_url: string
+          status?: string
+          synced_count?: number
+          updated_at?: string
+        }
+        Update: {
+          columns?: Json
+          created_at?: string
+          created_by?: string | null
+          form_id?: string
+          last_error?: string
+          last_synced_at?: string | null
+          lock_until?: string | null
+          sheet_id?: number
+          sheet_title?: string
+          spreadsheet_id?: string
+          spreadsheet_title?: string
+          spreadsheet_url?: string
+          status?: string
+          synced_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_sheet_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_sheet_links_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: true
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_sheet_sync_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          form_id: string
+          id: number
+          last_error: string
+          locked_at: string | null
+          response_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          form_id: string
+          id?: never
+          last_error?: string
+          locked_at?: string | null
+          response_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          form_id?: string
+          id?: never
+          last_error?: string
+          locked_at?: string | null
+          response_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_sheet_sync_jobs_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_sheet_sync_jobs_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "form_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forms: {
         Row: {
           created_at: string
@@ -2279,6 +2399,26 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_sheet_sync_jobs: {
+        Args: { _form_id: string; _limit?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          form_id: string
+          id: number
+          last_error: string
+          locked_at: string | null
+          response_id: string
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "form_sheet_sync_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       create_review_collection: {
         Args: {
           p_expires_at?: string
@@ -2290,6 +2430,10 @@ export type Database = {
       default_review_questions: { Args: never; Returns: Json }
       departure_seats_on_hold: {
         Args: { _departure_id: string }
+        Returns: number
+      }
+      enqueue_form_sheet_backfill: {
+        Args: { _form_id: string }
         Returns: number
       }
       generate_referral_code: { Args: { _first_name: string }; Returns: string }
@@ -2362,6 +2506,7 @@ export type Database = {
         Args: { p_collection_id: string; p_remaining: number }
         Returns: number
       }
+      sheets_sync_secret: { Args: never; Returns: string }
       spell_wishlist_counts: {
         Args: never
         Returns: {

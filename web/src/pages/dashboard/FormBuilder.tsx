@@ -19,6 +19,7 @@ import { TextAreaField, TextField } from "@/components/dashboard/builder/Fields"
 import AddQuestionDialog from "@/components/dashboard/forms/AddQuestionDialog";
 import EnquiryShareLinks from "@/components/dashboard/forms/EnquiryShareLinks";
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
+import GoogleSheetPanel from "@/components/dashboard/forms/GoogleSheetPanel";
 import QuestionCard from "@/components/dashboard/forms/QuestionCard";
 import { SpellStatusBadge } from "@/components/dashboard/spells/SpellBadges";
 import {
@@ -33,6 +34,8 @@ import {
 } from "@/data/forms";
 import type { FormQuestion, FormStyle, LogoutForm, QuestionType } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
+import { useSheetLinks } from "@/data/sheetsSync";
+import { isUuid } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -145,6 +148,7 @@ function FormBuilderEditor() {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const { getFormById, saveForm, uniqueFormSlug } = useFormStore();
+  const { getLink } = useSheetLinks();
   /** One save in flight at a time - double-clicks must not insert twice (M10). */
   const [saving, setSaving] = useState<boolean>(false);
 
@@ -297,6 +301,9 @@ function FormBuilderEditor() {
   const askedCount = visibleQuestions(form.questions).length;
   const questionsComplete = questionsReady === form.questions.length && askedCount > 0;
   const StyleIcon = FORM_STYLE_META[form.style].icon;
+  /* Only a saved form (real database id) can be mirrored to a sheet. */
+  const savedFormId = isUuid(form.id) ? form.id : null;
+  const sheetLinked = savedFormId !== null && getLink(savedFormId) !== undefined;
 
   const toggle = (panel: PanelId): void =>
     setOpen((current) => ({ ...current, [panel]: !current[panel] }));
@@ -481,7 +488,7 @@ function FormBuilderEditor() {
             open={open.settings}
             onToggle={() => toggle("settings")}
             complete
-            summary={`“${form.submitLabel.trim() !== "" ? form.submitLabel : "Submit"}” button · ${form.isEnquiry ? "CRM enquiry form" : "success note set"}`}
+            summary={`“${form.submitLabel.trim() !== "" ? form.submitLabel : "Submit"}” button · ${form.isEnquiry ? "CRM enquiry form" : "success note set"}${sheetLinked ? " · Google Sheet linked" : ""}`}
           >
             <div className="space-y-6">
               <TextField
@@ -577,6 +584,9 @@ function FormBuilderEditor() {
                   </p>
                 )}
               </div>
+
+              {/* Google Sheet mirror (0087) */}
+              <GoogleSheetPanel formId={savedFormId} />
             </div>
           </Panel>
         </div>
