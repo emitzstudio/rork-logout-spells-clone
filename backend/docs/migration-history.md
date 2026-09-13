@@ -2775,6 +2775,36 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0090 — The Halloween Spell · Bangkok to Chiang Mai (2026-09-13)
+
+- **APPLIED** as `halloween-spell-publication`. Source: [`0090_halloween_spell.sql`](../migrations/0090_halloween_spell.sql).
+- Insert-only: one published spell (`the-halloween-spell`), one label-only departure
+  and one publication-log entry. Existing spells, departures, forms, archives,
+  reviews, bookings and receipts are protected by before/after equality checks.
+  No schema, policy, booking, email or payment changes.
+- All **43 supplied points across seven days**, in their supplied order; 7 days /
+  6 nights = 3 Bangkok hotel nights + 1 sleeper-train night + 2 Chiang Mai hotel
+  nights. Arrival Bangkok, departure Chiang Mai. No added party or ticketed event.
+- **Price TBA; Dates TBC.** Zero price/capacity retain the existing unannounced
+  sentinels; start/end dates are null. No host, hotels, stars, fees, tax rates,
+  deposits, inclusions/exclusions or application form invented.
+- Nine-page charcoal-and-gold **Grimoire v1**: real embedded vector text, numbered
+  timelines, scenic art, closing route/price summary and a clickable website link.
+  Five new, explicitly labelled AI artworks; versioned assets/PDF served from the
+  published web origin. Existing brochures/assets are unchanged.
+- Sources: `pdf-build/halloween-v1.json`, `halloween-content.ts`, `halloween.ts`,
+  `halloween-image-sources.json`; reproducible asset/migration preparation scripts.
+- Validation: all nine PDF pages checked for complete ordered text, safe bounds,
+  embedded fonts and website link; visual contact-sheet review; live public API
+  matches the source; new live assets are byte-identical; original public data and
+  assets unchanged. 308 unit tests pass, including five new Halloween tests;
+  website typecheck, lint and build pass. Live browser checks at 390px and 1440px
+  pass on both the preview origin and `www.logoutspells.com`: listing, seven-day
+  journey, TBA, brochure links, no horizontal overflow and closed applications.
+  Browser checks submit no forms; preview images were kept out of the repository.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

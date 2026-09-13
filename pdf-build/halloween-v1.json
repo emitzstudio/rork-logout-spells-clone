@@ -1,0 +1,115 @@
+{
+  "id": "9a110026-a117-4c3d-9051-000000000001",
+  "departureId": "9a110026-a117-4c3d-9051-000000000002",
+  "changeId": "9a110026-a117-4c3d-9051-000000000003",
+  "slug": "the-halloween-spell",
+  "name": "The Halloween Spell",
+  "hook": "City lights. Sleeper-train nights. A little northern magic.",
+  "fileName": "Logout-Spells-Halloween-Bangkok-Chiang-Mai-Grimoire-v1.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "Dates TBC",
+  "durationDays": 7,
+  "nights": 6,
+  "priceLabel": "TBA",
+  "location": "Bangkok & Chiang Mai",
+  "heroFile": "halloween-bangkok-cover-v1.jpg",
+  "imageNote": "Artwork is AI-generated for atmosphere, not photographs of confirmed hotels, venues or events.",
+  "about": "A seven-day Thailand journey from Bangkok's markets and street-food evenings to Chiang Mai's old-town streets, coffee and waterfalls. Begin with a welcome dinner, discover the railway and floating markets, and slow down for a Thai farm and cooking experience.\n\nAn overnight sleeper train carries the journey north. Chiang Mai brings time to unwind, local food, Wat Chedi Luang and the Ping River, followed by a day in Doi Inthanon National Park and a farewell dinner.\n\n7 days / 6 nights: 3 nights in Bangkok, 1 aboard the sleeper train and 2 in Chiang Mai. Travel dates and price are to be announced.",
+  "priceNote": "Price TBA. Travel dates, pricing, inclusions, exclusions and booking terms will be announced. Applications are not open yet; no payment is requested.",
+  "practicalNote": "The listed experiences describe the itinerary, not confirmed price inclusions. Hotels, room categories, train class, timings and group size are to be confirmed.",
+  "days": [
+    {
+      "title": "Welcome to Bangkok", "titleLines": ["HELLO,", "BANGKOK."], "location": "Bangkok", "imageFile": "halloween-bangkok-cover-v1.jpg",
+      "intro": "Arrive, settle in and gather around the table. The spell begins here.",
+      "points": [
+        {"title": "Airport pickup", "body": "Meet your pickup on arrival in Bangkok."},
+        {"title": "Hotel check-in", "body": "Settle into your Bangkok hotel."},
+        {"title": "Welcome dinner", "body": "Share the first dinner of the journey."},
+        {"title": "Overnight in Bangkok", "body": "Rest in Bangkok for the night."}
+      ],
+      "overnight": "Bangkok · Night 1"
+    },
+    {
+      "title": "Markets, Street Food & City Lights", "titleLines": ["MARKETS BY DAY.", "CITY LIGHTS BY NIGHT."], "location": "Bangkok", "imageFile": "halloween-floating-market-v1.jpg",
+      "intro": "From railway stalls to riverside lights, follow Bangkok's many rhythms.",
+      "points": [
+        {"title": "Mae Klong Railway Market", "body": "Visit the market beside the railway tracks."},
+        {"title": "Sugar Palm Farm", "body": "Stop at a sugar palm farm."},
+        {"title": "Damnoen Saduak Floating Market", "body": "Explore the lively canal-side market."},
+        {"title": "Tuk-tuk street food experience", "body": "Discover local flavours by tuk-tuk."},
+        {"title": "Democracy Monument", "body": "See the city's Democracy Monument."},
+        {"title": "Giant Swing", "body": "Continue to Bangkok's iconic Giant Swing."},
+        {"title": "Flower Market", "body": "Take in the colours of the flower market."},
+        {"title": "Riverside/rooftop experience", "body": "Spend time by the river or above the city."},
+        {"title": "Overnight in Bangkok", "body": "Return to Bangkok for the night."}
+      ],
+      "overnight": "Bangkok · Night 2"
+    },
+    {
+      "title": "From the Farm to the Table", "titleLines": ["SLOW DOWN.", "TASTE THAILAND."], "location": "Bangkok", "imageFile": "halloween-thai-farm-v1.jpg",
+      "intro": "A day with the land, the ingredients and the pleasure of cooking together.",
+      "points": [
+        {"title": "Kok Na Sai Farm visit", "body": "Begin with a visit to Kok Na Sai Farm."},
+        {"title": "Thai rice/farm experience", "body": "Discover Thai rice and farm life."},
+        {"title": "Thai cooking class", "body": "Get hands-on with a Thai cooking experience."},
+        {"title": "Lunch during the cooking experience", "body": "Enjoy lunch as part of the cooking experience."},
+        {"title": "Dinner", "body": "Gather for dinner after the farm day."},
+        {"title": "Overnight in Bangkok", "body": "Spend your third night in Bangkok."}
+      ],
+      "overnight": "Bangkok · Night 3"
+    },
+    {
+      "title": "Bangkok to Chiang Mai", "titleLines": ["ONE CITY FADES.", "THE NORTH CALLS."], "location": "Bangkok to Chiang Mai", "imageFile": "halloween-bangkok-cover-v1.jpg",
+      "intro": "A day at your own pace, then an overnight journey into the next chapter.",
+      "points": [
+        {"title": "Free day in Bangkok", "body": "Spend the day in Bangkok at leisure."},
+        {"title": "Evening transfer to railway station", "body": "Head to the station in the evening."},
+        {"title": "Overnight sleeper train to Chiang Mai", "body": "Travel north aboard the overnight sleeper train."}
+      ],
+      "overnight": "Sleeper train · Night 4"
+    },
+    {
+      "title": "Chiang Mai, at Your Own Rhythm", "titleLines": ["A SOFTER PACE.", "A NORTHERN WELCOME."], "location": "Chiang Mai", "imageFile": "halloween-chiang-mai-v1.jpg",
+      "intro": "Settle into Chiang Mai, then discover its markets, flavours and river.",
+      "points": [
+        {"title": "Arrival and hotel transfer", "body": "Arrive in Chiang Mai and transfer to the hotel."},
+        {"title": "Hotel check-in", "body": "Check in and settle into your new base."},
+        {"title": "Thai massage/free time", "body": "Unwind with a Thai massage or time at leisure."},
+        {"title": "Chiang Mai night market", "body": "Explore the city's night market."},
+        {"title": "Local food experience", "body": "Discover local flavours in Chiang Mai."},
+        {"title": "Wat Chedi Luang", "body": "Visit Wat Chedi Luang."},
+        {"title": "Flower Market", "body": "Take in Chiang Mai's flower market."},
+        {"title": "Ping River", "body": "Spend time beside the Ping River."},
+        {"title": "Overnight in Chiang Mai", "body": "Stay in Chiang Mai for the night."}
+      ],
+      "overnight": "Chiang Mai · Night 5"
+    },
+    {
+      "title": "Coffee, Waterfalls & a Farewell", "titleLines": ["INTO THE GREEN.", "ONE LAST TOAST."], "location": "Chiang Mai", "imageFile": "halloween-northern-waterfall-v1.jpg",
+      "intro": "Forest air, village coffee and waterfalls before a final dinner together.",
+      "points": [
+        {"title": "Doi Inthanon National Park", "body": "Head into Doi Inthanon National Park."},
+        {"title": "Ban Mae Klang Luang village", "body": "Visit Ban Mae Klang Luang village."},
+        {"title": "Coffee experience", "body": "Pause for a local coffee experience."},
+        {"title": "Pha Dok Sieo Waterfall", "body": "Continue to Pha Dok Sieo Waterfall."},
+        {"title": "Local lunch", "body": "Enjoy a local lunch during the day."},
+        {"title": "Mae Ya Waterfall", "body": "Visit Mae Ya Waterfall."},
+        {"title": "Farewell dinner", "body": "Gather for the journey's farewell dinner."},
+        {"title": "Overnight in Chiang Mai", "body": "Spend your final night in Chiang Mai."}
+      ],
+      "overnight": "Chiang Mai · Night 6"
+    },
+    {
+      "title": "Until the Next Spell", "titleLines": ["TAKE THE STORIES.", "LEAVE THE RUSH."], "location": "Chiang Mai", "imageFile": "halloween-chiang-mai-v1.jpg",
+      "intro": "One last breakfast, then the journey home. Keep a little of the magic.",
+      "points": [
+        {"title": "Breakfast", "body": "Start your final morning with breakfast."},
+        {"title": "Hotel checkout", "body": "Check out of your Chiang Mai hotel."},
+        {"title": "Airport transfer", "body": "Transfer to Chiang Mai Airport."},
+        {"title": "Departure", "body": "Depart from Chiang Mai. Until the next spell."}
+      ],
+      "overnight": "Departure · End of the spell"
+    }
+  ]
+}
