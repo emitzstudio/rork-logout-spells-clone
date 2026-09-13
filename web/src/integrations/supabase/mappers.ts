@@ -248,6 +248,7 @@ export const mapSpell = (
     changes: changes.map(mapChange).slice(0, 4),
     draft: draftFromRow(row, dep),
     formId: row.form_id,
+    deletedAt: row.deleted_at,
   };
 };
 
@@ -446,10 +447,11 @@ export const mapForm = (row: FormRow): LogoutForm => {
     submitLabel: row.submit_label,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
   };
 };
 
-/** The 10-column forms write payload (exactly the granted whitelist). */
+/** The 10-column forms write payload (exactly the granted whitelist - the bin stamp moves through its own update). */
 export const formWritePayload = (form: LogoutForm): Tables["forms"]["Insert"] => ({
   slug: form.slug,
   title: form.title,

@@ -1,14 +1,24 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, ChevronUp, CornerDownLeft, Star } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, ChevronUp, CornerDownLeft, Link2, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { EMOJI_SCALE, RATING_STYLE_META, ratingDisplay, visibleQuestions } from "@/data/forms";
+import {
+  EMOJI_SCALE,
+  joinPhotoUrls,
+  normalizeLink,
+  RATING_STYLE_META,
+  ratingDisplay,
+  visibleQuestions,
+} from "@/data/forms";
 import type { FormQuestion, LogoutForm, ResponseAnswer } from "@/data/forms";
 import { cn } from "@/lib/utils";
 
+import PhotoUploadControl, { isPhotoList, photosIssue, readyPhotoUrls } from "./PhotoUploadControl";
+import type { PhotoAttachment } from "./PhotoUploadControl";
+
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export type AnswerValue = string | string[] | number;
+export type AnswerValue = string | string[] | number | PhotoAttachment[];
 export type AnswerMap = Record<string, AnswerValue>;
 
 /* -------------------------------- Helpers -------------------------------- */
@@ -19,6 +29,10 @@ const isBlank = (value: AnswerValue | undefined): boolean =>
   (Array.isArray(value) && value.length === 0) ||
   (typeof value === "number" && (Number.isNaN(value) || value <= 0));
 
+/** A multiple-choice selection (labels), as opposed to a photo list. */
+const isStringList = (value: AnswerValue | undefined): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
 const answerError = (question: FormQuestion, value: AnswerValue | undefined): string | null => {
   if (isBlank(value)) return question.required ? "This one needs an answer" : null;
   const text = typeof value === "string" ? value.trim() : "";
@@ -28,16 +42,26 @@ const answerError = (question: FormQuestion, value: AnswerValue | undefined): st
   if (question.type === "phone" && text.replace(/\D/g, "").length < 7) {
     return "That number looks a little short";
   }
+  if (question.type === "link" && normalizeLink(text) === null) {
+    return "That doesn't look like a web link - try something like instagram.com/yourname";
+  }
+  if (question.type === "photos" && isPhotoList(value)) {
+    return photosIssue(value);
+  }
   return null;
 };
 
 const displayValue = (question: FormQuestion, value: AnswerValue | undefined): string => {
   if (value === undefined || isBlank(value)) return "";
-  if (Array.isArray(value)) return value.join(" · ");
+  if (isPhotoList(value)) return joinPhotoUrls(readyPhotoUrls(value));
+  if (isStringList(value)) return value.join(" · ");
   if (typeof value === "number") {
     return question.type === "rating" ? ratingDisplay(question.ratingStyle, value) : String(value);
   }
-  return String(value).trim();
+  const text = String(value).trim();
+  /* Links store the complete URL - `instagram.com/x` becomes `https://instagram.com/x`. */
+  if (question.type === "link") return normalizeLink(text) ?? text;
+  return text;
 };
 
 const questionLabel = (question: FormQuestion): string =>
@@ -61,6 +85,8 @@ interface ControlProps {
   onEnter?: () => void;
   variant: "conversational" | "traditional";
   autoFocus?: boolean;
+  /** Photos questions upload through this; absent in preview mode (photos stay local). */
+  uploadPhoto?: (file: File) => Promise<string>;
 }
 
 const INPUT_TYPES: Partial<Record<FormQuestion["type"], string>> = {
@@ -68,6 +94,55 @@ const INPUT_TYPES: Partial<Record<FormQuestion["type"], string>> = {
   phone: "tel",
   date: "date",
 };
+
+/** The Link question - a URL field that shows the complete address it will store. */
+function LinkControl({ question, value, onChange, onEnter, variant, autoFocus }: ControlProps) {
+  const text = typeof value === "string" ? value : "";
+  const normalized = text.trim() !== "" ? normalizeLink(text) : null;
+  const conversational = variant === "conversational";
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "flex items-center gap-2.5",
+          conversational
+            ? "border-b border-cream/20 pb-2.5 transition-colors duration-200 focus-within:border-gold"
+            : "h-11 rounded-lg border border-cream/10 bg-cream/[0.03] px-3.5 transition-colors duration-200 focus-within:border-gold/45 focus-within:bg-cream/[0.045]",
+        )}
+      >
+        <Link2 className={cn("shrink-0 text-gold/60", conversational ? "h-5 w-5" : "h-4 w-4")} />
+        <input
+          type="url"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          value={text}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && onEnter) {
+              e.preventDefault();
+              onEnter();
+            }
+          }}
+          placeholder={question.placeholder !== "" ? question.placeholder : "https://instagram.com/yourname"}
+          aria-label={questionLabel(question)}
+          autoFocus={autoFocus}
+          className={cn(
+            "min-w-0 flex-1 bg-transparent outline-none placeholder:text-cream/25",
+            conversational ? "font-serif text-[22px] text-cream" : "font-sans text-[13.5px] text-cream",
+          )}
+        />
+      </div>
+      {normalized !== null && normalized !== text.trim() && (
+        <p className="mt-2 truncate font-mono text-[11px] text-cream/40">
+          Saved as <span className="text-gold-light/80">{normalized}</span>
+        </p>
+      )}
+    </div>
+  );
+}
 
 function TextControl({ question, value, onChange, onEnter, variant, autoFocus }: ControlProps) {
   const text = typeof value === "string" ? value : "";
@@ -130,7 +205,7 @@ function TextControl({ question, value, onChange, onEnter, variant, autoFocus }:
 function ChoiceControl({ question, value, onChange, variant }: ControlProps) {
   const multiple = question.type === "multiple_choice";
   const selected: string[] = multiple
-    ? Array.isArray(value)
+    ? isStringList(value)
       ? value
       : []
     : typeof value === "string" && value !== ""
@@ -295,6 +370,18 @@ export function QuestionControl(props: ControlProps) {
     return <ChoiceControl {...props} />;
   }
   if (props.question.type === "rating") return <RatingControl {...props} />;
+  if (props.question.type === "link") return <LinkControl {...props} />;
+  if (props.question.type === "photos") {
+    return (
+      <PhotoUploadControl
+        question={props.question}
+        value={props.value}
+        onChange={props.onChange}
+        uploadPhoto={props.uploadPhoto}
+        variant={props.variant}
+      />
+    );
+  }
   return <TextControl {...props} />;
 }
 
@@ -360,9 +447,10 @@ interface FlowProps {
   submitting: boolean;
   /** Failure from the write - shown at the submit control; retrying is allowed. */
   submitError: string | null;
+  uploadPhoto?: (file: File) => Promise<string>;
 }
 
-function ConversationalFlow({ form, answers, setValue, onFinish, submitting, submitError }: FlowProps) {
+function ConversationalFlow({ form, answers, setValue, onFinish, submitting, submitError, uploadPhoto }: FlowProps) {
   /** -1 = intro screen, then one stage per question. */
   const [stage, setStage] = useState<number>(-1);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -501,7 +589,8 @@ function ConversationalFlow({ form, answers, setValue, onFinish, submitting, sub
                     onChange={handleChange}
                     onEnter={advance}
                     variant="conversational"
-                    autoFocus
+                    autoFocus={question.type !== "photos"}
+                    uploadPhoto={uploadPhoto}
                   />
                 </div>
                 <AnimatePresence>
@@ -580,7 +669,7 @@ function ConversationalFlow({ form, answers, setValue, onFinish, submitting, sub
 
 /* ---------------------------- Traditional flow ----------------------------- */
 
-function TraditionalFlow({ form, answers, setValue, onFinish, submitting, submitError }: FlowProps) {
+function TraditionalFlow({ form, answers, setValue, onFinish, submitting, submitError, uploadPhoto }: FlowProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const submit = (): void => {
@@ -648,6 +737,7 @@ function TraditionalFlow({ form, answers, setValue, onFinish, submitting, submit
                     }
                   }}
                   variant="traditional"
+                  uploadPhoto={uploadPhoto}
                 />
                 {errors[question.id] && (
                   <p className="mt-2 font-sans text-[11.5px] text-red-300">{errors[question.id]}</p>
@@ -690,6 +780,12 @@ interface FormRendererProps {
    * the submit control with a retry.
    */
   onSubmit?: (answers: ResponseAnswer[]) => void | Promise<void>;
+  /**
+   * Uploads one photo for a Photos question and resolves to its permanent
+   * URL. Omit in preview mode - selected photos then stay in the browser and
+   * the submission records nothing for them.
+   */
+  uploadPhoto?: (file: File) => Promise<string>;
   className?: string;
 }
 
@@ -699,7 +795,7 @@ interface FormRendererProps {
  * preview, the public /forms/{slug} page and spell booking dialogs, so what
  * the founder previews is exactly what gets published.
  */
-export default function FormRenderer({ form, onSubmit, className }: FormRendererProps) {
+export default function FormRenderer({ form, onSubmit, uploadPhoto, className }: FormRendererProps) {
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [done, setDone] = useState<boolean>(false);
   const [sending, setSending] = useState<boolean>(false);
@@ -758,6 +854,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
           onFinish={finish}
           submitting={sending}
           submitError={submitError}
+          uploadPhoto={uploadPhoto}
         />
       ) : (
         <TraditionalFlow
@@ -767,6 +864,7 @@ export default function FormRenderer({ form, onSubmit, className }: FormRenderer
           onFinish={finish}
           submitting={sending}
           submitError={submitError}
+          uploadPhoto={uploadPhoto}
         />
       )}
     </div>

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Download, Inbox, Search, Sparkles, X } from 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import AnswerValueView from "@/components/dashboard/forms/AnswerValueView";
 import type { FormResponse, ResponseStatus } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
 import { downloadInboxExcel } from "@/data/responsesExport";
@@ -187,18 +188,22 @@ function ResponseDrawer({ response, onClose }: { response: FormResponse; onClose
               <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">
                 {String(index + 1).padStart(2, "0")} · {answer.questionTitle}
               </p>
-              <p
-                className={cn(
-                  "mt-2 leading-relaxed",
-                  answer.value !== ""
-                    ? answer.type === "long_text"
-                      ? "font-serif text-[15.5px] italic text-cream/85"
-                      : "font-sans text-[13.5px] text-cream"
-                    : "font-sans text-[12px] italic text-cream/30",
-                )}
-              >
-                {answer.value !== "" ? answer.value : "Skipped"}
-              </p>
+              <div className="mt-2">
+                <AnswerValueView answer={answer} tone="drawer">
+                  <p
+                    className={cn(
+                      "leading-relaxed",
+                      answer.value !== ""
+                        ? answer.type === "long_text"
+                          ? "font-serif text-[15.5px] italic text-cream/85"
+                          : "font-sans text-[13.5px] text-cream"
+                        : "font-sans text-[12px] italic text-cream/30",
+                    )}
+                  >
+                    {answer.value !== "" ? answer.value : "Skipped"}
+                  </p>
+                </AnswerValueView>
+              </div>
             </motion.div>
           ))}
         </div>

@@ -21,6 +21,8 @@ import {
 
 import { parseSpellDates } from "./account/derive";
 import { slugify } from "./builder";
+import { splitBinned } from "./recycleBin";
+import type { SpellDeleteBlockers } from "./recycleBin";
 import type { ManagedSpell, ManagedStatus } from "./spells";
 
 /** Statuses visible on the public website. */
@@ -83,8 +85,14 @@ const departureDates = (label: string): { start: string | null; end: string | nu
 };
 
 interface SpellStoreValue {
-  /** Every spell the caller may see - staff get drafts/archived, visitors don't. */
+  /**
+   * Every ACTIVE spell the caller may see - staff get drafts/archived,
+   * visitors don't. Spells in the Recycle Bin are never here, so every list,
+   * filter, count, search and picker is bin-safe by construction.
+   */
   spells: ManagedSpell[];
+  /** Spells in the Recycle Bin, newest deletion first (staff only - RLS hides them from visitors). */
+  binnedSpells: ManagedSpell[];
   /** True once the first fetch has settled - pages gate their 404s on this. */
   ready: boolean;
   /** True when the collection read FAILED - consumers show retry, never "empty" (M10). */
@@ -96,12 +104,25 @@ interface SpellStoreValue {
   duplicateSpell: (id: string) => Promise<ManagedSpell | null>;
   archiveSpell: (id: string) => Promise<void>;
   restoreSpell: (id: string) => Promise<void>;
+  /**
+   * Normal Delete (0088): moves the spell to the Recycle Bin. Departures,
+   * seats, bookings, the attached form and the activity log all stay put;
+   * the spell simply leaves the website and every console list.
+   */
+  binSpell: (id: string) => Promise<void>;
+  /** Brings a binned spell back exactly as it was (same status, same everything). */
+  restoreBinnedSpell: (id: string) => Promise<void>;
+  /** What still points at a binned spell - the database refuses a permanent delete while either is non-zero. */
+  permanentDeleteBlockers: (id: string) => Promise<SpellDeleteBlockers>;
+  /** Permanent delete - only for spells already in the bin with no bookings or review collections. */
+  destroySpell: (id: string) => Promise<void>;
   /** Deleting a form detaches it from every spell that pointed at it. */
   detachFormFromSpells: (formId: string) => Promise<void>;
   refresh: () => void;
+  /** Active spells only - a binned spell reads as missing everywhere. */
   getById: (id: string) => ManagedSpell | undefined;
   getBySlug: (slug: string) => ManagedSpell | undefined;
-  /** `glow-ground-spell` → `glow-ground-spell-2` when taken by another spell. */
+  /** `glow-ground-spell` → `glow-ground-spell-2` when taken by another spell (binned ones still hold their slug). */
   uniqueSlug: (base: string, excludeId?: string) => string;
   /** What the public website shows - newest first. */
   publicSpells: ManagedSpell[];
@@ -118,7 +139,9 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
   });
 
   const collection = query.data ?? EMPTY_COLLECTION;
-  const spells = collection.spells;
+  /* The Recycle Bin split happens once, here - consumers only ever see the active half. */
+  const allSpells = collection.spells;
+  const { active: spells, binned: binnedSpells } = useMemo(() => splitBinned(allSpells), [allSpells]);
 
   const invalidate = useCallback(
     () => queryClient.invalidateQueries({ queryKey: SPELLS_KEY }),
@@ -158,7 +181,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
 
   const saveSpell = useCallback(
     async (record: ManagedSpell): Promise<ManagedSpell> => {
-      const existing = spells.find((s) => s.id === record.id);
+      const existing = allSpells.find((s) => s.id === record.id);
       let id = existing !== undefined && isUuid(record.id) ? record.id : null;
 
       /* New spells insert first (without imagery) - storage paths need the real id. */
@@ -188,7 +211,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       await invalidate();
       return { ...record, id, draft: draft ?? record.draft };
     },
-    [spells, collection.meta, upsertDeparture, appendChanges, invalidate],
+    [allSpells, collection.meta, upsertDeparture, appendChanges, invalidate],
   );
 
   const duplicateSpell = useCallback(
@@ -198,7 +221,8 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       const copyName = `${source.name} (Copy)`;
       const copySlug = (() => {
         const root = `${source.slug}-copy`;
-        const taken = (candidate: string): boolean => spells.some((s) => s.slug === candidate);
+        /* Slugs are unique in the database - a binned spell still owns its slug. */
+        const taken = (candidate: string): boolean => allSpells.some((s) => s.slug === candidate);
         if (!taken(root)) return root;
         for (let n = 2; n < 200; n++) if (!taken(`${root}-${n}`)) return `${root}-${n}`;
         return `${root}-${Date.now().toString(36)}`;
@@ -231,7 +255,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       };
       return saveSpell(copy);
     },
-    [spells, saveSpell],
+    [spells, allSpells, saveSpell],
   );
 
   const setStatus = useCallback(
@@ -266,6 +290,62 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     [setStatus],
   );
 
+  /**
+   * The bin stamp travels on its own update (the only client-writable use of
+   * `deleted_at`); the database trigger records who did it. An RLS-filtered
+   * write affects 0 rows without erroring, so the row count is checked.
+   */
+  const setBinned = useCallback(
+    async (id: string, binned: boolean): Promise<void> => {
+      const { data, error } = await supabase
+        .from("spells")
+        .update({ deleted_at: binned ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select("id");
+      if (error) throw new Error(`${binned ? "Delete" : "Restore"} failed: ${error.message}`);
+      if ((data ?? []).length !== 1) {
+        throw new Error(`${binned ? "Delete" : "Restore"} failed: the spell couldn't be updated.`);
+      }
+      await appendChanges(id, [
+        binned
+          ? { id: "bin-change", time: "Just now", kind: "deleted", title: "Moved to the Recycle Bin", detail: "Hidden everywhere until restored" }
+          : { id: "bin-change", time: "Just now", kind: "restored", title: "Restored from the Recycle Bin", detail: "Back exactly as it was" },
+      ]);
+      await invalidate();
+    },
+    [appendChanges, invalidate],
+  );
+
+  const binSpell = useCallback((id: string) => setBinned(id, true), [setBinned]);
+  const restoreBinnedSpell = useCallback((id: string) => setBinned(id, false), [setBinned]);
+
+  const permanentDeleteBlockers = useCallback(async (id: string): Promise<SpellDeleteBlockers> => {
+    const [bookings, collections] = await Promise.all([
+      supabase.from("bookings").select("id", { count: "exact", head: true }).eq("spell_id", id),
+      supabase.from("review_collections").select("id", { count: "exact", head: true }).eq("spell_id", id),
+    ]);
+    if (bookings.error) throw new Error(`Couldn't check bookings: ${bookings.error.message}`);
+    if (collections.error) throw new Error(`Couldn't check review collections: ${collections.error.message}`);
+    return { bookings: bookings.count ?? 0, reviewCollections: collections.count ?? 0 };
+  }, []);
+
+  const destroySpell = useCallback(
+    async (id: string): Promise<void> => {
+      const target = allSpells.find((s) => s.id === id);
+      const { data, error } = await supabase.from("spells").delete().eq("id", id).select("id");
+      if (error) throw new Error(`Permanent delete failed: ${error.message}`);
+      if ((data ?? []).length === 0) {
+        throw new Error(
+          "Permanent delete failed: only spells in the Recycle Bin with no bookings or review collections can be deleted permanently.",
+        );
+      }
+      /* Row first, imagery after - an orphaned file is only a cost nuisance. */
+      void deleteStorageUrls(collectDraftStorageUrls(target?.draft));
+      await invalidate();
+    },
+    [allSpells, invalidate],
+  );
+
   const detachFormFromSpells = useCallback(
     async (formId: string) => {
       const { error } = await supabase
@@ -293,8 +373,9 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
   const uniqueSlug = useCallback(
     (base: string, excludeId?: string): string => {
       const root = slugify(base) !== "" ? slugify(base) : "spell";
+      /* Slugs are unique in the database - a binned spell still owns its slug. */
       const taken = (candidate: string): boolean =>
-        spells.some((s) => s.slug === candidate && s.id !== excludeId);
+        allSpells.some((s) => s.slug === candidate && s.id !== excludeId);
       if (!taken(root)) return root;
       for (let n = 2; n < 200; n++) {
         const candidate = `${root}-${n}`;
@@ -302,7 +383,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       }
       return `${root}-${Date.now().toString(36)}`;
     },
-    [spells],
+    [allSpells],
   );
 
   const publicSpells = useMemo<ManagedSpell[]>(
@@ -316,6 +397,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SpellStoreValue>(
     () => ({
       spells,
+      binnedSpells,
       ready: query.isFetched,
       failed: query.isError,
       retry,
@@ -323,6 +405,10 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       duplicateSpell,
       archiveSpell,
       restoreSpell,
+      binSpell,
+      restoreBinnedSpell,
+      permanentDeleteBlockers,
+      destroySpell,
       detachFormFromSpells,
       refresh,
       getById,
@@ -332,6 +418,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       spells,
+      binnedSpells,
       query.isFetched,
       query.isError,
       retry,
@@ -339,6 +426,10 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       duplicateSpell,
       archiveSpell,
       restoreSpell,
+      binSpell,
+      restoreBinnedSpell,
+      permanentDeleteBlockers,
+      destroySpell,
       detachFormFromSpells,
       refresh,
       getById,

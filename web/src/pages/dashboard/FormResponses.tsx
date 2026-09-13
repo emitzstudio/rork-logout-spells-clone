@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import AnswerValueView from "@/components/dashboard/forms/AnswerValueView";
 import GoogleSheetPanel from "@/components/dashboard/forms/GoogleSheetPanel";
+import { answerPreview } from "@/data/forms";
 import type { FormResponse } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
 import { downloadResponsesExcel } from "@/data/responsesExport";
@@ -123,18 +125,22 @@ function ResponseDetail({
                 <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-cream/40">
                   {String(index + 1).padStart(2, "0")} · {answer.questionTitle}
                 </p>
-                <p
-                  className={cn(
-                    "mt-2 leading-relaxed",
-                    answer.value !== ""
-                      ? answer.type === "long_text"
-                        ? "whitespace-pre-wrap font-serif text-[15.5px] italic text-cream/85"
-                        : "font-sans text-[13.5px] text-cream"
-                      : "font-sans text-[12px] italic text-cream/30",
-                  )}
-                >
-                  {answer.value !== "" ? answer.value : "Skipped"}
-                </p>
+                <div className="mt-2">
+                  <AnswerValueView answer={answer} tone="drawer">
+                    <p
+                      className={cn(
+                        "leading-relaxed",
+                        answer.value !== ""
+                          ? answer.type === "long_text"
+                            ? "whitespace-pre-wrap font-serif text-[15.5px] italic text-cream/85"
+                            : "font-sans text-[13.5px] text-cream"
+                          : "font-sans text-[12px] italic text-cream/30",
+                      )}
+                    >
+                      {answer.value !== "" ? answer.value : "Skipped"}
+                    </p>
+                  </AnswerValueView>
+                </div>
               </motion.div>
             ))
           )}
@@ -227,12 +233,12 @@ export default function FormResponses() {
     }
   };
 
-  /* First two answered fields per row - derived from the stored submission. */
+  /* First two answered fields per row - derived from the stored submission (photos read as a count). */
   const previewAnswers = (response: FormResponse): { title: string; value: string }[] =>
     response.answers
       .filter((answer) => answer.value.trim() !== "")
       .slice(0, 2)
-      .map((answer) => ({ title: answer.questionTitle, value: answer.value }));
+      .map((answer) => ({ title: answer.questionTitle, value: answerPreview(answer) }));
 
   return (
     <motion.div
@@ -275,9 +281,9 @@ export default function FormResponses() {
         </div>
       ) : !form ? (
         <div className="mt-6 rounded-xl border border-dashed border-cream/15 bg-cream/[0.015] px-6 py-20 text-center">
-          <p className="font-serif text-2xl text-cream">This form doesn't exist</p>
+          <p className="font-serif text-2xl text-cream">This form isn't here</p>
           <p className="mx-auto mt-2 max-w-sm font-sans text-[12.5px] text-cream/45">
-            It may have been deleted - every form with responses is listed on the Responses page.
+            It may be waiting in the Recycle Bin - restore it there and its responses return here.
           </p>
           <Link to="/dashboard/responses" className="btn-ghost-gold mt-7 inline-flex !px-5 !py-2.5 !text-[12px]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Responses

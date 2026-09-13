@@ -2659,6 +2659,69 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0088 — Recycle Bin for forms + spells · Link + Photos question types (2026-09-13)
+
+- **0088_recycle_bin_and_form_photos — APPLIED** in six `runMigration` batches
+  (`recycle-bin-columns`, `recycle-bin-policies`, `recycle-bin-public-functions`,
+  `recycle-bin-change-kind`, `form-uploads-bucket`, `recycle-bin-forms-comment`).
+  Source of record:
+  [`backend/migrations/0088_recycle_bin_and_form_photos.sql`](../migrations/0088_recycle_bin_and_form_photos.sql).
+  **Additive only** — no table/column dropped or renamed, no row rewritten; every
+  existing form and spell starts active (`deleted_at = null`).
+- **Why.** The console's Delete buttons never deleted anything: `spells` had no
+  DELETE grant at all (the handler silently *archived*, and archived spells still
+  list), and forms with responses were “retired” to draft because RLS forbade
+  deleting an answered form. Confirming the dialog therefore changed nothing the
+  founder could see. The fix is a real soft-delete, not a UI workaround.
+- **Columns (4)**: `forms.deleted_at` / `deleted_by`, `spells.deleted_at` /
+  `deleted_by` (→ profiles `set null`), partial indexes on the non-null stamps.
+  `deleted_by` is owned by the `stamp_deleted_by()` trigger (BEFORE UPDATE OF
+  `deleted_at`): stamped with `auth.uid()` on null → set, cleared on restore, frozen
+  while binned.
+- **Grants**: `authenticated` may UPDATE `deleted_at` on both tables (the only
+  bin-related write) and gains DELETE on `spells` for the first time — the policy
+  narrows it.
+- **Policies**: `forms_select_published_or_staff`, `forms_select_crm_enquiry`,
+  `spells_select_public_or_staff`, `spell_departures_select_public_or_staff` and
+  `form_responses_insert_public_published` all gain `deleted_at is null`, so a
+  binned published item leaves the website and stops accepting submissions
+  server-side. `forms_delete_staff_unanswered` is **replaced** by
+  `forms_delete_staff_binned` (bin-only); new `spells_delete_staff_binned` allows a
+  real DELETE only while binned **and** no `bookings` / `review_collections` row
+  points at the spell (a clean 0-row refusal instead of a foreign-key error).
+- **Functions (3 re-created)**: `increment_spell_views`, `submit_inquiry`,
+  `join_waitlist_public` — the live 0002 / 0032 / 0033 bodies plus one
+  `deleted_at is null` clause each (definer functions bypass RLS).
+- **Enum**: `change_kind` gains `'deleted'` (the spell activity log records
+  “Moved to the Recycle Bin”; restores reuse `'restored'`).
+- **Storage**: new public bucket `form-uploads` (5 MB, JPEG/PNG/WebP) for the
+  Photos question type — see [storage-structure.md](./storage-structure.md).
+  INSERT is open to anyone but only into `responses/{form_id}/{session}/…` of a
+  published, non-binned form whose questions contain a `photos` question; no
+  UPDATE policy; staff DELETE.
+- **Console**: Delete on Forms and Spells now moves to the Recycle Bin (new
+  `/dashboard/recycle-bin` page under System, with a live badge) → Restore, or
+  Delete Permanently behind two confirmations. Every list, count, search, picker and
+  the inbox read the active half only; responses of a binned form wait with it and
+  return on restore. Form Builder gains **Link** (validated, stored as the complete
+  https URL, clickable in the CRM and as `HYPERLINK` cells in both Excel exports) and
+  **Photos** (founder-set maximum 1–10; respondents see thumbnails, remove before
+  submit, can't exceed the limit; the response stores one public URL per line;
+  the CRM shows thumbnails). The Google Sheet mirror needs no change — it writes
+  the stored text values.
+- **Existing data**: 14 spells, 19 forms, 320+ responses untouched.
+- Validation: rolled-back live SQL under the real `anon` / admin JWT roles — a
+  binned published spell and form are invisible to anon (rows, departures, the
+  active-departures view), the response INSERT is refused, `deleted_by` stamps the
+  admin and clears on restore, an active form can't be hard-deleted (0 rows), a
+  binned one can (its responses cascade), a binned spell with review collections
+  is refused, a free one deletes with its departures; bucket INSERT accepted for a
+  published photos form and refused for a binned form and for a form without a
+  photos question. Website: 276 unit tests + 21 browser tests pass (26 new,
+  including a real-browser photo-upload flow), typecheck, lint and build pass.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

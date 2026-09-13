@@ -16,6 +16,7 @@ import {
   Sparkles,
   Sunrise,
   Ticket,
+  Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -44,7 +45,8 @@ export type ChangeKind =
   | "image"
   | "duplicated"
   | "archived"
-  | "restored";
+  | "restored"
+  | "deleted";
 
 export interface SpellChange {
   id: string;
@@ -101,6 +103,12 @@ export interface ManagedSpell {
    * of the standard booking dialog. Many spells may share one form.
    */
   formId?: string | null;
+  /**
+   * Recycle Bin (0088): set while the spell is binned. Binned spells leave
+   * the website and every console list; departures, bookings, the attached
+   * form and the activity log stay put, so restoring brings it all back.
+   */
+  deletedAt?: string | null;
 }
 
 /* ------------------------------- Metadata -------------------------------- */
@@ -173,6 +181,7 @@ export const CHANGE_ICON: Record<ChangeKind, LucideIcon> = {
   duplicated: Copy,
   archived: Archive,
   restored: RotateCcw,
+  deleted: Trash2,
 };
 
 export type SortId =

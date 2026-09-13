@@ -21,6 +21,7 @@
 | `site-media` | Public read | Staff | Team portraits, previous-spell archive imagery |
 | `avatars` | Public read | Each user, own folder | Profile avatar + profile cover |
 | `memories` | **Private** | Each user, own folder | Trip album photos — served via signed URLs only |
+| `form-uploads` | Public read (unguessable paths) | Anyone, into a published non-binned form that asks for photos | Photos respondents attach to a form's Photos question (0088) |
 
 Public buckets hold only content that is by definition public on the website.
 Anything personal lives in `memories` (private) or `avatars` (public by product
@@ -40,6 +41,7 @@ site-media/   team/{name}.jpg                            (the 7 seeded portraits
 avatars/      {user_id}/avatar-{image_id}.jpg
               {user_id}/cover-{image_id}.jpg
 memories/     {user_id}/{memory_id}/{photo_id}.jpg
+form-uploads/ responses/{form_id}/{session_id}/{photo_id}.jpg   (0088 — one session per submission)
 ```
 
 The first path segment of user buckets is **always the owner's `auth.uid()`** — this is
@@ -66,6 +68,18 @@ from the earlier fixed-name sketch).
   `{owner}/{memory_id}/…`, so a row can never name a foreign object. The client
   re-encode to JPEG also strips EXIF/GPS before upload — location metadata never
   reaches storage.
+- **`form-uploads`** (live since 0088): SELECT anyone (the URLs live inside the
+  response and must open from the CRM, Excel exports and the Google Sheet mirror
+  without signing; paths carry two generated ids). INSERT: `anon` and
+  `authenticated`, but only into `responses/{form_id}/{session}/…` where that form
+  is **published, not in the Recycle Bin, and its `questions` document contains a
+  `photos` question** (`@>` containment check) — a form that never asked for
+  photos can't be used as a drop box. NO UPDATE policy (objects are immutable;
+  names are never reused). DELETE: `is_staff()` — the console removes a form's
+  uploads after a permanent delete. 5 MB cap; JPEG/PNG/WebP. The client resizes
+  to ≤1440px JPEG first, the same pipeline as every other bucket, and the
+  per-question maximum (1–10, founder-set) is enforced by the uploader before any
+  file is chosen.
 
 ## Upload rules
 

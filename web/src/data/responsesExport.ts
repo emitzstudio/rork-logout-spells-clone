@@ -19,7 +19,9 @@
  *
  * Every answer is written as a TEXT cell - phone numbers keep their leading
  * "+" and never collapse into "9.17E+11"; multiple-choice picks stay together
- * in one cell exactly as the CRM shows them.
+ * in one cell exactly as the CRM shows them. Link answers (0088) become real
+ * clickable HYPERLINK cells showing the complete URL; photo answers list one
+ * uploaded image URL per line in a wrapped cell.
  *
  * The builders are pure and dependency-free (unit-tested); the download steps
  * lazy-load the xlsx writer so the console chunk stays lean. Only
@@ -28,8 +30,8 @@
 import type { Cell, Row } from "write-excel-file/browser";
 
 import { slugify } from "./builder";
-import { visibleQuestions } from "./forms";
-import type { FormResponse, LogoutForm, QuestionType } from "./forms";
+import { isHttpUrl, visibleQuestions } from "./forms";
+import type { FormResponse, LogoutForm, QuestionType, ResponseAnswer } from "./forms";
 
 export interface ExportColumn {
   /** Header cell text - question titles for the dynamic columns. */
@@ -42,7 +44,9 @@ export interface ExportColumn {
 
 export type ExportCell =
   | { kind: "text"; value: string; wrap: boolean }
-  | { kind: "date"; value: string };
+  | { kind: "date"; value: string }
+  /** A clickable cell whose visible text is the complete URL (0088 Link answers). */
+  | { kind: "link"; value: string };
 
 export interface ResponsesTable {
   columns: ExportColumn[];
@@ -99,9 +103,36 @@ export const responseFields = (
   return fields;
 };
 
-/** Answers keyed by question id - the lookup that puts each value under its own column. */
-const answersById = (response: FormResponse): Map<string, string> =>
-  new Map(response.answers.map((answer) => [answer.questionId, answer.value]));
+/** Answer records keyed by question id - the lookup that puts each value under its own column (the type decides how the cell is written). */
+const answerRecordsById = (response: FormResponse): Map<string, ResponseAnswer> =>
+  new Map(response.answers.map((answer) => [answer.questionId, answer]));
+
+/** Excel caps string constants inside formulas at 255 characters - longer URLs stay plain text. */
+const HYPERLINK_MAX_LENGTH = 255;
+
+/** A complete URL short enough to become a `HYPERLINK(...)` cell. */
+export const isHyperlinkable = (value: string): boolean =>
+  value.length <= HYPERLINK_MAX_LENGTH && isHttpUrl(value);
+
+/**
+ * The cell for one answer under one field: a clickable link for Link answers
+ * that hold a real URL, wrapped text (one URL per line) for photos, plain
+ * text otherwise. Empty answers stay empty.
+ */
+export const answerCell = (
+  field: Pick<ResponseField, "type">,
+  answer: Pick<ResponseAnswer, "type" | "value"> | undefined,
+  wrap: boolean,
+): ExportCell => {
+  const value = answer?.value ?? "";
+  const type = answer?.type ?? field.type;
+  if (type === "link" && isHyperlinkable(value.trim())) return { kind: "link", value: value.trim() };
+  if (type === "photos") return { kind: "text", value, wrap: true };
+  return { kind: "text", value, wrap };
+};
+
+/** Multi-line and photo answers need a tall, wrapped column. */
+const isWideType = (type: QuestionType): boolean => type === "long_text" || type === "photos";
 
 /* ------------------------------ Per-form sheet ------------------------------ */
 
@@ -115,7 +146,7 @@ export const buildResponsesTable = (
   responses: FormResponse[],
 ): ResponsesTable => {
   const fields = responseFields(form, responses);
-  const isWide = (field: ResponseField): boolean => field.type === "long_text";
+  const isWide = (field: ResponseField): boolean => isWideType(field.type);
 
   const hasSpellProvenance = responses.some((response) => response.spellName !== null);
 
@@ -135,17 +166,11 @@ export const buildResponsesTable = (
   ];
 
   const rows: ExportCell[][] = responses.map((response) => {
-    const byQuestion = answersById(response);
+    const byQuestion = answerRecordsById(response);
     return [
       { kind: "text", value: response.id, wrap: false },
       { kind: "date", value: response.submittedAt },
-      ...fields.map(
-        (field): ExportCell => ({
-          kind: "text",
-          value: byQuestion.get(field.id) ?? "",
-          wrap: isWide(field),
-        }),
-      ),
+      ...fields.map((field): ExportCell => answerCell(field, byQuestion.get(field.id), isWide(field))),
       ...(hasSpellProvenance
         ? [
             {
@@ -188,15 +213,14 @@ export const INBOX_META_COLUMNS: readonly ExportColumn[] = [
   { header: "Status", width: 10, wrap: false },
 ];
 
-/** Paragraph answers get a wide column; multi-picks a medium one; everything wraps inside its own cell. */
+/** Paragraph and photo answers get a wide column; multi-picks and links a medium one; everything wraps inside its own cell. */
 const inboxFieldColumn = (field: ResponseField): ExportColumn => ({
   header: field.header,
-  width:
-    field.type === "long_text"
-      ? 56
-      : field.type === "multiple_choice"
-        ? 34
-        : fieldWidth(field.header, false),
+  width: isWideType(field.type)
+    ? 56
+    : field.type === "multiple_choice" || field.type === "link"
+      ? 34
+      : fieldWidth(field.header, false),
   wrap: true,
 });
 
@@ -265,7 +289,7 @@ export const buildInboxWorkbook = (
     const columns: ExportColumn[] = [...INBOX_META_COLUMNS, ...fields.map(inboxFieldColumn)];
 
     const rows: ExportCell[][] = group.map((response) => {
-      const byQuestion = answersById(response);
+      const byQuestion = answerRecordsById(response);
       return [
         text(response.respondentName),
         text(response.respondentPhone),
@@ -273,7 +297,7 @@ export const buildInboxWorkbook = (
         text(response.formTitle.trim() !== "" ? response.formTitle : title),
         { kind: "date", value: response.submittedAt },
         text(response.status),
-        ...fields.map((field) => text(byQuestion.get(field.id) ?? "")),
+        ...fields.map((field) => answerCell(field, byQuestion.get(field.id), true)),
       ];
     });
 
@@ -333,10 +357,21 @@ const headerRow = (columns: readonly ExportColumn[]): Row =>
     }),
   );
 
+/** Link cells lean on the brand gold so a clickable URL reads as one. */
+const LINK_TEXT = "#B8963E";
+
+/**
+ * `=HYPERLINK(url, url)` - the complete address is both the target and the
+ * visible text, so nothing is truncated. `isHttpUrl` already refused quotes,
+ * whitespace and angle brackets, so the literal can't break out of the formula.
+ */
+export const hyperlinkFormula = (url: string): string => `HYPERLINK("${url}","${url}")`;
+
 /**
  * Text stays text (`type: String`) so phone numbers and numeric-looking
  * answers keep every digit and any leading "+"; empty answers become empty
- * cells; dates become real date cells that sort and filter correctly.
+ * cells; dates become real date cells that sort and filter correctly; links
+ * become clickable hyperlink cells.
  */
 const dataCell = (cell: ExportCell): Cell => {
   if (cell.kind === "date") {
@@ -345,6 +380,15 @@ const dataCell = (cell: ExportCell): Cell => {
       return cell.value === "" ? null : { value: cell.value, type: String, alignVertical: "top" };
     }
     return { value: date, type: Date, format: DATE_FORMAT, alignVertical: "top" };
+  }
+  if (cell.kind === "link") {
+    return {
+      value: hyperlinkFormula(cell.value),
+      type: "Formula",
+      textColor: LINK_TEXT,
+      textDecoration: { underline: true },
+      alignVertical: "top",
+    };
   }
   if (cell.value === "") return null;
   return { value: cell.value, type: String, wrap: cell.wrap, alignVertical: "top" };

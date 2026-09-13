@@ -37,8 +37,8 @@ interface ToastState {
 export default function Forms() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { forms, ready, failed, retry, saveForm, deleteForm, uniqueFormSlug, responses, inquiries } = useFormStore();
-  const { spells, detachFormFromSpells } = useSpellStore();
+  const { forms, ready, failed, retry, saveForm, binForm, uniqueFormSlug, responses, inquiries } = useFormStore();
+  const { spells } = useSpellStore();
 
   /* The bell's "new responses / enquiries" rows deep-link straight to their tab. */
   const tabFromSearch = (search: string): TabId | null => {
@@ -176,27 +176,23 @@ export default function Forms() {
     [showToast],
   );
 
+  /* Delete = move to the Recycle Bin (0088). Attached spells keep their
+     form_id and simply fall back to the standard dialog until it's restored. */
   const remove = useCallback(
     (id: string) => {
       const target = forms.find((f) => f.id === id);
       setConfirmId(null);
-      void deleteForm(id)
-        .then((result) => {
-          if (result === "deleted") {
-            // Spells pointing at this form fall back to the standard booking dialog.
-            void detachFormFromSpells(id);
-            showToast(target ? `“${target.title}” deleted` : "Form deleted");
-          } else {
-            showToast(
-              target
-                ? `“${target.title}” has responses - unpublished instead, link paused`
-                : "Form unpublished",
-            );
-          }
-        })
-        .catch(() => showToast("Could not delete - please try again"));
+      void binForm(id)
+        .then(() =>
+          showToast(
+            target
+              ? `“${target.title.trim() !== "" ? target.title : "Untitled Form"}” moved to the Recycle Bin`
+              : "Form moved to the Recycle Bin",
+          ),
+        )
+        .catch(() => showToast("Could not move it to the Recycle Bin - please try again"));
     },
-    [forms, deleteForm, detachFormFromSpells, showToast],
+    [forms, binForm, showToast],
   );
 
   /* -------------------------------- Render -------------------------------- */
@@ -378,6 +374,7 @@ export default function Forms() {
           <DeleteFormDialog
             key={confirmForm.id}
             formTitle={confirmForm.title.trim() !== "" ? confirmForm.title : "Untitled Form"}
+            isPublished={confirmForm.status === "published"}
             responseCount={responseCount(confirmForm.id)}
             attachedCount={attachedCount(confirmForm.id)}
             onCancel={() => setConfirmId(null)}

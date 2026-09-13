@@ -20,6 +20,7 @@ import FormBuilder from "./FormBuilder";
 import FormResponses from "./FormResponses";
 import Forms from "./Forms";
 import Overview from "./Overview";
+import RecycleBin from "./RecycleBin";
 import Responses from "./Responses";
 import ReviewCollection from "./ReviewCollection";
 import ReviewFormBuilder from "./ReviewFormBuilder";
@@ -131,6 +132,10 @@ function FounderConsole() {
       document.title = "Reviews · Dashboard | Logout Spells";
       return;
     }
+    if (location.pathname === "/dashboard/recycle-bin") {
+      document.title = "Recycle Bin · Dashboard | Logout Spells";
+      return;
+    }
     const section = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
     document.title = `${section ? `${section.label} · ` : ""}Dashboard | Logout Spells`;
   }, [location.pathname]);
@@ -191,7 +196,9 @@ function FounderConsole() {
                 <Route path="reviews/:id/form" element={<ReviewFormBuilder />} />
                 {/* M12 - the control room. */}
                 <Route path="settings" element={<Settings />} />
-                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings"].includes(section.slug)).map((section) => (
+                {/* 0088 - deleted forms and spells: restore or delete permanently. */}
+                <Route path="recycle-bin" element={<RecycleBin />} />
+                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings", "recycle-bin"].includes(section.slug)).map((section) => (
                   <Route key={section.slug} path={section.slug} element={<Section section={section} />} />
                 ))}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

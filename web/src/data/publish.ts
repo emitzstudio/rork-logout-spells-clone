@@ -187,6 +187,7 @@ export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs
     wishlists: existing?.wishlists ?? 0,
     inclusions: inclusions.length > 0 ? inclusions : (existing?.inclusions ?? []),
     formId: draft.formId ?? null,
+    deletedAt: existing?.deletedAt ?? null,
     changes: [change, ...(existing?.changes ?? [])].slice(0, 4),
     // Older editor drafts can predate a brochure upload. Only an explicit pricing edit replaces it.
     draft: { ...draft, pricing: draft.pricing ?? existing?.draft?.pricing, name, slug, status: status === "published" ? "published" : "draft" },

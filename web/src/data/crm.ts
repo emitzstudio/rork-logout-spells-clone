@@ -12,7 +12,7 @@
  *   hot/warm/mild/inactive → stay in Inquiries, parked at the BOTTOM
  *   unclassified (null) → top of Inquiries, newest first
  */
-import type { FormQuestion, LogoutForm, ResponseAnswer } from "./forms";
+import type { FormQuestion, LogoutForm, QuestionType, ResponseAnswer } from "./forms";
 import { visibleQuestions } from "./forms";
 
 /* --------------------------------- Types ---------------------------------- */
@@ -207,6 +207,8 @@ export interface CrmQuestionColumn {
   id: string;
   header: string;
   wide: boolean;
+  /** The question's type - links render as anchors, photos as thumbnails, in the sheet and the export. */
+  type: QuestionType;
 }
 
 /**
@@ -222,7 +224,8 @@ export const crmQuestionColumns = (
   const columns: CrmQuestionColumn[] = active.map((question, index) => ({
     id: question.id,
     header: question.title.trim() !== "" ? question.title.trim() : `Question ${index + 1}`,
-    wide: question.type === "long_text",
+    wide: question.type === "long_text" || question.type === "photos",
+    type: question.type,
   }));
   const seen = new Set(columns.map((column) => column.id));
   for (const lead of leads) {
@@ -232,7 +235,8 @@ export const crmQuestionColumns = (
       columns.push({
         id: answer.questionId,
         header: answer.questionTitle.trim() !== "" ? answer.questionTitle.trim() : "Untitled question",
-        wide: answer.type === "long_text",
+        wide: answer.type === "long_text" || answer.type === "photos",
+        type: answer.type,
       });
     }
   }
@@ -242,6 +246,10 @@ export const crmQuestionColumns = (
 /** Answer text for one lead in one question column ("" when never asked). */
 export const leadAnswer = (lead: CrmLead, questionId: string): string =>
   lead.answers.find((answer) => answer.questionId === questionId)?.value ?? "";
+
+/** The stored answer record itself - carries the type the cell renderer needs (undefined when never asked). */
+export const leadAnswerRecord = (lead: CrmLead, questionId: string): ResponseAnswer | undefined =>
+  lead.answers.find((answer) => answer.questionId === questionId);
 
 /* -------------------------------- Overview --------------------------------- */
 

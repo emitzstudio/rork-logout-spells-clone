@@ -52,6 +52,8 @@ export default function SpellPageScreen() {
         .select("id, slug, status")
         .eq("id", formId)
         .eq("status", "published")
+        /* A form in the Recycle Bin (0088) can't take requests, even for signed-in staff. */
+        .is("deleted_at", null)
         .maybeSingle();
       if (error) throw new Error("We couldn’t load this spell’s form. Please try again.");
       return data;

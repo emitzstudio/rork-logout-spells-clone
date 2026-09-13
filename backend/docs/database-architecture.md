@@ -167,7 +167,7 @@ reviewed migration (see authentication-flow.md).
 | `slug` | `text` unique | public URL identity |
 | `name`, `hook` | `text` | card copy |
 | `category` | `spell_category` null | null while a builder draft is undecided; CHECK forces non-null once status is `published`/`soldout` |
-| `status` | `spell_status` default `draft` | archive instead of delete |
+| `status` | `spell_status` default `draft` | archive hides from the site; Delete = Recycle Bin (below) |
 | `urgency` | `spell_urgency` null | badge |
 | `featured` | `boolean` default false | |
 | `location`, `region` | `text` | |
@@ -181,12 +181,22 @@ reviewed migration (see authentication-flow.md).
 | `inclusions` | `text[]` | card-level list |
 | `page` | `jsonb` null | full Spell Builder document (D1-A) |
 | `form_id` | `uuid` null → forms `set null` | attached application form — live since M4; many spells may share one form |
+| `deleted_at` | `timestamptz` null | **Recycle Bin (0088)** — set = binned: gone from the website and every console list, departures/bookings/form/history untouched; null = active. Restore clears it |
+| `deleted_by` | `uuid` null → profiles `set null` | trigger-stamped `auth.uid()` on bin, cleared on restore; never client-writable |
 | `views` | `bigint` default 0 | incremented via a `SECURITY DEFINER` RPC, never direct UPDATE |
 | `created_by` | `uuid` null → profiles `set null` | |
 | `published_at` | `timestamptz` null | |
 | `created_at`, `updated_at` | `timestamptz` | |
 
 Dates, seats, and per-run pricing live in `spell_departures` (D2, below).
+
+RLS since 0088: SELECT anyone where `status in (published, soldout) and deleted_at is
+null`, staff all · INSERT/UPDATE staff (`deleted_at` is the only bin-related column
+clients may write) · DELETE staff **only while binned and while no `bookings` row or
+`review_collections` row points at the spell** — the console's “Delete Permanently”.
+The public definer paths (`increment_spell_views`, `submit_inquiry`,
+`join_waitlist_public`) and the departures SELECT policy repeat the `deleted_at is
+null` rule, so a binned spell is invisible and inert everywhere at once.
 
 Indexes: `slug` unique · `(status, category)` · partial on
 `featured where status = 'published'`.
@@ -339,13 +349,19 @@ Future expansion (multiple roles, achievements) is additive: join tables, no red
 ### `forms` — the dynamic form builder
 `id`, `slug` unique (format-checked), `title`, `description`, `style form_style`,
 `status form_status` default `draft`, `questions jsonb` (v1: `{version, questions:
-FormQuestion[]}` — 9 question types, core questions reorderable-not-deletable,
-text-only so no bucket is needed), `success_message`, `redirect_url`, `submit_label`,
-`created_by`, timestamps.
-RLS: SELECT anyone where published (application pages work logged-out), staff all ·
-INSERT/UPDATE staff · DELETE staff **only while unanswered** (`NOT EXISTS` guard on
-responses) — once travellers have written into a form it is retired by unpublishing,
-never cascade-deleted.
+FormQuestion[]}` — 11 question types since 0088 (`link` stores a complete http(s)
+URL; `photos` carries `maxPhotos` 1–10 and stores one public `form-uploads` URL per
+line — never image bytes), core questions reorderable-not-deletable), `success_message`,
+`redirect_url`, `submit_label`, `created_by`, timestamps, and since 0088 the Recycle Bin
+pair `deleted_at` / `deleted_by` (same semantics as on `spells`).
+RLS: SELECT anyone where `published and deleted_at is null` (application pages work
+logged-out), staff all, CRM role where enquiry and not binned · INSERT/UPDATE staff
+(`deleted_at` is the only bin column clients write) · DELETE staff **only while
+binned** (0088 replaced the old unanswered-only rule) — the console's “Delete
+Permanently”, which cascades the form's responses. Normal Delete never destroys
+anything: it stamps `deleted_at`, the public link pauses, `form_responses` INSERT is
+refused for the binned form, and Restore brings questions, responses, settings, sheet
+link and attached spells back exactly as they were.
 
 ### `form_responses` — public write path #1
 `id`, `form_id` → forms cascade, `spell_id uuid` null → spells `set null` +

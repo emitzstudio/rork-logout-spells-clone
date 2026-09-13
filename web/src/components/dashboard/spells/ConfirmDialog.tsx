@@ -10,12 +10,18 @@ export type ConfirmKind = "delete" | "archive";
 interface ConfirmDialogProps {
   kind: ConfirmKind;
   spellName: string;
+  /** The spell is on the website right now - binning it takes it down until restored. */
+  isLive?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
-/** Premium confirmation modal for destructive / archival actions. */
-export default function ConfirmDialog({ kind, spellName, onCancel, onConfirm }: ConfirmDialogProps) {
+/**
+ * Premium confirmation modal for archival and Recycle Bin moves. "Delete"
+ * never destroys a spell (0088): it moves to the Recycle Bin with its
+ * departures, seats, bookings, form and history intact, and can be restored.
+ */
+export default function ConfirmDialog({ kind, spellName, isLive = false, onCancel, onConfirm }: ConfirmDialogProps) {
   const isDelete = kind === "delete";
   const Icon = isDelete ? Trash2 : Archive;
 
@@ -37,7 +43,7 @@ export default function ConfirmDialog({ kind, spellName, onCancel, onConfirm }: 
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
-        aria-label={isDelete ? "Delete spell" : "Archive spell"}
+        aria-label={isDelete ? "Move spell to the Recycle Bin" : "Archive spell"}
         className="relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-cream/10 bg-[#14130F] p-6 shadow-[0_40px_100px_rgba(0,0,0,0.6)]"
       >
         <span
@@ -60,15 +66,22 @@ export default function ConfirmDialog({ kind, spellName, onCancel, onConfirm }: 
         </div>
 
         <h3 className="mt-4 text-center font-serif text-[24px] font-medium leading-tight text-cream">
-          {isDelete ? "Delete this Spell?" : "Archive this Spell?"}
+          {isDelete ? "Move this spell to the Recycle Bin?" : "Archive this Spell?"}
         </h3>
 
         <p className="mt-2.5 text-center font-sans text-[13px] leading-relaxed text-cream/55">
           <span className="font-serif italic text-gold-light">“{spellName}”</span>{" "}
           {isDelete
-            ? "will be permanently removed from your console. This can’t be undone."
+            ? `will be removed from the main list but can be restored later.${isLive ? " It leaves the website while it's in the bin." : ""}`
             : "will be hidden from the public site and moved to your archive. You can restore it anytime."}
         </p>
+
+        {isDelete && (
+          <div className="mt-4 space-y-1.5 rounded-lg border border-cream/[0.08] bg-cream/[0.02] px-4 py-3 font-sans text-[11.5px] leading-relaxed text-cream/50">
+            <p>· Dates, seats, bookings, the attached form and its history all stay with it.</p>
+            <p>· Nothing is deleted permanently from here.</p>
+          </div>
+        )}
 
         <div className="mt-6 flex items-center gap-2.5">
           <button
@@ -89,7 +102,7 @@ export default function ConfirmDialog({ kind, spellName, onCancel, onConfirm }: 
                 : "bg-gold text-charcoal-deep hover:bg-gold-light hover:shadow-[0_0_30px_rgba(184,150,62,0.4)]",
             )}
           >
-            {isDelete ? "Delete Spell" : "Archive Spell"}
+            {isDelete ? "Move to Recycle Bin" : "Archive Spell"}
           </button>
         </div>
       </motion.div>

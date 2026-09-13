@@ -18,12 +18,13 @@ import { slugify } from "./builder";
 import {
   crmQuestionColumns,
   formatCallDate,
-  leadAnswer,
+  leadAnswerRecord,
   LEAD_TYPE_META,
   sourceLabel,
 } from "./crm";
 import type { CrmLead, CrmTab } from "./crm";
 import type { LogoutForm } from "./forms";
+import { hyperlinkFormula, isHyperlinkable } from "./responsesExport";
 
 export interface CrmExportColumn {
   header: string;
@@ -33,7 +34,9 @@ export interface CrmExportColumn {
 
 export type CrmExportCell =
   | { kind: "text"; value: string; wrap: boolean }
-  | { kind: "date"; value: string };
+  | { kind: "date"; value: string }
+  /** A clickable cell whose visible text is the complete URL (0088 Link answers). */
+  | { kind: "link"; value: string };
 
 export interface CrmTable {
   columns: CrmExportColumn[];
@@ -80,13 +83,15 @@ export const buildCrmTable = (
         ]
       : []),
     { kind: "date", value: lead.submittedAt },
-    ...questions.map(
-      (question): CrmExportCell => ({
-        kind: "text",
-        value: leadAnswer(lead, question.id),
-        wrap: question.wide,
-      }),
-    ),
+    ...questions.map((question): CrmExportCell => {
+      const answer = leadAnswerRecord(lead, question.id);
+      const value = answer?.value ?? "";
+      /* Links become clickable cells; photos list one URL per line. */
+      if ((answer?.type ?? question.type) === "link" && isHyperlinkable(value.trim())) {
+        return { kind: "link", value: value.trim() };
+      }
+      return { kind: "text", value, wrap: question.wide };
+    }),
     { kind: "text", value: lead.latestResponse, wrap: true },
     {
       kind: "text",
@@ -128,6 +133,14 @@ export const downloadCrmExcel = async (
     row.map((cell): Cell => {
       if (cell.kind === "date") {
         return { value: new Date(cell.value), format: DATE_FORMAT };
+      }
+      if (cell.kind === "link") {
+        return {
+          value: hyperlinkFormula(cell.value),
+          type: "Formula",
+          textColor: "#B8963E",
+          textDecoration: { underline: true },
+        };
       }
       if (cell.value === "") return null;
       return cell.wrap ? { value: cell.value, wrap: true } : { value: cell.value };

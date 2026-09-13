@@ -10,10 +10,12 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 interface AddQuestionDialogProps {
   onPick: (type: QuestionType) => void;
   onClose: () => void;
+  /** The types on offer - every type by default; builders whose renderer can't show a type narrow this. */
+  types?: readonly QuestionType[];
 }
 
 /** The "+ Add Question" fork - pick a question type, land in its editor. */
-export default function AddQuestionDialog({ onPick, onClose }: AddQuestionDialogProps) {
+export default function AddQuestionDialog({ onPick, onClose, types = QUESTION_TYPE_IDS }: AddQuestionDialogProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === "Escape") onClose();
@@ -66,7 +68,7 @@ export default function AddQuestionDialog({ onPick, onClose }: AddQuestionDialog
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-          {QUESTION_TYPE_IDS.map((typeId, index) => {
+          {types.map((typeId, index) => {
             const meta = QUESTION_TYPE_META[typeId];
             const Icon = meta.icon;
             return (
@@ -92,7 +94,7 @@ export default function AddQuestionDialog({ onPick, onClose }: AddQuestionDialog
         </div>
 
         <p className="mt-5 text-center font-sans text-[10.5px] uppercase tracking-[0.2em] text-cream/25">
-          More types arrive with later phases ✦
+          {types.length} question types ✦
         </p>
       </motion.div>
     </motion.div>

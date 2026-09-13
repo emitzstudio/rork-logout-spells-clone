@@ -2,12 +2,14 @@ import { Check, Loader2, PenLine } from "lucide-react";
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 
+import AnswerValueView, { isRichAnswer } from "@/components/dashboard/forms/AnswerValueView";
 import {
   formatCallDate,
   formatSubmittedOn,
   LEAD_TYPE_META,
   LEAD_TYPES,
   leadAnswer,
+  leadAnswerRecord,
   sourceLabel,
 } from "@/data/crm";
 import type { CrmLead, CrmQuestionColumn, LeadType } from "@/data/crm";
@@ -70,14 +72,24 @@ export default function CrmLeadTable({
                 <td className={cn(TD_CLASS, "whitespace-nowrap font-sans text-[12px] text-cream/60")}>
                   {formatSubmittedOn(lead.submittedAt)}
                 </td>
-                {columns.map((column) => (
-                  <td
-                    key={column.id}
-                    className={cn(TD_CLASS, column.wide ? "min-w-[220px] max-w-[300px]" : "min-w-[130px] max-w-[230px]")}
-                  >
-                    <PeekCell value={leadAnswer(lead, column.id)} />
-                  </td>
-                ))}
+                {columns.map((column) => {
+                  const record = leadAnswerRecord(lead, column.id);
+                  return (
+                    <td
+                      key={column.id}
+                      className={cn(TD_CLASS, column.wide ? "min-w-[220px] max-w-[300px]" : "min-w-[130px] max-w-[230px]")}
+                    >
+                      {record !== undefined && isRichAnswer(record) ? (
+                        /* Links open as their complete URL; photos show as thumbnails (0088). */
+                        <AnswerValueView answer={record} tone="cell">
+                          <PeekCell value={record.value} />
+                        </AnswerValueView>
+                      ) : (
+                        <PeekCell value={leadAnswer(lead, column.id)} />
+                      )}
+                    </td>
+                  );
+                })}
                 <td className={cn(TD_CLASS, "min-w-[240px] max-w-[280px]")}>
                   <NoteCell
                     value={lead.latestResponse}

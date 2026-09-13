@@ -70,6 +70,8 @@ describe("mapForm backward compatibility", () => {
     const row: FormRow = {
       created_at: "2026-08-20T00:00:00.000Z",
       created_by: null,
+      deleted_at: null,
+      deleted_by: null,
       description: "",
       id: "11111111-1111-4111-a111-111111111111",
       is_enquiry: false,

@@ -219,21 +219,26 @@ export function useDepartureOptions(): UseQueryResult<DepartureOption[]> {
     queryFn: async (): Promise<DepartureOption[]> => {
       const [departures, spells, waitlist] = await Promise.all([
         supabase.from("spell_departures").select("*").order("start_date", { ascending: true, nullsFirst: false }),
-        supabase.from("spells").select("id, name, status, price_minor"),
+        supabase.from("spells").select("id, name, status, price_minor, deleted_at"),
         supabase.from("booking_waitlist").select("*").eq("status", "offered"),
       ]);
       if (departures.error) throw departures.error;
       if (spells.error) throw spells.error;
       if (waitlist.error) throw waitlist.error;
 
+      /* Spells in the Recycle Bin (0088) take their departures out of every picker with them. */
       const spellById = new Map((spells.data ?? []).map((s) => [s.id, s]));
+      const activeDepartures = (departures.data ?? []).filter((d) => {
+        const spell = spellById.get(d.spell_id);
+        return spell === undefined || spell.deleted_at === null;
+      });
       const holdsByDeparture = new Map<string, number>();
       for (const row of waitlist.data ?? []) {
         if (!activeHold(row)) continue;
         holdsByDeparture.set(row.departure_id, (holdsByDeparture.get(row.departure_id) ?? 0) + row.seats_requested);
       }
 
-      return (departures.data ?? []).map((d): DepartureOption => {
+      return activeDepartures.map((d): DepartureOption => {
         const spell = spellById.get(d.spell_id);
         const holds = holdsByDeparture.get(d.id) ?? 0;
         const tbc = d.start_date === null || d.end_date === null;

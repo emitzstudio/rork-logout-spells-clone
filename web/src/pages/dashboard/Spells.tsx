@@ -59,6 +59,7 @@ export default function Spells() {
     duplicateSpell: duplicateSpellInStore,
     archiveSpell: archiveSpellInStore,
     restoreSpell: restoreSpellInStore,
+    binSpell: binSpellInStore,
     refresh,
   } = useSpellStore();
   const [view, setView] = useState<ViewMode>(readStoredView);
@@ -180,23 +181,20 @@ export default function Spells() {
     [spells, restoreSpellInStore, showToast],
   );
 
+  /* Delete = move to the Recycle Bin (0088). Departures, bookings, the form
+     and the history stay attached; the spell just leaves this list and the site. */
   const deleteSpell = useCallback(
     (id: string) => {
       const target = spells.find((s) => s.id === id);
       setConfirmState(null);
       setSelectedId(null);
-      /* Catalogue rows are never erased - the database allows archive only. */
-      void archiveSpellInStore(id)
+      void binSpellInStore(id)
         .then(() =>
-          showToast(
-            target
-              ? `“${target.name}” moved to the archive - spells are never erased`
-              : "Spell archived",
-          ),
+          showToast(target ? `“${target.name}” moved to the Recycle Bin` : "Spell moved to the Recycle Bin"),
         )
-        .catch(() => showToast("Could not archive - please try again"));
+        .catch(() => showToast("Could not move it to the Recycle Bin - please try again"));
     },
-    [spells, archiveSpellInStore, showToast],
+    [spells, binSpellInStore, showToast],
   );
 
   /** Archive needs confirmation; restoring an archived spell is instant. */
@@ -599,6 +597,7 @@ export default function Spells() {
             key={`${confirmState.kind}-${confirmState.id}`}
             kind={confirmState.kind}
             spellName={confirmTarget.name}
+            isLive={confirmTarget.status === "published" || confirmTarget.status === "soldout"}
             onCancel={() => setConfirmState(null)}
             onConfirm={() =>
               confirmState.kind === "delete"

@@ -4,6 +4,8 @@ import { Link, NavLink } from "react-router-dom";
 
 import { useOpsBadges } from "@/data/bookingOps";
 import { DASH_NAV } from "@/data/dashboard";
+import { useFormStore } from "@/data/formStore";
+import { useSpellStore } from "@/data/spellStore";
 import { useFounderProfile } from "@/data/team";
 import type { DashNavItem } from "@/data/dashboard";
 import { useStaffAuth } from "@/integrations/supabase/staffAuth";
@@ -81,6 +83,9 @@ function NavEntry({
 function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const staff = useStaffAuth();
   const badges = useOpsBadges();
+  /* 0088 - the bin badge counts deleted forms + spells waiting to be restored. */
+  const { binnedForms } = useFormStore();
+  const { binnedSpells } = useSpellStore();
   /* M12 - the chip reads the central founder profile (Settings → Founder Profile). */
   const founder = useFounderProfile();
 
@@ -92,6 +97,10 @@ function SidebarBody({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
     }
     if (item.to === "/dashboard/testimonials") {
       const count = badges.data?.pendingReviews ?? 0;
+      return { ...item, badge: count > 0 ? count : undefined };
+    }
+    if (item.to === "/dashboard/recycle-bin") {
+      const count = binnedForms.length + binnedSpells.length;
       return { ...item, badge: count > 0 ? count : undefined };
     }
     return item;

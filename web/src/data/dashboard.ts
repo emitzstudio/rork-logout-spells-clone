@@ -14,6 +14,7 @@ import {
   NotebookPen,
   PenLine,
   PhoneCall,
+  Recycle,
   Settings,
   Sparkles,
   Star,
@@ -66,7 +67,10 @@ export const DASH_NAV: DashNavGroup[] = [
   },
   {
     label: "System",
-    items: [{ label: "Settings", to: "/dashboard/settings", icon: Settings }],
+    items: [
+      { label: "Recycle Bin", to: "/dashboard/recycle-bin", icon: Recycle },
+      { label: "Settings", to: "/dashboard/settings", icon: Settings },
+    ],
   },
 ];
 
@@ -126,6 +130,15 @@ export const DASH_SECTIONS: DashSection[] = [
       "Approve, feature and curate what people say after they log out. The best words flow straight onto the site.",
     hint: "Arrives in Phase 2",
     icon: MessageSquareQuote,
+  },
+  {
+    slug: "recycle-bin",
+    label: "Recycle Bin",
+    tagline: "Deleted forms & spells",
+    description:
+      "Deleted forms and spells wait here with everything attached - restore them exactly as they were, or delete them permanently.",
+    hint: "Live since 0088",
+    icon: Recycle,
   },
   {
     slug: "settings",

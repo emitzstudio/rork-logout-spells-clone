@@ -37,10 +37,12 @@ function BookingFormPicker({
   value: string | null;
   onChange: (formId: string | null) => void;
 }) {
-  const { publishedForms, getFormById } = useFormStore();
+  const { publishedForms, getFormById, binnedForms } = useFormStore();
   const navigate = useNavigate();
   const [open, setOpen] = useState<boolean>(false);
   const current = value !== null ? getFormById(value) : undefined;
+  /* A binned form stays attached but can't be picked - say where it went (0088). */
+  const binned = value !== null && current === undefined && binnedForms.some((form) => form.id === value);
   const label =
     value === null
       ? "No form attached"
@@ -48,7 +50,9 @@ function BookingFormPicker({
         ? current.title.trim() !== ""
           ? current.title
           : "Untitled Form"
-        : "Form removed";
+        : binned
+          ? "Form in the Recycle Bin - restore it to use it"
+          : "Form removed";
 
   return (
     <div className="relative">

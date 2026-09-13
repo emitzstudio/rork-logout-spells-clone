@@ -11,7 +11,9 @@ import {
   CalendarDays,
   CircleDot,
   Hash,
+  Images,
   LayoutList,
+  Link2,
   ListChecks,
   Mail,
   MessagesSquare,
@@ -39,7 +41,9 @@ export type QuestionType =
   | "date"
   | "single_choice"
   | "multiple_choice"
-  | "rating";
+  | "rating"
+  | "link"
+  | "photos";
 
 export type RatingStyle = "star5" | "star10" | "emoji" | "numeric";
 
@@ -68,6 +72,12 @@ export interface FormQuestion {
   options: QuestionOption[];
   /** Only used by the rating type. */
   ratingStyle: RatingStyle;
+  /**
+   * Only used by the photos type - how many images a respondent may attach
+   * (1-{@link MAX_PHOTO_LIMIT}). Records saved before the type existed lack
+   * the field; read it through {@link photoLimit}, never directly.
+   */
+  maxPhotos?: number;
 }
 
 export interface LogoutForm {
@@ -87,6 +97,12 @@ export interface LogoutForm {
   submitLabel: string;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Recycle Bin (0088): set while the form is binned. Binned forms leave every
+   * list, picker and count, the public link pauses and submissions are
+   * refused server-side; restore clears it with everything intact.
+   */
+  deletedAt?: string | null;
 }
 
 /* ------------------------------- Responses -------------------------------- */
@@ -97,7 +113,10 @@ export interface ResponseAnswer {
   questionId: string;
   questionTitle: string;
   type: QuestionType;
-  /** Display-ready value - multiple choice joined with " · ". */
+  /**
+   * Display-ready value - multiple choice joined with " · ", a link as its
+   * full normalised URL, photos as one uploaded image URL per line.
+   */
   value: string;
 }
 
@@ -190,6 +209,20 @@ export const QUESTION_TYPE_META: Record<QuestionType, QuestionTypeMeta> = {
     hasOptions: false,
     hasPlaceholder: false,
   },
+  link: {
+    label: "Link",
+    description: "A web address - Instagram, portfolio, anything with a URL.",
+    icon: Link2,
+    hasOptions: false,
+    hasPlaceholder: true,
+  },
+  photos: {
+    label: "Photos",
+    description: "Let them attach images - inspiration, references, proof.",
+    icon: Images,
+    hasOptions: false,
+    hasPlaceholder: false,
+  },
 };
 
 export const QUESTION_TYPE_IDS = Object.keys(QUESTION_TYPE_META) as QuestionType[];
@@ -220,6 +253,84 @@ export const FORM_STYLE_META: Record<
   },
 };
 
+/* ----------------------------- Links + photos ----------------------------- */
+
+/** Photos a single question may collect - the stepper's ceiling. */
+export const MAX_PHOTO_LIMIT = 10;
+
+/** What a fresh Photos question starts at. */
+export const DEFAULT_PHOTO_LIMIT = 3;
+
+/** The photo ceiling for one question - clamped, and 3 for records without the field. */
+export const photoLimit = (question: Pick<FormQuestion, "maxPhotos">): number => {
+  const raw = Number(question.maxPhotos);
+  if (!Number.isFinite(raw)) return DEFAULT_PHOTO_LIMIT;
+  return Math.min(MAX_PHOTO_LIMIT, Math.max(1, Math.round(raw)));
+};
+
+const HOSTNAME_RE = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i;
+
+/**
+ * A stored value that is already a complete http(s) URL - no rewriting, no
+ * guessing. Also the gate for hyperlink cells in exports, so it refuses
+ * anything that could escape an Excel string literal.
+ */
+export const isHttpUrl = (value: string): boolean => {
+  if (value.length === 0 || value.length > 2048 || /[\s"<>]/.test(value)) return false;
+  if (!/^https?:\/\//i.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && (HOSTNAME_RE.test(url.hostname) || url.hostname === "localhost");
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * What a respondent typed → the complete URL that gets stored, or null when
+ * it isn't a web address. `instagram.com/example` becomes
+ * `https://instagram.com/example`; mailto:, spaces and bare words are refused.
+ */
+export const normalizeLink = (raw: string): string | null => {
+  const text = raw.trim();
+  if (text === "" || /[\s"<>]/.test(text)) return null;
+  /* `mailto:x`, `ftp://…` carry a scheme; `www.site.com:8080/x` only carries a port. */
+  const hasScheme = /^[a-z][a-z0-9+.-]*:(?:\/\/|[^0-9/])/i.test(text);
+  const candidate = hasScheme ? text : `https://${text}`;
+  if (!/^https?:\/\//i.test(candidate)) return null;
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    return null;
+  }
+  if (!HOSTNAME_RE.test(url.hostname) && url.hostname !== "localhost") return null;
+  return isHttpUrl(url.href) ? url.href : null;
+};
+
+/** The uploaded image URLs inside a stored photos answer (one per line). */
+export const photoUrls = (value: string): string[] =>
+  value
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter((part) => isHttpUrl(part));
+
+/** Stored photos answer - one URL per line, so sheets and exports stay readable. */
+export const joinPhotoUrls = (urls: readonly string[]): string => urls.join("\n");
+
+/**
+ * Short, list-friendly text for an answer: photos become a count ("3 photos")
+ * instead of a wall of URLs; everything else is the value itself.
+ */
+export const answerPreview = (answer: Pick<ResponseAnswer, "type" | "value">): string => {
+  if (answer.type === "photos") {
+    const count = photoUrls(answer.value).length;
+    if (count === 0) return answer.value.trim() !== "" ? answer.value : "";
+    return `${count} photo${count === 1 ? "" : "s"}`;
+  }
+  return answer.value;
+};
+
 /** Display value for a rating answer, e.g. "4/5" or "🤩 · 5/5". */
 export const ratingDisplay = (style: RatingStyle, value: number): string => {
   const scale = RATING_STYLE_META[style].scale;
@@ -245,6 +356,7 @@ export const createQuestion = (type: QuestionType): FormQuestion => ({
   enabled: true,
   options: QUESTION_TYPE_META[type].hasOptions ? [createOption(), createOption()] : [],
   ratingStyle: "star5",
+  ...(type === "photos" ? { maxPhotos: DEFAULT_PHOTO_LIMIT } : {}),
 });
 
 const coreQuestion = (partial: Partial<FormQuestion> & Pick<FormQuestion, "type" | "title">): FormQuestion => ({
@@ -317,6 +429,7 @@ export const createEmptyForm = (): LogoutForm => {
     submitLabel: "Submit",
     createdAt: now,
     updatedAt: now,
+    deletedAt: null,
   };
 };
 

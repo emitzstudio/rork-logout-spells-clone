@@ -24,6 +24,7 @@ import {
   duplicateReviewQuestion,
   enabledReviewQuestions,
   parseReviewQuestions,
+  REVIEW_QUESTION_TYPES,
   reviewFormIssues,
   type ReviewAnswersDraft,
   type ReviewAnswerValue,
@@ -220,6 +221,7 @@ function ReviewFormEditor({ bundle }: { bundle: CollectionBundle }) {
                 onDelete={() => deleteQ(question.id)}
                 lockOptions={question.kind === "consent"}
                 lockRatingStyle={question.kind === "rating"}
+                types={REVIEW_QUESTION_TYPES}
               />
             ))}
           </Reorder.Group>
@@ -288,7 +290,9 @@ function ReviewFormEditor({ bundle }: { bundle: CollectionBundle }) {
       </div>
 
       <AnimatePresence>
-        {addOpen && <AddQuestionDialog onPick={addQuestion} onClose={() => setAddOpen(false)} />}
+        {addOpen && (
+          <AddQuestionDialog onPick={addQuestion} onClose={() => setAddOpen(false)} types={REVIEW_QUESTION_TYPES} />
+        )}
       </AnimatePresence>
     </motion.div>
   );

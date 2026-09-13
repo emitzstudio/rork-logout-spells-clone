@@ -871,6 +871,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           id: string
           is_enquiry: boolean
@@ -887,6 +889,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           id?: string
           is_enquiry?: boolean
@@ -903,6 +907,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           id?: string
           is_enquiry?: boolean
@@ -920,6 +926,13 @@ export type Database = {
           {
             foreignKeyName: "forms_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forms_deleted_by_fkey"
+            columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1952,6 +1965,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           currency: string
+          deleted_at: string | null
+          deleted_by: string | null
           duration_days: number
           featured: boolean
           form_id: string | null
@@ -1984,6 +1999,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           duration_days?: number
           featured?: boolean
           form_id?: string | null
@@ -2016,6 +2033,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           duration_days?: number
           featured?: boolean
           form_id?: string | null
@@ -2046,6 +2065,13 @@ export type Database = {
           {
             foreignKeyName: "spells_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spells_deleted_by_fkey"
+            columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2558,6 +2584,7 @@ export type Database = {
         | "duplicated"
         | "archived"
         | "restored"
+        | "deleted"
       change_request_kind: "seat_change" | "transfer" | "cancellation" | "other"
       change_request_status:
         | "requested"
@@ -2783,6 +2810,7 @@ export const Constants = {
         "duplicated",
         "archived",
         "restored",
+        "deleted",
       ],
       change_request_kind: ["seat_change", "transfer", "cancellation", "other"],
       change_request_status: [

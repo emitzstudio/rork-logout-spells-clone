@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
 import type { LogoutForm } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
 import type { ManagedSpell } from "@/data/spells";
+import { newUploadSession, uploadFormPhoto } from "@/integrations/supabase/storage";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -23,6 +24,13 @@ interface FormDialogProps {
  */
 export default function FormDialog({ open, form, spell, onClose }: FormDialogProps) {
   const { addResponse } = useFormStore();
+
+  /* One upload folder per dialog - every photo this visitor attaches lands together. */
+  const [uploadSession] = useState<string>(() => newUploadSession());
+  const uploadPhoto = useCallback(
+    (file: File): Promise<string> => uploadFormPhoto(form.id, uploadSession, file),
+    [form.id, uploadSession],
+  );
 
   useEffect(() => {
     if (!open) return undefined;
@@ -98,6 +106,7 @@ export default function FormDialog({ open, form, spell, onClose }: FormDialogPro
                     answers,
                   })
                 }
+                uploadPhoto={uploadPhoto}
               />
             </div>
           </motion.div>

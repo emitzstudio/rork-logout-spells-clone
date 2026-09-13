@@ -23,7 +23,8 @@ export const isPublic = (spell: ManagedSpell): boolean => PUBLIC_STATUSES.has(sp
 
 const fetchSpells = async (): Promise<ManagedSpell[]> => {
   const [spellsRes, depsRes] = await Promise.all([
-    supabase.from("spells").select("*").order("created_at", { ascending: false }),
+    /* Spells in the Recycle Bin (0088) never reach the traveller app, whoever is signed in. */
+    supabase.from("spells").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("spell_active_departures").select("*"),
   ]);
   if (spellsRes.error) throw spellsRes.error;

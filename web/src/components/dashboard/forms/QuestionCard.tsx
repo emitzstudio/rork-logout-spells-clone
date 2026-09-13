@@ -1,9 +1,17 @@
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
-import { Check, ChevronDown, Copy, GripVertical, Lock, Plus, Star, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, Copy, GripVertical, Images, Lock, Plus, Star, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
-import { TextField } from "@/components/dashboard/builder/Fields";
-import { createOption, QUESTION_TYPE_IDS, QUESTION_TYPE_META, RATING_STYLE_META } from "@/data/forms";
+import { StepperField, TextField } from "@/components/dashboard/builder/Fields";
+import {
+  createOption,
+  DEFAULT_PHOTO_LIMIT,
+  MAX_PHOTO_LIMIT,
+  photoLimit,
+  QUESTION_TYPE_IDS,
+  QUESTION_TYPE_META,
+  RATING_STYLE_META,
+} from "@/data/forms";
 import type { FormQuestion, QuestionOption, QuestionType, RatingStyle } from "@/data/forms";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +29,8 @@ interface QuestionCardProps {
   lockOptions?: boolean;
   /** Review builder: the core rating is always 5 gold stars - style is read-only. */
   lockRatingStyle?: boolean;
+  /** The types the type picker offers - every type by default. */
+  types?: readonly QuestionType[];
 }
 
 /* ------------------------------ Type dropdown ------------------------------ */
@@ -28,9 +38,11 @@ interface QuestionCardProps {
 function TypePicker({
   value,
   onChange,
+  types,
 }: {
   value: QuestionType;
   onChange: (type: QuestionType) => void;
+  types: readonly QuestionType[];
 }) {
   const [open, setOpen] = useState<boolean>(false);
   const meta = QUESTION_TYPE_META[value];
@@ -71,7 +83,7 @@ function TypePicker({
               role="listbox"
               className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-[300px] overflow-y-auto rounded-xl border border-cream/12 bg-[#14130F] p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.6)]"
             >
-              {QUESTION_TYPE_IDS.map((typeId) => {
+              {types.map((typeId) => {
                 const optionMeta = QUESTION_TYPE_META[typeId];
                 const OptionIcon = optionMeta.icon;
                 const active = typeId === value;
@@ -228,6 +240,7 @@ export default function QuestionCard({
   onDelete,
   lockOptions = false,
   lockRatingStyle = false,
+  types = QUESTION_TYPE_IDS,
 }: QuestionCardProps) {
   const controls = useDragControls();
   const meta = QUESTION_TYPE_META[question.type];
@@ -238,8 +251,12 @@ export default function QuestionCard({
     onPatch({
       type,
       options: needsOptions && question.options.length === 0 ? [createOption(), createOption()] : question.options,
+      /* A question switched to Photos starts at the default ceiling. */
+      ...(type === "photos" && question.maxPhotos === undefined ? { maxPhotos: DEFAULT_PHOTO_LIMIT } : {}),
     });
   };
+
+  const limit = photoLimit(question);
 
   return (
     <Reorder.Item
@@ -297,6 +314,7 @@ export default function QuestionCard({
             <span className="block font-sans text-[10px] uppercase tracking-[0.14em] text-cream/30">
               {meta.label}
               {question.type === "rating" && ` · ${RATING_STYLE_META[question.ratingStyle].label}`}
+              {question.type === "photos" && ` · up to ${limit} photo${limit === 1 ? "" : "s"}`}
               {!question.enabled && <span className="text-cream/45"> · off - not asked in this form</span>}
             </span>
           </span>
@@ -411,7 +429,40 @@ export default function QuestionCard({
                   </div>
                 </div>
               ) : (
-                <TypePicker value={question.type} onChange={changeType} />
+                <TypePicker value={question.type} onChange={changeType} types={types} />
+              )}
+
+              {question.type === "photos" && (
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,220px)_1fr] sm:items-end">
+                  <StepperField
+                    label="Maximum photos"
+                    value={limit}
+                    onChange={(maxPhotos) => onPatch({ maxPhotos })}
+                    min={1}
+                    max={MAX_PHOTO_LIMIT}
+                    suffix={limit === 1 ? "photo" : "photos"}
+                    helper={`Respondents can attach up to ${limit} - never more.`}
+                  />
+                  <div className="flex items-start gap-2.5 rounded-lg border border-cream/[0.07] bg-cream/[0.015] px-3.5 py-3">
+                    <Images className="mt-0.5 h-4 w-4 shrink-0 text-gold/60" />
+                    <p className="font-sans text-[11.5px] leading-relaxed text-cream/50">
+                      They see <span className="text-cream/80">“Add photos · Up to {limit}”</span>, thumbnails of what they
+                      picked, and a remove button on each. Photos upload as they're chosen and land with the response in the
+                      CRM.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {question.type === "link" && (
+                <p className="flex items-start gap-2 rounded-lg border border-cream/[0.07] bg-cream/[0.015] px-3.5 py-3 font-sans text-[11.5px] leading-relaxed text-cream/50">
+                  <TypeIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold/60" />
+                  <span>
+                    Only a real web address is accepted. <span className="text-cream/80">instagram.com/yourname</span> is
+                    saved as the complete link <span className="text-cream/80">https://instagram.com/yourname</span>, clickable
+                    in the CRM and exports.
+                  </span>
+                </p>
               )}
 
               {meta.hasOptions && !lockOptions && (

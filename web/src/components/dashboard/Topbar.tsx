@@ -152,7 +152,10 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
 
   const sectionLabel = useMemo<string>(() => {
     const match = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
-    return match?.label ?? "Overview";
+    if (match) return match.label;
+    if (location.pathname.startsWith("/dashboard/forms")) return "Forms";
+    if (location.pathname.startsWith("/dashboard/spells")) return "Spells";
+    return "Overview";
   }, [location.pathname]);
 
   useEffect(() => {

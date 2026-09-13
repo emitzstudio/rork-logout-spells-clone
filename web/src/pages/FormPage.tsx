@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, CircleDashed } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
@@ -8,6 +8,7 @@ import LoadError from "@/components/site/LoadError";
 import { parseAttribution } from "@/data/crm";
 import { useFormStore } from "@/data/formStore";
 import { useSiteSettings } from "@/data/siteSettingsStore";
+import { newUploadSession, uploadFormPhoto } from "@/integrations/supabase/storage";
 import { useNoIndex } from "@/lib/seo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -35,6 +36,17 @@ export default function FormPage() {
 
   const form = slug ? getFormBySlug(slug) : undefined;
   const visible = form !== undefined && (form.status === "published" || isPreview);
+  const formId = form?.id ?? null;
+
+  /* One upload folder per visit - every photo this respondent attaches lands together. */
+  const [uploadSession] = useState<string>(() => newUploadSession());
+  const uploadPhoto = useCallback(
+    (file: File): Promise<string> => {
+      if (formId === null) return Promise.reject(new Error("Form not ready"));
+      return uploadFormPhoto(formId, uploadSession, file);
+    },
+    [formId, uploadSession],
+  );
 
   useEffect(() => {
     document.title = form
@@ -113,6 +125,8 @@ export default function FormPage() {
                     : (answers) =>
                         addResponse({ form, spellId: null, spellName: null, answers, attribution })
                 }
+                /* Previews keep photos in the browser - nothing is uploaded or recorded. */
+                uploadPhoto={isPreview ? undefined : uploadPhoto}
               />
             </div>
           </div>

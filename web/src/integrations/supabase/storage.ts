@@ -141,6 +141,43 @@ export const deleteMemoryPaths = async (paths: string[]): Promise<void> => {
   }
 };
 
+/* ------------------------------ Form photos (0088) --------------------------- */
+
+/**
+ * One upload session per form submission - every photo a respondent attaches
+ * lands in the same folder, so the response's answers and the bucket agree.
+ */
+export const newUploadSession = (): string => freshId();
+
+/**
+ * Uploads one respondent photo for a Photos question into
+ * form-uploads/responses/{formId}/{sessionId}/{generated}.jpg and returns its
+ * public URL - the URL is what the response stores. The bucket policy only
+ * accepts uploads into a published, non-binned form that asks for photos.
+ * Anything the browser can decode (JPEG, PNG, WebP, HEIC on Safari) is
+ * resized to ≤1440px JPEG first, exactly like every other image pipeline.
+ */
+export const uploadFormPhoto = async (
+  formId: string,
+  sessionId: string,
+  file: File | Blob,
+): Promise<string> => {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const blob = await toResizedJpeg(objectUrl);
+    const path = `responses/${formId}/${sessionId}/${freshId()}.jpg`;
+    const { error } = await supabase.storage.from("form-uploads").upload(path, blob, {
+      contentType: "image/jpeg",
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (error) throw new Error(`Photo upload failed: ${error.message}`);
+    return supabase.storage.from("form-uploads").getPublicUrl(path).data.publicUrl;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
 /* ------------------------------ Traveller avatars --------------------------- */
 
 /**

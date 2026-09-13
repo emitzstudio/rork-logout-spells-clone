@@ -16,6 +16,8 @@ const currentPricing = { tiers: [], remainingNote: "", taxNote: "", note: "", br
 const currentRow = {
   ...dashboard.spell,
   page: { ...dashboard.spell.page, pricing: currentPricing },
+  deleted_at: null,
+  deleted_by: null,
 } as SpellRow;
 const departure = { ...dashboard.departure, seats_on_hold: 0 } as ActiveDepartureRow;
 const currentDraft = mapSpell(currentRow, departure, []).draft!;

@@ -128,6 +128,15 @@ export const createDefaultReviewQuestions = (): ReviewQuestion[] => [
   },
 ];
 
+/**
+ * The types a review form may add. Links and photo uploads (0088) belong to
+ * application forms - the review renderer has no controls for them, so the
+ * review builder never offers them.
+ */
+export const REVIEW_QUESTION_TYPES: readonly QuestionType[] = QUESTION_TYPE_IDS.filter(
+  (type) => type !== "photos" && type !== "link",
+);
+
 /** New custom question - same factory the Form Builder uses, kind 'custom'. */
 export const createReviewQuestion = (type: QuestionType): ReviewQuestion => ({
   ...createQuestion(type),
