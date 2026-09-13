@@ -1,0 +1,125 @@
+{
+  "id": "f2302026-a117-4c3d-9051-280920260001",
+  "departureId": "f2302026-a117-4c3d-9051-280920260002",
+  "changeId": "f2302026-a117-4c3d-9051-280920260003",
+  "slug": "the-thailand-full-moon-spell",
+  "name": "The Thailand Full Moon Spell",
+  "hook": "Island days. Moonlit nights. A little further from ordinary.",
+  "fileName": "Logout-Spells-Thailand-Full-Moon-23-28-Sep-2026-Grimoire-v1.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "23-28 September 2026",
+  "startDate": "2026-09-23",
+  "endDate": "2026-09-28",
+  "durationDays": 6,
+  "nights": 5,
+  "adults": 10,
+  "rooms": 5,
+  "priceLabel": "TBA",
+  "location": "Krabi, Koh Samui & Phuket",
+  "heroFile": "thailand-full-moon-cover-v1.jpg",
+  "imageNote": "Moon, Krabi and Samui artwork is AI-generated for atmosphere; it does not depict confirmed hotels or the booked event.",
+  "about": "Six days from Krabi's island waters to the palm-lined shores of Koh Samui, with Koh Phangan's Full Moon Party at the heart of the journey. Arrive through Phuket, settle into Krabi, cross to Samui and return to Phuket for one last day before flying home.\n\n23-28 September 2026 · 6 days / 5 nights · 10 adults / 5 rooms.\n\nPrice TBA. The Full Moon Party ticket is at your own cost. Hotels listed are proposed properties or similar; final arrangements will be confirmed before travel.",
+  "days": [
+    {
+      "date": "2026-09-23", "dateLabel": "Wednesday, 23 September 2026",
+      "title": "Phuket Airport to Krabi", "titleLines": ["THE JOURNEY", "BEGINS IN KRABI"],
+      "location": "Phuket Airport to Krabi", "imageFile": "thailand-krabi-islands-v1.jpg", "illustration": true,
+      "intro": "Land in Phuket. Leave the rush behind. Your first chapter begins on the road to Krabi.",
+      "points": [
+        {"title":"PHUKET AIRPORT ARRIVAL","body":"Meet your pickup at Phuket Airport."},
+        {"title":"ROAD TRANSFER TO KRABI","body":"Travel by road from Phuket Airport to your Krabi hotel."},
+        {"title":"CHECK IN & UNWIND","body":"Check in at the hotel and settle in for an overnight stay in Krabi."}
+      ],
+      "overnight":"Krabi · Night 1", "note":""
+    },
+    {
+      "date":"2026-09-24", "dateLabel":"Thursday, 24 September 2026",
+      "title":"Four Islands by Speedboat", "titleLines":["FOUR ISLANDS.","ONE BLUE HORIZON."],
+      "location":"Krabi", "imageFile":"thailand-krabi-islands-v1.jpg", "illustration":true,
+      "intro":"A half-day on the water, with Krabi's island scenery unfolding around you.",
+      "points":[
+        {"title":"BREAKFAST AT THE HOTEL","body":"Start the morning with breakfast before the tour."},
+        {"title":"4 ISLAND TOUR · SPEEDBOAT","body":"Enjoy a half-day Four Islands tour by speedboat, with lunch."},
+        {"title":"BACK TO KRABI","body":"Return to the hotel in the evening for an overnight stay."}
+      ],
+      "overnight":"Krabi · Night 2", "note":"National Park Fee is not included: THB 200 per person, as quoted."
+    },
+    {
+      "date":"2026-09-25", "dateLabel":"Friday, 25 September 2026",
+      "title":"Krabi to Koh Samui", "titleLines":["ACROSS TO", "KOH SAMUI"],
+      "location":"Krabi to Koh Samui", "imageFile":"thailand-samui-morning-v1.jpg", "illustration":true,
+      "intro":"Trade the Andaman coast for the Gulf of Thailand. The island chapter begins.",
+      "points":[
+        {"title":"BREAKFAST & CHECKOUT","body":"Enjoy breakfast, then check out of your Krabi hotel."},
+        {"title":"TRANSFER & FERRY CROSSING","body":"Transfer from Krabi to Koh Samui via ferry."},
+        {"title":"SETTLE INTO SAMUI","body":"Arrive, check in at the hotel and stay overnight in Koh Samui."}
+      ],
+      "overnight":"Koh Samui · Night 3", "note":""
+    },
+    {
+      "date":"2026-09-26", "dateLabel":"Saturday, 26 September 2026",
+      "title":"Koh Phangan & the Full Moon Party", "titleLines":["FOLLOW THE", "FULL MOON"],
+      "location":"Koh Samui to Koh Phangan", "imageFile":"thailand-full-moon-cover-v1.jpg", "illustration":true,
+      "intro":"A slow beach morning. An island crossing. Then the night this spell is made for.",
+      "points":[
+        {"title":"BREAKFAST & BEACH TIME","body":"Have breakfast, then relax on the beach in Koh Samui."},
+        {"title":"FERRY TO KOH PHANGAN","body":"Travel from Koh Samui to Koh Phangan by ferry."},
+        {"title":"FULL MOON PARTY","body":"Enjoy the Full Moon Party. Entry tickets are at your own cost."},
+        {"title":"RETURN TO YOUR HOTEL","body":"The itinerary plans a return to the Koh Samui hotel for the night."}
+      ],
+      "overnight":"Koh Samui · Night 4",
+      "note":"Party-night return timings and Samui-Phangan ferry fares/inclusion must be confirmed. Do not assume a late-night scheduled ferry. Event dates may change; reconfirm locally."
+    },
+    {
+      "date":"2026-09-27", "dateLabel":"Sunday, 27 September 2026",
+      "title":"Koh Samui to Phuket", "titleLines":["BACK ACROSS", "TO PHUKET"],
+      "location":"Koh Samui · Surat Thani · Krabi · Phuket", "imageFile":"starboy-phuket-beach-20260911.jpg", "illustration":false,
+      "intro":"One more crossing, then the road through Krabi leads you back to Phuket.",
+      "points":[
+        {"title":"BREAKFAST & CHECKOUT","body":"Have breakfast and check out of the Koh Samui hotel."},
+        {"title":"KOH SAMUI TO SURAT THANI","body":"Transfer to the ferry terminal, then take the ferry to Surat Thani."},
+        {"title":"ROAD TRANSFER VIA KRABI","body":"Continue by road via Krabi to Phuket."},
+        {"title":"PHUKET HOTEL CHECK-IN","body":"Check in at your Phuket hotel for an overnight stay."}
+      ],
+      "overnight":"Phuket · Night 5", "note":""
+    },
+    {
+      "date":"2026-09-28", "dateLabel":"Monday, 28 September 2026",
+      "title":"Shopping & Departure", "titleLines":["ONE LAST DAY", "IN THAILAND"],
+      "location":"Phuket", "imageFile":"starboy-old-town-20260911.jpg", "illustration":false,
+      "intro":"A little time to wander, a little space for souvenirs. Take the memories home.",
+      "points":[
+        {"title":"BREAKFAST & CHECKOUT","body":"Enjoy breakfast, then check out of the hotel."},
+        {"title":"FREE TIME FOR SHOPPING","body":"Spend the day at leisure for shopping before your evening transfer."},
+        {"title":"PHUKET AIRPORT TRANSFER","body":"Transfer to Phuket Airport in the evening for departure."}
+      ],
+      "overnight":"Departure · End of the spell", "note":"Phuket Old Town photograph is destination imagery, not an additional scheduled tour."
+    }
+  ],
+  "hotels":[
+    {"location":"Krabi","nights":2,"dates":"23 & 24 September","name":"Ibis Styles Krabi Ao Nang / Hula Hula Resort","room":"Standard Room · Twin / Double","note":"Or similar."},
+    {"location":"Koh Samui","nights":2,"dates":"25 & 26 September","name":"Malibu Beach Resort Samui","room":"3 Star · Studio Room · Twin / Double","note":"Or similar."},
+    {"location":"Phuket","nights":1,"dates":"27 September","name":"7 Q Phuket Patong","room":"3 Star · Superior Room · Twin / Double","note":"Or similar."}
+  ],
+  "inclusions":[
+    "Daily buffet breakfast at the hotel",
+    "All airport transfers on a private basis",
+    "All tours on SIC basis (Seat in Coach) in Thailand",
+    "Surat Thani - Koh Samui - Surat Thani ferry tickets"
+  ],
+  "exclusions":[
+    "Full Moon Party entry ticket · at your own cost",
+    "National Park Fee · THB 200 per person for the Four Islands tour, as quoted",
+    "Airfare",
+    "Travel insurance · INR 500 per person additional, as quoted",
+    "RT-PCR testing, if required by COVID-related travel rules · additional cost"
+  ],
+  "entryNote":"Indian passport holders may be eligible for visa-exempt tourist entry under the rules in force at travel. This is not a guarantee of free visa-on-arrival. Check passport eligibility and current Thai entry requirements before departure.",
+  "transportNote":"Surat Thani - Koh Samui - Surat Thani ferry tickets are included. Samui - Koh Phangan ferry fares/inclusion and the post-party return must be confirmed separately.",
+  "priceNote":"Price TBA. Pricing, taxes, deposit and booking terms will be announced. Applications are not open yet; no payment is requested.",
+  "sources":[
+    {"label":"Full Moon Party calendar","url":"https://www.fullmoonpartythailand.com/dates","checked":"2026-09-13"},
+    {"label":"Thai Embassy entry updates","url":"https://newdelhi.thaiembassy.org/en/content/latest-update-on-revision-to-thailand-s-visa-exemp","checked":"2026-09-13"}
+  ]
+}

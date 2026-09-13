@@ -660,7 +660,7 @@ export function SpellPricing({ draft, onBook }: SpellPricingProps) {
         <Reveal className="mx-auto mt-12 max-w-[520px] rounded-2xl border border-gold/40 bg-gold/[0.05] px-8 py-10 text-center">
           <p className="eyebrow">Prices</p>
           <p className="mt-4 font-serif text-5xl text-cream">TBA</p>
-          <p className="mt-4 font-sans text-sm leading-relaxed text-cream/55">Pricing and booking details will be announced. You can send an inquiry in the meantime.</p>
+          <p className="mt-4 font-sans text-sm leading-relaxed text-cream/55">Pricing and booking details will be announced.{draft.formId ? " You can send an inquiry in the meantime." : " Applications are not open yet."}</p>
         </Reveal>
       )}
       {!isTba && tiers.length === 0 && <Reveal className="mx-auto mt-12 max-w-[520px] rounded-2xl border border-gold/40 bg-gold/[0.05] px-8 py-10 text-center"><p className="eyebrow">Per person</p><p className="mt-4 font-serif text-5xl text-cream">{formatINR(Number(draft.price))}</p></Reveal>}
