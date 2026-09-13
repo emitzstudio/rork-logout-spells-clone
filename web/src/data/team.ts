@@ -66,7 +66,7 @@ const TEAM: TeamMember[] = [
     name: "Vidushi Verma",
     designation: "Founder & Chief Spellcaster",
     department: "Founder",
-    photo: "/team/vidushi.jpg",
+    photo: "/team/vidushi-20260913-v2.webp",
     initial: "V",
     featured: true,
     intro: "The first believer. Logout Spells began as her little experiment with the world.",
