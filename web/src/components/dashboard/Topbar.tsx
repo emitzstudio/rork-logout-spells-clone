@@ -155,6 +155,7 @@ export default function Topbar({ onOpenMobileNav }: { onOpenMobileNav: () => voi
     if (match) return match.label;
     if (location.pathname.startsWith("/dashboard/forms")) return "Forms";
     if (location.pathname.startsWith("/dashboard/spells")) return "Spells";
+    if (location.pathname.startsWith("/dashboard/receipts")) return "Receipts";
     return "Overview";
   }, [location.pathname]);
 

@@ -22,6 +22,7 @@
 | `avatars` | Public read | Each user, own folder | Profile avatar + profile cover |
 | `memories` | **Private** | Each user, own folder | Trip album photos — served via signed URLs only |
 | `form-uploads` | Public read (unguessable paths) | Anyone, into a published non-binned form that asks for photos | Photos respondents attach to a form's Photos question (0088) |
+| `receipts` | **Private** | Staff | Generated booking-receipt PDFs (0089) — served through the staff session only |
 
 Public buckets hold only content that is by definition public on the website.
 Anything personal lives in `memories` (private) or `avatars` (public by product
@@ -42,6 +43,7 @@ avatars/      {user_id}/avatar-{image_id}.jpg
               {user_id}/cover-{image_id}.jpg
 memories/     {user_id}/{memory_id}/{photo_id}.jpg
 form-uploads/ responses/{form_id}/{session_id}/{photo_id}.jpg   (0088 — one session per submission)
+receipts/     {receipt_id}/{receipt_number}-{generated}.pdf        (0089 — a regeneration is a NEW name)
 ```
 
 The first path segment of user buckets is **always the owner's `auth.uid()`** — this is
@@ -80,6 +82,15 @@ from the earlier fixed-name sketch).
   to ≤1440px JPEG first, the same pipeline as every other bucket, and the
   per-question maximum (1–10, founder-set) is enforced by the uploader before any
   file is chosen.
+- **`receipts`** (live since 0089): PRIVATE — a receipt names a traveller, their
+  contact details and money, so no public URL ever exists. SELECT / INSERT /
+  DELETE: `is_staff()` only; NO UPDATE policy (objects are immutable — the console
+  uploads a new name, repoints `receipts.pdf_path`, then removes the old object).
+  The console downloads through the signed-in session (`storage.download`, which
+  re-checks the policy server-side); nothing is signed and nothing is persisted as a
+  link. 5 MB cap; `application/pdf` only. The PDF is rendered in the browser with
+  pdf-lib from the shipped Grimoire fonts and logo — real vector text, never a
+  screenshot.
 
 ## Upload rules
 

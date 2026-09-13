@@ -36,6 +36,7 @@ spells
  ├─ 1:N  bookings                       (spell_id, nullable + frozen spell_snapshot jsonb)
  ├─ 1:N  form_responses                 (spell_id, nullable — "applied through")
  ├─ 1:N  inquiries                      (spell_id, nullable + spell_name snapshot)
+ ├─ 1:N  receipts                       (spell_id, nullable + full trip snapshot — 0089)
  └─ 1:N← previous_spells                (previous_spells.spell_id, nullable —
                                          "this circle ran as that live spell")
 
@@ -84,6 +85,8 @@ interests                               (catalogue, seeded)
 | `team_members.user_id` → profiles | `set null` | display card is independent of login |
 | `form_responses.form_id` → forms | `cascade` | responses belong to the form |
 | `form_responses.spell_id` / `inquiries.spell_id` → spells | `set null` | snapshots keep them readable |
+| `receipts.spell_id` → spells | `set null` | a receipt is a financial record; it prints its own trip snapshot, never the live spell |
+| `receipts.created_by` → profiles | `set null` | authorship is informational |
 | `bookings.user_id` → profiles | `set null` | **financial records survive account deletion** |
 | `bookings.spell_id` → spells | `set null` | `spell_snapshot` keeps the trip renderable |
 | `bookings.departure_id` → spell_departures | `set null` | financial record survives run cleanup |
@@ -107,5 +110,7 @@ is to stay unchanged when the source changes:
 - `inquiries.spell_slug` / `spell_name`, `form_responses.spell_name`,
   `referrals.booked_spell_name` — display continuity.
 - `form_responses.answers[].questionTitle` — responses stay readable after form edits.
+- `receipts.trip_name` / `travel_dates` / `destination` / `spell_image_url` and the
+  traveller fields — a receipt is what was issued, whatever the spell becomes later.
 
 Everything else joins live tables; no other field is stored twice.

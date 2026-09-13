@@ -73,6 +73,7 @@ avoided by design.
 | `payment_provider` | `mock`, `razorpay`, `stripe` | payments, webhook events (D3: **Razorpay is live**; `stripe` reserved for the future) |
 | `referral_status` | `invited`, `joined`, `booked` | referrals |
 | `notification_kind` | `trip`, `payment`, `memory`, `offer`, `referral`, `system` | notifications |
+| `receipt_payment_status` | `paid`, `partially_paid`, `pending` | receipts (0089) |
 
 ---
 
@@ -475,6 +476,25 @@ Wallet credits are `kind = 'credit'` rows (referral rewards land here).
 `processed boolean`, `processed_at`, `error text`, `created_at`.
 RLS: SELECT staff · writes service role only. The unique event id makes webhook
 processing idempotent — a replayed event can never double-capture.
+
+### `receipts` — console-generated booking receipts (LIVE since 0089)
+`id`, **`receipt_number text` unique — server-generated `LS-YYYY-NNNN`** via
+`set_receipt_number()` (BEFORE INSERT) over `next_receipt_number()`, which reuses
+the `ref_counters` mechanism (§8) with scope `receipt` per Asia/Kolkata year; never
+client-supplied, never updated. `receipt_date date`, `spell_id uuid` null → spells
+`set null` (an optional pre-fill link — the receipt keeps its OWN trip snapshot:
+`trip_name`, `travel_dates`, `destination`, `spell_image_url`), traveller snapshot
+(`traveller_name` / `_email` / `_phone`, `travellers_count ≥ 1`), money in paise
+(`total_minor`, `received_minor`, `balance_minor`, all ≥ 0), `payment_status
+receipt_payment_status`, `payment_date`, `balance_due_date`, `notes`, the current
+PDF (`pdf_path` in the private `receipts` bucket + `pdf_generated_at`), `created_by`
+(defaults `auth.uid()`), timestamps. Indexes: `created_at desc` · partial on `spell_id`.
+RLS: **staff only** — SELECT / INSERT / UPDATE via `is_staff()`; column-scoped grants
+exclude the number and audit columns; **no DELETE path** (financial records are
+corrected by editing + regenerating the PDF, never erased). The console writes the
+row first, renders the PDF in the browser, uploads it, then repoints `pdf_path`
+(old object removed last) — regenerating never creates a second receipt or number.
+Email delivery is deliberately not part of this domain.
 
 ### `referrals`
 `id`, `referrer_id` → profiles cascade, `invitee_name`, `invitee_email`,

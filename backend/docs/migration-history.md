@@ -2722,6 +2722,59 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0089 — Booking receipts · numbered PDF receipts from the console (2026-09-13)
+
+- **0089_receipts — APPLIED** in two `runMigration` batches
+  (`receipts-table-numbering-rls`, `receipts-private-bucket`). Source of record:
+  [`backend/migrations/0089_receipts.sql`](../migrations/0089_receipts.sql).
+  **Additive only** — one enum, one table, two functions, two triggers, one bucket;
+  nothing existing changes shape.
+- **What.** Dashboard → Receipts: the founder creates a booking receipt by hand or
+  pre-filled from a Spell, the browser renders a branded A4 PDF (pdf-lib, the
+  Grimoire typefaces, real vector text) and stores it in the private `receipts`
+  bucket; the row keeps the receipt facts plus the path of the current PDF.
+- **Enum**: `receipt_payment_status` — `paid` · `partially_paid` · `pending`.
+- **Table `receipts`**: `receipt_number` (unique, format-checked `LS-YYYY-NNNN`),
+  `receipt_date`, optional `spell_id` → spells `set null` (the receipt keeps its own
+  trip snapshot), traveller fields, trip fields, `total_minor` / `received_minor` /
+  `balance_minor` (paise), `payment_status`, `payment_date`, `balance_due_date`,
+  `notes`, `spell_image_url`, `pdf_path` / `pdf_generated_at`, `created_by`
+  (defaults `auth.uid()`), timestamps. Checks: ≥1 traveller, non-negative money.
+- **Numbering**: `next_receipt_number()` reuses the 0004 `ref_counters` mechanism
+  with scope `receipt`, keyed per Asia/Kolkata calendar year — `LS-2026-0001`,
+  `LS-2026-0002`, … (row-locked upsert, so concurrent generates serialize; the
+  unique constraint is the backstop). `set_receipt_number()` BEFORE INSERT
+  overwrites whatever the client sent; the column holds no client grant. Editing
+  updates the same row, so regenerating a PDF never mints a second number.
+- **Grants / RLS**: staff only in every direction (`is_staff()` on SELECT / INSERT /
+  UPDATE); column-scoped INSERT/UPDATE grants exclude `receipt_number`,
+  `created_by` and the timestamps; **no DELETE grant** — receipts are financial
+  records, corrected by editing and regenerating, never erased.
+- **Storage**: private bucket `receipts` (5 MB, `application/pdf`), paths
+  `{receipt_id}/{receipt_number}-{generated}.pdf`; SELECT / INSERT / DELETE staff
+  only, no UPDATE policy (regeneration = new object, repoint, remove old). PDFs are
+  served through the signed-in session (`storage.download`), never a persisted URL.
+- **Console**: `/dashboard/receipts` (list, search, status filter, totals, View ·
+  Download · Edit), `/dashboard/receipts/new` and `/:id/edit` (five-section form
+  with a live HTML twin of the PDF; balance = total − received and the status
+  follow the amounts until overridden, each with "Reset to automatic"; a Spell
+  pre-fills name, destination, dates, image and price × travellers), `/:id`
+  (document view, Download / Open / Edit / Regenerate). "Receipt created" offers
+  the PDF immediately.
+- **Deliberately absent**: any email delivery. The traveller's email is printed on
+  the receipt only.
+- Validation: rolled-back live SQL under the real admin and a non-staff profile —
+  two inserts numbered `LS-2026-0001` / `-0002`, a forged number and a number
+  update refused (permission denied), the PDF repoint allowed, DELETE refused,
+  bucket insert allowed for staff and refused for non-staff, non-staff and anon see
+  zero rows/objects; nothing persisted (0 receipts, 0 counter rows, 0 objects).
+  Website: 303 unit tests + 24 browser tests pass (30 new: rupee formatting,
+  balance/status rules, validation, spell pre-fill, mappers, real PDF rendering
+  incl. multi-page overflow and glyph-exact text, and a real-browser editor flow);
+  typecheck, lint and build pass.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

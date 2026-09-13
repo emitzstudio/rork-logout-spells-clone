@@ -178,6 +178,51 @@ export const uploadFormPhoto = async (
   }
 };
 
+/* ------------------------------ Receipts (0089) ------------------------------ */
+
+/**
+ * The `receipts` bucket is PRIVATE (a receipt names a traveller, their
+ * contact details and money): no public URLs exist. PDFs travel through the
+ * signed-in staff session - `download()` re-checks the storage policy
+ * server-side. Paths: {receipt_id}/{receipt_number}-{generated}.pdf; a
+ * regeneration uploads a NEW name, repoints the row, then removes the old
+ * object, so nothing is ever overwritten in place.
+ */
+export const uploadReceiptPdf = async (
+  receiptId: string,
+  receiptNumber: string,
+  bytes: Uint8Array,
+): Promise<string> => {
+  const safeNumber = receiptNumber.replace(/[^A-Za-z0-9-]/g, "");
+  const path = `${receiptId}/${safeNumber !== "" ? safeNumber : "receipt"}-${freshId()}.pdf`;
+  const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+  const { error } = await supabase.storage.from("receipts").upload(path, blob, {
+    contentType: "application/pdf",
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (error) throw new Error(`Receipt PDF upload failed: ${error.message}`);
+  return path;
+};
+
+/** Fetches a stored receipt PDF through the staff session (RLS applies). */
+export const downloadReceiptPdf = async (path: string): Promise<Blob> => {
+  const { data, error } = await supabase.storage.from("receipts").download(path);
+  if (error || !data) throw new Error(`Receipt PDF download failed: ${error?.message ?? "no file"}`);
+  return data;
+};
+
+/** Best-effort removal of superseded receipt PDFs - never before the row repoint. */
+export const deleteReceiptPdfs = async (paths: string[]): Promise<void> => {
+  const real = paths.filter((path) => path !== "");
+  if (real.length === 0) return;
+  try {
+    await supabase.storage.from("receipts").remove(real);
+  } catch (error) {
+    console.warn("[storage] Receipt PDF cleanup skipped:", error);
+  }
+};
+
 /* ------------------------------ Traveller avatars --------------------------- */
 
 /**

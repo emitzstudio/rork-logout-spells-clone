@@ -1583,6 +1583,102 @@ export type Database = {
         }
         Relationships: []
       }
+      receipts: {
+        Row: {
+          balance_due_date: string | null
+          balance_minor: number
+          created_at: string
+          created_by: string | null
+          destination: string
+          id: string
+          notes: string
+          payment_date: string | null
+          payment_status: Database["public"]["Enums"]["receipt_payment_status"]
+          pdf_generated_at: string | null
+          pdf_path: string
+          receipt_date: string
+          receipt_number: string
+          received_minor: number
+          spell_id: string | null
+          spell_image_url: string
+          total_minor: number
+          travel_dates: string
+          traveller_email: string
+          traveller_name: string
+          traveller_phone: string
+          travellers_count: number
+          trip_name: string
+          updated_at: string
+        }
+        Insert: {
+          balance_due_date?: string | null
+          balance_minor?: number
+          created_at?: string
+          created_by?: string | null
+          destination?: string
+          id?: string
+          notes?: string
+          payment_date?: string | null
+          payment_status?: Database["public"]["Enums"]["receipt_payment_status"]
+          pdf_generated_at?: string | null
+          pdf_path?: string
+          receipt_date?: string
+          receipt_number: string
+          received_minor?: number
+          spell_id?: string | null
+          spell_image_url?: string
+          total_minor?: number
+          travel_dates?: string
+          traveller_email?: string
+          traveller_name?: string
+          traveller_phone?: string
+          travellers_count?: number
+          trip_name?: string
+          updated_at?: string
+        }
+        Update: {
+          balance_due_date?: string | null
+          balance_minor?: number
+          created_at?: string
+          created_by?: string | null
+          destination?: string
+          id?: string
+          notes?: string
+          payment_date?: string | null
+          payment_status?: Database["public"]["Enums"]["receipt_payment_status"]
+          pdf_generated_at?: string | null
+          pdf_path?: string
+          receipt_date?: string
+          receipt_number?: string
+          received_minor?: number
+          spell_id?: string | null
+          spell_image_url?: string
+          total_minor?: number
+          travel_dates?: string
+          traveller_email?: string
+          traveller_name?: string
+          traveller_phone?: string
+          travellers_count?: number
+          trip_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_spell_id_fkey"
+            columns: ["spell_id"]
+            isOneToOne: false
+            referencedRelation: "spells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ref_counters: {
         Row: {
           period: string
@@ -2485,6 +2581,7 @@ export type Database = {
         Returns: string
       }
       leave_waitlist_public: { Args: { _entry_id: string }; Returns: undefined }
+      next_receipt_number: { Args: never; Returns: string }
       next_ref: { Args: { _prefix: string; _scope: string }; Returns: string }
       record_manual_payment: {
         Args: {
@@ -2624,6 +2721,7 @@ export type Database = {
         | "captured"
         | "failed"
         | "refunded"
+      receipt_payment_status: "paid" | "partially_paid" | "pending"
       response_status: "new" | "viewed"
       review_invite_status: "pending" | "used"
       review_status: "pending" | "approved" | "rejected"
@@ -2855,6 +2953,7 @@ export const Constants = {
         "failed",
         "refunded",
       ],
+      receipt_payment_status: ["paid", "partially_paid", "pending"],
       response_status: ["new", "viewed"],
       review_invite_status: ["pending", "used"],
       review_status: ["pending", "approved", "rejected"],

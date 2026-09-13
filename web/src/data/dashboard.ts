@@ -14,6 +14,7 @@ import {
   NotebookPen,
   PenLine,
   PhoneCall,
+  ReceiptIndianRupee,
   Recycle,
   Settings,
   Sparkles,
@@ -60,6 +61,7 @@ export const DASH_NAV: DashNavGroup[] = [
       { label: "CRM", to: "/dashboard/crm", icon: PhoneCall },
       { label: "Categories", to: "/dashboard/categories", icon: FolderOpen },
       { label: "Bookings", to: "/dashboard/bookings", icon: CalendarCheck2 },
+      { label: "Receipts", to: "/dashboard/receipts", icon: ReceiptIndianRupee },
       { label: "Testimonials", to: "/dashboard/testimonials", icon: MessageSquareQuote },
       { label: "Reviews", to: "/dashboard/reviews", icon: Star },
       { label: "Blog", to: "/dashboard/blog", icon: PenLine },
@@ -123,6 +125,15 @@ export const DASH_SECTIONS: DashSection[] = [
     icon: CalendarCheck2,
   },
   {
+    slug: "receipts",
+    label: "Receipts",
+    tagline: "Numbered booking receipts",
+    description:
+      "Create branded booking receipts - numbered automatically, rendered as sharp A4 PDFs, and kept here to download again whenever a traveller asks.",
+    hint: "Live since 0089",
+    icon: ReceiptIndianRupee,
+  },
+  {
     slug: "testimonials",
     label: "Testimonials",
     tagline: "Words from the circles",
@@ -167,6 +178,5 @@ export const QUICK_ACTIONS: QuickAction[] = [
   { id: "qa-bookings", label: "Review Bookings", sub: "Seats, payments & waitlists", to: "/dashboard/bookings", icon: CalendarCheck2 },
   { id: "qa-testimonials", label: "Testimonials", sub: "Moderate & feature", to: "/dashboard/testimonials", icon: MessageSquareQuote },
   { id: "qa-blog", label: "Write Blog Post", sub: "The journal awaits", to: "/dashboard/blog", icon: NotebookPen },
-  { id: "qa-categories", label: "Categories", sub: "Curate collections", to: "/dashboard/categories", icon: FolderOpen },
   { id: "qa-settings", label: "Site Settings", sub: "Profile & preferences", to: "/dashboard/settings", icon: Settings },
 ];

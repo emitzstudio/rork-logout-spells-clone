@@ -20,6 +20,9 @@ import FormBuilder from "./FormBuilder";
 import FormResponses from "./FormResponses";
 import Forms from "./Forms";
 import Overview from "./Overview";
+import ReceiptDetail from "./ReceiptDetail";
+import ReceiptEditor from "./ReceiptEditor";
+import Receipts from "./Receipts";
 import RecycleBin from "./RecycleBin";
 import Responses from "./Responses";
 import ReviewCollection from "./ReviewCollection";
@@ -136,6 +139,14 @@ function FounderConsole() {
       document.title = "Recycle Bin · Dashboard | Logout Spells";
       return;
     }
+    if (location.pathname === "/dashboard/receipts/new" || (location.pathname.startsWith("/dashboard/receipts/") && location.pathname.endsWith("/edit"))) {
+      document.title = "Receipt · Dashboard | Logout Spells";
+      return;
+    }
+    if (location.pathname.startsWith("/dashboard/receipts")) {
+      document.title = "Receipts · Dashboard | Logout Spells";
+      return;
+    }
     const section = DASH_SECTIONS.find((s) => location.pathname === `/dashboard/${s.slug}`);
     document.title = `${section ? `${section.label} · ` : ""}Dashboard | Logout Spells`;
   }, [location.pathname]);
@@ -198,7 +209,12 @@ function FounderConsole() {
                 <Route path="settings" element={<Settings />} />
                 {/* 0088 - deleted forms and spells: restore or delete permanently. */}
                 <Route path="recycle-bin" element={<RecycleBin />} />
-                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings", "recycle-bin"].includes(section.slug)).map((section) => (
+                {/* 0089 - numbered booking receipts: list → create/edit → view + download. */}
+                <Route path="receipts" element={<Receipts />} />
+                <Route path="receipts/new" element={<ReceiptEditor />} />
+                <Route path="receipts/:id" element={<ReceiptDetail />} />
+                <Route path="receipts/:id/edit" element={<ReceiptEditor />} />
+                {DASH_SECTIONS.filter((section) => !["spells", "bookings", "testimonials", "responses", "settings", "recycle-bin", "receipts"].includes(section.slug)).map((section) => (
                   <Route key={section.slug} path={section.slug} element={<Section section={section} />} />
                 ))}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
