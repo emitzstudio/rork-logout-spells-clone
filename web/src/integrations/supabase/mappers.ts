@@ -15,6 +15,7 @@ import type { FormQuestion, FormResponse, LogoutForm, ResponseAnswer } from "@/d
 import type { Interest } from "@/data/interests";
 import { brochureLink } from "@/data/publishedPricing";
 import { replaceRetiredStarboyBrochure } from "@/data/starboyBrochure";
+import { packageCardsSchema } from "@/data/packageCards";
 import type {
   CommunityMoment,
   PastChapter,
@@ -102,10 +103,12 @@ const revivePricing = (raw: unknown): PricingBlock | undefined => {
   }
   const brochure = brochureLink({ tiers: [], remainingNote: "", taxNote: "", note: "", brochureUrl: typeof doc.brochureUrl === "string" ? doc.brochureUrl : undefined });
   const hasTerms = [doc.remainingNote, doc.taxNote, doc.note].some((value) => typeof value === "string" && value.trim() !== "");
+  const packages = packageCardsSchema.safeParse(doc.packages);
   // Automatic brochures still need single-price/TBA terms after a custom link is cleared.
-  if (tiers.length === 0 && brochure === null && !hasTerms) return undefined;
+  if (tiers.length === 0 && brochure === null && !hasTerms && !packages.success) return undefined;
   return {
     tiers,
+    ...(packages.success ? { packages: packages.data } : {}),
     ...(doc.requestMode === "published-terms" ? { requestMode: "published-terms" as const } : {}),
     ...(typeof doc.brochureUrl === "string" ? { brochureUrl: replaceRetiredStarboyBrochure(doc.brochureUrl) } : {}),
     remainingNote: typeof doc.remainingNote === "string" ? doc.remainingNote : "",

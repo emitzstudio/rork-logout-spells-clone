@@ -179,6 +179,8 @@ export interface PriceTier {
  */
 export interface PricingBlock {
   tiers: PriceTier[];
+  /** Optional package comparison content saved alongside the existing price tiers. */
+  packages?: import("./packageCards").PackageCard[];
   /** Use the published tiers in reserve requests; the team confirms the final quote. */
   requestMode?: "published-terms";
   /** Optional HTTPS or same-site brochure PDF link. */

@@ -2805,6 +2805,34 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0091 — Starboy · three package cards (2026-09-14)
+
+- **APPLIED** as `starboy-three-packages`. Source: [`0091_starboy_three_packages.sql`](../migrations/0091_starboy_three_packages.sql).
+- Only the existing published Starboy page document changes. Exact XO / STARBOY /
+  TIMELESS package cards are saved in `page.pricing.packages`, with regular-price
+  tiers retained for legacy clients; no new taxes, deposits or payment logic.
+- XO: 9–12 October, 4 days / 3 nights, Bangkok, INR 80,000 early bird / 85,000 regular.
+  STARBOY: 9–15 October, 7 days / 6 nights, Bangkok + Phuket, INR 140,000 / 150,000.
+  TIMELESS: same extended dates, INR 190,000 / 200,000. Each card has its own exact
+  included list before exclusions/optional items. No extra package promises.
+- Removed the discontinued cooking activity from the Starboy story, Day 3 and
+  shared exclusions. Updated the old summary and three package/date FAQs to avoid
+  conflicting claims. All other itinerary days and imagery are unchanged.
+- Preserved the name, slug, non-page spell fields, brochure URL and PDF bytes.
+  Existing spells, departures, forms, bookings, receipts, archives and reviews are
+  protected by transaction-level equality guards; no schema or policy changes.
+- Validation: 314 unit tests + 24 browser tests pass; web static checks and build
+  pass. Preview browser verification at 390px / 1440px confirms exact lists,
+  responsive stacking, no horizontal overflow, inquiry dialog and unchanged
+  surrounding typography, colours, navigation and classes against the baseline.
+  All existing public assets and unrelated public data match the snapshot.
+- **Custom-domain deployment pending:** `www.logoutspells.com` still serves the
+  prior Vercel JavaScript bundle. The database text corrections are live, but the
+  new card renderer is deployed only at the Rork preview origin until the latest
+  source is deployed/promoted in the existing Vercel project.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

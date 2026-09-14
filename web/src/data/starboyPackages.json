@@ -1,0 +1,92 @@
+[
+  {
+    "id": "xo",
+    "name": "XO",
+    "label": "REGULAR",
+    "earlyBird": 80000,
+    "regular": 85000,
+    "dates": "9–12 October",
+    "duration": "4 Days / 3 Nights",
+    "location": "Bangkok",
+    "included": [
+      { "title": "The Weeknd Concert Tickets", "detail": "Standing or seating, based on availability" },
+      { "title": "3 Nights Accommodation", "detail": "Premium party villas / 3 to 4 star hotels in Bangkok" },
+      { "title": "Internal Transfers", "detail": "Airport pickup, drop off and all planned internal transportation" },
+      { "title": "Meals", "detail": "3 breakfasts" },
+      { "title": "BKK Food Crawl" }
+    ],
+    "excludedHeading": "NOT INCLUDED / OPTIONAL",
+    "excluded": [
+      { "title": "International Flights", "detail": "India ↔ Bangkok not included" },
+      { "title": "Drag Show / Art Museum Tickets", "detail": "Optional add on" },
+      { "title": "Visa / Travel Insurance", "detail": "Not included" },
+      { "title": "Meals Not Specifically Mentioned", "detail": "Not included" },
+      { "title": "Alcoholic Beverages", "detail": "Not included" }
+    ]
+  },
+  {
+    "id": "starboy",
+    "name": "STARBOY",
+    "label": "EXTENDED",
+    "earlyBird": 140000,
+    "regular": 150000,
+    "dates": "9–15 October",
+    "duration": "7 Days / 6 Nights",
+    "location": "Bangkok + Phuket",
+    "included": [
+      { "title": "The Weeknd Concert Tickets", "detail": "Standing or seating, based on availability" },
+      { "title": "International Flight", "detail": "India → Bangkok" },
+      { "title": "Internal Flight", "detail": "Bangkok → Phuket" },
+      { "title": "6 Nights Accommodation", "detail": "Premium party villas / 3 to 4 star hotels in Bangkok & Phuket" },
+      { "title": "All Internal Transfers", "detail": "Airport pickups, drop offs and all planned transportation" },
+      { "title": "Meals", "detail": "6 breakfasts, 1 lunch and 1 dinner" },
+      { "title": "BKK Food Crawl" },
+      { "title": "Entry to Itinerary Clubs" },
+      { "title": "Traditional Thai Massage" },
+      { "title": "Phi Phi Island Tour" },
+      { "title": "Café Del Mar Drop & Entry" },
+      { "title": "Phuket Old Town Market Visit" }
+    ],
+    "excludedHeading": "NOT INCLUDED / OPTIONAL",
+    "excluded": [
+      { "title": "Return International Flight", "detail": "Phuket → India not included" },
+      { "title": "Visa / Travel Insurance", "detail": "Not included" },
+      { "title": "Drag Show / Art Museum Tickets", "detail": "Optional add on" },
+      { "title": "Meals Not Specifically Mentioned" },
+      { "title": "Alcoholic Beverages" }
+    ]
+  },
+  {
+    "id": "timeless",
+    "name": "TIMELESS",
+    "label": "PREMIUM MAX ALL INCLUSIVE",
+    "earlyBird": 190000,
+    "regular": 200000,
+    "dates": "9–15 October",
+    "duration": "7 Days / 6 Nights",
+    "location": "Bangkok + Phuket",
+    "included": [
+      { "title": "Premium The Weeknd Concert Tickets", "detail": "Standing or seating, subject to availability, with premium ticket allocation" },
+      { "title": "International Flights", "detail": "India → Bangkok\nPhuket → India" },
+      { "title": "Internal Flight", "detail": "Bangkok → Phuket" },
+      { "title": "6 Nights Premium Accommodation", "detail": "Premium party villas / 3 to 4 star hotels in Bangkok & Phuket" },
+      { "title": "All Internal Transfers", "detail": "Airport pickups, drop offs and all planned transportation" },
+      { "title": "Meals", "detail": "6 breakfasts, 1 lunch and 1 dinner" },
+      { "title": "BKK Food Crawl" },
+      { "title": "Drag Show / Art Museum Tickets" },
+      { "title": "ATV Ride" },
+      { "title": "Entry to Itinerary Clubs" },
+      { "title": "Premium Traditional Thai Massage" },
+      { "title": "Phi Phi Island Tour" },
+      { "title": "Café Del Mar Drop & Entry" },
+      { "title": "Phuket Old Town Market Visit" },
+      { "title": "Visa" },
+      { "title": "Travel Insurance" }
+    ],
+    "excludedHeading": "NOT INCLUDED",
+    "excluded": [
+      { "title": "Meals Not Specifically Mentioned" },
+      { "title": "Alcoholic Beverages" }
+    ]
+  }
+]

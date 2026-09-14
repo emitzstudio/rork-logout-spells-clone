@@ -6,6 +6,7 @@ import { RichBody } from "@/components/dashboard/builder/RichText";
 import { SpellAudience, SpellFaqs, SpellHost, SpellPricing, SpellStay } from "@/components/spell/SpellSections";
 import { BUILDER_ICONS, FINAL_CTA, dayHasContent, quickEffectiveValue, type SpellDraft } from "@/data/builder";
 import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
+import StarboyPackages from "@/components/spell/StarboyPackages";
 import { cn } from "@/lib/utils";
 
 const container = "mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-14";
@@ -108,10 +109,14 @@ export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft
     {draft.gallery.length > 0 && <section aria-label="Gallery" className="border-y border-white/10 bg-[#110d0c] py-16"><div className={container}><p className={kicker}>03 / In the frame</p><h2 className={cn(title, "mt-4 text-5xl md:text-7xl")}>A different kind of escape.</h2></div><div className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 sm:px-8 lg:px-14">{draft.gallery.map((image) => <figure key={image.id} className="relative aspect-[4/3] w-[80vw] max-w-[480px] shrink-0 snap-center overflow-hidden"><img src={image.url} alt={image.name} loading="lazy" className="h-full w-full object-cover" /></figure>)}</div></section>}
     {highlights.length > 0 && <section className={cn(container, "py-16 md:py-24")}><p className={kicker}>The highlights</p><div className="mt-8 grid gap-px bg-white/10 sm:grid-cols-2 md:grid-cols-4">{highlights.map((item, index) => <div key={item.id} className="bg-[#090909] p-6"><p className="font-concert text-4xl font-bold text-gold/60">{String(index + 1).padStart(2, "0")}</p><h3 className={cn(title, "mt-5 text-3xl")}>{item.title}</h3><p className="mt-4 text-sm leading-relaxed text-white/60">{item.description}</p></div>)}</div></section>}
     <SpellStay draft={draft} />
+    {draft.pricing?.packages?.length ? (
+      <div className="starboy-shared"><StarboyPackages packages={draft.pricing.packages} draft={draft} onBook={onBook} /></div>
+    ) : <>
     <div className="starboy-shared"><SpellPricing draft={draft} onBook={onBook} /></div>
     <section className={cn(container, "grid gap-12 border-t border-white/10 py-16 md:grid-cols-2")}>
       {[{ heading: "Marked included", items: draft.included, icon: Check }, { heading: "Optional / not included", items: draft.notIncluded, icon: X }].map(({ heading, items, icon: Icon }) => <div key={heading}><h2 className={kicker}>{heading}</h2><ul className="mt-6 space-y-4">{items.filter((item) => item.text.trim()).map((item) => <li key={item.id} className="flex items-start gap-3 text-sm text-white/80"><Icon size={16} className="mt-0.5 shrink-0 text-gold" aria-hidden />{item.text}</li>)}</ul></div>)}
     </section>
+    </>}
     <SpellAudience draft={draft} />
     <div className="starboy-shared"><SpellFaqs draft={draft} /></div>
     <section className="relative overflow-hidden border-t border-white/10 bg-[radial-gradient(ellipse_at_bottom,#4c1710,transparent_70%)]">
