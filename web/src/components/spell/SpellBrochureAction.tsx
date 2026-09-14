@@ -3,6 +3,8 @@ import { useRef, useState } from "react";
 import type { SpellDraft } from "@/data/builder";
 import { brochureLink } from "@/data/publishedPricing";
 import { cn } from "@/lib/utils";
+import StarboyBrochureMenu from "@/components/spell/StarboyBrochureMenu";
+import { starboyPackageBrochure } from "@/data/starboyPackageBrochures";
 
 /** Prefer an existing custom PDF; otherwise generate a fresh download from this spell's details. */
 export default function SpellBrochureAction({ draft, className, label = "Download brochure (PDF)" }: {
@@ -30,6 +32,8 @@ export default function SpellBrochureAction({ draft, className, label = "Downloa
     }
   };
 
+  const packages = draft.slug === "the-starboy-spell" ? draft.pricing?.packages?.filter((pack) => starboyPackageBrochure(pack.id)) : undefined;
+  if (packages?.length) return <StarboyBrochureMenu packages={packages} className={classes} label={label} />;
   if (link) return <a href={link} target="_blank" rel="noopener noreferrer" className={classes}><Download size={16} aria-hidden /> {label}</a>;
   return <div className="flex max-w-full flex-col items-center gap-2">
     <button type="button" onClick={() => void download()} disabled={status === "preparing"} aria-busy={status === "preparing"} className={classes}>

@@ -9,6 +9,7 @@ import { pageFromDraft, mapSpell, type SpellRow } from "@/integrations/supabase/
 import StarboyPackages from "@/components/spell/StarboyPackages";
 import StarboyExperience from "@/components/spell/StarboyExperience";
 import { STARBOY_BROCHURE_URL } from "@/data/starboyBrochure";
+import { STARBOY_PACKAGE_BROCHURES } from "@/data/starboyPackageBrochures";
 import sql from "../../../backend/migrations/0091_starboy_three_packages.sql?raw";
 
 const packages = packageCardsSchema.parse(packagesJson);
@@ -69,11 +70,15 @@ describe("Starboy three package comparison", () => {
     const live = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft, onBook: () => {} })));
     const legacy = { ...draft, pricing: { ...draft.pricing, packages: undefined } };
     const old = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(StarboyExperience, { draft: legacy, onBook: () => {} })));
-    expect(live.split('id="price"')[0]).toBe(old.split('id="price"')[0]);
+    // Only the download action changes in the hero: a package chooser replaces the shared PDF.
+    const withoutDownload = (markup: string) => markup.split('id="price"')[0].replace(/<(a|button)\b[^>]*>(?:(?!<\/(?:a|button)>)[\s\S])*?Download itinerary \(PDF\)(?:(?!<\/(?:a|button)>)[\s\S])*?<\/\1>/, "DOWNLOAD");
+    expect(withoutDownload(live)).toBe(withoutDownload(old));
     expect(live).not.toMatch(/Marked included|Optional \/ not included/);
     expect(live.match(/data-package=/g)).toHaveLength(3);
     expect(live.match(/Request your spot/g)).toHaveLength(3);
-    expect(live.split(`href="${STARBOY_BROCHURE_URL}"`)).toHaveLength(4);
+    expect(live).not.toContain(STARBOY_BROCHURE_URL);
+    expect([...live.matchAll(/href="([^"]+\.pdf)"/g)].map((match) => match[1])).toEqual(Object.values(STARBOY_PACKAGE_BROCHURES));
+    expect(live.match(/aria-haspopup="menu"/g)).toHaveLength(3);
   });
 
   it("round-trips package details in saved CMS pricing and rejects malformed packages", () => {

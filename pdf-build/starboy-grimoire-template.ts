@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { PDFDocument, PDFFont, PDFImage, PDFPage, PDFName, PDFString, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, PDFName, PDFString, StandardFonts, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { TripSpec } from "./trips";
 import type { StarboyDashboardEdition } from "./starboy-cinematic";
 import type packageEdition from "./starboy-packages-v9.json";
 import type premiumEdition from "./starboy-premium-v1.json";
+import type { PackageCard } from "../web/src/data/packageCards";
 
 const W = 595.28;
 const H = 841.89;
@@ -24,7 +25,17 @@ const CREAM = hex("#F5F0E8");
 const MUTED = hex("#C8C1B4");
 type Ink = ReturnType<typeof rgb>;
 type Stop = { title: string; paragraphs: number[] };
-type DayLayout = { image: string; stops: Stop[]; closing: number[] };
+/** Numbered timeline layout with complete, ordered paragraph references. */
+export type DayLayout = { image: string; stops: Stop[]; closing: number[] };
+type GrimoireRevision = {
+  cleanCover: boolean;
+  omitPackagePage: boolean;
+  arrivalImage: string;
+  finalPriceBoxes?: boolean;
+  conversionFinal?: { starboyPdfUrl: string };
+  premium?: typeof premiumEdition;
+  packageEdition?: { card: PackageCard; layouts: DayLayout[] };
+};
 const dayLayouts: DayLayout[] = [
   { image: "starboy-bangkok-night-band.jpg", stops: [
     { title: "ART, CULTURE & DRAG", paragraphs: [1] },
@@ -67,9 +78,12 @@ const dayLayouts: DayLayout[] = [
  * Full dashboard paragraphs are preserved; no website code, links or data are changed.
  * Returns validated-in-memory bytes so publishing can happen after content validation.
  */
-export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: { cleanCover: boolean; omitPackagePage: boolean; arrivalImage: string; finalPriceBoxes?: boolean; conversionFinal?: { starboyPdfUrl: string }; premium?: typeof premiumEdition }): Promise<Uint8Array> {
-  assert.equal(spec.days.length, 7);
-  assert.equal(dashboard.bodies.length, 7);
+export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDashboardEdition, packages?: typeof packageEdition, revision?: GrimoireRevision): Promise<Uint8Array> {
+  const pack = revision?.packageEdition?.card;
+  const expectedDays = pack?.id === "xo" ? 4 : 7;
+  assert.equal(spec.days.length, expectedDays);
+  assert.equal(dashboard.bodies.length, expectedDays);
+  if (revision?.packageEdition) assert.equal(revision.packageEdition.layouts.length, expectedDays);
   assert(spec.final.announcement && spec.final.lists);
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
@@ -77,8 +91,8 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   doc.setAuthor("Logout Spells");
   doc.setSubject(spec.docSubject);
   // Fixed edition metadata makes identical content reproducible without replacing prior files.
-  doc.setCreationDate(new Date("2026-09-12T00:00:00Z"));
-  doc.setModificationDate(new Date("2026-09-12T00:00:00Z"));
+  doc.setCreationDate(new Date(pack ? "2026-09-14T00:00:00Z" : "2026-09-12T00:00:00Z"));
+  doc.setModificationDate(new Date(pack ? "2026-09-14T00:00:00Z" : "2026-09-12T00:00:00Z"));
   const font = async (name: string, subset = false): Promise<PDFFont> => doc.embedFont(readFileSync(`fonts/${name}.ttf`), { subset });
   const serif = await font("cormorant-garamond-v21-latin_latin-ext-500");
   const bold = await font("cormorant-garamond-v21-latin_latin-ext-700");
@@ -86,6 +100,18 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   const sans = await font("inter-v20-latin_latin-ext-regular", true);
   const semi = await font("inter-v20-latin_latin-ext-600", true);
   const hand = await font("caveat-v23-latin_latin-ext-600", true);
+  const symbols = pack ? await doc.embedFont(StandardFonts.Symbol) : undefined;
+  const characters = new Map<PDFFont, Set<number>>();
+  function glyphFont(face: PDFFont, ch: string): PDFFont {
+    if (!pack) return face;
+    const supported = (f: PDFFont): boolean => {
+      if (!characters.has(f)) characters.set(f, new Set(f.getCharacterSet()));
+      return characters.get(f)!.has(ch.codePointAt(0)!);
+    };
+    if (supported(face)) return face;
+    assert(symbols && supported(symbols), `Missing PDF glyph: ${ch}`);
+    return symbols;
+  }
   const images = new Map<string, PDFImage>();
   async function image(path: string): Promise<PDFImage> {
     const cached = images.get(path);
@@ -96,7 +122,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     return result;
   }
   function width(value: string, size: number, face: PDFFont, tracking = 0): number {
-    return [...value].reduce((sum, ch) => sum + face.widthOfTextAtSize(ch, size), 0) + Math.max(0, [...value].length - 1) * tracking;
+    return [...value].reduce((sum, ch) => sum + glyphFont(face, ch).widthOfTextAtSize(ch, size), 0) + Math.max(0, [...value].length - 1) * tracking;
   }
   function text(page: PDFPage, value: string, x: number, y: number, size: number, face = sans, color: Ink = MUTED, tracking = 0): void {
     assert(!/[\u2013\u2014\uFFFD]/.test(value), `Invalid character: ${value}`);
@@ -104,8 +130,9 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     assert(x >= 25 && x + measured <= W - 25 && y >= 25 && y + size <= H - 20, `Text exceeds safe margins: ${value}`);
     // Character-wise text avoids the Cormorant fi/ff ligature advance bug.
     for (const ch of value) {
-      page.drawText(ch, { x, y, font: face, size, color });
-      x += face.widthOfTextAtSize(ch, size) + tracking;
+      const selectedFont = glyphFont(face, ch);
+      page.drawText(ch, { x, y, font: selectedFont, size, color });
+      x += selectedFont.widthOfTextAtSize(ch, size) + tracking;
     }
   }
   function center(page: PDFPage, value: string, y: number, size: number, face = sans, color: Ink = MUTED, tracking = 0): void {
@@ -175,7 +202,24 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   }
   const logo = await image("logo-mark.png");
   const cover = page();
-  if (revision?.premium) {
+  if (pack) {
+    await photo(cover, "img2/starboy-grimoire-cover-v6.jpg", H);
+    fade(cover, H, 180, 0.8, 0);
+    box(cover, 16, H - 16, W - 32, H - 32, 10, false, 0.4);
+    cover.drawImage(logo, { x: W / 2 - 23, y: H - 84, width: 46, height: 46 });
+    center(cover, "LOGOUT SPELLS", H - 104, 10, semi, GOLD_LIGHT, 4.4);
+    center(cover, "THE GRIMOIRE · OCTOBER 2026", 524, 8.5, semi, GOLD, 3.1);
+    for (const line of spec.cover.titleLines) center(cover, line.text, line.y, line.size, bold, CREAM, line.tr);
+    center(cover, "After hours, beyond the ordinary.", 333, 19.5, italic, GOLD_HI);
+    ornament(cover, 310);
+    center(cover, pack.dates.replace("–", " - ").toUpperCase() + " 2026", 283, 11, semi, CREAM, 2.6);
+    center(cover, `${pack.duration} · ${pack.location}`.toUpperCase(), 260, 8.5, semi, MUTED, 1.8);
+    box(cover, 68, 231, W - 136, 115, 8, true, 0.8);
+    center(cover, pack.name, 164, 55, bold, CREAM, 3);
+    center(cover, pack.label, 137, 8, semi, GOLD_LIGHT, 2.1);
+    center(cover, "Your itinerary. Your inclusions. Your edition.", 83, 12, italic, GOLD_HI);
+    center(cover, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 36, 7, semi, MUTED, 2.5);
+  } else if (revision?.premium) {
     await photo(cover, "img2/starboy-final.jpg", H);
     cover.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.34 });
     fade(cover, H, 410, 0.96, 0);
@@ -231,7 +275,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   }
 
   for (const [index, day] of spec.days.entries()) {
-    const layout = dayLayouts[index];
+    const layout = revision?.packageEdition?.layouts[index] ?? dayLayouts[index];
     const body = dashboard.bodies[index];
     assert(layout && body);
     const paragraphs = body.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
@@ -262,7 +306,8 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     y = paragraph(p, paragraphs[0]!, 0, y, 12, italic, 430, 16.5, CREAM, true) - 22;
     const closing = layout.closing.map((i) => paragraphs[i]!).join(" ");
     const closingLines = wrap(closing, 11.5, italic, 435);
-    const bottom = index === 2 ? 124 : index === 6 ? 110 : 90;
+    const isLastDay = index === spec.days.length - 1;
+    const bottom = index === 2 ? 124 : isLastDay ? 110 : 90;
     const headingSize = 9.3;
     const bodySize = 9.3;
     const leading = 13.8;
@@ -295,8 +340,8 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     for (const line of closingLines) { center(p, line, y, 11.5, italic, GOLD_HI); y -= 15; }
     assert(y >= bottom, `Day ${index + 1} closing overlaps its footer`);
     if (index === 2) credit(p, 87);
-    if (index === 6) center(p, "END OF THE SPELL", 85, 8, semi, GOLD_LIGHT, 3);
-    footer(p, revision?.premium ? "STARBOY PACKAGE · ALL INCLUSIVE" : day.footer);
+    if (isLastDay) center(p, "END OF THE SPELL", 85, 8, semi, GOLD_LIGHT, 3);
+    footer(p, pack ? `${pack.name} · DAY ${String(index + 1).padStart(2, "0")} · ${pack.location.toUpperCase()}` : revision?.premium ? "STARBOY PACKAGE · ALL INCLUSIVE" : day.footer);
   }
 
   if (packages && !revision?.omitPackagePage) {
@@ -330,6 +375,83 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   }
 
   const f = spec.final;
+  if (pack) {
+    const normal = (value: string): string => value.replace(/[–—]/g, "-");
+    const backdrop = async (): Promise<PDFPage> => {
+      const p = page();
+      await photo(p, pack.id === "xo" ? "img2/starboy-grimoire-cover-v6.jpg" : "img2/starboy-final.jpg", H);
+      p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.9 });
+      box(p, 16, H - 16, W - 32, H - 32, 10, false, 0.3);
+      p.drawImage(logo, { x: W / 2 - 16, y: 778, width: 32, height: 32 });
+      return p;
+    };
+    const items = (p: PDFPage, list: PackageCard["included"], left: number, start: number, maxW: number): number => {
+      let y = start;
+      for (const item of list) {
+        sparkle(p, left + 3, y + 3, 3);
+        y = paragraph(p, item.title, left + 17, y, 10, semi, maxW - 17, 14, CREAM);
+        if (item.detail) y = paragraph(p, normal(item.detail), left + 17, y - 3, 9.2, sans, maxW - 17, 13, MUTED);
+        y -= 13;
+      }
+      return y;
+    };
+    const inclusions = await backdrop();
+    center(inclusions, "PRICE & BOOKING", 751, 8, semi, GOLD_LIGHT, 3);
+    center(inclusions, pack.name, 699, 44, bold, CREAM, 2);
+    center(inclusions, pack.label, 678, 8, semi, GOLD_LIGHT, 1.8);
+    center(inclusions, `${normal(pack.dates)} 2026 · ${pack.duration}`, 654, 9, sans, MUTED);
+    center(inclusions, pack.location, 636, 11, semi, CREAM);
+    const cardWidth = (W - 128 - 16) / 2;
+    for (const [index, tier] of [{ label: "EARLY BIRD", amount: pack.earlyBird }, { label: "REGULAR", amount: pack.regular }].entries()) {
+      const left = 64 + index * (cardWidth + 16);
+      const cardCenter = (value: string, y: number, size: number, face: PDFFont, color: Ink, tracking = 0): void => text(inclusions, value, left + (cardWidth - width(value, size, face, tracking)) / 2, y, size, face, color, tracking);
+      box(inclusions, left, 617, cardWidth, 85, 8, true, index ? 0.45 : 0.9);
+      cardCenter(tier.label, 597, 8, semi, GOLD_LIGHT, 1.9);
+      cardCenter(`₹${tier.amount.toLocaleString("en-IN")}`, 563, 30, semi, CREAM);
+      cardCenter("PER PERSON", 546, 7, semi, MUTED, 1.4);
+    }
+    text(inclusions, "INCLUDED", 64, 504, 9, semi, GOLD_LIGHT, 2.3);
+    rule(inclusions, 64, W - 64, 491, 0.4);
+    // Balance full items across columns without splitting any description.
+    const itemHeight = (item: PackageCard["included"][number]): number => wrap(item.title, 10, semi, 196).length * 14 + (item.detail ? 3 + wrap(normal(item.detail), 9.2, sans, 196).length * 13 : 0) + 13;
+    if (pack.included.length <= 5) {
+      assert(items(inclusions, pack.included, 64, 468, W - 128) >= 84);
+    } else {
+      const heights = pack.included.map(itemHeight);
+      const total = heights.reduce((a, b) => a + b, 0);
+      let split = 1;
+      let difference = Infinity;
+      for (let i = 1; i < heights.length; i++) {
+        const diff = Math.abs(total - 2 * heights.slice(0, i).reduce((a, b) => a + b, 0));
+        if (diff < difference) { split = i; difference = diff; }
+      }
+      const ends = [items(inclusions, pack.included.slice(0, split), 64, 468, 213), items(inclusions, pack.included.slice(split), 318, 468, 213)];
+      assert(Math.min(...ends) >= 84, `${pack.name}: inclusions overlap footer: ${ends}`);
+    }
+    footer(inclusions, `${pack.name} · YOUR PACKAGE INCLUSIONS`);
+
+    const booking = await backdrop();
+    center(booking, "THE DETAILS THAT MATTER", 751, 8, semi, GOLD_LIGHT, 2.6);
+    center(booking, `${pack.name} · Good to know`, 702, 34, serif, CREAM);
+    center(booking, `${normal(pack.dates)} 2026 · ${pack.location}`, 676, 9.5, sans, MUTED);
+    text(booking, pack.excludedHeading, 64, 626, 9, semi, GOLD_LIGHT, 1.8);
+    rule(booking, 64, W - 64, 612, 0.4);
+    const excludedEnd = items(booking, pack.excluded, 64, 588, W - 128);
+    assert(excludedEnd >= 278, `${pack.name}: exclusions overlap inquiry`);
+    rule(booking, 64, W - 64, 268, 0.35);
+    center(booking, "Your spell awaits.", 227, 32, italic, GOLD_HI);
+    center(booking, `Ask us about the ${pack.name} package.`, 199, 11, sans, CREAM);
+    booking.drawRectangle({ x: 64, y: 113, width: W - 128, height: 61, color: GOLD_LIGHT, borderColor: GOLD_HI, borderWidth: 1 });
+    center(booking, "REQUEST YOUR SPOT", 139, 19, bold, DEEP, 1.8);
+    const url = new URL(f.announcement!.url);
+    assert(url.protocol === "https:" && !url.username && !url.password);
+    const annotation = doc.context.register(doc.context.obj({ Type: "Annot", Subtype: "Link", Rect: [64, 113, W - 64, 174], Border: [0, 0, 0], Contents: PDFString.of(`${pack.name} package - inquiry form`), A: { Type: "Action", S: "URI", URI: PDFString.of(url.href) } }));
+    booking.node.set(PDFName.of("Annots"), doc.context.obj([annotation]));
+    center(booking, "Opens the inquiry form. No payment is collected", 95, 8.5, sans, MUTED);
+    center(booking, "and no seat is reserved by submitting the form.", 81, 8.5, sans, MUTED);
+    footer(booking, `${pack.name} · UNTIL THE NEXT SPELL`);
+    return doc.save();
+  }
   const p = page();
   await photo(p, "img2/starboy-final.jpg", H);
   p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: DEEP, opacity: 0.76 });

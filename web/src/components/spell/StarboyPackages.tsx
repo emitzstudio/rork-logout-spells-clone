@@ -4,6 +4,7 @@ import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import { FINAL_CTA, type SpellDraft } from "@/data/builder";
 import type { PackageCard } from "@/data/packageCards";
 import { formatINR } from "@/data/spells";
+import { starboyPackageBrochure } from "@/data/starboyPackageBrochures";
 
 const reveal = {
   initial: { opacity: 0, y: 28 },
@@ -59,6 +60,12 @@ export default function StarboyPackages({ packages, draft, onBook }: {
                 <h4 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cream/60">{pack.excludedHeading}</h4>
                 <PackageItems items={pack.excluded} />
               </div>
+              {starboyPackageBrochure(pack.id) && <a
+                href={starboyPackageBrochure(pack.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost-gold mt-8 flex min-h-12 w-full items-center justify-center !px-3 text-center !text-[10px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+              >Download {pack.name} Grimoire (PDF)</a>}
             </motion.article>
           ))}
         </div>
