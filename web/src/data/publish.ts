@@ -188,6 +188,8 @@ export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs
     inclusions: inclusions.length > 0 ? inclusions : (existing?.inclusions ?? []),
     formId: draft.formId ?? null,
     deletedAt: existing?.deletedAt ?? null,
+    /* Editing never moves a spell (0092); the database gives a new one its place at the end. */
+    sortOrder: existing?.sortOrder ?? null,
     changes: [change, ...(existing?.changes ?? [])].slice(0, 4),
     // Older editor drafts can predate a brochure upload. Only an explicit pricing edit replaces it.
     draft: { ...draft, pricing: draft.pricing ?? existing?.draft?.pricing, name, slug, status: status === "published" ? "published" : "draft" },

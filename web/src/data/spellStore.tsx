@@ -23,6 +23,7 @@ import { parseSpellDates } from "./account/derive";
 import { slugify } from "./builder";
 import { splitBinned } from "./recycleBin";
 import type { SpellDeleteBlockers } from "./recycleBin";
+import { compareSiteOrder } from "./spells";
 import type { ManagedSpell, ManagedStatus } from "./spells";
 
 /** Statuses visible on the public website. */
@@ -41,7 +42,13 @@ const EMPTY_COLLECTION: SpellCollection = { spells: [], meta: {} };
 
 const fetchSpellCollection = async (): Promise<SpellCollection> => {
   const [spellsRes, depsRes, changesRes] = await Promise.all([
-    supabase.from("spells").select("*").order("created_at", { ascending: false }),
+    /* The manual site order (0092): position first, then newest, then id. */
+    supabase
+      .from("spells")
+      .select("*")
+      .order("sort_order", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true }),
     supabase.from("spell_active_departures").select("*"),
     supabase
       .from("spell_changes")
@@ -72,6 +79,8 @@ const fetchSpellCollection = async (): Promise<SpellCollection> => {
     spells.push(mapSpell(row, dep, changesBySpell.get(row.id) ?? []));
     meta[row.id] = { departureId: dep?.id ?? null, publishedAt: row.published_at };
   }
+  /* The database already orders this way; sorting again keeps the rule in one place. */
+  spells.sort(compareSiteOrder);
   return { spells, meta };
 };
 
@@ -118,13 +127,19 @@ interface SpellStoreValue {
   destroySpell: (id: string) => Promise<void>;
   /** Deleting a form detaches it from every spell that pointed at it. */
   detachFormFromSpells: (formId: string) => Promise<void>;
+  /**
+   * Saves a new manual order (0092): the array is the complete new sequence of
+   * ACTIVE spells, first to last. The collection reflects it instantly and the
+   * database stores it atomically; on failure the previous order comes back.
+   */
+  reorderSpells: (orderedIds: readonly string[]) => Promise<void>;
   refresh: () => void;
   /** Active spells only - a binned spell reads as missing everywhere. */
   getById: (id: string) => ManagedSpell | undefined;
   getBySlug: (slug: string) => ManagedSpell | undefined;
   /** `glow-ground-spell` → `glow-ground-spell-2` when taken by another spell (binned ones still hold their slug). */
   uniqueSlug: (base: string, excludeId?: string) => string;
-  /** What the public website shows - newest first. */
+  /** What the public website shows - in the founder's manual site order. */
   publicSpells: ManagedSpell[];
 }
 
@@ -358,6 +373,33 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     [invalidate],
   );
 
+  const reorderSpells = useCallback(
+    async (orderedIds: readonly string[]): Promise<void> => {
+      const ids = orderedIds.filter(isUuid);
+      if (ids.length === 0 || new Set(ids).size !== ids.length) {
+        throw new Error("Reorder failed: the new order is incomplete.");
+      }
+      const position = new Map(ids.map((id, index) => [id, index]));
+      const previous = queryClient.getQueryData<SpellCollection>(SPELLS_KEY);
+
+      /* Optimistic: the console and the site preview show the new order at once. */
+      if (previous) {
+        const reordered = previous.spells
+          .map((spell) => (position.has(spell.id) ? { ...spell, sortOrder: position.get(spell.id) ?? spell.sortOrder } : spell))
+          .sort(compareSiteOrder);
+        queryClient.setQueryData<SpellCollection>(SPELLS_KEY, { ...previous, spells: reordered });
+      }
+
+      const { error } = await supabase.rpc("reorder_spells", { _ids: ids });
+      if (error) {
+        if (previous) queryClient.setQueryData<SpellCollection>(SPELLS_KEY, previous);
+        throw new Error(`Reorder failed: ${error.message}`);
+      }
+      await invalidate();
+    },
+    [queryClient, invalidate],
+  );
+
   const refresh = useCallback(() => {
     void invalidate();
   }, [invalidate]);
@@ -386,13 +428,8 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
     [allSpells],
   );
 
-  const publicSpells = useMemo<ManagedSpell[]>(
-    () =>
-      spells
-        .filter(isPublic)
-        .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
-    [spells],
-  );
+  /* Same manual order as the console - `spells` is already sorted by it. */
+  const publicSpells = useMemo<ManagedSpell[]>(() => spells.filter(isPublic), [spells]);
 
   const value = useMemo<SpellStoreValue>(
     () => ({
@@ -410,6 +447,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       permanentDeleteBlockers,
       destroySpell,
       detachFormFromSpells,
+      reorderSpells,
       refresh,
       getById,
       getBySlug,
@@ -431,6 +469,7 @@ export function SpellStoreProvider({ children }: { children: ReactNode }) {
       permanentDeleteBlockers,
       destroySpell,
       detachFormFromSpells,
+      reorderSpells,
       refresh,
       getById,
       getBySlug,

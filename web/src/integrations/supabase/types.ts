@@ -2083,6 +2083,7 @@ export type Database = {
           published_at: string | null
           region: string
           slug: string
+          sort_order: number | null
           status: Database["public"]["Enums"]["spell_status"]
           symbol: string
           updated_at: string
@@ -2117,6 +2118,7 @@ export type Database = {
           published_at?: string | null
           region?: string
           slug: string
+          sort_order?: number | null
           status?: Database["public"]["Enums"]["spell_status"]
           symbol?: string
           updated_at?: string
@@ -2151,6 +2153,7 @@ export type Database = {
           published_at?: string | null
           region?: string
           slug?: string
+          sort_order?: number | null
           status?: Database["public"]["Enums"]["spell_status"]
           symbol?: string
           updated_at?: string
@@ -2600,6 +2603,7 @@ export type Database = {
         Args: { _departure_id: string; _seats: number }
         Returns: boolean
       }
+      reorder_spells: { Args: { _ids: string[] }; Returns: undefined }
       reserve_departure_seats: {
         Args: {
           _departure_id: string

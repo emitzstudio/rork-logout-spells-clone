@@ -10,6 +10,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 
+import { compareSiteOrder } from "@/data/spells";
 import type { ManagedSpell, SpellCategoryId } from "@/data/spells";
 import { supabase } from "@/integrations/supabase/client";
 import { mapInterest } from "@/integrations/supabase/mappers";
@@ -163,11 +164,8 @@ export function matchSpellsToInterests(
       return { spell, matched, score: matched.length * 3 + affinity };
     })
     .filter((m) => m.score > 0)
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        Date.parse(b.spell.createdAt) - Date.parse(a.spell.createdAt),
-    );
+    /* Strongest match first; equal scores fall back to the founder's site order (0092). */
+    .sort((a, b) => b.score - a.score || compareSiteOrder(a.spell, b.spell));
 }
 
 /** "You dream of Trekking ✦ Stargazing" - the little reason line on cards. */

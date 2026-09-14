@@ -14,6 +14,7 @@ import { mapSpell } from "@/src/integrations/supabase/mappers";
 import type { ActiveDepartureRow } from "@/src/integrations/supabase/mappers";
 import { supabase } from "@/src/integrations/supabase/client";
 
+import { compareSiteOrder } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 
 /** Statuses visible on the public surfaces. */
@@ -23,8 +24,15 @@ export const isPublic = (spell: ManagedSpell): boolean => PUBLIC_STATUSES.has(sp
 
 const fetchSpells = async (): Promise<ManagedSpell[]> => {
   const [spellsRes, depsRes] = await Promise.all([
-    /* Spells in the Recycle Bin (0088) never reach the traveller app, whoever is signed in. */
-    supabase.from("spells").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
+    /* Spells in the Recycle Bin (0088) never reach the traveller app, whoever is
+       signed in. Ordered exactly like the website: the founder's manual order (0092). */
+    supabase
+      .from("spells")
+      .select("*")
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true }),
     supabase.from("spell_active_departures").select("*"),
   ]);
   if (spellsRes.error) throw spellsRes.error;
@@ -33,7 +41,9 @@ const fetchSpells = async (): Promise<ManagedSpell[]> => {
   for (const dep of (depsRes.data ?? []) as ActiveDepartureRow[]) {
     if (dep.spell_id !== null) depBySpell.set(dep.spell_id, dep);
   }
-  return (spellsRes.data ?? []).map((row) => mapSpell(row, depBySpell.get(row.id)));
+  return (spellsRes.data ?? [])
+    .map((row) => mapSpell(row, depBySpell.get(row.id)))
+    .sort(compareSiteOrder);
 };
 
 export const [SpellStoreProvider, useSpellStore] = createContextHook(() => {
@@ -45,14 +55,8 @@ export const [SpellStoreProvider, useSpellStore] = createContextHook(() => {
 
   const spells = useMemo<ManagedSpell[]>(() => query.data ?? [], [query.data]);
 
-  /** What the public app shows — newest first, same ordering as the site. */
-  const publicSpells = useMemo<ManagedSpell[]>(
-    () =>
-      spells
-        .filter(isPublic)
-        .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
-    [spells],
-  );
+  /** What the public app shows — the founder's manual site order, same as the website. */
+  const publicSpells = useMemo<ManagedSpell[]>(() => spells.filter(isPublic), [spells]);
 
   const getBySlug = useCallback(
     (slug: string): ManagedSpell | undefined => spells.find((s) => s.slug === slug),

@@ -109,6 +109,12 @@ export interface ManagedSpell {
    * form and the activity log stay put, so restoring brings it all back.
    */
   deletedAt?: string | null;
+  /**
+   * Manual display order (0092) - lower comes first everywhere spells are
+   * listed. Saved only by drag-and-drop in Dashboard → Spells; editing a spell
+   * never changes it and a new spell joins at the end. `null` reads as last.
+   */
+  sortOrder?: number | null;
 }
 
 /* ------------------------------- Metadata -------------------------------- */
@@ -185,6 +191,7 @@ export const CHANGE_ICON: Record<ChangeKind, LucideIcon> = {
 };
 
 export type SortId =
+  | "manual"
   | "newest"
   | "oldest"
   | "az"
@@ -194,6 +201,7 @@ export type SortId =
   | "updated";
 
 export const SORT_OPTIONS: { id: SortId; label: string }[] = [
+  { id: "manual", label: "Site order" },
   { id: "newest", label: "Newest first" },
   { id: "oldest", label: "Oldest first" },
   { id: "az", label: "Name A-Z" },
@@ -204,6 +212,49 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
 ];
 
 /* -------------------------------- Helpers -------------------------------- */
+
+type Orderable = Pick<ManagedSpell, "id" | "createdAt"> & { sortOrder?: number | null };
+
+/**
+ * The one ordering rule for every spell listing (console and website):
+ * manual position first (unset = last), then newest first, then id - the
+ * exact `order by sort_order, created_at desc, id` the database uses.
+ */
+export const compareSiteOrder = (a: Orderable, b: Orderable): number => {
+  const ao = a.sortOrder ?? Number.POSITIVE_INFINITY;
+  const bo = b.sortOrder ?? Number.POSITIVE_INFINITY;
+  if (ao !== bo) return ao < bo ? -1 : 1;
+  const at = Date.parse(a.createdAt);
+  const bt = Date.parse(b.createdAt);
+  if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return bt - at;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+};
+
+/**
+ * Rearranges only the spells the founder could see while dragging. The slots
+ * those spells occupied in the full order are refilled with the same spells in
+ * their new sequence, so every hidden spell keeps its exact position.
+ */
+export const applySubsetOrder = (
+  fullOrder: readonly string[],
+  subsetBefore: readonly string[],
+  subsetAfter: readonly string[],
+): string[] => {
+  const members = new Set(subsetBefore);
+  if (subsetAfter.length !== subsetBefore.length || subsetAfter.some((id) => !members.has(id))) {
+    return [...fullOrder];
+  }
+  const slots: number[] = [];
+  fullOrder.forEach((id, index) => {
+    if (members.has(id)) slots.push(index);
+  });
+  if (slots.length !== subsetAfter.length) return [...fullOrder];
+  const next = [...fullOrder];
+  slots.forEach((slot, k) => {
+    next[slot] = subsetAfter[k];
+  });
+  return next;
+};
 
 export const formatINR = (value: number): string => `₹${value.toLocaleString("en-IN")}`;
 

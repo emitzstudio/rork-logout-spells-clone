@@ -227,13 +227,15 @@ export default function SpellsToolbar({
           onToggle={() => toggle("location")}
           onSelect={closeAnd(onLocation)}
         />
+        {/* "Site order" is the resting state; any other sort lights up so the
+            founder can see why the drag grips are away (0092). */}
         <SelectMenu
           id="sort"
-          placeholder="Sort"
+          placeholder="Site order"
           icon={ArrowUpDown}
           options={sortOptions}
           activeId={sort}
-          engaged={false}
+          engaged={sort !== "manual"}
           open={openMenu === "sort"}
           onToggle={() => toggle("sort")}
           onSelect={closeAnd((value: string) => onSort(value as SortId))}

@@ -2833,6 +2833,45 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0092 / 0093 — Manual spell ordering (2026-09-14)
+
+- **APPLIED** as `spell-manual-order` (0092) and `spell-manual-order-verify` (0093).
+  Sources: [`0092_spell_manual_order.sql`](../migrations/0092_spell_manual_order.sql),
+  [`0093_spell_manual_order_verify.sql`](../migrations/0093_spell_manual_order_verify.sql).
+- WHY: every spell list (console and website) sorted by creation date, so the
+  founder could not choose which spell leads.
+- WHAT (additive only): `spells.sort_order integer` + index `(sort_order,
+  created_at desc)`; `reorder_spells(uuid[])` (SECURITY INVOKER, staff-only,
+  refuses duplicate ids, positions = array index, unlisted spells untouched);
+  `spells_default_sort_order` BEFORE INSERT trigger (new spell = `max + 1`, i.e.
+  the end); `grant update (sort_order)` to authenticated under the existing staff
+  RLS; the `set_spells_updated_at` WHEN clause now also skips a sort_order-only
+  change, so a pure reorder never masquerades as a content edit. No drop, no
+  rename, no policy change, no NOT NULL on existing data.
+- Backfill mirrors the order the website showed at that moment (`created_at desc,
+  id`), guarded: aborts if any `updated_at` moves or the backfilled order differs
+  from the previous website order. Result: nothing on the site moved when this
+  shipped (8 spells, Starboy first … Bir last, every `updated_at` unchanged).
+- 0093 verified live inside one transaction that restores the starting state:
+  founder claims reverse the order through the RPC and restore it, no `updated_at`
+  moves, duplicate ids refused; a random authenticated account gets
+  `Only staff can reorder spells.` and a direct `sort_order` write touches 0 rows;
+  anon gets `permission denied` (42501, also confirmed over REST); a probe spell
+  landed at `max + 1`, a sort_order-only update left its `updated_at` alone while
+  a content update stamped it; probe erased; final `(id, sort_order, updated_at)`
+  snapshot identical.
+- Readers: website store, console and the traveller app all order by
+  `sort_order asc nulls last, created_at desc, id asc` (one shared
+  `compareSiteOrder`); `sort_order` stays out of the console's save payload.
+  Console: drag grips in grid and list view under the new resting sort
+  "Site order", pointer + keyboard, optimistic order with rollback on failure;
+  filtered reorders move only the spells on screen.
+- Validation: 326 unit tests (incl. 12 new ordering tests) and 26 browser tests
+  (incl. 2 new keyboard drag-and-drop tests) pass; web typecheck, lint and build
+  pass; expo typecheck passes.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

@@ -31,7 +31,7 @@ const row: SpellRow = {
   price_minor: 1400000, currency: "INR", host_name: "Kavya Lilhare", host_role: "Creator · Your host in the hills",
   hero_url: "", mobile_hero_url: "", cover_url: "", hero_as_cover: true, gradient: "", symbol: "", inclusions: [],
   page, views: 0, created_by: null, published_at: "2026-09-01", created_at: "2026-09-01", updated_at: "2026-09-10", form_id: null,
-  deleted_at: null, deleted_by: null,
+  deleted_at: null, deleted_by: null, sort_order: 0,
 };
 const departure: ActiveDepartureRow = {
   id: "b7e83d15-2c4a-4f09-9d61-84f2a6c9e3d1", spell_id: row.id,

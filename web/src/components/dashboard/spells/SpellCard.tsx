@@ -17,6 +17,8 @@ import { formatINR, seatsPct } from "@/data/spells";
 import type { ManagedSpell } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
+import { DragHandle } from "./SortableSpell";
+import type { DragHandleProps } from "./SortableSpell";
 import { CategoryChip, SpellStatusBadge, UrgencyBadge } from "./SpellBadges";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -35,6 +37,17 @@ interface SpellCardProps extends SpellActionHandlers {
   index: number;
   /** Freshly duplicated - briefly glows gold. */
   fresh: boolean;
+  /** Drag-to-reorder grip (0092); null hides it (temporary sorts), "static" paints it inert. */
+  handle?: DragHandleProps | "static" | null;
+  /** The copy that follows the pointer while dragging - no entrance, no hover, no clicks. */
+  lifted?: boolean;
+  /** Slot left behind while its card is lifted - hover effects rest. */
+  ghost?: boolean;
+  /**
+   * Layout animations run only when this changes (filters, search, sort, view)
+   * so a drag-and-drop reorder is choreographed by the drag, never twice.
+   */
+  layoutKey?: string;
 }
 
 const hideBrokenImage = (event: SyntheticEvent<HTMLImageElement>): void => {
@@ -78,6 +91,10 @@ export default function SpellCard({
   spell,
   index,
   fresh,
+  handle = null,
+  lifted = false,
+  ghost = false,
+  layoutKey,
   onView,
   onEdit,
   onDuplicate,
@@ -102,17 +119,20 @@ export default function SpellCard({
 
   return (
     <motion.article
-      layout
-      initial={{ opacity: 0, y: 18, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      layout={!lifted}
+      layoutDependency={layoutKey}
+      initial={lifted ? false : { opacity: 0, y: 18, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: lifted ? 1.02 : 1 }}
       exit={{ opacity: 0, scale: 0.92, y: -6, transition: { duration: 0.28, ease: EASE } }}
       transition={{ duration: 0.5, delay: Math.min(index, 8) * 0.045, ease: EASE }}
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-charcoal-soft/80 transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-gold/30 hover:shadow-[0_18px_50px_rgba(0,0,0,0.45)]",
+        "group relative overflow-hidden rounded-xl border bg-charcoal-soft/80 transition-[border-color,box-shadow,transform] duration-300",
+        !lifted && !ghost && "hover:-translate-y-1 hover:border-gold/30 hover:shadow-[0_18px_50px_rgba(0,0,0,0.45)]",
         fresh
           ? "border-gold/50 shadow-[0_0_44px_rgba(184,150,62,0.22)]"
           : "border-cream/[0.07]",
         isArchived && "opacity-75 saturate-[0.8] hover:opacity-100",
+        lifted && "pointer-events-none border-gold/60 shadow-[0_32px_80px_rgba(0,0,0,0.6),0_0_0_1px_rgba(184,150,62,0.35)]",
       )}
     >
       {/* Hero */}
@@ -147,7 +167,13 @@ export default function SpellCard({
       {/* Body */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          {/* Above the full-card open trigger, so the grip lifts instead of opening. */}
+          <DragHandle
+            handle={handle}
+            label={`Drag to reorder ${spell.name}`}
+            className="relative z-[2] -ml-1.5 mt-0.5 h-9 w-7"
+          />
+          <div className="min-w-0 flex-1">
             <p className="font-sans text-[9px] uppercase tracking-[0.26em] text-gold/70">{spell.type}</p>
             <h3 className="mt-0.5 truncate font-serif text-[19px] leading-tight text-cream">{spell.name}</h3>
           </div>

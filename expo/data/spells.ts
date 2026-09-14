@@ -66,6 +66,11 @@ export interface ManagedSpell {
    * built-in enquiry when one is published.
    */
   formId?: string | null;
+  /**
+   * Manual display order set in the website console (0092) — lower comes
+   * first everywhere spells are listed. `null` reads as last.
+   */
+  sortOrder?: number | null;
 }
 
 /* ------------------------------- Metadata -------------------------------- */
@@ -119,6 +124,22 @@ export const URGENCY_META: Record<UrgencyId, UrgencyStyle> = {
 };
 
 /* -------------------------------- Helpers -------------------------------- */
+
+type Orderable = Pick<ManagedSpell, "id" | "createdAt"> & { sortOrder?: number | null };
+
+/**
+ * The one ordering rule for every spell listing, identical to the website:
+ * manual position first (unset = last), then newest first, then id.
+ */
+export const compareSiteOrder = (a: Orderable, b: Orderable): number => {
+  const ao = a.sortOrder ?? Number.POSITIVE_INFINITY;
+  const bo = b.sortOrder ?? Number.POSITIVE_INFINITY;
+  if (ao !== bo) return ao < bo ? -1 : 1;
+  const at = Date.parse(a.createdAt);
+  const bt = Date.parse(b.createdAt);
+  if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return bt - at;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+};
 
 export const formatINR = (value: number): string => `₹${value.toLocaleString("en-IN")}`;
 

@@ -252,10 +252,14 @@ export const mapSpell = (
     draft: draftFromRow(row, dep),
     formId: row.form_id,
     deletedAt: row.deleted_at,
+    sortOrder: row.sort_order,
   };
 };
 
-/** The 25-column write payload (exactly the granted whitelist). */
+/**
+ * The 25-column write payload (exactly the granted whitelist). `sort_order`
+ * is deliberately absent: saving or editing a spell never moves it (0092).
+ */
 export const spellWritePayload = (
   record: ManagedSpell,
   draft: SpellDraft | null,

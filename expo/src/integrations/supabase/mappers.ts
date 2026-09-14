@@ -148,6 +148,7 @@ export const mapSpell = (row: SpellRow, dep: ActiveDepartureRow | undefined): Ma
     inclusions: row.inclusions,
     draft: draftFromRow(row, dep),
     formId: row.form_id,
+    sortOrder: row.sort_order,
   };
 };
 

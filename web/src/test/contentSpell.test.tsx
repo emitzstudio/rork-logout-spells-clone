@@ -24,7 +24,7 @@ const row: SpellRow = {
   ...fields, id: "c8250926-a351-4b17-9250-270920260001", status: "published", urgency: "early-bird", featured: false,
   currency: "INR", mobile_hero_url: fields.hero_url, cover_url: "", hero_as_cover: true, gradient: "", symbol: "", inclusions: [],
   views: 0, created_by: null, published_at: "2026-09-11", created_at: "2026-09-11", updated_at: "2026-09-11", form_id: null,
-  deleted_at: null, deleted_by: null,
+  deleted_at: null, deleted_by: null, sort_order: 0,
 };
 const departure: ActiveDepartureRow = {
   ...dates, id: "c8250926-a351-4b17-9250-270920260002", spell_id: row.id, status: "scheduled", seats_booked: 0,

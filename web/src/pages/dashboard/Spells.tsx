@@ -1,25 +1,49 @@
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { Announcements, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Download, Plus, SearchX, Upload, X } from "lucide-react";
+import { Check, Download, GripVertical, Plus, SearchX, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import ConfirmDialog from "@/components/dashboard/spells/ConfirmDialog";
 import type { ConfirmKind } from "@/components/dashboard/spells/ConfirmDialog";
 import NewSpellDialog from "@/components/dashboard/spells/NewSpellDialog";
+import SortableSpell from "@/components/dashboard/spells/SortableSpell";
 import SpellCard from "@/components/dashboard/spells/SpellCard";
 import SpellDrawer from "@/components/dashboard/spells/SpellDrawer";
 import SpellListRow, { SpellListHeader } from "@/components/dashboard/spells/SpellListRow";
 import SpellsEmptyState from "@/components/dashboard/spells/SpellsEmptyState";
 import SpellsToolbar from "@/components/dashboard/spells/SpellsToolbar";
 import type { FilterOption, ViewMode } from "@/components/dashboard/spells/SpellsToolbar";
-import { CATEGORY_META, STATUS_META } from "@/data/spells";
+import { applySubsetOrder, CATEGORY_META, compareSiteOrder, STATUS_META } from "@/data/spells";
 import type { ManagedSpell, ManagedStatus, SortId, SpellCategoryId } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
 import { supabase } from "@/integrations/supabase/client";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const VIEW_STORAGE_KEY = "ls-spells-view";
+
+/** The drop settles with the same silk ease the rest of the console uses. */
+const DROP_ANIMATION = { duration: 240, easing: "cubic-bezier(0.16, 1, 0.3, 1)" };
+
+const noop = (): void => {};
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 16 },
@@ -60,6 +84,7 @@ export default function Spells() {
     archiveSpell: archiveSpellInStore,
     restoreSpell: restoreSpellInStore,
     binSpell: binSpellInStore,
+    reorderSpells: reorderSpellsInStore,
     refresh,
   } = useSpellStore();
   const [view, setView] = useState<ViewMode>(readStoredView);
@@ -67,12 +92,17 @@ export default function Spells() {
   const [category, setCategory] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [sort, setSort] = useState<SortId>("newest");
+  /* "Site order" is the resting sort - the same order the website shows (0092). */
+  const [sort, setSort] = useState<SortId>("manual");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [newOpen, setNewOpen] = useState<boolean>(false);
   const [freshId, setFreshId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
+  /* Drag-and-drop ordering: the id being carried, and the order just dropped -
+     shown synchronously so nothing flashes while the database catches up. */
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
 
   /* ------------------------------ Persistence ----------------------------- */
 
@@ -121,6 +151,15 @@ export default function Spells() {
     const timer = window.setTimeout(() => setToast(null), 2600);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  /* Once the collection itself carries the dropped order, the local copy retires. */
+  useEffect(() => {
+    if (!pendingOrder) return;
+    const current = spells.map((s) => s.id);
+    if (current.length === pendingOrder.length && current.every((id, i) => id === pendingOrder[i])) {
+      setPendingOrder(null);
+    }
+  }, [spells, pendingOrder]);
 
   const showToast = useCallback((message: string) => {
     setToast({ id: Date.now(), message });
@@ -211,9 +250,23 @@ export default function Spells() {
 
   /* ------------------------------- Derived -------------------------------- */
 
+  /* The collection in site order - or the order just dropped, until it lands. */
+  const ordered = useMemo<ManagedSpell[]>(() => {
+    if (!pendingOrder) return spells;
+    const rank = new Map(pendingOrder.map((id, index) => [id, index]));
+    return [...spells].sort((a, b) => {
+      const ra = rank.get(a.id);
+      const rb = rank.get(b.id);
+      if (ra !== undefined && rb !== undefined) return ra - rb;
+      if (ra !== undefined) return -1;
+      if (rb !== undefined) return 1;
+      return compareSiteOrder(a, b);
+    });
+  }, [spells, pendingOrder]);
+
   const visible = useMemo<ManagedSpell[]>(() => {
     const q = query.trim().toLowerCase();
-    const filtered = spells.filter((s) => {
+    const filtered = ordered.filter((s) => {
       if (category !== "all" && s.category !== (category as SpellCategoryId)) return false;
       if (status !== "all" && s.status !== (status as ManagedStatus)) return false;
       if (locationFilter !== "all" && s.location !== locationFilter) return false;
@@ -223,6 +276,9 @@ export default function Spells() {
     });
     const sorted = [...filtered];
     switch (sort) {
+      case "manual":
+        /* Already in site order - nothing to rearrange. */
+        break;
       case "newest":
         sorted.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
         break;
@@ -248,7 +304,76 @@ export default function Spells() {
         break;
     }
     return sorted;
-  }, [spells, query, category, status, locationFilter, sort]);
+  }, [ordered, query, category, status, locationFilter, sort]);
+
+  /* ---------------------------- Manual ordering ---------------------------- */
+
+  const reorderable = sort === "manual";
+  const visibleIds = useMemo(() => visible.map((s) => s.id), [visible]);
+  const activeSpell = activeId ? (visible.find((s) => s.id === activeId) ?? null) : null;
+
+  /*
+   * Cards animate their layout only when the set on screen changes (filters,
+   * search, sort, view, a deletion) - never on a drag-and-drop reorder, which
+   * the drag itself already choreographed.
+   */
+  const layoutKey = useMemo(
+    () => `${view}|${sort}|${[...visibleIds].sort().join(",")}`,
+    [view, sort, visibleIds],
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  }, []);
+
+  const handleDragCancel = useCallback(() => setActiveId(null), []);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveId(null);
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const from = visibleIds.indexOf(String(active.id));
+      const to = visibleIds.indexOf(String(over.id));
+      if (from < 0 || to < 0) return;
+
+      /* Only the spells on screen move; anything a filter hides keeps its slot. */
+      const nextVisible = arrayMove(visibleIds, from, to);
+      const fullOrder = applySubsetOrder(ordered.map((s) => s.id), visibleIds, nextVisible);
+
+      setPendingOrder(fullOrder);
+      reorderSpellsInStore(fullOrder)
+        .then(() => showToast("Spell order saved - the website now follows it"))
+        .catch(() => {
+          setPendingOrder(null);
+          showToast("Couldn't save the new order - it's back to how it was");
+        });
+    },
+    [visibleIds, ordered, reorderSpellsInStore, showToast],
+  );
+
+  const announcements = useMemo<Announcements>(() => {
+    const nameOf = (id: string | number): string =>
+      visible.find((s) => s.id === String(id))?.name ?? "this spell";
+    const positionOf = (id: string | number): string =>
+      `position ${visibleIds.indexOf(String(id)) + 1} of ${visibleIds.length}`;
+    return {
+      onDragStart: ({ active }) =>
+        `Picked up ${nameOf(active.id)}. Use the arrow keys to move it, Space to drop it, Escape to cancel.`,
+      onDragOver: ({ active, over }) =>
+        over ? `${nameOf(active.id)} is now at ${positionOf(over.id)}.` : `${nameOf(active.id)} is outside the list.`,
+      onDragEnd: ({ active, over }) =>
+        over
+          ? `${nameOf(active.id)} dropped at ${positionOf(over.id)}. Saving the new order.`
+          : `${nameOf(active.id)} returned to its place.`,
+      onDragCancel: ({ active }) => `Reordering cancelled. ${nameOf(active.id)} returned to its place.`,
+    };
+  }, [visible, visibleIds]);
 
   const categoryOptions = useMemo<FilterOption[]>(() => {
     const counts = spells.reduce<Record<string, number>>((acc, s) => {
@@ -514,45 +639,119 @@ export default function Spells() {
                   Clear filters
                 </button>
               </motion.div>
-            ) : view === "grid" ? (
-              <motion.div layout className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <AnimatePresence mode="popLayout" initial={false}>
-                  {visible.map((spell, index) => (
-                    <SpellCard
-                      key={spell.id}
-                      spell={spell}
-                      index={index}
-                      fresh={spell.id === freshId}
-                      onView={() => setSelectedId(spell.id)}
-                      onEdit={() => goEdit(spell)}
-                      onDuplicate={() => duplicateSpell(spell.id)}
-                      onArchive={() => handleArchiveAction(spell)}
-                      onDelete={() => setConfirmState({ kind: "delete", id: spell.id })}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
             ) : (
-              <div className="overflow-hidden rounded-xl border border-cream/[0.07] bg-charcoal-soft/75">
-                <SpellListHeader />
-                <div className="divide-y divide-cream/[0.05]">
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {visible.map((spell, index) => (
-                      <SpellListRow
-                        key={spell.id}
-                        spell={spell}
-                        index={index}
-                        fresh={spell.id === freshId}
-                        onView={() => setSelectedId(spell.id)}
-                        onEdit={() => goEdit(spell)}
-                        onDuplicate={() => duplicateSpell(spell.id)}
-                        onArchive={() => handleArchiveAction(spell)}
-                        onDelete={() => setConfirmState({ kind: "delete", id: spell.id })}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={view === "list" ? [restrictToVerticalAxis] : undefined}
+                accessibility={{ announcements }}
+                onDragStart={handleDragStart}
+                onDragCancel={handleDragCancel}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={visibleIds}
+                  strategy={view === "grid" ? rectSortingStrategy : verticalListSortingStrategy}
+                  disabled={!reorderable}
+                >
+                  {view === "grid" ? (
+                    <motion.div layout layoutDependency={layoutKey} className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        {visible.map((spell, index) => (
+                          /* `grid` lets the card stretch to the row height, exactly as before the wrapper existed. */
+                          <SortableSpell key={spell.id} id={spell.id} name={spell.name} disabled={!reorderable} className="grid">
+                            {(handle, { isDragging }) => (
+                              <SpellCard
+                                spell={spell}
+                                index={index}
+                                fresh={spell.id === freshId}
+                                handle={handle}
+                                ghost={isDragging}
+                                layoutKey={layoutKey}
+                                onView={() => setSelectedId(spell.id)}
+                                onEdit={() => goEdit(spell)}
+                                onDuplicate={() => duplicateSpell(spell.id)}
+                                onArchive={() => handleArchiveAction(spell)}
+                                onDelete={() => setConfirmState({ kind: "delete", id: spell.id })}
+                              />
+                            )}
+                          </SortableSpell>
+                        ))}
+                      </AnimatePresence>
+                    </motion.div>
+                  ) : (
+                    <div className="overflow-hidden rounded-xl border border-cream/[0.07] bg-charcoal-soft/75">
+                      <SpellListHeader reorderable={reorderable} />
+                      <div className="divide-y divide-cream/[0.05]">
+                        <AnimatePresence mode="popLayout" initial={false}>
+                          {visible.map((spell, index) => (
+                            <SortableSpell key={spell.id} id={spell.id} name={spell.name} disabled={!reorderable}>
+                              {(handle, { isDragging }) => (
+                                <SpellListRow
+                                  spell={spell}
+                                  index={index}
+                                  fresh={spell.id === freshId}
+                                  handle={handle}
+                                  ghost={isDragging}
+                                  layoutKey={layoutKey}
+                                  onView={() => setSelectedId(spell.id)}
+                                  onEdit={() => goEdit(spell)}
+                                  onDuplicate={() => duplicateSpell(spell.id)}
+                                  onArchive={() => handleArchiveAction(spell)}
+                                  onDelete={() => setConfirmState({ kind: "delete", id: spell.id })}
+                                />
+                              )}
+                            </SortableSpell>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
+                </SortableContext>
+
+                {/* The lifted copy follows the pointer; its slot stays behind as a ghost. */}
+                <DragOverlay dropAnimation={DROP_ANIMATION} zIndex={60}>
+                  {activeSpell ? (
+                    view === "grid" ? (
+                      <SpellCard
+                        spell={activeSpell}
+                        index={0}
+                        fresh={false}
+                        handle="static"
+                        lifted
+                        onView={noop}
+                        onEdit={noop}
+                        onDuplicate={noop}
+                        onArchive={noop}
+                        onDelete={noop}
                       />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
+                    ) : (
+                      <SpellListRow
+                        spell={activeSpell}
+                        index={0}
+                        fresh={false}
+                        handle="static"
+                        lifted
+                        onView={noop}
+                        onEdit={noop}
+                        onDuplicate={noop}
+                        onArchive={noop}
+                        onDelete={noop}
+                      />
+                    )
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            )}
+
+            {/* Why the grips are there - or where they went. */}
+            {visible.length > 1 && (
+              <p className="mt-4 flex items-center gap-1.5 font-sans text-[11px] text-cream/35">
+                <GripVertical className="h-3 w-3 shrink-0" aria-hidden />
+                {reorderable
+                  ? "Drag a spell by its grip to set the order the website shows."
+                  : "Sorted temporarily - switch back to Site order to rearrange spells."}
+              </p>
             )}
           </div>
         </>

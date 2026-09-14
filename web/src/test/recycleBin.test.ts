@@ -74,7 +74,7 @@ describe("mappers carry the bin stamp", () => {
       price_minor: 0, currency: "INR", host_name: "", host_role: "", hero_url: "", mobile_hero_url: "", cover_url: "",
       hero_as_cover: true, gradient: "", symbol: "✦", inclusions: [], page: null, views: 0, created_by: null,
       published_at: null, created_at: "2026-09-01", updated_at: "2026-09-13", form_id: null,
-      deleted_at: "2026-09-13T09:00:00.000Z", deleted_by: null,
+      deleted_at: "2026-09-13T09:00:00.000Z", deleted_by: null, sort_order: 0,
     };
     expect(mapSpell(spellRow, undefined, []).deletedAt).toBe("2026-09-13T09:00:00.000Z");
     expect(mapSpell({ ...spellRow, deleted_at: null }, undefined, []).deletedAt).toBeNull();

@@ -16,6 +16,8 @@ import { CATEGORY_META, formatINR, seatsPct, URGENCY_META } from "@/data/spells"
 import type { ManagedSpell } from "@/data/spells";
 import { cn } from "@/lib/utils";
 
+import { DragHandle } from "./SortableSpell";
+import type { DragHandleProps } from "./SortableSpell";
 import type { SpellActionHandlers } from "./SpellCard";
 import { SpellStatusBadge } from "./SpellBadges";
 
@@ -38,9 +40,10 @@ const hideBrokenImage = (event: SyntheticEvent<HTMLImageElement>): void => {
 };
 
 /** Notion-database style column header for the list view. */
-export function SpellListHeader() {
+export function SpellListHeader({ reorderable = false }: { reorderable?: boolean }) {
   return (
     <div className="hidden items-center gap-3 border-b border-cream/[0.07] bg-cream/[0.015] px-4 py-2.5 sm:flex">
+      {reorderable && <span className="-ml-1.5 w-7 shrink-0" aria-hidden />}
       <span className="w-11 shrink-0" aria-hidden />
       <span className={cn(HEAD, "flex-1")}>Spell</span>
       <span className={cn(HEAD, COLS.category)}>Category</span>
@@ -85,6 +88,14 @@ interface SpellListRowProps extends SpellActionHandlers {
   spell: ManagedSpell;
   index: number;
   fresh: boolean;
+  /** Drag-to-reorder grip (0092); null hides it (temporary sorts), "static" paints it inert. */
+  handle?: DragHandleProps | "static" | null;
+  /** The copy that follows the pointer while dragging - no entrance, no hover, no clicks. */
+  lifted?: boolean;
+  /** Slot left behind while its row is lifted - hover effects rest. */
+  ghost?: boolean;
+  /** Layout animations run only when this changes - never during a drag. */
+  layoutKey?: string;
 }
 
 /** Compact database row - click anywhere to open, actions float in on hover. */
@@ -92,6 +103,10 @@ export default function SpellListRow({
   spell,
   index,
   fresh,
+  handle = null,
+  lifted = false,
+  ghost = false,
+  layoutKey,
   onView,
   onEdit,
   onDuplicate,
@@ -105,17 +120,23 @@ export default function SpellListRow({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
+      layout={!lifted}
+      layoutDependency={layoutKey}
+      initial={lifted ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -14, transition: { duration: 0.22, ease: EASE } }}
       transition={{ duration: 0.4, delay: Math.min(index, 10) * 0.03, ease: EASE }}
       className={cn(
-        "group relative flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-cream/[0.025]",
+        "group relative flex items-center gap-3 px-4 py-3 transition-colors duration-150",
+        !lifted && !ghost && "hover:bg-cream/[0.025]",
         fresh && "bg-gold/[0.05]",
         isArchived && "opacity-70 hover:opacity-100",
+        lifted && "pointer-events-none rounded-xl border border-gold/50 bg-[#14130F]/[0.98] shadow-[0_28px_70px_rgba(0,0,0,0.6)]",
       )}
     >
+      {/* Above the full-row open trigger, so the grip lifts instead of opening. */}
+      <DragHandle handle={handle} label={`Drag to reorder ${spell.name}`} className="relative z-[2] -ml-1.5 h-9 w-7" />
+
       {/* Thumb */}
       <span
         className={cn(

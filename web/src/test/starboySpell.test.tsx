@@ -41,7 +41,7 @@ const row: SpellRow = {
   location: "", region: "", duration_days: 7, nights: 0, price_minor: 0, currency: "INR", host_name: "", host_role: "",
   hero_url: "", mobile_hero_url: fields.hero_url ?? "", cover_url: "", hero_as_cover: true, gradient: "", symbol: "", inclusions: [],
   views: 0, created_by: null, published_at: "2026-09-11", created_at: "2026-09-11", updated_at: "2026-09-11", form_id: null, page: null,
-  deleted_at: null, deleted_by: null, ...fields,
+  deleted_at: null, deleted_by: null, sort_order: 0, ...fields,
 };
 const departure: ActiveDepartureRow = {
   id: "b1092026-a117-4c3d-9051-151020260002", spell_id: row.id, status: "scheduled", seats_booked: 0, seats_total: 0,

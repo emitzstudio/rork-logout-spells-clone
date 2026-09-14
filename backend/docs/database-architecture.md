@@ -184,6 +184,7 @@ reviewed migration (see authentication-flow.md).
 | `form_id` | `uuid` null → forms `set null` | attached application form — live since M4; many spells may share one form |
 | `deleted_at` | `timestamptz` null | **Recycle Bin (0088)** — set = binned: gone from the website and every console list, departures/bookings/form/history untouched; null = active. Restore clears it |
 | `deleted_by` | `uuid` null → profiles `set null` | trigger-stamped `auth.uid()` on bin, cleared on restore; never client-writable |
+| `sort_order` | `integer` | **Manual site order (0092)** — lower first everywhere spells are listed; ties newest-first, then `id`; null reads as last. Written only by `reorder_spells(uuid[])` (staff, atomic); a new spell takes `max + 1` from a BEFORE INSERT trigger; outside the console save whitelist so editing never moves a spell; a sort_order-only update does **not** stamp `updated_at` |
 | `views` | `bigint` default 0 | incremented via a `SECURITY DEFINER` RPC, never direct UPDATE |
 | `created_by` | `uuid` null → profiles `set null` | |
 | `published_at` | `timestamptz` null | |
@@ -200,9 +201,16 @@ The public definer paths (`increment_spell_views`, `submit_inquiry`,
 null` rule, so a binned spell is invisible and inert everywhere at once.
 
 Indexes: `slug` unique · `(status, category)` · partial on
-`featured where status = 'published'`.
+`featured where status = 'published'` · `(sort_order, created_at desc)` (0092).
 RLS: SELECT anyone where `status in ('published','soldout')`, staff see all ·
 INSERT/UPDATE staff · DELETE nobody (archive via status).
+
+**Listing order (0092):** every reader — website, console, traveller app — orders
+by `sort_order asc nulls last, created_at desc, id asc`. The console's
+Dashboard → Spells drag-and-drop calls `reorder_spells(uuid[])` (SECURITY INVOKER;
+refuses non-staff and duplicate ids; positions = array index) with the complete new
+sequence of active spells; spells not in the array keep their value, so deleting or
+binning one leaves the rest exactly where they were.
 
 Derived, never stored: revenue (sum of captured payments), wishlist count
 (count of `saved_spells`), "ongoing" state (dates), automatic seat availability

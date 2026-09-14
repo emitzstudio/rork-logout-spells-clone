@@ -11,7 +11,7 @@ import { SpellPricing } from "@/components/spell/SpellSections";
 import { brochureLink } from "@/data/publishedPricing";
 import { parseSpellDates } from "@/data/account/derive";
 
-const row = { ...fullMoonContent, id: trip.id, hero_as_cover: true, mobile_hero_url: fullMoonContent.hero_url, cover_url: "", gradient: "", symbol: "", views: 0, created_at: "2026-09-13T00:00:00Z", updated_at: "2026-09-13T00:00:00Z", published_at: "2026-09-13T00:00:00Z", created_by: null, inclusions: trip.inclusions, deleted_at: null, deleted_by: null } as SpellRow;
+const row = { ...fullMoonContent, id: trip.id, hero_as_cover: true, mobile_hero_url: fullMoonContent.hero_url, cover_url: "", gradient: "", symbol: "", views: 0, created_at: "2026-09-13T00:00:00Z", updated_at: "2026-09-13T00:00:00Z", published_at: "2026-09-13T00:00:00Z", created_by: null, inclusions: trip.inclusions, deleted_at: null, deleted_by: null, sort_order: 0 } as SpellRow;
 const departure = { ...fullMoonContent.departure, id: trip.departureId, spell_id: trip.id, seats_booked: 0, seats_on_hold: 0 } as ActiveDepartureRow;
 const spell = mapSpell(row, departure, []);
 const draft = spell.draft!;
