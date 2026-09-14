@@ -1,5 +1,8 @@
 import {
   balanceDueLabel,
+  BOOKING_TYPE_META,
+  RECEIPT_COMPANY_EMAIL,
+  receiptTaxLines,
   formatReceiptDate,
   PAYMENT_STATUS_META,
   receiptStatusLine,
@@ -25,10 +28,10 @@ const STATUS_INK: Record<ReceiptPaymentStatus, string> = {
 function Fact({ label, value, tone, dot }: { label: string; value: string; tone?: "gold" | "muted"; dot?: string }) {
   return (
     <div>
-      <p className="font-sans text-[7px] font-semibold uppercase tracking-[0.24em] text-[#8B8377]">{label}</p>
+      <p className="font-sans text-[8px] font-semibold uppercase tracking-[0.24em] text-[#8B8377]">{label}</p>
       <p
         className={cn(
-          "mt-1 flex items-start gap-1.5 font-sans text-[10.5px] leading-snug [overflow-wrap:anywhere]",
+          "mt-1 flex items-start gap-1.5 font-sans text-[11.5px] leading-snug [overflow-wrap:anywhere]",
           tone === "gold" ? "text-[#957A2F]" : tone === "muted" ? "text-[#8B8377]" : "text-[#1C1C1A]",
         )}
       >
@@ -65,8 +68,9 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
   const meta = [receipt.destination, receipt.travelDates, travellersLabel(receipt.travellersCount)]
     .filter((part) => part.trim() !== "")
     .join("   ·   ");
-  const contact = [brand.name, brand.website, brand.email, brand.phone].filter((part) => part.trim() !== "");
-  const paragraphs = receipt.notes.trim() !== "" ? receipt.notes.trim().split(/\n{2,}/) : [];
+  const contact = [brand.name, brand.website, RECEIPT_COMPANY_EMAIL, brand.phone].filter((part) => part.trim() !== "");
+  const taxes = receiptTaxLines(receipt);
+  const paragraphs = [...(taxes.length > 0 ? [taxes.join("\n")] : []), ...(receipt.notes.trim() !== "" ? receipt.notes.trim().split(/\n{2,}/) : [])];
 
   return (
     <div
@@ -129,15 +133,15 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
             <div
               key={card.label}
               className={cn(
-                "px-4 py-4",
+                "min-w-0 px-2 py-4 sm:px-4",
                 index > 0 && "border-l border-[#1C1C1A]/10",
                 card.due && "bg-[#B8963E]/[0.08]",
               )}
             >
-              <p className="font-sans text-[7px] font-semibold uppercase tracking-[0.24em] text-[#8B8377]">{card.label}</p>
+              <p className="font-sans text-[8px] font-semibold uppercase tracking-[0.24em] text-[#8B8377]">{card.label}</p>
               <p
                 className={cn(
-                  "mt-2 truncate font-serif text-[21px] font-bold leading-none",
+                  "mt-2 font-serif text-[24px] font-bold leading-none [overflow-wrap:anywhere]",
                   card.due ? "text-[#957A2F]" : "text-[#1C1C1A]",
                 )}
                 title={card.amount}
@@ -146,7 +150,7 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
               </p>
               <p
                 className={cn(
-                  "mt-2 truncate font-sans text-[8px]",
+                  "mt-2 font-sans text-[9px] leading-snug",
                   card.due ? "text-[#957A2F]" : card.settled ? "text-[#2F7D5B]" : "text-[#8B8377]",
                 )}
               >
@@ -170,6 +174,7 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
             <Fact label="Spell / Trip" value={receipt.tripName} />
             <Fact label="Travel dates" value={receipt.travelDates} />
             <Fact label="Destination" value={receipt.destination} />
+            {receipt.bookingType && <Fact label="Booking type" value={BOOKING_TYPE_META[receipt.bookingType].label} />}
           </div>
         </div>
 
@@ -186,9 +191,9 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
         {/* Notes */}
         {paragraphs.length > 0 && (
           <div className="mt-7 space-y-3">
-            <SectionTitle>Notes</SectionTitle>
+            <SectionTitle>{taxes.length > 0 ? "Notes / Taxes" : "Notes"}</SectionTitle>
             {paragraphs.map((paragraph, index) => (
-              <p key={index} className="whitespace-pre-wrap font-sans text-[10px] leading-relaxed text-[#4A463F] [overflow-wrap:anywhere]">
+              <p key={index} className="whitespace-pre-wrap font-sans text-[11px] leading-relaxed text-[#4A463F] [overflow-wrap:anywhere]">
                 {paragraph}
               </p>
             ))}
@@ -209,7 +214,7 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
 
       {/* Footer */}
       <div className="border-t border-[#1C1C1A]/[0.12] px-7 py-4">
-        <p className="font-sans text-[8px] text-[#4A463F]">
+        <p className="font-sans text-[9px] leading-relaxed text-[#4A463F]">
           {contact.map((part, index) => (
             <span key={part}>
               {index > 0 && <span className="mx-2 text-[#8B8377]">·</span>}
@@ -217,7 +222,7 @@ export default function ReceiptPreview({ receipt, brand, className }: ReceiptPre
             </span>
           ))}
         </p>
-        <p className="mt-1 font-sans text-[6.8px] text-[#8B8377]">
+        <p className="mt-1 font-sans text-[8px] text-[#8B8377]">
           This receipt records the payment received against the booking above.
         </p>
       </div>

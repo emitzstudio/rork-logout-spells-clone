@@ -37,6 +37,9 @@ import {
 
 import {
   balanceDueLabel,
+  BOOKING_TYPE_META,
+  RECEIPT_COMPANY_EMAIL,
+  receiptTaxLines,
   formatReceiptDate,
   formatReceiptINR,
   PAYMENT_STATUS_META,
@@ -45,7 +48,6 @@ import {
   travellersLabel,
 } from "@/data/receipts";
 import type { Receipt, ReceiptPaymentStatus } from "@/data/receipts";
-import { CONTACT_EMAIL } from "@/data/site";
 import { FALLBACK_SITE_URL } from "@/lib/seoFiles";
 
 /* ------------------------------- Geometry -------------------------------- */
@@ -56,12 +58,12 @@ const M = 48;
 const CW = W - M * 2;
 const BAND = 130;
 const SLIM_BAND = 62;
-const BOTTOM = 80;
+const BOTTOM = 84;
 /** Vertical rhythm of a label-over-value fact: label row, value line, gap after. */
 const FACT_LABEL = 13;
-const FACT_LINE = 14;
-const FACT_GAP = 9;
-const SECTION_HEAD = 28;
+const FACT_LINE = 15;
+const FACT_GAP = 8;
+const SECTION_HEAD = 25;
 
 /* -------------------------------- Palette -------------------------------- */
 
@@ -104,7 +106,7 @@ export interface ReceiptBrand {
 export const DEFAULT_RECEIPT_BRAND: ReceiptBrand = {
   name: "Logout Spells",
   tagline: "Belonging > Bookings",
-  email: CONTACT_EMAIL,
+  email: RECEIPT_COMPANY_EMAIL,
   phone: "",
   website: FALLBACK_SITE_URL.replace(/^https?:\/\//, ""),
   siteUrl: FALLBACK_SITE_URL,
@@ -163,9 +165,13 @@ class ReceiptLayout {
     private readonly image: PDFImage | undefined,
     now: Date,
     private readonly trace?: string[],
+    private readonly compact = false,
   ) {
     this.generated = now.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   }
+
+  private get sectionHead(): number { return this.compact ? 23 : SECTION_HEAD; }
+  private get factGap(): number { return this.compact ? 6 : FACT_GAP; }
 
   /* ------------------------------ Text core ------------------------------ */
 
@@ -328,7 +334,7 @@ class ReceiptLayout {
     this.page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: PAPER });
     if (first) this.band();
     else this.slimBand();
-    this.y = H - (first ? BAND : SLIM_BAND) - 32;
+    this.y = H - (first ? BAND : SLIM_BAND) - (this.compact ? 23 : 27);
   }
 
   /** Starts a continuation page when `height` would cross into the footer. Returns true when it did. */
@@ -366,13 +372,13 @@ class ReceiptLayout {
     if (this.logo) this.page.drawImage(this.logo, { x: M, y: top - 36 - logoSize, width: logoSize, height: logoSize });
     const textX = M + (this.logo ? logoSize + 14 : 0);
     this.text(this.brand.name.toUpperCase(), textX, top - 53, 11, this.fonts.sansSemi, GOLD_LIGHT, 4);
-    if (this.brand.tagline !== "") this.text(this.brand.tagline, textX, top - 68, 8.5, this.fonts.sans, CREAM, 0.6, 0.62);
+    if (this.brand.tagline !== "") this.text(this.brand.tagline, textX, top - 68, 9.2, this.fonts.sans, CREAM, 0.6, 0.62);
 
     /* Right - document identity */
     this.right("BOOKING RECEIPT", W - M, top - 42, 8.5, this.fonts.sansSemi, GOLD_LIGHT, 3.2);
     const numberSize = this.fitSize(this.receipt.number, this.fonts.sansSemi, 21, 12, 240);
     this.right(this.receipt.number, W - M, top - 67, numberSize, this.fonts.sansSemi, CREAM, 0.6);
-    this.right(`Issued ${formatReceiptDate(this.receipt.receiptDate)}`, W - M, top - 82, 8.5, this.fonts.sans, CREAM, 0, 0.62);
+    this.right(`Issued ${formatReceiptDate(this.receipt.receiptDate)}`, W - M, top - 82, 9.2, this.fonts.sans, CREAM, 0, 0.62);
 
     /* Bottom row - the human line + status pill */
     const baseline = top - BAND + 22;
@@ -385,7 +391,7 @@ class ReceiptLayout {
     this.text(pillLabel, pillX + 22, baseline + 1.2, 7.5, this.fonts.sansSemi, CREAM, 1.8);
 
     const lineWidth = pillX - M - 18;
-    const line = this.fit(receiptStatusLine(this.receipt), this.fonts.sans, 9, 7, lineWidth, 2);
+    const line = this.fit(receiptStatusLine(this.receipt), this.fonts.sans, 9.5, 8.5, lineWidth, 2);
     let lineY = baseline + (line.lines.length - 1) * 11.5;
     for (const part of line.lines) {
       this.text(part, M, lineY, line.size, this.fonts.sans, CREAM, 0, 0.78);
@@ -406,28 +412,28 @@ class ReceiptLayout {
 
   hero(): void {
     const { receipt } = this;
-    this.text("SPELL / TRIP", M, this.y, 7.5, this.fonts.sansSemi, GOLD_DEEP, 2.4);
+    this.text("SPELL / TRIP", M, this.y, 8.2, this.fonts.sansSemi, GOLD_DEEP, 2.2);
     this.y -= 30;
     const title = this.fit(receipt.tripName, this.fonts.serif, 32, 22, CW, 2);
     for (const line of title.lines) {
-      this.ensure(title.size * 1.08);
+      this.ensure(title.size * 1.2);
       this.text(line, M, this.y, title.size, this.fonts.serif, INK);
-      this.y -= title.size * 1.08;
+      this.y -= title.size * 1.2;
     }
     this.y -= 3;
     const parts = [receipt.destination, receipt.travelDates, travellersLabel(receipt.travellersCount)].filter((part) => part.trim() !== "");
     const meta = parts.join("   ·   ").toUpperCase();
-    for (const line of this.wrap(meta, 8.5, this.fonts.sansSemi, CW, 1.4)) {
+    for (const line of this.wrap(meta, 9.2, this.fonts.sansSemi, CW, 1)) {
       this.ensure(14);
-      this.text(line, M, this.y, 8.5, this.fonts.sansSemi, MUTED, 1.4);
+      this.text(line, M, this.y, 9.2, this.fonts.sansSemi, MUTED, 1);
       this.y -= 14;
     }
-    this.y -= 20;
+    this.y -= this.compact ? 12 : 20;
   }
 
   summary(): void {
     const { receipt } = this;
-    const height = 98;
+    const height = 102;
     this.ensure(height + 12);
     const top = this.y;
     const colW = CW / 3;
@@ -445,43 +451,43 @@ class ReceiptLayout {
     receiptSummaryCards(receipt).forEach((column, index) => {
       const x = M + colW * index + 18;
       const inner = colW - 36;
-      this.text(column.label.toUpperCase(), x, top - 25, 7.5, this.fonts.sansSemi, MUTED, 1.8);
-      const size = this.fitSize(column.amount, this.fonts.serifBold, 24, 12, inner);
+      this.text(column.label.toUpperCase(), x, top - 25, 8.1, this.fonts.sansSemi, MUTED, 1.1);
+      const size = this.fitSize(column.amount, this.fonts.serifBold, 28, 12, inner);
       this.text(column.amount, x, top - 57, size, this.fonts.serifBold, column.due ? GOLD_DEEP : INK);
-      const sub = this.fit(column.sub, this.fonts.sans, 8.5, 6.5, inner, 1);
-      this.text(sub.lines.join(" "), x, top - 78, sub.size, this.fonts.sans, column.due ? GOLD_DEEP : column.settled ? EMERALD : MUTED);
+      const sub = this.fit(column.sub, this.fonts.sans, 9, 8, inner, 2);
+      sub.lines.forEach((line, row) => this.text(line, x, top - 77 - row * 11, sub.size, this.fonts.sans, column.due ? GOLD_DEEP : column.settled ? EMERALD : MUTED));
     });
-    this.y = top - height - 26;
+    this.y = top - height - (this.compact ? 16 : 22);
   }
 
   private sectionTitle(label: string, x: number, width: number, y: number): number {
-    this.text(label, x, y, 8, this.fonts.sansSemi, GOLD_DEEP, 2.6);
+    this.text(label, x, y, 8.8, this.fonts.sansSemi, GOLD_DEEP, 2.3);
     this.rule(x, x + width, y - 9, INK, 0.14);
-    return SECTION_HEAD;
+    return this.sectionHead;
   }
 
   private factLines(fact: Fact, width: number): string[] {
     const value = fact.value.trim() !== "" ? fact.value : "—";
-    return this.wrap(value, 10.5, this.fonts.sans, width - (fact.dot ? 12 : 0));
+    return this.wrap(value, 11.5, this.fonts.sans, width - (fact.dot ? 12 : 0));
   }
 
   private factsHeight(facts: Fact[], width: number): number {
-    return facts.reduce((sum, fact) => sum + FACT_LABEL + this.factLines(fact, width).length * FACT_LINE + FACT_GAP, 0);
+    return facts.reduce((sum, fact) => sum + FACT_LABEL + this.factLines(fact, width).length * FACT_LINE + this.factGap, 0);
   }
 
   private drawFacts(facts: Fact[], x: number, width: number, top: number): number {
     let y = top;
     for (const fact of facts) {
-      this.text(fact.label.toUpperCase(), x, y, 7.2, this.fonts.sansSemi, MUTED, 1.7);
+      this.text(fact.label.toUpperCase(), x, y, 8, this.fonts.sansSemi, MUTED, 1.4);
       y -= FACT_LABEL;
       const ink = fact.tone === "gold" ? GOLD_DEEP : fact.tone === "muted" ? MUTED : INK;
       const lines = this.factLines(fact, width);
       lines.forEach((line, index) => {
         if (index === 0 && fact.dot) this.page.drawCircle({ x: x + 3.2, y: y + 3.6, size: 3, color: fact.dot });
-        this.text(line, x + (fact.dot ? 12 : 0), y, 10.5, this.fonts.sans, ink);
+        this.text(line, x + (fact.dot ? 12 : 0), y, 11.5, this.fonts.sans, ink);
         y -= FACT_LINE;
       });
-      y -= FACT_GAP;
+      y -= this.factGap;
     }
     return top - y;
   }
@@ -501,15 +507,16 @@ class ReceiptLayout {
       { label: "Spell / Trip", value: receipt.tripName },
       { label: "Travel dates", value: receipt.travelDates },
       { label: "Destination", value: receipt.destination },
+      ...(receipt.bookingType ? [{ label: "Booking type", value: BOOKING_TYPE_META[receipt.bookingType].label }] : []),
     ];
-    const height = SECTION_HEAD + Math.max(this.factsHeight(traveller, colW), this.factsHeight(trip, colW));
+    const height = this.sectionHead + Math.max(this.factsHeight(traveller, colW), this.factsHeight(trip, colW));
     this.ensure(Math.min(height, H - BAND - BOTTOM - 60));
     const top = this.y;
     this.sectionTitle("TRAVELLER", M, colW, top);
     this.sectionTitle("TRIP", M + colW + gap, colW, top);
-    const left = this.drawFacts(traveller, M, colW, top - SECTION_HEAD);
-    const right = this.drawFacts(trip, M + colW + gap, colW, top - SECTION_HEAD);
-    this.y = top - SECTION_HEAD - Math.max(left, right) - 12;
+    const left = this.drawFacts(traveller, M, colW, top - this.sectionHead);
+    const right = this.drawFacts(trip, M + colW + gap, colW, top - this.sectionHead);
+    this.y = top - this.sectionHead - Math.max(left, right) - (this.compact ? 8 : 12);
   }
 
   /** The payment record: status, dates and how the balance stands. */
@@ -523,33 +530,34 @@ class ReceiptLayout {
       [{ label: "Payment date", value: receipt.paymentDate ? formatReceiptDate(receipt.paymentDate) : "" }],
       [{ label: "Balance due date", value: balanceDueLabel(receipt), tone: receipt.balanceMinor > 0 ? "gold" : "muted" }],
     ];
-    const height = SECTION_HEAD + Math.max(...facts.map((column) => this.factsHeight(column, colW)));
+    const height = this.sectionHead + Math.max(...facts.map((column) => this.factsHeight(column, colW)));
     this.ensure(height + 10);
     const top = this.y;
     this.sectionTitle("PAYMENT", M, CW, top);
     let used = 0;
     facts.forEach((column, index) => {
-      used = Math.max(used, this.drawFacts(column, M + (colW + gap) * index, colW, top - SECTION_HEAD));
+      used = Math.max(used, this.drawFacts(column, M + (colW + gap) * index, colW, top - this.sectionHead));
     });
-    this.y = top - SECTION_HEAD - used - 12;
+    this.y = top - this.sectionHead - used - (this.compact ? 8 : 12);
   }
 
   /** Optional notes - wrapped paragraphs that continue onto further pages when long. */
   notes(): void {
     const text = this.receipt.notes.trim();
-    if (text === "") return;
-    this.ensure(SECTION_HEAD + 14.5 * 2);
-    this.sectionTitle("NOTES", M, CW, this.y);
-    this.y -= SECTION_HEAD;
-    const paragraphs = text.split(/\n{2,}/);
+    const taxes = receiptTaxLines(this.receipt);
+    if (text === "" && taxes.length === 0) return;
+    this.ensure(this.sectionHead + 15 * 2);
+    this.sectionTitle(taxes.length > 0 ? "NOTES / TAXES" : "NOTES", M, CW, this.y);
+    this.y -= this.sectionHead;
+    const paragraphs = [...(taxes.length > 0 ? [taxes.join("\n")] : []), ...(text ? text.split(/\n{2,}/) : [])];
     paragraphs.forEach((paragraph, index) => {
-      for (const line of this.wrap(paragraph, 10, this.fonts.sans, CW)) {
-        if (this.ensure(14.5)) {
+      for (const line of this.wrap(paragraph, 11, this.fonts.sans, CW)) {
+        if (this.ensure(15)) {
           this.text("NOTES · CONTINUED", M, this.y, 7.2, this.fonts.sansSemi, MUTED, 1.7);
           this.y -= 18;
         }
-        this.text(line, M, this.y, 10, this.fonts.sans, INK_SOFT);
-        this.y -= 14.5;
+        this.text(line, M, this.y, 11, this.fonts.sans, INK_SOFT);
+        this.y -= 15;
       }
       if (index < paragraphs.length - 1) this.y -= 6;
     });
@@ -573,27 +581,29 @@ class ReceiptLayout {
     }
     this.centered("Until the next spell", this.y - 12, 18, this.fonts.hand, GOLD_DEEP);
     this.y -= 28;
-    if (room >= full) this.centered("Thank you for choosing to log out with us.", this.y, 8.5, this.fonts.sans, MUTED, 0.3);
+    if (room >= full) this.centered("Thank you for choosing to log out with us.", this.y, 9.2, this.fonts.sans, MUTED, 0.3);
     this.y -= 18;
   }
 
   /** Footer on every page: brand contact (linked), the record line and page numbers. */
   finish(): void {
     const total = this.pages.length;
-    const contact = [this.brand.name, this.brand.website, this.brand.email, this.brand.phone].filter((part) => part.trim() !== "").join("   ·   ");
+    const contact = [this.brand.name, this.brand.website].filter((part) => part.trim() !== "").join("   ·   ");
+    const contactDetails = [RECEIPT_COMPANY_EMAIL, this.brand.phone].filter((part) => part.trim() !== "").join("   ·   ");
     this.pages.forEach((page, index) => {
       this.page = page;
-      this.rule(M, W - M, 62, INK, 0.12);
+      this.rule(M, W - M, 70, INK, 0.12);
       const pageLabel = `PAGE ${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
-      const pageWidth = this.width(pageLabel, 7, this.fonts.sansSemi, 1.6);
-      const contactSize = this.fitSize(contact, this.fonts.sans, 8, 6, CW - pageWidth - 24);
-      this.text(contact, M, 47, contactSize, this.fonts.sans, INK_SOFT);
-      this.right(pageLabel, W - M, 47, 7, this.fonts.sansSemi, MUTED, 1.6);
+      const pageWidth = this.width(pageLabel, 8, this.fonts.sansSemi, 1.2);
+      const contactSize = this.fitSize(contact, this.fonts.sans, 9.2, 8, CW - pageWidth - 24);
+      this.text(contact, M, 55, contactSize, this.fonts.sans, INK_SOFT);
+      this.text(contactDetails, M, 41, this.fitSize(contactDetails, this.fonts.sans, 9.2, 8, CW), this.fonts.sans, INK_SOFT);
+      this.right(pageLabel, W - M, 55, 8, this.fonts.sansSemi, MUTED, 1.2);
       this.text(
         `This receipt records the payment received against the booking above. Generated ${this.generated}.`,
         M,
-        34,
-        6.8,
+        26,
+        7.8,
         this.fonts.sans,
         MUTED,
       );
@@ -601,7 +611,7 @@ class ReceiptLayout {
         this.doc.context.obj({
           Type: "Annot",
           Subtype: "Link",
-          Rect: [M, 40, M + this.width(contact, contactSize, this.fonts.sans), 58],
+          Rect: [M, 51, M + this.width(contact, contactSize, this.fonts.sans), 66],
           Border: [0, 0, 0],
           A: { Type: "Action", S: "URI", URI: PDFString.of(this.brand.siteUrl) },
         }),
@@ -627,7 +637,7 @@ class ReceiptLayout {
 /** Pure renderer - fonts and artwork are passed in, so tests run offline and output is deterministic. */
 export async function renderReceipt(receipt: Receipt, assets: ReceiptAssets): Promise<Uint8Array> {
   const now = assets.now ?? new Date();
-  const brand: ReceiptBrand = { ...DEFAULT_RECEIPT_BRAND, ...Object.fromEntries(Object.entries(assets.brand ?? {}).filter(([, value]) => typeof value === "string")) };
+  const brand: ReceiptBrand = { ...DEFAULT_RECEIPT_BRAND, ...Object.fromEntries(Object.entries(assets.brand ?? {}).filter(([, value]) => typeof value === "string")), email: RECEIPT_COMPANY_EMAIL };
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   doc.setTitle(`Booking Receipt ${receipt.number} · ${brand.name}`);
@@ -662,7 +672,15 @@ export async function renderReceipt(receipt: Receipt, assets: ReceiptAssets): Pr
     assets.image ? optional(() => doc.embedJpg(assets.image!)) : Promise.resolve(undefined),
   ]);
 
-  new ReceiptLayout(doc, { serif, serifBold, sans, sansSemi, hand, fallback }, receipt, brand, logo, image, now, assets.trace).render();
+  const fonts = { serif, serifBold, sans, sansSemi, hand, fallback };
+  const traceStart = assets.trace?.length ?? 0;
+  new ReceiptLayout(doc, fonts, receipt, brand, logo, image, now, assets.trace).render();
+  if (doc.getPageCount() === 2) {
+    // Try tighter whitespace before allowing continuation pages; never shrink the readable body text.
+    while (doc.getPageCount() > 0) doc.removePage(0);
+    assets.trace?.splice(traceStart);
+    new ReceiptLayout(doc, fonts, receipt, brand, logo, image, now, assets.trace, true).render();
+  }
   return doc.save();
 }
 

@@ -1587,9 +1587,12 @@ export type Database = {
         Row: {
           balance_due_date: string | null
           balance_minor: number
+          base_minor: number | null
+          booking_type: string | null
           created_at: string
           created_by: string | null
           destination: string
+          gst_minor: number | null
           id: string
           notes: string
           payment_date: string | null
@@ -1601,6 +1604,7 @@ export type Database = {
           received_minor: number
           spell_id: string | null
           spell_image_url: string
+          tcs_minor: number | null
           total_minor: number
           travel_dates: string
           traveller_email: string
@@ -1613,9 +1617,12 @@ export type Database = {
         Insert: {
           balance_due_date?: string | null
           balance_minor?: number
+          base_minor?: number | null
+          booking_type?: string | null
           created_at?: string
           created_by?: string | null
           destination?: string
+          gst_minor?: number | null
           id?: string
           notes?: string
           payment_date?: string | null
@@ -1627,6 +1634,7 @@ export type Database = {
           received_minor?: number
           spell_id?: string | null
           spell_image_url?: string
+          tcs_minor?: number | null
           total_minor?: number
           travel_dates?: string
           traveller_email?: string
@@ -1639,9 +1647,12 @@ export type Database = {
         Update: {
           balance_due_date?: string | null
           balance_minor?: number
+          base_minor?: number | null
+          booking_type?: string | null
           created_at?: string
           created_by?: string | null
           destination?: string
+          gst_minor?: number | null
           id?: string
           notes?: string
           payment_date?: string | null
@@ -1653,6 +1664,7 @@ export type Database = {
           received_minor?: number
           spell_id?: string | null
           spell_image_url?: string
+          tcs_minor?: number | null
           total_minor?: number
           travel_dates?: string
           traveller_email?: string

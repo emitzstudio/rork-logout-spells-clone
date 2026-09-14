@@ -18,6 +18,8 @@ import { DateField, MoneyField } from "@/components/dashboard/receipts/ReceiptFi
 import ReceiptPreview from "@/components/dashboard/receipts/ReceiptPreview";
 import ReceiptSuccessDialog from "@/components/dashboard/receipts/ReceiptSuccessDialog";
 import {
+  BOOKING_TYPE_META,
+  formatReceiptINR,
   createEmptyReceiptDraft,
   detachSpell,
   draftFromReceipt,
@@ -34,7 +36,7 @@ import {
   rupeesToMinor,
   withDerivedMoney,
 } from "@/data/receipts";
-import type { Receipt, ReceiptDraft, ReceiptPaymentStatus } from "@/data/receipts";
+import type { Receipt, ReceiptDraft, ReceiptPaymentStatus, ReceiptBookingType } from "@/data/receipts";
 import { ReceiptPdfError, saveBytesAsFile, useReceipt, useReceiptBrand, useSaveReceipt, type SaveReceiptResult } from "@/data/receiptStore";
 import { formatINR, STATUS_META } from "@/data/spells";
 import { useSpellStore } from "@/data/spellStore";
@@ -137,7 +139,7 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
   const receivedMinor = draft.received.trim() === "" ? 0 : rupeesToMinor(draft.received);
   const totalInvalid = touched && draft.total.trim() !== "" && (totalMinor === null || totalMinor < 0);
   const receivedInvalid =
-    touched && draft.received.trim() !== "" && (receivedMinor === null || receivedMinor < 0 || (totalMinor !== null && receivedMinor !== null && receivedMinor > totalMinor));
+    touched && draft.received.trim() !== "" && (receivedMinor === null || receivedMinor < 0 || (money !== null && receivedMinor !== null && receivedMinor > money.totalMinor));
   const balanceInvalid = touched && draft.balanceManual && (rupeesToMinor(draft.balance) === null || (rupeesToMinor(draft.balance) ?? 0) < 0);
 
   /* "₹12,000 × 3" - offered when a linked spell has a price and the total doesn't match it. */
@@ -176,6 +178,7 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
         onError: (error) => {
           if (error instanceof ReceiptPdfError) {
             setSaved(error.receipt);
+            setDraft((current) => ({ ...current, legacyPricing: error.receipt.bookingType === null }));
             toast.error(`${error.receipt.number} was saved, but its PDF couldn't be generated - fix anything needed and generate again.`);
             return;
           }
@@ -259,8 +262,25 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
       <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
         {/* Left - the form */}
         <div className="min-w-0 space-y-4">
-          {/* 01 · Spell (optional) */}
-          <Section index={1} title="Spell" description="Optional - pick a Spell to pre-fill the trip, or leave it and type everything by hand.">
+          <Section index={1} title="Booking Type" description="Choose the booking type first. Taxes are added automatically to the pre-tax trip price.">
+            <fieldset className="grid grid-cols-2 gap-3" aria-label="Booking Type">
+              {(["international", "domestic"] as ReceiptBookingType[]).map((type) => (
+                <label key={type} className={cn("flex min-h-20 cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors", draft.bookingType === type ? "border-gold/50 bg-gold/10 text-gold-light" : "border-cream/15 text-cream/70 hover:border-gold/30")}>
+                  <input type="radio" name="booking-type" aria-label={BOOKING_TYPE_META[type].label} value={type} checked={draft.bookingType === type} onChange={() => patch({ bookingType: type })} className="mt-1 h-4 w-4 accent-[#B8963E]" />
+                  <span><span className="block font-serif text-lg">{BOOKING_TYPE_META[type].label}</span><span className="mt-1 block font-sans text-xs leading-relaxed">{BOOKING_TYPE_META[type].taxNote}</span></span>
+                </label>
+              ))}
+            </fieldset>
+            {draft.legacyPricing && (
+              <div className="space-y-2 font-sans text-xs leading-relaxed text-cream/60">
+                <p>This older receipt has no saved booking type. Its original amounts stay unchanged until you choose one. Choosing a type treats the price below as pre-tax and adds the applicable taxes; review the new total before saving.</p>
+                {draft.bookingType !== null && <button type="button" onClick={() => patch({ bookingType: null })} className="min-h-11 text-gold-light underline underline-offset-4">Keep original pricing instead</button>}
+              </div>
+            )}
+          </Section>
+          {(draft.bookingType !== null || isEdit) && <>
+          {/* Spell (optional) */}
+          <Section index={2} title="Spell" description="Optional - pick a Spell to pre-fill the trip, or leave it and type everything by hand.">
             <FieldShell
               label="Pre-fill from a Spell"
               optional
@@ -337,7 +357,7 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
           </Section>
 
           {/* 02 · Traveller */}
-          <Section index={2} title="Traveller details" description="Who the receipt is for. The email is printed on the receipt - nothing is sent.">
+          <Section index={3} title="Traveller details" description="Who the receipt is for. The email is printed on the receipt - nothing is sent.">
             <div className="grid gap-5 sm:grid-cols-2">
               <TextField label="Traveller name" value={draft.travellerName} onChange={(travellerName) => patch({ travellerName })} placeholder="e.g. Ananya Sharma" maxLength={RECEIPT_LIMITS.travellerName} />
               <FieldShell label="Email" optional>
@@ -359,7 +379,7 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
           </Section>
 
           {/* 03 · Trip */}
-          <Section index={3} title="Trip details" description="What they booked - exactly as it should read on the receipt.">
+          <Section index={4} title="Trip details" description="What they booked - exactly as it should read on the receipt.">
             <TextField label="Spell / Trip name" value={draft.tripName} onChange={(tripName) => patch({ tripName })} placeholder="e.g. Thailand Full Moon" maxLength={RECEIPT_LIMITS.tripName} />
             <div className="grid gap-5 sm:grid-cols-2">
               <TextField label="Travel dates" value={draft.travelDates} onChange={(travelDates) => patch({ travelDates })} placeholder="e.g. 23–28 September 2026" optional maxLength={RECEIPT_LIMITS.travelDates} helper="Free text - written the way the traveller should read it." />
@@ -368,11 +388,21 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
           </Section>
 
           {/* 04 · Payment */}
-          <Section index={4} title="Payment details" description="Balance = total − received. Both the balance and the status follow the amounts until you take them over.">
+          <Section index={5} title="Payment details" description="Balance = final total (including taxes) − amount received. Existing manual overrides remain available.">
             <div className="grid gap-5 sm:grid-cols-2">
-              <MoneyField label="Total trip price" value={draft.total} onChange={(total) => patch({ total })} placeholder="12,000" invalid={totalInvalid} suggestion={priceSuggestion} />
-              <MoneyField label="Amount received" value={draft.received} onChange={(received) => patch({ received })} placeholder="0" invalid={receivedInvalid} helper={receivedInvalid && totalMinor !== null && (receivedMinor ?? 0) > totalMinor ? "More than the total trip price." : undefined} />
+              <MoneyField label="Total trip price" value={draft.total} onChange={(total) => patch({ total })} placeholder="12,000" invalid={totalInvalid} suggestion={priceSuggestion} helper={draft.bookingType ? "Pre-tax price for all travellers together. Taxes are added below, not per payment." : "Original final trip price — no retroactive tax calculation."} />
+              <MoneyField label="Amount received" value={draft.received} onChange={(received) => patch({ received })} placeholder="0" invalid={receivedInvalid} helper={receivedInvalid ? "Enter a valid amount no higher than the final total including taxes." : undefined} />
             </div>
+            {draft.bookingType && money && (
+              <div aria-label="Automatic tax calculation" className="rounded-lg border border-gold/25 bg-gold/[0.05] p-4 font-sans text-[13px]">
+                <p className="mb-3 text-xs text-cream/60">{BOOKING_TYPE_META[draft.bookingType].taxNote} · on the pre-tax trip price</p>
+                <dl className="space-y-2 tabular-nums">
+                  <div className="flex justify-between gap-3"><dt className="text-cream/60">GST (5%)</dt><dd className="text-cream">{formatReceiptINR(money.gstMinor ?? 0)}</dd></div>
+                  {draft.bookingType === "international" && <div className="flex justify-between gap-3"><dt className="text-cream/60">TCS (2%)</dt><dd className="text-cream">{formatReceiptINR(money.tcsMinor ?? 0)}</dd></div>}
+                  <div className="flex justify-between gap-3 border-t border-gold/20 pt-3"><dt className="text-gold-light">Final total including taxes</dt><dd className="font-semibold text-gold-light">{formatReceiptINR(money.totalMinor)}</dd></div>
+                </dl>
+              </div>
+            )}
             <div className="grid gap-5 sm:grid-cols-2">
               <MoneyField
                 label="Balance amount"
@@ -381,7 +411,7 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
                 manual={draft.balanceManual}
                 onResetAuto={() => patch({ balanceManual: false })}
                 invalid={balanceInvalid}
-                helper={draft.balanceManual ? "Entered by hand - the automatic figure is total − received." : "Calculated automatically. Edit it if the receipt needs a different figure."}
+                helper={draft.balanceManual ? "Entered by hand — review after changing booking type or price. Automatic figure is final total including taxes − received." : "Calculated automatically. Edit it if the receipt needs a different figure."}
               />
               <FieldShell
                 label="Payment status"
@@ -437,9 +467,11 @@ function ReceiptEditorForm({ source }: { source: Receipt | null }) {
           </Section>
 
           {/* 05 · Notes */}
-          <Section index={5} title="Notes" description="Optional - anything the traveller should read: payment mode, what the advance covers, documents to carry.">
+          <Section index={6} title="Notes / Taxes" description="Tax information is added automatically. Use notes only for additional payment or travel information.">
             <TextAreaField label="Notes / additional information" value={draft.notes} onChange={(notes) => patch({ notes })} placeholder="e.g. Advance received via UPI. Balance due 30 days before departure." optional maxLength={RECEIPT_LIMITS.notes} showCount rows={4} />
           </Section>
+
+          </>}
 
           {/* Mobile generate */}
           <button type="button" onClick={generate} disabled={save.isPending} className="btn-gold w-full !py-3.5 !text-[12.5px] disabled:opacity-60 lg:hidden">

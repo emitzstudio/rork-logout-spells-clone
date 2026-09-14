@@ -14,6 +14,7 @@ import { join } from "node:path";
 import { PDFDict, PDFDocument, PDFName, PDFStream, PDFString } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 
+import { createEmptyReceiptDraft, previewReceipt, withDerivedMoney } from "@/data/receipts";
 import type { Receipt } from "@/data/receipts";
 import { DEFAULT_RECEIPT_BRAND, renderReceipt, type ReceiptAssets } from "@/lib/receiptPdf";
 
@@ -33,10 +34,11 @@ const assets: ReceiptAssets = {
 const base: Receipt = {
   id: "11111111-1111-4111-a111-111111111111",
   number: "LS-2026-0001",
+  bookingType: null, baseMinor: null, gstMinor: null, tcsMinor: null,
   receiptDate: "2026-09-13",
   spellId: null,
   travellerName: "Vidushi Verma",
-  travellerEmail: "vidushi@logoutspells.com",
+  travellerEmail: "traveller@example.com",
   travellerPhone: "+91 98765 43210",
   travellersCount: 2,
   tripName: "Thailand Full Moon",
@@ -115,7 +117,7 @@ describe("renderReceipt", () => {
     /* Every fact the founder typed is drawn as text - whole strings, rupee sign included. */
     for (const expected of [
       "LOGOUT SPELLS", "BOOKING RECEIPT", "LS-2026-0001", "Issued 13 September 2026", "PARTIALLY PAID",
-      "Thailand Full Moon", "Vidushi Verma", "+91 98765 43210", "vidushi@logoutspells.com", "2 travellers",
+      "Thailand Full Moon", "Vidushi Verma", "+91 98765 43210", "traveller@example.com", "2 travellers",
       "23–28 September 2026", "Koh Samui & Krabi, Thailand",
       "₹1,20,000/-", "₹36,000/-", "₹84,000/-", "Received 12 September 2026", "Due by 1 September 2026",
       "Partially Paid", "12 September 2026", "1 September 2026",
@@ -200,6 +202,47 @@ describe("renderReceipt", () => {
     const pending = await renderReceipt({ ...base, number: "LS-2026-0003", receivedMinor: 0, balanceMinor: base.totalMinor, paymentStatus: "pending", paymentDate: null, travellerEmail: "", travellerPhone: "", destination: "", travelDates: "", notes: "" }, assets);
     keep("receipt-pending.pdf", pending);
     for (const bytes of [paid, pending]) expect((await load(bytes)).getPageCount()).toBe(1);
+  });
+
+  it.each(["international", "domestic"] as const)("renders a complete, single-page %s receipt using the confirmed ₹85,000 example", async (bookingType) => {
+    const draft = withDerivedMoney({
+      ...createEmptyReceiptDraft(new Date("2026-09-14T09:00:00Z")), bookingType,
+      travellerName: "Ananya Sharma", travellerEmail: "ananya@example.com", travellerPhone: "+91 98765 43210", travellersCount: 1,
+      tripName: "The Blinding Nights Spell", destination: bookingType === "international" ? "Bangkok, Thailand" : "Jibhi, Himachal Pradesh",
+      travelDates: "9–12 October 2026", total: "85000", received: "20000", paymentDate: "2026-09-14", balanceDueDate: "2026-10-01",
+      notes: "Advance received via UPI. Please carry your booking confirmation.",
+    });
+    const receipt = { ...previewReceipt(draft, null), number: "LS-2026-0040" };
+    const trace: string[] = [];
+    const bytes = await renderReceipt(receipt, { ...assets, trace, brand: { email: "vidushi@logoutspells.com" } });
+    keep(`receipt-${bookingType}.pdf`, bytes);
+    expect((await load(bytes)).getPageCount()).toBe(1);
+    const text = trace.join(" ");
+    expect(text).toContain("Pre-tax trip price ₹85,000/-");
+    expect(text).toContain("GST (5%) ₹4,250/-");
+    expect(text).toContain("logoutspells@gmail.com");
+    expect(text).not.toContain("vidushi@logoutspells.com");
+    if (bookingType === "international") {
+      expect(text).toContain("5% GST + 2% TCS applicable");
+      expect(text).toContain("TCS (2%) ₹1,700/-");
+      expect(text).toContain("₹90,950/-");
+      expect(text).toContain("₹70,950/-");
+    } else {
+      expect(text).toContain("5% GST applicable");
+      expect(text).not.toContain("TCS");
+      expect(text).toContain("₹89,250/-");
+      expect(text).toContain("₹69,250/-");
+    }
+  });
+
+  it("keeps ordinary two-line trips and a full paragraph of notes on one page without shrinking body text", async () => {
+    const receipt: Receipt = { ...base, bookingType: "international", baseMinor: 8500000, gstMinor: 425000, tcsMinor: 170000, totalMinor: 9095000, balanceMinor: 5495000,
+      tripName: "Thailand Full Moon — Bangkok, Koh Samui and Krabi",
+      notes: "Advance received via UPI. Balance due before departure. Please carry a valid passport and keep this receipt for your records.",
+    };
+    const bytes = await renderReceipt(receipt, assets);
+    keep("receipt-two-line.pdf", bytes);
+    expect((await load(bytes)).getPageCount()).toBe(1);
   });
 
   it("accepts brand overrides from site settings", async () => {

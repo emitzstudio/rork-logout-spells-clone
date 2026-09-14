@@ -15,7 +15,7 @@ import { deleteReceiptPdfs, downloadReceiptPdf, uploadReceiptPdf } from "@/integ
 import type { Database } from "@/integrations/supabase/types";
 import { DEFAULT_RECEIPT_BRAND, renderReceiptPdf, type ReceiptBrand } from "@/lib/receiptPdf";
 
-import { mapReceipt, receiptFilename, receiptWritePayload } from "./receipts";
+import { mapReceipt, receiptFilename, receiptWritePayload, RECEIPT_COMPANY_EMAIL } from "./receipts";
 import type { Receipt, ReceiptDraft, ReceiptRow } from "./receipts";
 import { useSiteSettings } from "./siteSettingsStore";
 
@@ -53,10 +53,10 @@ export function useReceiptBrand(): ReceiptBrand {
       ...DEFAULT_RECEIPT_BRAND,
       name: settings.site.siteName !== "" ? settings.site.siteName : DEFAULT_RECEIPT_BRAND.name,
       tagline: settings.site.tagline,
-      email: settings.contact.contactEmail !== "" ? settings.contact.contactEmail : DEFAULT_RECEIPT_BRAND.email,
+      email: RECEIPT_COMPANY_EMAIL,
       phone: settings.contact.phone,
     }),
-    [settings.site.siteName, settings.site.tagline, settings.contact.contactEmail, settings.contact.phone],
+    [settings.site.siteName, settings.site.tagline, settings.contact.phone],
   );
 }
 
@@ -96,7 +96,7 @@ export class ReceiptPdfError extends Error {
  * new object is safely uploaded, and the old object is removed last.
  */
 const saveReceipt = async ({ draft, existing, brand }: SaveReceiptInput): Promise<SaveReceiptResult> => {
-  const payload = receiptWritePayload(draft);
+  const payload = receiptWritePayload({ ...draft, legacyPricing: existing !== null && existing.bookingType === null });
   let row: ReceiptRow;
   if (existing) {
     const { data, error } = await supabase

@@ -5,12 +5,15 @@
  * "Receipt created" moment offers the PDF, editing keeps the number, and the
  * list downloads a stored receipt.
  */
+import "@/index.css";
 import { act } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
+import { ReceiptPdfError } from "@/data/receiptStore";
 
-import { receiptWritePayload } from "@/data/receipts";
+import { receiptWritePayload, draftFromReceipt, previewReceipt, withDerivedMoney } from "@/data/receipts";
 import type { Receipt, ReceiptDraft } from "@/data/receipts";
 import type { ManagedSpell } from "@/data/spells";
 import ReceiptEditor from "@/pages/dashboard/ReceiptEditor";
@@ -35,7 +38,7 @@ vi.mock("@/data/receiptStore", () => ({
   useReceiptBrand: () => ({
     name: "Logout Spells",
     tagline: "Belonging > Bookings",
-    email: "vidushi@logoutspells.com",
+    email: "logoutspells@gmail.com",
     phone: "",
     website: "logoutspells.com",
     siteUrl: "https://logoutspells.com",
@@ -63,6 +66,7 @@ const spell: ManagedSpell = {
 };
 
 const existing: Receipt = {
+  bookingType: null, baseMinor: null, gstMinor: null, tcsMinor: null,
   id: "receipt-7", number: "LS-2026-0007", receiptDate: "2026-09-13", spellId: null,
   travellerName: "Vidushi Verma", travellerEmail: "vidushi@logoutspells.com", travellerPhone: "", travellersCount: 2,
   tripName: "Thailand Full Moon", travelDates: "23–28 September 2026", destination: "Koh Samui",
@@ -85,7 +89,8 @@ const app = (path: string) => (
   </MemoryRouter>
 );
 
-beforeEach(() => {
+beforeEach(async () => {
+  await page.viewport(1440, 1000);
   vi.clearAllMocks();
   mocks.spells = [spell];
   mocks.receipts = [];
@@ -95,20 +100,22 @@ test("balance and status follow the amounts, overrides have a way back, a Spell 
   const screen = await render(app("/dashboard/receipts/new"));
   await expect.element(screen.getByText("LS-2026-····")).toBeVisible();
 
-  /* ₹12,000 − ₹3,600 = ₹8,400, formatted the Indian way, status suggested. */
+  await expect.element(screen.getByLabelText("Total trip price")).not.toBeInTheDocument();
+  await screen.getByRole("radio", { name: "Domestic", exact: true }).click();
+  /* ₹12,000 + ₹600 GST − ₹3,600 = ₹9,000. */
   const total = screen.getByLabelText("Total trip price");
   const received = screen.getByLabelText("Amount received");
   const balance = screen.getByLabelText("Balance amount");
   await total.fill("12000");
   await received.fill("3600");
   await expect.element(total).toHaveValue("12,000");
-  await expect.element(balance).toHaveValue("8,400");
+  await expect.element(balance).toHaveValue("9,000");
   await expect.element(screen.getByRole("button", { name: "Partially Paid", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect.element(screen.getByText("₹8,400/-", { exact: true })).toBeVisible();
-  await expect.element(screen.getByText("Advance received · Balance of ₹8,400/- due before departure")).toBeVisible();
+  await expect.element(screen.getByText("₹9,000/-", { exact: true })).toBeVisible();
+  await expect.element(screen.getByText("Advance received · Balance of ₹9,000/- due before departure")).toBeVisible();
 
   /* Paying in full settles the balance and flips the status automatically… */
-  await received.fill("12000");
+  await received.fill("12600");
   await expect.element(balance).toHaveValue("0");
   await expect.element(screen.getByRole("button", { name: "Paid", exact: true })).toHaveAttribute("aria-pressed", "true");
   await received.fill("3600");
@@ -117,7 +124,7 @@ test("balance and status follow the amounts, overrides have a way back, a Spell 
   await balance.fill("5000");
   await expect.element(screen.getByText("Manual", { exact: true })).toBeVisible();
   await screen.getByRole("button", { name: "Reset to automatic" }).click();
-  await expect.element(balance).toHaveValue("8,400");
+  await expect.element(balance).toHaveValue("9,000");
   await screen.getByRole("button", { name: "Pending", exact: true }).click();
   await expect.element(screen.getByRole("button", { name: "Pending", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect.element(screen.getByText("Chosen by hand.")).toBeVisible();
@@ -140,7 +147,7 @@ test("balance and status follow the amounts, overrides have a way back, a Spell 
   await expect.element(total).toHaveValue("12,000");
   await screen.getByRole("button", { name: "Use ₹14,000 × 1" }).click();
   await expect.element(total).toHaveValue("14,000");
-  await expect.element(balance).toHaveValue("10,400");
+  await expect.element(balance).toHaveValue("11,100");
 
   await screen.getByRole("button", { name: "Generate Receipt" }).first().click();
   expect(mocks.mutate).toHaveBeenCalledTimes(1);
@@ -152,9 +159,11 @@ test("balance and status follow the amounts, overrides have a way back, a Spell 
     trip_name: "Jibhi with Kavya",
     destination: "Jibhi, Himachal Pradesh",
     spell_id: SPELL_ID,
-    total_minor: 1_400_000,
+    booking_type: "domestic",
+    base_minor: 1_400_000,
+    total_minor: 1_470_000,
     received_minor: 360_000,
-    balance_minor: 1_040_000,
+    balance_minor: 1_110_000,
     payment_status: "partially_paid",
   });
 
@@ -165,9 +174,10 @@ test("balance and status follow the amounts, overrides have a way back, a Spell 
     number: "LS-2026-0001",
     travellerName: "Ananya Sharma",
     tripName: "Jibhi with Kavya",
-    totalMinor: 1_400_000,
+    bookingType: "domestic", baseMinor: 1_400_000, gstMinor: 70_000, tcsMinor: 0,
+    totalMinor: 1_470_000,
     receivedMinor: 360_000,
-    balanceMinor: 1_040_000,
+    balanceMinor: 1_110_000,
     pdfPath: "receipt-1/LS-2026-0001-abc.pdf",
   };
   await act(async () => {
@@ -182,7 +192,8 @@ test("balance and status follow the amounts, overrides have a way back, a Spell 
   /* "Create another" starts clean - the saved receipt is not touched again. */
   await dialog.getByRole("button", { name: "Create another" }).click();
   await expect.element(screen.getByRole("dialog")).not.toBeInTheDocument();
-  await expect.element(screen.getByLabelText("Traveller name")).toHaveValue("");
+  await expect.element(screen.getByLabelText("Traveller name")).not.toBeInTheDocument();
+  await expect.element(screen.getByRole("radio", { name: "Domestic", exact: true })).not.toBeChecked();
   await expect.element(screen.getByText("LS-2026-····")).toBeVisible();
 });
 
@@ -205,6 +216,82 @@ test("editing an existing receipt opens its saved figures and regenerates the sa
   expect(input.existing?.id).toBe("receipt-7");
   expect(input.existing?.number).toBe("LS-2026-0007");
   expect(receiptWritePayload(input.draft)).toMatchObject({ received_minor: 12_000_000, balance_minor: 0, payment_status: "paid" });
+});
+
+test("International taxes, classification changes and reopening preserve the pre-tax price and receipt number", async () => {
+  const screen = await render(app("/dashboard/receipts/new"));
+  await screen.getByRole("button", { name: "Generate Receipt", exact: true }).first().click();
+  expect(mocks.mutate).not.toHaveBeenCalled();
+  await expect.element(screen.getByText("Choose International or Domestic booking type")).toBeVisible();
+  await screen.getByRole("radio", { name: "International", exact: true }).click();
+  await screen.getByLabelText("Traveller name").fill("Ananya Sharma");
+  await screen.getByLabelText("Spell / Trip name").fill("The Blinding Nights Spell");
+  await screen.getByLabelText("Total trip price").fill("85000");
+  await screen.getByLabelText("Amount received").fill("20000");
+  await expect.element(screen.getByLabelText("Balance amount")).toHaveValue("70,950");
+  const calculation = screen.getByLabelText("Automatic tax calculation");
+  await expect.element(calculation.getByText("₹4,250/-", { exact: true })).toBeVisible();
+  await expect.element(calculation.getByText("₹1,700/-", { exact: true })).toBeVisible();
+  await expect.element(calculation.getByText("₹90,950/-", { exact: true })).toBeVisible();
+  await expect.element(screen.getByText("logoutspells@gmail.com")).toBeVisible();
+  await screen.getByRole("button", { name: "Generate Receipt", exact: true }).first().click();
+  const [input] = mocks.mutate.mock.calls[0] as MutateCall;
+  expect(receiptWritePayload(input.draft)).toMatchObject({ booking_type: "international", base_minor: 8500000, total_minor: 9095000, balance_minor: 7095000 });
+  const saved = { ...previewReceipt(input.draft, existing), id: existing.id };
+  await screen.unmount();
+  mocks.receipts = [saved];
+  const editor = await render(app(`/dashboard/receipts/${saved.id}/edit`));
+  await expect.element(editor.getByRole("radio", { name: "International", exact: true })).toBeChecked();
+  await expect.element(editor.getByLabelText("Total trip price")).toHaveValue("85,000");
+  await expect.element(editor.getByLabelText("Balance amount")).toHaveValue("70,950");
+  await editor.getByRole("radio", { name: "Domestic", exact: true }).click();
+  await expect.element(editor.getByLabelText("Balance amount")).toHaveValue("69,250");
+  await expect.element(editor.getByLabelText("Automatic tax calculation").getByText("TCS (2%)")).not.toBeInTheDocument();
+  await editor.getByRole("button", { name: "Save & regenerate PDF", exact: true }).first().click();
+  const [edit] = mocks.mutate.mock.calls[1] as MutateCall;
+  expect(edit.existing?.number).toBe(existing.number);
+  expect(receiptWritePayload(edit.draft)).toMatchObject({ booking_type: "domestic", total_minor: 8925000, balance_minor: 6925000 });
+  expect(draftFromReceipt(previewReceipt(withDerivedMoney(edit.draft), saved)).bookingType).toBe("domestic");
+});
+
+test("a legacy conversion that saves but fails to render stays classified on retry", async () => {
+  mocks.receipts = [existing];
+  const screen = await render(app(`/dashboard/receipts/${existing.id}/edit`));
+  await screen.getByRole("radio", { name: "International", exact: true }).click();
+  await expect.element(screen.getByRole("button", { name: "Keep original pricing instead" })).toBeVisible();
+  await screen.getByRole("button", { name: "Keep original pricing instead" }).click();
+  await expect.element(screen.getByLabelText("Balance amount")).toHaveValue("84,000");
+  await screen.getByRole("radio", { name: "International", exact: true }).click();
+  await screen.getByRole("button", { name: "Save & regenerate PDF", exact: true }).first().click();
+  const [input, callbacks] = mocks.mutate.mock.calls[0] as [{ draft: ReceiptDraft }, { onError: (error: Error) => void }];
+  const saved = { ...previewReceipt(input.draft, existing), pdfPath: "", pdfGeneratedAt: null };
+  await act(async () => callbacks.onError(new ReceiptPdfError("Font unavailable", saved)));
+  await expect.element(screen.getByRole("button", { name: "Keep original pricing instead" })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole("radio", { name: "International", exact: true })).toBeChecked();
+  await screen.getByRole("button", { name: "Save & regenerate PDF", exact: true }).first().click();
+  const [retry] = mocks.mutate.mock.calls[1] as MutateCall;
+  expect(retry.existing?.number).toBe(existing.number);
+  expect(retry.draft.legacyPricing).toBe(false);
+  expect(receiptWritePayload(retry.draft).booking_type).toBe("international");
+});
+
+for (const width of [390, 1440]) test(`receipt type selection and readable preview fit ${width}px`, async () => {
+  await page.viewport(width, 1000);
+  const screen = await render(<div className="min-h-screen bg-charcoal-deep p-4">{app("/dashboard/receipts/new")}</div>);
+  await screen.getByRole("radio", { name: "International", exact: true }).click();
+  await screen.getByLabelText("Traveller name").fill("Ananya Sharma");
+  await screen.getByLabelText("Spell / Trip name").fill("The Blinding Nights Spell");
+  await screen.getByLabelText("Total trip price").fill("85000");
+  await screen.getByLabelText("Amount received").fill("20000");
+  const preview = document.querySelector('[aria-label^="Preview of receipt"]') as HTMLElement;
+  expect(preview.textContent).toContain("₹90,950/-");
+  expect(preview.textContent).toContain("logoutspells@gmail.com");
+  expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
+  for (const node of preview.querySelectorAll("p, h2")) {
+    const bounds = node.getBoundingClientRect();
+    expect(bounds.right).toBeLessThanOrEqual(width);
+    expect(node.scrollWidth).toBeLessThanOrEqual(node.clientWidth + 1);
+  }
 });
 
 test("the Receipts list shows each receipt's number, money and status, and downloads the stored PDF", async () => {

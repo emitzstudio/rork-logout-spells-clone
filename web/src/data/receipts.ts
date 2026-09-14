@@ -20,6 +20,7 @@ import type { ManagedSpell } from "./spells";
 type Tables = Database["public"]["Tables"];
 
 export type ReceiptRow = Tables["receipts"]["Row"];
+export type ReceiptBookingType = "international" | "domestic";
 export type ReceiptPaymentStatus = Database["public"]["Enums"]["receipt_payment_status"];
 
 /* --------------------------------- Types --------------------------------- */
@@ -39,6 +40,12 @@ export interface Receipt {
   tripName: string;
   travelDates: string;
   destination: string;
+  /** Null only for historical receipts with no recorded tax classification. */
+  bookingType: ReceiptBookingType | null;
+  baseMinor: number | null;
+  gstMinor: number | null;
+  tcsMinor: number | null;
+  /** Final amount owed, including applicable taxes. */
   totalMinor: number;
   receivedMinor: number;
   balanceMinor: number;
@@ -58,6 +65,9 @@ export interface Receipt {
 
 /** What the founder edits - money as typed text, plus the "edited by hand" flags. */
 export interface ReceiptDraft {
+  bookingType: ReceiptBookingType | null;
+  /** Only a saved, unclassified receipt may retain the old pricing rules. */
+  legacyPricing: boolean;
   receiptDate: string;
   spellId: string | null;
   travellerName: string;
@@ -67,7 +77,7 @@ export interface ReceiptDraft {
   tripName: string;
   travelDates: string;
   destination: string;
-  /** Rupees as typed: "12,000" / "12000" / "12000.50". */
+  /** Whole booking pre-tax rupees; historical unclassified drafts retain their final total. */
   total: string;
   received: string;
   /** Derived (total − received) until the founder edits it by hand. */
@@ -84,6 +94,9 @@ export interface ReceiptDraft {
 }
 
 /* ------------------------------- Metadata -------------------------------- */
+
+/** Receipt issuer address, intentionally independent of website contact and email delivery settings. */
+export const RECEIPT_COMPANY_EMAIL = "logoutspells@gmail.com";
 
 export const PAYMENT_STATUS_ORDER: ReceiptPaymentStatus[] = ["paid", "partially_paid", "pending"];
 
@@ -132,22 +145,21 @@ export const RECEIPT_LIMITS = {
 export const rupeesToMinor = (input: string): number | null => {
   const cleaned = input.replace(/[₹,\s]/g, "").replace(/\/-$/, "");
   if (cleaned === "" || cleaned === "-" || cleaned === "−" || cleaned === ".") return null;
-  if (!/^-?\d*(\.\d{0,2})?$/.test(cleaned)) return null;
-  const value = Number(cleaned);
-  if (!Number.isFinite(value)) return null;
-  return Math.round(value * 100);
+  if (!/^-?(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/.test(cleaned)) return null;
+  const [whole, fraction = ""] = cleaned.replace(/^-/, "").split(".");
+  const unsigned = Number(whole || "0") * 100 + Number(fraction.padEnd(2, "0"));
+  const minor = cleaned.startsWith("-") ? -unsigned : unsigned;
+  return Number.isSafeInteger(minor) ? minor : null;
 };
 
 const hasPaise = (minor: number): boolean => Math.abs(minor) % 100 !== 0;
 
 /** Paise → "12,000" / "12,000.50" - what the money inputs show once settled. */
 export const minorToRupeesInput = (minor: number): string => {
-  const value = Math.abs(minor) / 100;
-  const digits = hasPaise(minor) ? 2 : 0;
-  return `${minor < 0 ? "-" : ""}${value.toLocaleString("en-IN", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })}`;
+  const absolute = Math.abs(minor);
+  const whole = Math.floor(absolute / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  const paise = absolute % 100;
+  return `${minor < 0 ? "-" : ""}${whole}${paise ? `.${String(paise).padStart(2, "0")}` : ""}`;
 };
 
 /**
@@ -172,20 +184,50 @@ export const suggestPaymentStatus = (totalMinor: number, receivedMinor: number):
 };
 
 export interface ReceiptMoney {
+  baseMinor: number | null;
+  gstMinor: number | null;
+  tcsMinor: number | null;
   totalMinor: number;
   receivedMinor: number;
   balanceMinor: number;
   paymentStatus: ReceiptPaymentStatus;
 }
 
+/** Both taxes use the same pre-tax base; round each separately to the nearest paise. */
+export const receiptTaxAmounts = (inputMinor: number, bookingType: ReceiptBookingType | null): Pick<ReceiptMoney, "baseMinor" | "gstMinor" | "tcsMinor" | "totalMinor"> => {
+  if (bookingType === null) return { baseMinor: null, gstMinor: null, tcsMinor: null, totalMinor: inputMinor };
+  // Integer quotient/remainder avoids floating-point percentage rounding drift.
+  const percent = (rate: number): number => Math.floor(inputMinor / 100) * rate + Math.floor(((inputMinor % 100) * rate + 50) / 100);
+  const gstMinor = percent(5);
+  const tcsMinor = bookingType === "international" ? percent(2) : 0;
+  return { baseMinor: inputMinor, gstMinor, tcsMinor, totalMinor: inputMinor + gstMinor + tcsMinor };
+};
+
+export const BOOKING_TYPE_META: Record<ReceiptBookingType, { label: string; taxNote: string }> = {
+  international: { label: "International", taxNote: "5% GST + 2% TCS applicable" },
+  domestic: { label: "Domestic", taxNote: "5% GST applicable" },
+};
+
+/** Shared automatic tax text for the editor, preview and PDF; never stored in free-form notes. */
+export const receiptTaxLines = (receipt: Pick<Receipt, "bookingType" | "baseMinor" | "gstMinor" | "tcsMinor">): string[] => {
+  if (!receipt.bookingType || receipt.baseMinor === null) return [];
+  const meta = BOOKING_TYPE_META[receipt.bookingType];
+  const amounts = [`Pre-tax trip price ${formatReceiptINR(receipt.baseMinor)}`, `GST (5%) ${formatReceiptINR(receipt.gstMinor ?? 0)}`];
+  if (receipt.bookingType === "international") amounts.push(`TCS (2%) ${formatReceiptINR(receipt.tcsMinor ?? 0)}`);
+  return [`${meta.label} · ${meta.taxNote}`, amounts.join(" · "), "Taxes calculated on the pre-tax trip price and included in the total above."];
+};
+
 /**
  * Resolves the draft's money exactly as the receipt will store it - manual
  * overrides win where the founder set them. Null while a figure is unparseable.
  */
 export const resolveMoney = (draft: ReceiptDraft): ReceiptMoney | null => {
-  const totalMinor = rupeesToMinor(draft.total);
+  const inputMinor = rupeesToMinor(draft.total);
   const receivedMinor = draft.received.trim() === "" ? 0 : rupeesToMinor(draft.received);
-  if (totalMinor === null || receivedMinor === null || totalMinor < 0 || receivedMinor < 0) return null;
+  if (inputMinor === null || receivedMinor === null || inputMinor < 0 || receivedMinor < 0) return null;
+  const taxes = receiptTaxAmounts(inputMinor, draft.bookingType);
+  const { totalMinor } = taxes;
+  if (!Number.isSafeInteger(totalMinor)) return null;
   let balanceMinor = deriveBalanceMinor(totalMinor, receivedMinor);
   if (draft.balanceManual) {
     const manual = rupeesToMinor(draft.balance);
@@ -193,7 +235,7 @@ export const resolveMoney = (draft: ReceiptDraft): ReceiptMoney | null => {
     balanceMinor = manual;
   }
   const paymentStatus = draft.statusManual ? draft.paymentStatus : suggestPaymentStatus(totalMinor, receivedMinor);
-  return { totalMinor, receivedMinor, balanceMinor, paymentStatus };
+  return { ...taxes, receivedMinor, balanceMinor, paymentStatus };
 };
 
 /**
@@ -201,12 +243,13 @@ export const resolveMoney = (draft: ReceiptDraft): ReceiptMoney | null => {
  * follow the amounts until the founder takes them over by hand.
  */
 export const withDerivedMoney = (draft: ReceiptDraft): ReceiptDraft => {
-  const totalMinor = rupeesToMinor(draft.total);
+  const inputMinor = rupeesToMinor(draft.total);
+  const totalMinor = inputMinor === null ? null : receiptTaxAmounts(inputMinor, draft.bookingType).totalMinor;
   const receivedMinor = draft.received.trim() === "" ? 0 : rupeesToMinor(draft.received);
   const next = { ...draft };
-  if (totalMinor === null || receivedMinor === null) {
+  if (totalMinor === null || receivedMinor === null || totalMinor < 0 || receivedMinor < 0 || !Number.isSafeInteger(totalMinor)) {
     /* Nothing to derive from yet - an automatic balance never shows a stale figure. */
-    if (!draft.balanceManual && draft.total.trim() === "") next.balance = "";
+    if (!draft.balanceManual) next.balance = "";
     return next;
   }
   if (!draft.balanceManual) next.balance = minorToRupeesInput(deriveBalanceMinor(totalMinor, receivedMinor));
@@ -251,6 +294,8 @@ export const formatReceiptDateShort = (value: string | null | undefined): string
 /* --------------------------------- Drafts -------------------------------- */
 
 export const createEmptyReceiptDraft = (now: Date = new Date()): ReceiptDraft => ({
+  bookingType: null,
+  legacyPricing: false,
   receiptDate: todayInputValue(now),
   spellId: null,
   travellerName: "",
@@ -279,6 +324,8 @@ export const createEmptyReceiptDraft = (now: Date = new Date()): ReceiptDraft =>
  * would derive, so untouched receipts keep following the automatic rules.
  */
 export const draftFromReceipt = (receipt: Receipt): ReceiptDraft => ({
+  bookingType: receipt.bookingType,
+  legacyPricing: receipt.bookingType === null,
   receiptDate: receipt.receiptDate,
   spellId: receipt.spellId,
   travellerName: receipt.travellerName,
@@ -288,7 +335,7 @@ export const draftFromReceipt = (receipt: Receipt): ReceiptDraft => ({
   tripName: receipt.tripName,
   travelDates: receipt.travelDates,
   destination: receipt.destination,
-  total: minorToRupeesInput(receipt.totalMinor),
+  total: minorToRupeesInput(receipt.baseMinor ?? receipt.totalMinor),
   received: minorToRupeesInput(receipt.receivedMinor),
   balance: minorToRupeesInput(receipt.balanceMinor),
   balanceManual: receipt.balanceMinor !== deriveBalanceMinor(receipt.totalMinor, receipt.receivedMinor),
@@ -336,14 +383,16 @@ export const detachSpell = (draft: ReceiptDraft): ReceiptDraft => ({
 /** Everything that blocks generating the receipt, in reading order. */
 export const receiptIssues = (draft: ReceiptDraft): string[] => {
   const issues: string[] = [];
+  if (draft.bookingType === null && !draft.legacyPricing) issues.push("Choose International or Domestic booking type");
   if (draft.travellerName.trim() === "") issues.push("Add the traveller's name");
   if (draft.travellerEmail.trim() !== "" && !EMAIL_RE.test(draft.travellerEmail.trim())) {
     issues.push("That doesn't look like an email address");
   }
   if (!Number.isInteger(draft.travellersCount) || draft.travellersCount < 1) issues.push("At least one traveller");
   if (draft.tripName.trim() === "") issues.push("Add the spell or trip name");
-  const totalMinor = rupeesToMinor(draft.total);
-  if (totalMinor === null || totalMinor < 0) issues.push("Enter the total trip price in rupees");
+  const inputMinor = rupeesToMinor(draft.total);
+  const totalMinor = inputMinor === null ? null : receiptTaxAmounts(inputMinor, draft.bookingType).totalMinor;
+  if (totalMinor === null || totalMinor < 0 || !Number.isSafeInteger(totalMinor)) issues.push("Enter the total trip price in rupees");
   const receivedMinor = draft.received.trim() === "" ? 0 : rupeesToMinor(draft.received);
   if (receivedMinor === null || receivedMinor < 0) issues.push("Amount received must be a rupee amount");
   if (totalMinor !== null && receivedMinor !== null && receivedMinor > totalMinor) {
@@ -382,6 +431,10 @@ export const receiptHints = (draft: ReceiptDraft): string[] => {
 export const mapReceipt = (row: ReceiptRow): Receipt => ({
   id: row.id,
   number: row.receipt_number,
+  bookingType: row.booking_type === "international" || row.booking_type === "domestic" ? row.booking_type : null,
+  baseMinor: row.base_minor == null ? null : Number(row.base_minor),
+  gstMinor: row.gst_minor == null ? null : Number(row.gst_minor),
+  tcsMinor: row.tcs_minor == null ? null : Number(row.tcs_minor),
   receiptDate: row.receipt_date,
   spellId: row.spell_id,
   travellerName: row.traveller_name,
@@ -408,6 +461,8 @@ export const mapReceipt = (row: ReceiptRow): Receipt => ({
 /** Exactly the granted insert/update columns - the number, PDF fields and audit columns are server-owned. */
 export type ReceiptWritePayload = Pick<
   Tables["receipts"]["Insert"],
+  | "booking_type"
+  | "base_minor"
   | "receipt_date"
   | "spell_id"
   | "traveller_name"
@@ -431,9 +486,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /** Throws when the draft has blocking issues - callers validate first. */
 export const receiptWritePayload = (draft: ReceiptDraft): ReceiptWritePayload => {
+  const issues = receiptIssues(draft);
+  if (issues.length > 0) throw new Error(issues[0]);
   const money = resolveMoney(draft);
   if (!money) throw new Error("The receipt's amounts aren't valid rupee figures.");
   return {
+    booking_type: draft.bookingType,
+    base_minor: money.baseMinor,
     receipt_date: draft.receiptDate,
     /* Only a real database id may reach the uuid column - the trip snapshot is what the receipt prints anyway. */
     spell_id: draft.spellId !== null && UUID_RE.test(draft.spellId) ? draft.spellId : null,
@@ -463,10 +522,11 @@ export const receiptNumberPlaceholder = (now: Date = new Date()): string => `LS-
  * live preview. The id/number come from the saved record when editing.
  */
 export const previewReceipt = (draft: ReceiptDraft, existing: Receipt | null, now: Date = new Date()): Receipt => {
-  const money = resolveMoney(draft) ?? { totalMinor: 0, receivedMinor: 0, balanceMinor: 0, paymentStatus: draft.paymentStatus };
+  const money = resolveMoney(draft) ?? { ...receiptTaxAmounts(0, draft.bookingType), receivedMinor: 0, balanceMinor: 0, paymentStatus: draft.paymentStatus };
   const iso = now.toISOString();
   return {
     id: existing?.id ?? "preview",
+    bookingType: draft.bookingType,
     number: existing?.number ?? receiptNumberPlaceholder(now),
     receiptDate: isDateInput(draft.receiptDate) ? draft.receiptDate : todayInputValue(now),
     spellId: draft.spellId,

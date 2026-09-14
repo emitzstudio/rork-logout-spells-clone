@@ -8,6 +8,9 @@ import { describe, expect, it } from "vitest";
 import { createEmptyDraft } from "@/data/builder";
 import { spellFromDraft } from "@/data/publish";
 import {
+  BOOKING_TYPE_META,
+  receiptTaxAmounts,
+  receiptTaxLines,
   createEmptyReceiptDraft,
   deriveBalanceMinor,
   detachSpell,
@@ -39,6 +42,7 @@ const NOW = new Date("2026-09-13T10:00:00+05:30");
 const filled = (): ReceiptDraft =>
   withDerivedMoney({
     ...createEmptyReceiptDraft(NOW),
+    legacyPricing: true, // existing receipt contract remains unchanged
     travellerName: "Vidushi Verma",
     travellerEmail: "vidushi@logoutspells.com",
     tripName: "Thailand Full Moon",
@@ -55,6 +59,10 @@ describe("rupee parsing and formatting", () => {
     expect(rupeesToMinor("")).toBeNull();
     expect(rupeesToMinor("abc")).toBeNull();
     expect(rupeesToMinor("12.345")).toBeNull();
+    expect(rupeesToMinor("-.")).toBeNull();
+    expect(rupeesToMinor(".50")).toBe(50);
+    expect(rupeesToMinor("70368744177664.01")).toBe(7036874417766401);
+    expect(rupeesToMinor(minorToRupeesInput(7036874417766401))).toBe(7036874417766401);
   });
 
   it("formats with lakh grouping and the Indian /- suffix", () => {
@@ -98,7 +106,7 @@ describe("automatic balance and payment status", () => {
     const manual = withDerivedMoney({ ...filled(), balance: "5,000", balanceManual: true, paymentStatus: "pending", statusManual: true });
     expect(manual.balance).toBe("5,000");
     expect(manual.paymentStatus).toBe("pending");
-    expect(resolveMoney(manual)).toEqual({ totalMinor: 1_200_000, receivedMinor: 360_000, balanceMinor: 500_000, paymentStatus: "pending" });
+    expect(resolveMoney(manual)).toEqual({ baseMinor: null, gstMinor: null, tcsMinor: null, totalMinor: 1_200_000, receivedMinor: 360_000, balanceMinor: 500_000, paymentStatus: "pending" });
     const reset = withDerivedMoney({ ...manual, balanceManual: false, statusManual: false });
     expect(reset.balance).toBe("8,400");
     expect(reset.paymentStatus).toBe("partially_paid");
@@ -177,10 +185,57 @@ describe("spell pre-fill", () => {
   });
 });
 
+describe("automatic booking taxes", () => {
+  const taxable = (bookingType: "international" | "domestic"): ReceiptDraft => withDerivedMoney({ ...filled(), legacyPricing: false, bookingType, total: "85000", received: "20000" });
+
+  it("requires an explicit booking type for new receipts", () => {
+    expect(createEmptyReceiptDraft(NOW).bookingType).toBeNull();
+    expect(receiptIssues({ ...filled(), legacyPricing: false })[0]).toBe("Choose International or Domestic booking type");
+    expect(() => receiptWritePayload({ ...filled(), legacyPricing: false })).toThrow("Choose International or Domestic");
+  });
+
+  it.each([
+    ["international", 170000, 9095000, 7095000],
+    ["domestic", 0, 8925000, 6925000],
+  ] as const)("%s calculates taxes on the full pre-tax booking, not on the advance", (type, tcs, total, balance) => {
+    const draft = taxable(type);
+    expect(resolveMoney(draft)).toEqual({ baseMinor: 8500000, gstMinor: 425000, tcsMinor: tcs, totalMinor: total, receivedMinor: 2000000, balanceMinor: balance, paymentStatus: "partially_paid" });
+    expect(receiptWritePayload(draft)).toMatchObject({ booking_type: type, base_minor: 8500000, total_minor: total, received_minor: 2000000, balance_minor: balance });
+    const preview = previewReceipt(draft, null, NOW);
+    expect(receiptTaxLines(preview)[0]).toContain(BOOKING_TYPE_META[type].taxNote);
+    expect(receiptTaxLines(preview).join(" ").includes("TCS")).toBe(type === "international");
+    expect(receiptSummaryCards(preview)[0].amount).toBe(formatReceiptINR(total));
+    const paid = withDerivedMoney({ ...draft, received: minorToRupeesInput(total) });
+    expect(receiptIssues(paid)).toEqual([]);
+    expect(resolveMoney(paid)).toMatchObject({ balanceMinor: 0, paymentStatus: "paid", totalMinor: total });
+    expect(receiptIssues({ ...paid, received: minorToRupeesInput(total + 1) })).toContain("Amount received can't be more than the total trip price");
+    expect(resolveMoney(withDerivedMoney({ ...draft, received: "85000" }))?.paymentStatus).toBe("partially_paid");
+  });
+
+  it("rounds each tax separately to paise and handles zero and fractional prices", () => {
+    expect(receiptTaxAmounts(10, "international")).toEqual({ baseMinor: 10, gstMinor: 1, tcsMinor: 0, totalMinor: 11 });
+    expect(receiptTaxAmounts(8500050, "international")).toEqual({ baseMinor: 8500050, gstMinor: 425003, tcsMinor: 170001, totalMinor: 9095054 });
+    expect(receiptTaxAmounts(0, "domestic").totalMinor).toBe(0);
+    expect(rupeesToMinor("9007199254740992")).toBeNull();
+  });
+
+  it("edits preserve the pre-tax base and classification without double-taxing or changing the number", () => {
+    const saved = { ...previewReceipt(taxable("international"), null, NOW), id: "saved", number: "LS-2026-0030" };
+    const draft = draftFromReceipt(saved);
+    expect(draft).toMatchObject({ bookingType: "international", total: "85,000", balance: "70,950", balanceManual: false, statusManual: false });
+    expect(receiptWritePayload(draft)).toMatchObject({ total_minor: 9095000, base_minor: 8500000 });
+    const changed = withDerivedMoney({ ...draft, bookingType: "domestic" });
+    expect(previewReceipt(changed, saved, NOW)).toMatchObject({ number: saved.number, totalMinor: 8925000, tcsMinor: 0, balanceMinor: 6925000 });
+    expect(receiptWritePayload(changed).notes).toBe("");
+    expect(withDerivedMoney({ ...changed, balanceManual: true, balance: "123", statusManual: true, paymentStatus: "pending" })).toMatchObject({ balance: "123", paymentStatus: "pending" });
+  });
+});
+
 describe("rows, payloads and display", () => {
   const row: ReceiptRow = {
     id: "11111111-1111-4111-a111-111111111111",
     receipt_number: "LS-2026-0007",
+    booking_type: null, base_minor: null, gst_minor: null, tcs_minor: null,
     receipt_date: "2026-09-13",
     spell_id: null,
     traveller_name: "Vidushi Verma",
