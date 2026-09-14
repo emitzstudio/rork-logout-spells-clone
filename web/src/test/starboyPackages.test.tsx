@@ -11,6 +11,7 @@ import StarboyExperience from "@/components/spell/StarboyExperience";
 import { STARBOY_BROCHURE_URL } from "@/data/starboyBrochure";
 import { STARBOY_PACKAGE_BROCHURES } from "@/data/starboyPackageBrochures";
 import sql from "../../../backend/migrations/0091_starboy_three_packages.sql?raw";
+import flightSql from "../../../backend/migrations/0096_starboy_outbound_flight_excluded.sql?raw";
 
 const packages = packageCardsSchema.parse(packagesJson);
 const draft = {
@@ -29,7 +30,7 @@ describe("Starboy three package comparison", () => {
       ["STARBOY", 140000, 150000, "9–15 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
       ["TIMELESS", 190000, 200000, "9–15 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
     ]);
-    expect(packages.map((p) => [p.included.length, p.excluded.length])).toEqual([[5, 5], [12, 5], [16, 2]]);
+    expect(packages.map((p) => [p.included.length, p.excluded.length])).toEqual([[5, 5], [11, 6], [16, 2]]);
     expect(html).toContain("grid-cols-1");
     expect(html).toContain("lg:grid-cols-3");
     expect(html.indexOf('data-package="xo"')).toBeLessThan(html.indexOf('data-package="starboy"'));
@@ -56,8 +57,12 @@ describe("Starboy three package comparison", () => {
 
   it("keeps the flight directions and premium-only experiences unambiguous", () => {
     expect(packages[0].included.some((i) => /flight|Phuket|Visa|Insurance|ATV/.test(i.title))).toBe(false);
-    expect(packages[1].included.find((i) => i.title === "International Flight")?.detail).toBe("India → Bangkok");
-    expect(packages[1].excluded[0].detail).toBe("Phuket → India not included");
+    expect(packages[1].included.some((i) => /International Flight/.test(i.title))).toBe(false);
+    expect(packages[1].excluded[0]).toEqual({ title: "International Flight", detail: "India → Bangkok" });
+    expect(packages[1].excluded[1].detail).toBe("Phuket → India not included");
+    expect(packages[1].included.find((i) => i.title === "Internal Flight")?.detail).toBe("Bangkok → Phuket");
+    const starboyCard = (html.match(/<article[\s\S]*?<\/article>/g) ?? [])[1];
+    expect(starboyCard.indexOf("International Flight")).toBeGreaterThan(starboyCard.indexOf(">NOT INCLUDED / OPTIONAL</h4>"));
     expect(packages[2].included.find((i) => i.title === "International Flights")?.detail).toBe("India → Bangkok\nPhuket → India");
     for (const text of ["ATV Ride", "Visa", "Travel Insurance", "Premium Traditional Thai Massage", "Premium The Weeknd Concert Tickets"]) {
       expect(packages[2].included.some((i) => i.title === text)).toBe(true);
@@ -92,7 +97,19 @@ describe("Starboy three package comparison", () => {
   });
 
   it("publishes the exact same cards with a guarded page-only migration", () => {
-    expect(JSON.parse(sql.split("$cards$")[1])).toEqual(packages);
+    const original = packageCardsSchema.parse(JSON.parse(sql.split("$cards$")[1]));
+    const flight = JSON.parse(flightSql.split("$flight$")[1]);
+    const revised = original.map((p) => p.id !== "starboy" ? p : {
+      ...p,
+      included: p.included.filter((item) => item.title !== flight.title),
+      excluded: [flight, ...p.excluded],
+    });
+    expect(revised).toEqual(packages);
+    expect(flightSql).toContain("2026-09-14T12:24:57.698041+00:00");
+    expect(flightSql).toContain("update public.spells set page = v_page where id = v_id");
+    expect(flightSql).toContain("India → Bangkok and Phuket → India international flights are not included.");
+    expect(flightSql).toContain("v_protected is distinct from v_after_protected");
+    expect(flightSql).not.toMatch(/\b(?:alter table|drop table|delete from|truncate|create policy)\b/i);
     expect(sql).toContain("2026-09-14T08:08:49.233689+00:00");
     expect(sql).toContain("update public.spells set page = v_page where id = v_id");
     expect(sql).toContain("v_protected is distinct from v_after_protected");

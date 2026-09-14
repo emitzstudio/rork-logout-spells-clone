@@ -38,8 +38,10 @@ try {
       assert(await link.isVisible());
       const bounds = await link.boundingBox();
       assert(bounds && bounds.height >= 44 && bounds.x >= 0 && bounds.x + bounds.width <= width);
-      const items = await card.locator("li").allTextContents();
-      assert.deepEqual(items, [...pack.included, ...pack.excluded].map((item) => item.title + (item.detail ?? "")));
+      assert.deepEqual(await card.locator("h4").allTextContents(), ["INCLUDED", pack.excludedHeading]);
+      for (const [index, items] of [pack.included, pack.excluded].entries()) {
+        assert.deepEqual(await card.locator("ul").nth(index).locator("li").allTextContents(), items.map((item) => item.title + (item.detail ?? "")));
+      }
     }
     for (const button of await page.getByRole("button", { name: /Download (itinerary|brochure) \(PDF\)/ }).all()) {
       await button.click();
@@ -50,6 +52,12 @@ try {
       assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= width && bounds.height <= 900);
       await page.keyboard.press("Escape");
     }
+    await page.getByRole("button", { name: "Which experiences are marked included?", exact: true }).click();
+    const story = await page.locator("main").innerText();
+    assert(story.includes("India → Bangkok and Phuket → India international flights are not included."));
+    assert(!story.includes("One Way International Flight"));
+    assert(!story.includes("STARBOY adds Phuket and the India → Bangkok international flight"));
+    assert.equal(await page.locator('a[href*="STARBOY-9-15-Oct-2026-Grimoire-v1.pdf"]').count(), 0);
     assert.equal(await page.locator('a[href*="Grimoire-v13.pdf"]').count(), 0);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []);

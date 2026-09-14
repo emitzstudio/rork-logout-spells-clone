@@ -1,7 +1,7 @@
 /** Immutable, independently shareable PDFs for the September 14 package terms. */
 export const STARBOY_PACKAGE_BROCHURES = {
   xo: "/brochures/Logout-Spells-Blinding-Nights-XO-9-12-Oct-2026-Grimoire-v1.pdf",
-  starboy: "/brochures/Logout-Spells-Blinding-Nights-STARBOY-9-15-Oct-2026-Grimoire-v1.pdf",
+  starboy: "/brochures/Logout-Spells-Blinding-Nights-STARBOY-9-15-Oct-2026-Grimoire-v2.pdf",
   timeless: "/brochures/Logout-Spells-Blinding-Nights-TIMELESS-9-15-Oct-2026-Grimoire-v1.pdf",
 } as const;
 

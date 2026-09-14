@@ -13,9 +13,12 @@ assert([draft, existing, publish].filter(Boolean).length === 1, "Choose --draft,
 const render = process.argv.includes("--render");
 const compact = (value: string): string => printable(value).normalize("NFKC").toLowerCase().replace(/\s+/g, "");
 if (draft || render) mkdirSync(".cache/package-grimoires", { recursive: true });
-// Validate every edition before publishing any of them.
+const selectedId = process.argv.find((arg) => arg.startsWith("--package="))?.slice(10);
+const cards = packageCardsSchema.parse(packages).filter((card) => !selectedId || card.id === selectedId);
+assert(cards.length > 0, `Unknown package: ${selectedId}`);
+// Validate every selected edition before publishing any of them.
 const generated: { filename: string; bytes: Uint8Array }[] = [];
-for (const card of packageCardsSchema.parse(packages)) {
+for (const card of cards) {
   const { spec, dashboard, revision } = starboyPackageContent(card);
   const bytes = existing ? readFileSync(`../web/public/brochures/${spec.fileName}`) : await buildGrimoireStarboy(spec, dashboard, undefined, revision);
   const doc = mupdf.Document.openDocument(bytes, "application/pdf");
@@ -82,7 +85,13 @@ for (const card of packageCardsSchema.parse(packages)) {
     assert(!/optional ATV/i.test(texts[6]));
     assert(compact(texts[4]).includes(compact("premium traditional Thai massage")));
   }
-  if (card.id === "starboy") assert(compact(texts[6]).includes(compact("ATV RIDE · OPTIONAL")));
+  if (card.id === "starboy") {
+    assert(compact(texts[6]).includes(compact("ATV RIDE · OPTIONAL")));
+    assert(!/international flight/i.test(includedText), "STARBOY must not include international flights");
+    assert(!compact(includedText).includes(compact("India → Bangkok")));
+    assert(compact(excludedText).includes(compact("International Flight India → Bangkok")));
+    assert(compact(includedText).includes(compact("Internal Flight Bangkok → Phuket")));
+  }
   if (existing) assert(Buffer.from(bytes).equals(readFileSync(spec.fileName)), "Public/source bytes differ");
   generated.push({ filename: spec.fileName, bytes });
   console.log(`PASS ${card.name}: ${doc.countPages()} pages, exact prices and terms, complete itinerary, safe margins, correct inquiry link (${bytes.length} bytes)`);

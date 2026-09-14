@@ -30,6 +30,16 @@ describe("Package-specific Grimoires", () => {
     expect(replaceRetiredStarboyBrochure(path)).toBe(path);
   });
 
+  it("moves the outbound flight only to STARBOY exclusions and versions only that PDF", () => {
+    const starboy = starboyPackageContent(packages[1]);
+    expect(starboy.spec.final.lists.left.join(" ")).not.toContain("International Flight");
+    expect(starboy.spec.final.lists.right[0]).toBe("International Flight · India → Bangkok");
+    expect(starboy.spec.final.lists.left).toContain("Internal Flight · Bangkok → Phuket");
+    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("Grimoire-v2.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("Grimoire-v1.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.timeless).toContain("Grimoire-v1.pdf");
+  });
+
   it("never falls back from an unknown package to someone else's PDF", () => {
     for (const id of ["unknown", "toString", "__proto__", "", "XO"]) expect(starboyPackageBrochure(id)).toBeUndefined();
     expect(new Set(Object.values(STARBOY_PACKAGE_BROCHURES)).size).toBe(3);

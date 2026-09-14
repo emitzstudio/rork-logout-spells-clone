@@ -35,7 +35,6 @@
     "location": "Bangkok + Phuket",
     "included": [
       { "title": "The Weeknd Concert Tickets", "detail": "Standing or seating, based on availability" },
-      { "title": "International Flight", "detail": "India → Bangkok" },
       { "title": "Internal Flight", "detail": "Bangkok → Phuket" },
       { "title": "6 Nights Accommodation", "detail": "Premium party villas / 3 to 4 star hotels in Bangkok & Phuket" },
       { "title": "All Internal Transfers", "detail": "Airport pickups, drop offs and all planned transportation" },
@@ -49,6 +48,7 @@
     ],
     "excludedHeading": "NOT INCLUDED / OPTIONAL",
     "excluded": [
+      { "title": "International Flight", "detail": "India → Bangkok" },
       { "title": "Return International Flight", "detail": "Phuket → India not included" },
       { "title": "Visa / Travel Insurance", "detail": "Not included" },
       { "title": "Drag Show / Art Museum Tickets", "detail": "Optional add on" },
