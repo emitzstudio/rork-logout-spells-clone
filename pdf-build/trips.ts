@@ -1763,9 +1763,9 @@ const ziro: TripSpec = {
  * Scenic imagery only: the original vn-* set plus two scenic vn4-* bands (the Ninh Binh karsts, a Da Nang
  * beach morning). */
 const vietnam: TripSpec = {
-  fileName: "Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf",
-  docTitle: "Logout Spells · The Vietnam Spell · 6 - 12 November 2026 · Hanoi to Da Nang",
-  docSubject: "6 - 12 November 2026 · Hanoi, Halong Bay, Ninh Binh, Hoi An, Ba Na Hills, Cham Islands · day-by-day itinerary and booking",
+  fileName: "Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf",
+  docTitle: "Logout Spells · The Vietnam Spell · 18 - 24 November 2026 · Hanoi to Da Nang",
+  docSubject: "18 - 24 November 2026 · Hanoi, Halong Bay, Ninh Binh, Hoi An, Ba Na Hills, Cham Islands · day-by-day itinerary and booking",
   memoriesFile: "img/spell-memories/sources.json",
   cover: {
     img: "img2/final/vn-cover.jpg",
@@ -1775,7 +1775,7 @@ const vietnam: TripSpec = {
     sub: "",
     subY: 372,
     ruleY: 349,
-    dateLine: "6 - 12 NOVEMBER 2026",
+    dateLine: "18 - 24 NOVEMBER 2026",
     dateY: 322,
     locLine: "",
     locY: 305,
@@ -1944,7 +1944,7 @@ const vietnam: TripSpec = {
   ],
   final: {
     img: "img2/final/vn-night.jpg",
-    subline: "THE VIETNAM SPELL · 6 - 12 NOVEMBER 2026 · HANOI TO DA NANG",
+    subline: "THE VIETNAM SPELL · 18 - 24 NOVEMBER 2026 · HANOI TO DA NANG",
     cards: [
       {
         label: "EARLY BIRD",

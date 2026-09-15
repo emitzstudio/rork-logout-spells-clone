@@ -1,12 +1,15 @@
-/** Verifies the numbered Vietnam itinerary, one-line captions and unchanged non-itinerary pages. */
+/** Verifies Vietnam's date-only revision, unchanged content/layout and live download. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as mupdf from "mupdf";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
+import { PDFDocument } from "pdf-lib";
 
-const fileName = "Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf";
-const previousFileName = "Logout-Spells-Vietnam-6-12-Nov-2026-Concise.pdf";
+const fileName = "Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf";
+const previousFileName = "Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf";
+const oldDate = "6 - 12 NOVEMBER 2026";
+const newDate = "18 - 24 NOVEMBER 2026";
 const bytes = readFileSync(fileName);
 const doc = mupdf.Document.openDocument(bytes, "application/pdf");
 const previousBytes = readFileSync(`../web/public/brochures/${previousFileName}`);
@@ -120,16 +123,21 @@ const inclusions: string[] = [
   "Logout Spells community access",
 ];
 const expectedPages: string[][] = [
-  ["VIETNAM", "7 DAYS / 6 NIGHTS", "6 - 12 NOVEMBER 2026", "GROUP SIZE", "10-15 Pax", "STAY", "4-Star Hotels", "TRIP TYPE", "Private"],
+  ["VIETNAM", "7 DAYS / 6 NIGHTS", newDate, "GROUP SIZE", "10-15 Pax", "STAY", "4-Star Hotels", "TRIP TYPE", "Private"],
   ["MEET THE CREATOR", "Meet Naksi", "@NAKSIMANICPIXIE", "YOUR HOST IN VIETNAM"],
   ...days.map((day, dayIndex) => [day.header, day.title, ...day.points.flatMap((point, pointIndex) => [String(pointIndex + 1).padStart(2, "0"), point.toUpperCase(), descriptions[dayIndex]![pointIndex]!]), day.ending ?? "", day.footer]),
   ["THE LOGOUT SPELLS CIRCLE"],
-  ["THE VIETNAM SPELL · 6 - 12 NOVEMBER 2026 · HANOI TO DA NANG", "EARLY BIRD", "₹65,000", "NORMAL PRICE", "₹70,000", "₹18,000", "5% GST & 2% TCS APPLICABLE", "WHAT'S INCLUDED", ...inclusions, "NOT INCLUDED", "International flights to Hanoi & back from Da Nang", "Vietnam e-visa"],
+  [`THE VIETNAM SPELL · ${newDate} · HANOI TO DA NANG`, "EARLY BIRD", "₹65,000", "NORMAL PRICE", "₹70,000", "₹18,000", "5% GST & 2% TCS APPLICABLE", "WHAT'S INCLUDED", ...inclusions, "NOT INCLUDED", "International flights to Hanoi & back from Da Nang", "Vietnam e-visa"],
 ];
 
 type TextLine = { text: string; bbox: { x: number; y: number; w: number; h: number } };
 assert.equal(doc.countPages(), 11, "Vietnam brochure page count changed");
 const texts: string[] = [];
+const dateRegions = new Map<number, TextLine["bbox"][]>();
+const metadata = await PDFDocument.load(bytes);
+const oldMetadata = await PDFDocument.load(previousBytes);
+assert.equal(metadata.getTitle(), oldMetadata.getTitle()?.replace("6 - 12 November 2026", "18 - 24 November 2026"), "PDF title must change only its dates");
+assert.equal(metadata.getSubject(), oldMetadata.getSubject()?.replace("6 - 12 November 2026", "18 - 24 November 2026"), "PDF subject must change only its dates");
 for (const [index, phrases] of expectedPages.entries()) {
   const page = doc.loadPage(index);
   const bounds = page.getBounds();
@@ -144,6 +152,22 @@ for (const [index, phrases] of expectedPages.entries()) {
   assert.deepEqual(unexpected, [], `Page ${index + 1}: unsupported glyph`);
   const data: { blocks: { lines?: TextLine[] }[] } = JSON.parse(structured.asJSON());
   const lines = data.blocks.flatMap((block) => block.lines ?? []);
+  const baselinePage = previous.loadPage(index);
+  const baselineStructured = baselinePage.toStructuredText("preserve-whitespace");
+  const baselineText = baselineStructured.asText();
+  const withoutSpacing = (value: string): string => value.replace(/\s/g, "");
+  assert.equal(withoutSpacing(text), withoutSpacing(baselineText).replaceAll(withoutSpacing(oldDate), withoutSpacing(newDate)), `Page ${index + 1}: content changed beyond dates`);
+  assert(!compact(text).includes(compact(oldDate)), `Page ${index + 1}: stale dates`);
+  if (index === 0 || index === 10) {
+    const baselineData: { blocks: { lines?: TextLine[] }[] } = JSON.parse(baselineStructured.asJSON());
+    const oldDateLines = baselineData.blocks.flatMap((block) => block.lines ?? []).filter((line) => compact(line.text).includes(compact(oldDate)));
+    const newDateLines = lines.filter((line) => compact(line.text).includes(compact(newDate)));
+    assert.equal(oldDateLines.length, 1, `Page ${index + 1}: baseline date line`);
+    assert.equal(newDateLines.length, 1, `Page ${index + 1}: revised date line`);
+    dateRegions.set(index, [...oldDateLines, ...newDateLines].map((line) => line.bbox));
+  }
+  baselineStructured.destroy();
+  baselinePage.destroy();
   for (const line of lines) {
     const { x, y, w, h } = line.bbox;
     assert(x >= 25 && x + w <= 570.3 && y >= 20 && y + h <= 822, `Page ${index + 1}: text outside safe area: ${line.text}`);
@@ -202,15 +226,28 @@ const render = (document: mupdf.Document, index: number, scale: number): Buffer 
   page.destroy();
   return result;
 };
-for (const index of [0, 1, 9, 10]) {
-  assert(render(doc, index, 1).equals(render(previous, index, 1)), `Page ${index + 1}: cover, creator, memories or booking page changed`);
+for (let index = 0; index < doc.countPages(); index++) {
+  const currentRender = render(doc, index, 1);
+  const previousRender = render(previous, index, 1);
+  const regions = dateRegions.get(index);
+  if (!regions) {
+    assert(currentRender.equals(previousRender), `Page ${index + 1}: non-date page changed visually`);
+    continue;
+  }
+  const currentImage = PNG.sync.read(currentRender);
+  const previousImage = PNG.sync.read(previousRender);
+  assert.equal(currentImage.width, previousImage.width);
+  assert.equal(currentImage.height, previousImage.height);
+  for (let y = 0; y < currentImage.height; y++) {
+    for (let x = 0; x < currentImage.width; x++) {
+      // Allow anti-aliasing around only the old and new date-line bounds.
+      if (regions.some((box) => x >= box.x - 2 && x <= box.x + box.w + 2 && y >= box.y - 2 && y <= box.y + box.h + 2)) continue;
+      const offset = (y * currentImage.width + x) * 4;
+      assert(currentImage.data.subarray(offset, offset + 4).equals(previousImage.data.subarray(offset, offset + 4)), `Page ${index + 1}: visual change outside date line at ${x},${y}`);
+    }
+  }
 }
-for (let index = 2; index <= 8; index++) {
-  const currentImage = PNG.sync.read(render(doc, index, 1));
-  const previousImage = PNG.sync.read(render(previous, index, 1));
-  const scenicBytes = currentImage.width * 235 * 4;
-  assert(currentImage.data.subarray(0, scenicBytes).equals(previousImage.data.subarray(0, scenicBytes)), `Day ${index - 1}: scenic image changed`);
-}
+console.log("PASS: only cover/booking dates changed; all other text and pixels preserved across 11 pages");
 assert.equal((texts[10] ?? "").match(/₹18,000/g)?.length, 4, "Booking figures changed");
 const reference = PNG.sync.read(readFileSync("qr-clean.png"));
 const referenceQr = jsQR(new Uint8ClampedArray(reference.data), reference.width, reference.height);
@@ -219,9 +256,10 @@ const rendered = PNG.sync.read(render(doc, 10, 2));
 const renderedQr = jsQR(new Uint8ClampedArray(rendered.data), rendered.width, rendered.height);
 assert.equal(renderedQr?.data, referenceQr.data, "Payment QR changed or cannot be scanned");
 assert(bytes.equals(readFileSync(`../web/public/brochures/${fileName}`)), "Publish copy differs");
-assert(previousBytes.equals(readFileSync(previousFileName)), "Previous concise brochure not retained intact");
+assert(previousBytes.equals(readFileSync(previousFileName)), "Previous numbered brochure not retained intact");
+assert(readFileSync("Logout-Spells-Vietnam-6-12-Nov-2026-Concise.pdf").equals(readFileSync("../web/public/brochures/Logout-Spells-Vietnam-6-12-Nov-2026-Concise.pdf")), "Previous concise brochure not retained intact");
 assert(readFileSync("Logout-Spells-Vietnam.pdf").equals(readFileSync("../web/public/brochures/Logout-Spells-Vietnam.pdf")), "Previous detailed brochure not retained intact");
-console.log(`PASS: 49 numbered points and one-line descriptions, nine inclusions, unchanged cover/creator/memories/booking/scenery/QR, prior PDFs retained, identical publish copy (${bytes.length} bytes)`);
+console.log(`PASS: 49 numbered points and one-line descriptions, nine inclusions, unchanged itinerary/creator/memories/prices/scenery/QR, prior PDFs retained, identical publish copy (${bytes.length} bytes)`);
 if (process.argv.includes("--live")) {
   const response = await fetch(`https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${fileName}`);
   assert.equal(response.status, 200, "Live PDF unavailable");
