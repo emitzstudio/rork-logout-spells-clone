@@ -402,8 +402,22 @@ const MONTHS: Record<string, number> = {
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
-/** Parses published ranges such as "2-5 October 2026" and legacy "Sep 18-23" labels. */
+/** Parses explicit same/cross-year departures and legacy recurring month labels. */
 export const parseSpellDates = (dates: string): { start: Date; end: Date } | null => {
+  const cross = /^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\s*[-–—]\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})$/.exec(dates.trim());
+  if (cross) {
+    const startMonth = MONTHS[cross[2].slice(0, 3).toLowerCase()];
+    const endMonth = MONTHS[cross[5].slice(0, 3).toLowerCase()];
+    const startDay = Number(cross[1]);
+    const endDay = Number(cross[4]);
+    const startYear = Number(cross[3]);
+    const endYear = Number(cross[6]);
+    if (startMonth === undefined || endMonth === undefined || startYear < 1000 || endYear < 1000 || startDay < 1 || endDay < 1) return null;
+    const start = new Date(startYear, startMonth, startDay, 8);
+    const end = new Date(endYear, endMonth, endDay, 18);
+    if (start.getMonth() !== startMonth || start.getDate() !== startDay || end.getMonth() !== endMonth || end.getDate() !== endDay || end < start) return null;
+    return { start, end };
+  }
   const dated = /^(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})$/.exec(dates.trim());
   if (dated) {
     const month = MONTHS[dated[3].slice(0, 3).toLowerCase()];
@@ -436,6 +450,15 @@ export const parseSpellDates = (dates: string): { start: Date; end: Date } | nul
     start: new Date(year, month, startDay, 8),
     end: new Date(year, month, endDay, 18),
   };
+};
+
+/** Calendar selections retain explicit years, including trips that cross New Year's Eve. */
+export const formatSpellDateRange = (from: Date, to: Date): string => {
+  const month = (date: Date): string => date.toLocaleString("en-GB", { month: "short" });
+  if (from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear()) {
+    return `${from.getDate()}-${to.getDate()} ${month(from)} ${from.getFullYear()}`;
+  }
+  return `${from.getDate()} ${month(from)} ${from.getFullYear()} - ${to.getDate()} ${month(to)} ${to.getFullYear()}`;
 };
 
 export const buildCalendarEvents = (

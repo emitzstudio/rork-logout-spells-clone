@@ -1,0 +1,193 @@
+{
+  "id": "e2012026-c117-4e3d-a501-020120270001",
+  "departureId": "e2012026-c117-4e3d-a501-020120270002",
+  "changeId": "e2012026-c117-4e3d-a501-020120270003",
+  "name": "The Europe Christmas + NYE Spell",
+  "slug": "the-europe-christmas-nye-spell",
+  "hook": "Christmas markets. Midnight on the rails. A new year by the canals.",
+  "dates": "20 December 2026 - 2 January 2027",
+  "startDate": "2026-12-20",
+  "endDate": "2027-01-02",
+  "durationDays": 14,
+  "nights": 13,
+  "location": "Europe · Brussels to Amsterdam",
+  "countries": ["Belgium", "France", "Germany", "Czechia", "Netherlands"],
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "fileName": "Logout-Spells-Europe-Christmas-NYE-20-Dec-2026-2-Jan-2027-Grimoire-v1.pdf",
+  "heroFile": "europe-brussels-winter-v1.jpg",
+  "priceLabel": "TBA",
+  "priceNote": "Price TBA. Pricing, taxes, deposit and booking terms will be announced. Applications are not open yet; no payment is requested.",
+  "about": "Follow the festive lights across five European countries, from Brussels and a Bruges day trip to Christmas Eve in Strasbourg and Christmas Day in Colmar. A Paris interlude leads to Berlin and Prague, before a proposed New Year's Eve sleeper journey and a gentle New Year's Day in Amsterdam. Delhi to Brussels at the start, Amsterdam to Delhi at the finish.",
+  "durationNote": "14 days / 13 nights: 12 hotel nights plus 1 overnight sleeper-train night. The count covers arrival in Brussels on 20 December through departure from Amsterdam on 2 January.",
+  "imageNote": "AI-generated destination-inspired artwork illustrates the atmosphere; it is not photography of confirmed hotels, booked events or guaranteed weather.",
+  "stayNote": "Hotel names, categories, room sharing and sleeper accommodation are to be confirmed. The overnight train on 31 December is proposed, subject to the operator's holiday timetable and availability.",
+  "transportNote": "All journey times are approximate planning estimates, not reserved services. Confirm the December 2026 / January 2027 timetables, operating dates, stations and tickets before booking, especially the 31 December European Sleeper. Early hotel check-in on arrival is not confirmed.",
+  "festiveNote": "Christmas-market hours, attractions, restaurants and shops can change during the holidays. Recheck official 2026 schedules before travel and arrange Christmas Eve dining ahead. NYE is planned aboard the sleeper, not at an Amsterdam party; no party or festival ticket is promised.",
+  "inclusionNote": "The itinerary describes planned travel and experiences, not price inclusions. Flights, trains, hotels, meals, sightseeing admissions, festival tickets, visas and insurance have not been confirmed as included or excluded. Final inclusions and exclusions will be announced with the price.",
+  "route": [
+    {"place": "Delhi to Brussels", "detail": "Outbound flight · arrive 20 December"},
+    {"place": "Brussels · 3 nights", "detail": "20-23 December · Bruges day trip on 22 December"},
+    {"place": "Strasbourg · 3 nights", "detail": "23-26 December · Colmar day trip on 25 December"},
+    {"place": "Paris · 1 night", "detail": "26-27 December · direct TGV from Strasbourg"},
+    {"place": "Berlin · 2 nights", "detail": "27-29 December · flight from Paris"},
+    {"place": "Prague · 2 nights", "detail": "29-31 December · direct train from Berlin"},
+    {"place": "European Sleeper · 1 night", "detail": "31 December-1 January · proposed Prague to Amsterdam"},
+    {"place": "Amsterdam · 1 night", "detail": "1-2 January · return flight to Delhi on 2 January"}
+  ],
+  "stays": [
+    {"location": "Brussels", "dates": "20-23 Dec 2026", "nights": 3, "kind": "hotel"},
+    {"location": "Strasbourg", "dates": "23-26 Dec 2026", "nights": 3, "kind": "hotel"},
+    {"location": "Paris", "dates": "26-27 Dec 2026", "nights": 1, "kind": "hotel"},
+    {"location": "Berlin", "dates": "27-29 Dec 2026", "nights": 2, "kind": "hotel"},
+    {"location": "Prague", "dates": "29-31 Dec 2026", "nights": 2, "kind": "hotel"},
+    {"location": "European Sleeper", "dates": "31 Dec 2026-1 Jan 2027", "nights": 1, "kind": "sleeper"},
+    {"location": "Amsterdam", "dates": "1-2 Jan 2027", "nights": 1, "kind": "hotel"}
+  ],
+  "trains": [
+    {"route": "Brussels - Bruges - Brussels", "detail": "22 Dec · direct trains · about 1 hour each way · day bag only"},
+    {"route": "Brussels-Midi - Strasbourg", "detail": "23 Dec · direct daytime TGV planned · fastest about 3h48"},
+    {"route": "Strasbourg - Colmar - Strasbourg", "detail": "25 Dec · direct trains · about 30 minutes each way"},
+    {"route": "Strasbourg - Paris Gare de l'Est", "detail": "26 Dec · direct TGV · fastest about 1h45-2h · no change"},
+    {"route": "Berlin Hbf - Praha hlavní nádraží", "detail": "29 Dec · direct EuroCity / ComfortJet · about 4h-4h20"},
+    {"route": "Prague - Amsterdam", "detail": "31 Dec-1 Jan · proposed European Sleeper · about 13 hours"}
+  ],
+  "days": [
+    {
+      "date": "2026-12-20", "dateLabel": "20 December 2026", "title": "Arrival in Brussels", "titleLines": ["BRUSSELS,", "THE FIRST LIGHTS"], "location": "Delhi to Brussels", "imageFile": "europe-brussels-winter-v1.jpg",
+      "intro": "A winter arrival, a hotel check-in, and the first evening under Brussels' Christmas lights.",
+      "points": [
+        {"title": "DELHI TO BRUSSELS", "body": "Arrive in Brussels and check into the hotel."},
+        {"title": "GRAND-PLACE", "body": "Explore the square and take in the Brussels Christmas lights."},
+        {"title": "WINTER WONDERS", "body": "Visit the Winter Wonders Christmas Market in the evening."},
+        {"title": "DINNER IN THE CITY", "body": "Settle into the festive atmosphere over dinner in Brussels."}
+      ], "overnight": "Overnight: Brussels", "note": "Flight and hotel details are to be confirmed; allow for arrival formalities before evening plans."
+    },
+    {
+      "date": "2026-12-21", "dateLabel": "21 December 2026", "title": "A full day in Brussels", "titleLines": ["BRUSSELS,", "AT YOUR OWN PACE"], "location": "Brussels", "imageFile": "europe-brussels-winter-v1.jpg",
+      "intro": "A relaxed full day through the city's grand squares, galleries and festive Old Town.",
+      "points": [
+        {"title": "THE HISTORIC HEART", "body": "Explore Grand-Place and Galeries Royales Saint-Hubert."},
+        {"title": "CITY LANDMARKS", "body": "Continue to Mont des Arts and Manneken Pis."},
+        {"title": "OLD TOWN WANDERING", "body": "Take your time exploring Brussels Old Town."},
+        {"title": "MARKETS AFTER DARK", "body": "Return to Winter Wonders Christmas Market, then enjoy the Christmas lights and an evening stroll."}
+      ], "overnight": "Overnight: Brussels", "note": ""
+    },
+    {
+      "date": "2026-12-22", "dateLabel": "22 December 2026", "title": "Bruges day trip", "titleLines": ["BRUGES,", "A WINTER FAIRYTALE"], "location": "Brussels - Bruges - Brussels", "imageFile": "europe-bruges-winter-v1.jpg",
+      "intro": "Medieval streets, canal-side views and a full day of festive Bruges, without changing hotels.",
+      "points": [
+        {"title": "THE MORNING TRAIN", "body": "Take a direct train from Brussels to Bruges, about 1 hour. Leave large luggage at the Brussels hotel and carry only a day bag."},
+        {"title": "MEDIEVAL BRUGES", "body": "Explore Markt Square, the Belfry of Bruges, Burg Square, Rozenhoedkaai and the Historic Old Town."},
+        {"title": "CHRISTMAS & WINTER GLOW", "body": "Enjoy the Christmas markets, Winter Glow, Christmas lights and winter bars."},
+        {"title": "ILLUMINATED STREETS", "body": "Stroll through the illuminated medieval streets, then return to Brussels by train in the evening."}
+      ], "overnight": "Overnight: Brussels", "note": "Confirm Winter Glow opening times and return trains for the date."
+    },
+    {
+      "date": "2026-12-23", "dateLabel": "23 December 2026", "title": "Brussels to Strasbourg", "titleLines": ["NEXT STOP,", "STRASBOURG"], "location": "Brussels to Strasbourg", "imageFile": "europe-strasbourg-winter-v1.jpg",
+      "intro": "A daytime train to Alsace and a first evening in Strasbourg's Christmas atmosphere.",
+      "points": [
+        {"title": "CHECK OUT & TRAVEL", "body": "Check out of Brussels. Travel from Brussels-Midi to Strasbourg on a planned direct daytime TGV; fastest journeys are about 3h48."},
+        {"title": "ARRIVE IN ALSACE", "body": "Arrive in Strasbourg and check into the hotel."},
+        {"title": "CATHEDRAL & OLD TOWN", "body": "Explore Strasbourg Cathedral, Place Kléber and Petite France in the evening."},
+        {"title": "FIRST CHRISTMAS MARKETS", "body": "Enjoy the Christmas lights and a first evening at Strasbourg's Christmas markets."}
+      ], "overnight": "Overnight: Strasbourg", "note": "The direct service and exact travel time must be reconfirmed for 23 December."
+    },
+    {
+      "date": "2026-12-24", "dateLabel": "24 December 2026", "title": "Christmas Eve in Strasbourg", "titleLines": ["CHRISTMAS EVE,", "THE ALSATIAN WAY"], "location": "Strasbourg", "imageFile": "europe-strasbourg-winter-v1.jpg",
+      "intro": "Make the most of the markets during the day, with a beautifully lit historic centre around dusk.",
+      "points": [
+        {"title": "THE CHRISTMAS SQUARES", "body": "Visit Strasbourg Cathedral, Place de la Cathédrale, Place Kléber, Place Broglie and Petite France."},
+        {"title": "MARKETS, FOOD & GIFTS", "body": "Enjoy the Christmas markets, Alsatian food, Christmas shopping, decorations and lights through the day."},
+        {"title": "LATE-AFTERNOON MAGIC", "body": "Plan the main market experience before the anticipated 6 PM Christmas Eve closure. Stay until late afternoon, then see the illuminated centre around dusk."},
+        {"title": "CHRISTMAS EVE DINNER", "body": "End the day with Christmas Eve dinner in Strasbourg."}
+      ], "overnight": "Overnight: Strasbourg", "note": "The 6 PM closing time on 24 December is a planning assumption pending the official 2026 schedule. City illuminations typically continue beyond Christmas."
+    },
+    {
+      "date": "2026-12-25", "dateLabel": "25 December 2026", "title": "Christmas Day in Colmar", "titleLines": ["CHRISTMAS DAY,", "COLOURED BY COLMAR"], "location": "Strasbourg - Colmar - Strasbourg", "imageFile": "europe-colmar-winter-v1.jpg",
+      "intro": "Spend Christmas Day among half-timbered houses and the festive streets of Colmar.",
+      "points": [
+        {"title": "A SHORT TRAIN RIDE", "body": "Take a direct morning train from Strasbourg to Colmar, about 30 minutes."},
+        {"title": "OLD TOWN & PETITE VENISE", "body": "Explore Petite Venise, Colmar Old Town, Quai de la Poissonnerie, Place de l'Ancienne Douane and Koïfhus."},
+        {"title": "ALSATIAN CHRISTMAS", "body": "Enjoy Christmas markets, Alsatian Christmas decorations, cafés, restaurants and the festive Old Town atmosphere."},
+        {"title": "BACK TO STRASBOURG", "body": "Return to Strasbourg by direct train in the evening, about 30 minutes."}
+      ], "overnight": "Overnight: Strasbourg", "note": "Colmar's published 2026 market schedule runs through 29 December, with Christmas Day hours of 10 AM-8 PM. Recheck before travel; individual venues may differ."
+    },
+    {
+      "date": "2026-12-26", "dateLabel": "26 December 2026", "title": "Strasbourg to Paris", "titleLines": ["A LITTLE", "PARIS INTERLUDE"], "location": "Strasbourg to Paris", "imageFile": "europe-paris-winter-v1.jpg",
+      "intro": "Trade Alsatian lanes for the Seine, the Eiffel Tower and an evening of Paris lights.",
+      "points": [
+        {"title": "DIRECT TO PARIS", "body": "Check out of Strasbourg and take a direct TGV to Paris Gare de l'Est. Fastest services take about 1h45-2h, with no change required."},
+        {"title": "THE EIFFEL TOWER", "body": "Arrive in Paris and spend the evening around the Eiffel Tower."},
+        {"title": "CHRISTMAS IN THE CITY", "body": "See the Paris Christmas lights and Champs-Élysées."},
+        {"title": "DINNER & AN EVENING WALK", "body": "Finish with dinner and an evening walk through Paris."}
+      ], "overnight": "Overnight: Paris", "note": ""
+    },
+    {
+      "date": "2026-12-27", "dateLabel": "27 December 2026", "title": "Paris to Berlin", "titleLines": ["PARIS MORNING,", "BERLIN EVENING"], "location": "Paris to Berlin", "imageFile": "europe-berlin-winter-v1.jpg",
+      "intro": "One more Paris morning before a flight keeps the next chapter moving.",
+      "points": [
+        {"title": "A MORNING IN PARIS", "body": "Spend the morning exploring Paris."},
+        {"title": "FLY TO BERLIN", "body": "Take an afternoon or evening flight from Paris to Berlin, avoiding the much longer train journey."},
+        {"title": "ARRIVE & CHECK IN", "body": "Arrive in Berlin and check into the hotel."}
+      ], "overnight": "Overnight: Berlin", "note": "Flight timing, airport and baggage allowance are to be confirmed."
+    },
+    {
+      "date": "2026-12-28", "dateLabel": "28 December 2026", "title": "A full day in Berlin", "titleLines": ["BERLIN,", "PAST & AFTER DARK"], "location": "Berlin", "imageFile": "europe-berlin-winter-v1.jpg",
+      "intro": "A full day of city landmarks, neighbourhoods and Berlin's winter nightlife.",
+      "points": [
+        {"title": "THE CITY ICONS", "body": "Explore Brandenburg Gate and the Reichstag."},
+        {"title": "CULTURE & THE RIVER", "body": "Continue to Museum Island, Berlin Cathedral and the East Side Gallery."},
+        {"title": "CHARLOTTENBURG & MARKETS", "body": "Explore Charlottenburg and winter / Christmas markets operating after Christmas."},
+        {"title": "BERLIN NIGHTLIFE", "body": "Experience Berlin nightlife in the evening."}
+      ], "overnight": "Overnight: Berlin", "note": "Market opening dates and attraction reservations need checking. Listing a landmark does not confirm an interior visit or admission ticket."
+    },
+    {
+      "date": "2026-12-29", "dateLabel": "29 December 2026", "title": "Berlin to Prague", "titleLines": ["THROUGH THE VALLEY,", "INTO PRAGUE"], "location": "Berlin to Prague", "imageFile": "europe-prague-winter-v1.jpg",
+      "intro": "A scenic railway chapter through the Elbe Valley, followed by Prague's evening lights.",
+      "points": [
+        {"title": "THE DIRECT TRAIN", "body": "Travel from Berlin Hbf to Praha hlavní nádraží on a direct EuroCity / ComfortJet service, approximately 4h-4h20."},
+        {"title": "THE ELBE VALLEY", "body": "Enjoy the scenic journey through the Elbe Valley."},
+        {"title": "OLD TOWN & CHARLES BRIDGE", "body": "Spend the evening at Old Town Square and Charles Bridge."},
+        {"title": "PRAGUE BY NIGHT", "body": "Take in the Christmas lights and enjoy dinner."}
+      ], "overnight": "Overnight: Prague", "note": "Exact service, duration and seat reservations are to be confirmed."
+    },
+    {
+      "date": "2026-12-30", "dateLabel": "30 December 2026", "title": "A full day in Prague", "titleLines": ["PRAGUE,", "ONE MORE FAIRYTALE"], "location": "Prague", "imageFile": "europe-prague-winter-v1.jpg",
+      "intro": "A full day between castle views, the river and a festive Old Town.",
+      "points": [
+        {"title": "OLD TOWN & THE BRIDGE", "body": "Explore Old Town Square and Charles Bridge."},
+        {"title": "THE CASTLE QUARTER", "body": "Visit Prague Castle, St. Vitus Cathedral and Malá Strana."},
+        {"title": "SQUARES & CHRISTMAS MARKETS", "body": "Continue to Wenceslas Square and the Christmas markets."},
+        {"title": "AN OLD TOWN EVENING", "body": "Enjoy an evening walk through Old Town."}
+      ], "overnight": "Overnight: Prague", "note": "Prague's major Christmas markets usually continue into January. Confirm the official 2026-27 dates and opening hours before travel."
+    },
+    {
+      "date": "2026-12-31", "dateLabel": "31 December 2026", "title": "NYE on the European Sleeper", "titleLines": ["MIDNIGHT,", "SOMEWHERE IN EUROPE"], "location": "Prague to Amsterdam", "imageFile": "europe-prague-winter-v1.jpg",
+      "intro": "A relaxed Prague day, then a proposed New Year's Eve spent travelling through the night.",
+      "points": [
+        {"title": "ONE LAST PRAGUE DAY", "body": "Enjoy a relaxed morning and afternoon in Prague."},
+        {"title": "BOARD EUROPEAN SLEEPER", "body": "In the evening, board the proposed European Sleeper from Prague to Amsterdam."},
+        {"title": "SLEEP ON THE TRAIN", "body": "An overnight journey of approximately 13 hours, with arrival in Amsterdam the following morning."}
+      ], "overnight": "Overnight: European Sleeper", "note": "The 31 December service, sleeper accommodation and arrival station are subject to operator confirmation. NYE is on the train; no onboard celebration or Amsterdam NYE party is included by this plan."
+    },
+    {
+      "date": "2027-01-01", "dateLabel": "1 January 2027", "title": "New Year's Day in Amsterdam", "titleLines": ["HELLO, NEW YEAR.", "HELLO, AMSTERDAM."], "location": "Amsterdam", "imageFile": "europe-amsterdam-winter-v1.jpg",
+      "intro": "Arrive in the morning and ease into the new year by the canals.",
+      "points": [
+        {"title": "A MORNING ARRIVAL", "body": "Arrive in Amsterdam from the overnight train."},
+        {"title": "CANALS & NEIGHBOURHOODS", "body": "Explore the Amsterdam canals, Jordaan, Nine Streets and Dam Square."},
+        {"title": "CAFÉS, SHOPS & LIGHTS", "body": "Enjoy café hopping, shopping where open, and the Amsterdam Light Festival, subject to its schedule."},
+        {"title": "A RELAXED EVENING", "body": "Unwind over a relaxed dinner and evening in Amsterdam after New Year's Eve."}
+      ], "overnight": "Overnight: Amsterdam", "note": "New Year's Day opening hours vary. Hotel check-in timing and any Light Festival tickets or route are to be confirmed."
+    },
+    {
+      "date": "2027-01-02", "dateLabel": "2 January 2027", "title": "Amsterdam departure", "titleLines": ["UNTIL THE", "NEXT SPELL"], "location": "Amsterdam to Delhi", "imageFile": "europe-amsterdam-winter-v1.jpg",
+      "intro": "A relaxed final morning, then the journey home from Amsterdam to Delhi.",
+      "points": [
+        {"title": "A SLOW MORNING", "body": "Enjoy a relaxed morning in Amsterdam."},
+        {"title": "AMSTERDAM TO DELHI", "body": "Depart Amsterdam for Delhi. End of the Europe Christmas + NYE journey."}
+      ], "overnight": "Departure day · no overnight stay", "note": "The return flight departs on 2 January; arrival in Delhi depends on the confirmed flight schedule."
+    }
+  ]
+}

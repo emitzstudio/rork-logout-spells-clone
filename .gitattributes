@@ -10,3 +10,5 @@ pdf-build/Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf filter=lfs diff=lfs m
 web/public/brochures/Logout-Spells-Vietnam-6-12-Nov-2026-Numbered.pdf filter=lfs diff=lfs merge=lfs -text
 pdf-build/Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf filter=lfs diff=lfs merge=lfs -text
 web/public/brochures/Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf filter=lfs diff=lfs merge=lfs -text
+pdf-build/Logout-Spells-Europe-Christmas-NYE-20-Dec-2026-2-Jan-2027-Grimoire-v1.pdf filter=lfs diff=lfs merge=lfs -text
+web/public/brochures/Logout-Spells-Europe-Christmas-NYE-20-Dec-2026-2-Jan-2027-Grimoire-v1.pdf filter=lfs diff=lfs merge=lfs -text

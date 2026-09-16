@@ -5,31 +5,8 @@ import type { DateRange } from "react-day-picker";
 import { boxBase, FieldShell, inputBase } from "@/components/dashboard/builder/Fields";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { parseSpellDates } from "@/data/account/derive";
+import { formatSpellDateRange, parseSpellDates } from "@/data/account/derive";
 import { cn } from "@/lib/utils";
-
-const MONTH_LABELS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-] as const;
-
-/**
- * Formats a picked range in the exact style spells already store:
- * "Sep 18-23" within one month (parseSpellDates understands it, so the
- * calendar page and booking dates stay live), "Sep 29 - Oct 2" across
- * months and "Sep 18" for a single day (both shown verbatim on the site,
- * exactly like hand-typed text today).
- */
-const formatPickedRange = (from: Date, to: Date): string => {
-  const sameMonth = from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear();
-  if (sameMonth && from.getDate() === to.getDate()) {
-    return `${MONTH_LABELS[from.getMonth()]} ${from.getDate()}`;
-  }
-  if (sameMonth) {
-    return `${MONTH_LABELS[from.getMonth()]} ${from.getDate()}-${to.getDate()}`;
-  }
-  return `${MONTH_LABELS[from.getMonth()]} ${from.getDate()} - ${MONTH_LABELS[to.getMonth()]} ${to.getDate()}`;
-};
 
 /** Calendar theme - the builder's cream/gold recipe instead of shadcn tokens. */
 const CALENDAR_CLASSNAMES = {
@@ -63,8 +40,8 @@ interface DateRangeFieldProps {
  * The Trip dates field - the input stays hand-editable ("Dates TBC" and any
  * freeform wording keep working) but clicking it opens a themed calendar
  * popover as the primary way to pick the range. The chosen dates are written
- * back as the same plain string the spell already stores, so existing spell
- * data and every parser behave exactly as before.
+ * back with explicit years, so cross-year departure dates survive saving.
+ * Existing hand-typed labels remain untouched until a new range is picked.
  */
 export default function DateRangeField({ label, value, onChange, placeholder, helper }: DateRangeFieldProps) {
   const [open, setOpen] = useState<boolean>(false);
@@ -90,7 +67,7 @@ export default function DateRangeField({ label, value, onChange, placeholder, he
   const handleSelect = (next: DateRange | undefined): void => {
     setRange(next);
     if (!next?.from) return;
-    apply(formatPickedRange(next.from, next.to ?? next.from));
+    apply(formatSpellDateRange(next.from, next.to ?? next.from));
     // Stay open until both ends of the range are chosen.
     if (next.to && next.to.getTime() !== next.from.getTime()) setOpen(false);
   };

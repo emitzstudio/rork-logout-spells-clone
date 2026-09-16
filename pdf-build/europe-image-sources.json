@@ -1,0 +1,15 @@
+{
+  "type": "AI-generated destination-inspired illustrations, not documentary or booked-property/event photography",
+  "createdOn": "2026-09-16",
+  "derivatives": "prepare-europe-assets.py creates versioned website JPEGs and aspect-correct PDF cover/bands from the originals below",
+  "images": [
+    {"city": "Brussels", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/c7909722-afd5-4b97-bb33-0ae1aa6f5610.png", "file": "europe-brussels-winter-v1.jpg"},
+    {"city": "Bruges", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/680bdef3-eb69-44c9-8798-a0fb958e6db9.png", "file": "europe-bruges-winter-v1.jpg"},
+    {"city": "Strasbourg", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/e57216b8-c88d-4d4b-a465-517b8389d272.png", "file": "europe-strasbourg-winter-v1.jpg"},
+    {"city": "Colmar", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/3501971e-f4ef-4640-934d-e8f1d1807081.png", "file": "europe-colmar-winter-v1.jpg"},
+    {"city": "Paris", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/a27b1614-99d4-42ff-88a7-818a134ae17b.png", "file": "europe-paris-winter-v1.jpg"},
+    {"city": "Berlin", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/ef78f876-f3cc-4ad9-96ea-e13db6a72ffc.png", "file": "europe-berlin-winter-v1.jpg"},
+    {"city": "Prague", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/a608383c-fcb4-4d5a-846a-7c90d9c9af2f.png", "file": "europe-prague-winter-v1.jpg"},
+    {"city": "Amsterdam", "source": "https://r2-pub.rork.com/projects/z57wkqd89o09lsi6kc7v1/assets/8aa3b22f-7f75-4dc9-981f-efa178d666ad.png", "file": "europe-amsterdam-winter-v1.jpg"}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "checkedOn": "2026-09-16",
+  "sources": [
+    {"url": "https://www.noel-colmar.com/en/colmar-the-magic-of-christmas/practical", "finding": "Official published 2026 market schedule: 23 November-29 December. Friday 25 December: 10:00-20:00. Other page sections still refer to 2025; use only the explicitly 2026 schedule."},
+    {"url": "https://www.strasbourg.eu/en/web/noel/getting-around", "finding": "Official page describes 18:00 Christmas Eve closure but no unambiguous 2026 year on retrieved schedule. Europe content retains 18:00 as a planning assumption pending official 2026 confirmation, not a guarantee that markets end for the season on 24 December."},
+    {"url": "https://europeansleeper.eu/timetable", "finding": "Official date-specific timetable confirms the Prague-to-Amsterdam route on sampled September 2026 departures, not the proposed 31 December 2026 departure. Holiday operation, berth availability, station and journey time remain subject to confirmation."}
+  ],
+  "unverifiedPlanningEstimates": ["Brussels-Strasbourg direct TGV about 3h48", "Strasbourg-Paris direct TGV about 1h45-2h", "Brussels-Bruges about 1 hour", "Strasbourg-Colmar about 30 minutes", "Berlin-Prague direct train about 4h-4h20", "Prague-Amsterdam European Sleeper about 13 hours", "Prague markets continuing into January", "Amsterdam Light Festival 1 January 2027 availability"]
+}
