@@ -3,13 +3,15 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
-import trip from "../../pdf-build/thailand-full-moon-v1.json" with { type: "json" };
-import { fullMoonContent } from "../../pdf-build/thailand-full-moon-content.ts";
+import trip from "../../pdf-build/thailand-full-moon-v2.json" with { type: "json" };
+import { fullMoonContent } from "../../pdf-build/thailand-full-moon-v2-content.ts";
 
 const root = new URL("../public/", import.meta.url);
 const cache = new URL("../../pdf-build/.cache/", import.meta.url);
-const baseline = new URL("thailand-full-moon-before-v1.json", cache);
+const baseline = new URL("thailand-full-moon-before-v2.json", cache);
 const site = new URL(process.argv.find((a) => a.startsWith("--site="))?.slice(7) ?? trip.origin).origin;
+// The public page links to a separate asset origin; verify the actual downloads, not an assumed same-domain mirror.
+const assetOrigin = process.argv.includes("--mirror-assets") ? site : new URL(fullMoonContent.page.pricing.brochureUrl).origin;
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const api = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -29,32 +31,33 @@ function files(dir = root, prefix = "") {
 }
 mkdirSync(cache, { recursive: true });
 if (process.argv.includes("--snapshot")) {
-  assert(!rows.spells.some((s) => s.id === trip.id || s.slug === trip.slug));
+  const target = rows.spells.find((s) => s.id === trip.id);
+  assert(target?.status === "published" && target.page.pricing.brochureUrl.endsWith("Grimoire-v1.pdf"), "Snapshot must precede itinerary revision");
   writeFileSync(baseline, JSON.stringify({ rows, files: files() }), { flag: "wx" });
   console.log("PASS: immutable pre-publication baseline saved");
   process.exit(0);
 }
 const before = JSON.parse(readFileSync(baseline, "utf8"));
 const normalize = (data) => ({ ...data, spells: data.spells.map(({ views, updated_at, ...rest }) => rest) });
-const remaining = { ...rows, spells: rows.spells.filter((s) => s.id !== trip.id), spell_departures: rows.spell_departures.filter((d) => d.id !== trip.departureId) };
-assert.deepEqual(normalize(remaining), normalize(before.rows), "Existing spells, forms, reviews and departures must remain unchanged");
+const withoutTarget = (data) => ({ ...data, spells: data.spells.filter((s) => s.id !== trip.id) });
+assert.deepEqual(normalize(withoutTarget(rows)), normalize(withoutTarget(before.rows)), "Existing spells, forms, reviews and all departures must remain unchanged");
 const currentFiles = files();
 for (const [name, digest] of Object.entries(before.files)) assert.equal(currentFiles[name], digest, `Existing asset modified: ${name}`);
 const added = Object.keys(currentFiles).filter((name) => !(name in before.files)).sort();
-const releaseAssets = [`/brochures/${trip.fileName}`, "/thailand-full-moon-cover-v1.jpg", "/thailand-krabi-islands-v1.jpg", "/thailand-samui-morning-v1.jpg"];
+const releaseAssets = [`/brochures/${trip.fileName}`];
 // Assets may already be deployed before this publication's immutable baseline.
 assert.deepEqual(added, releaseAssets.filter((path) => !(path in before.files)).sort());
-const referencedAssets = [...new Set([...releaseAssets, ...trip.days.map((day) => `/${day.imageFile}`)])];
+const referencedAssets = [...new Set([...releaseAssets, `/${trip.heroFile}`, ...trip.days.map((day) => `/${day.imageFile}`), "/brochures/Logout-Spells-Thailand-Full-Moon-23-28-Sep-2026-Grimoire-v1.pdf"])];
 for (const path of referencedAssets) {
   assert(currentFiles[path], `Missing local asset: ${path}`);
-  const r = await fetch(site + path, { cache: "no-store", signal: AbortSignal.timeout(30000) });
+  const r = await fetch(assetOrigin + path, { cache: "no-store", signal: AbortSignal.timeout(30000) });
   assert(r.ok, `Asset ${path}: ${r.status}`);
-  assert(r.headers.get("content-type")?.includes(path.endsWith(".pdf") ? "application/pdf" : "image/"));
+  assert(r.headers.get("content-type")?.includes(path.endsWith(".pdf") ? "application/pdf" : "image/"), `Unexpected content type at ${assetOrigin}${path}`);
   assert.equal(hash(Buffer.from(await r.arrayBuffer())), currentFiles[path], path);
 }
-console.log("PASS: existing data/assets preserved; all referenced live assets byte-identical");
+console.log(`PASS: existing data/assets preserved; referenced live assets byte-identical at ${assetOrigin}`);
 if (process.argv.includes("--assets-only")) {
-  assert(!rows.spells.some((s) => s.id === trip.id || s.slug === trip.slug), "Assets-only gate must precede the migration");
+  assert.deepEqual(normalize(rows), normalize(before.rows), "Assets-only gate must precede the itinerary migration");
   console.log("PASS: assets are ready before production publication");
   process.exit(0);
 }
@@ -62,6 +65,8 @@ const row = rows.spells.find((s) => s.id === trip.id);
 assert(row);
 // Republication preserves the archived entry's cleared urgency and manual order.
 for (const [key, value] of Object.entries({ ...fullMoonContent, urgency: null })) if (key !== "departure") assert.deepEqual(row[key], value, key);
+const omitChanged = ({ hook, location, page, inclusions, views, updated_at, ...rest }) => rest;
+assert.deepEqual(omitChanged(row), omitChanged(before.rows.spells.find((s) => s.id === trip.id)), "Non-itinerary target fields unchanged");
 assert.equal(row.sort_order, 2);
 assert.equal(row.deleted_at, null);
 assert.equal(row.mobile_hero_url, fullMoonContent.hero_url);
@@ -88,10 +93,23 @@ try {
     assert.deepEqual(await page.locator('a[href*=".pdf"]').evaluateAll((a) => a.map((el) => el.getAttribute("href"))), Array(2).fill(`${trip.origin}/brochures/${trip.fileName}`));
     assert((await page.locator("#price").innerText()).includes("TBA"));
     const journey = await page.locator("#journey").innerText();
-    for (const day of trip.days) { assert(journey.includes(day.title), day.title); assert(journey.includes(day.dateLabel), day.dateLabel); }
+    for (const day of trip.days) {
+      assert(journey.includes(day.title), day.title);
+      assert(journey.includes(day.dateLabel), day.dateLabel);
+      assert(journey.includes(day.intro), day.intro);
+      for (const point of day.points) assert(journey.includes(point.body), point.body);
+      assert(journey.includes(day.overnight), day.overnight);
+    }
+    assert(!/Krabi|Phuket|Surat Thani|Four Islands|THB 200/i.test(journey));
+    const staySection = page.locator("section").filter({ has: page.getByRole("heading", { name: fullMoonContent.page.stay.name, exact: true }) });
+    const stay = await staySection.innerText();
+    for (const hotel of trip.hotels) { assert(stay.includes(hotel.name)); assert(stay.includes(hotel.room)); }
     const main = await page.locator("main").innerText();
     assert(main.includes("10 adults / 5 rooms"));
     assert(main.includes(trip.dates));
+    assert(main.includes(trip.route));
+    assert(main.includes(trip.closing));
+    assert(!/Krabi|Phuket|Surat Thani|Four Islands|THB 200/i.test(main));
     assert(!main.includes("₹0"));
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await page.screenshot({ path: new URL(`full-moon-${new URL(site).hostname}-${width}.png`, cache).pathname });

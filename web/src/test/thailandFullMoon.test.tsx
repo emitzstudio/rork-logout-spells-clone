@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import trip from "../../../pdf-build/thailand-full-moon-v1.json";
-import { fullMoonContent } from "../../../pdf-build/thailand-full-moon-content";
+import trip from "../../../pdf-build/thailand-full-moon-v2.json";
+import originalTrip from "../../../pdf-build/thailand-full-moon-v1.json";
+import { fullMoonContent } from "../../../pdf-build/thailand-full-moon-v2-content";
+import { fullMoonContent as originalContent } from "../../../pdf-build/thailand-full-moon-content";
 import { mapSpell, pageFromDraft } from "@/integrations/supabase/mappers";
 import type { SpellRow, ActiveDepartureRow } from "@/integrations/supabase/mappers";
 import { SpellPricing } from "@/components/spell/SpellSections";
@@ -27,9 +29,11 @@ describe("Thailand Full Moon Spell publication", () => {
     for (const [i, day] of trip.days.entries()) {
       expect(draft.itinerary[i].title).toBe(day.title);
       expect(draft.itinerary[i].subtitle).toBe(day.dateLabel);
+      expect(draft.itinerary[i].body).toContain(day.intro);
+      expect(draft.itinerary[i].body).toContain(day.overnight);
       for (const point of day.points) expect(draft.itinerary[i].body).toContain(point.body);
     }
-    expect(trip.hotels.map((h) => h.nights)).toEqual([2, 2, 1]);
+    expect(trip.hotels.map((h) => h.nights)).toEqual([2, 3]);
     for (const hotel of trip.hotels) expect(draft.stay.longDescription).toContain(hotel.name);
     expect(parseSpellDates(draft.dates)).toEqual({ start: new Date(2026, 8, 23, 8), end: new Date(2026, 8, 28, 18) });
   });
@@ -53,11 +57,16 @@ describe("Thailand Full Moon Spell publication", () => {
   it("preserves the supplied inclusion scope and makes additional costs explicit", () => {
     expect(draft.included.map((i) => i.text)).toEqual(trip.inclusions);
     expect(draft.notIncluded.map((i) => i.text)).toEqual(trip.exclusions);
-    expect(draft.notIncluded.map((i) => i.text).join(" ")).toContain("THB 200");
+    expect(JSON.stringify(fullMoonContent)).not.toMatch(/Krabi|Phuket|Surat Thani|Four Islands|THB 200|SIC/i);
     expect(draft.notIncluded.map((i) => i.text).join(" ")).toContain("INR 500");
     expect(draft.itinerary[3].body).toContain("at your own cost");
     expect(draft.itinerary[3].body).toContain("must be confirmed");
-    expect(draft.itinerary[4].body).toContain("via Krabi to Phuket");
+    expect(draft.itinerary[3].body).toContain("Haad Rin Beach · 26 September 2026");
+    expect(draft.itinerary[3].body).toContain("Koh Phangan · Night 4");
+    expect(draft.itinerary[4].body).toContain("Do less. Enjoy more.");
+    expect(draft.itinerary[5].body).toContain("Transfer to Koh Samui Airport");
+    expect(draft.itinerary[5].body).toContain("SPELL COMPLETE.");
+    expect(draft.faqs.some((faq) => faq.answer === trip.leisureNote)).toBe(true);
     expect(draft.faqs.some((faq) => faq.answer === trip.entryNote)).toBe(true);
   });
 
@@ -75,7 +84,7 @@ describe("Thailand Full Moon Spell publication", () => {
     const sql = readFileSync(new URL("../../../backend/migrations/0098_republish_thailand_full_moon.sql", import.meta.url), "utf8");
     expect(sql.match(/update public\.spells set ([^;]+)/g)).toEqual(["update public.spells set status = 'published' where id = v_id"]);
     expect(sql).toContain(trip.id);
-    expect(sql).toContain(trip.fileName);
+    expect(sql).toContain(originalTrip.fileName);
     expect(sql).toContain("v_spell.status <> 'archived'");
     expect(sql).toContain("v_spell.deleted_at is not null");
     expect(sql).toContain("Full Moon content changed during visibility update");
@@ -83,11 +92,23 @@ describe("Thailand Full Moon Spell publication", () => {
     expect(sql).not.toMatch(/\b(?:delete from|drop table|alter table|insert into public\.spell_departures)\b/i);
   });
 
+  it("only revises four content fields while retaining the original PDF and all operational data", () => {
+    const sql = readFileSync(new URL("../../../backend/migrations/0099_thailand_full_moon_island_revision.sql", import.meta.url), "utf8");
+    const patch = JSON.parse(sql.match(/\$fullmoonv2\$([\s\S]+?)\$fullmoonv2\$/)![1]);
+    expect(patch).toEqual({ hook: trip.hook, location: trip.location, page: fullMoonContent.page, inclusions: trip.inclusions });
+    expect(sql).toContain("Full Moon changed since revision review");
+    expect(sql).toContain("Non-itinerary Full Moon fields changed");
+    expect(sql).toContain("Unrelated data changed during Full Moon revision");
+    expect(sql).not.toMatch(/\b(?:delete from|drop table|alter table|update public\.spell_departures|insert into public\.spell_departures)\b/i);
+    const oldPdf = readFileSync(new URL(`../../public/brochures/${originalTrip.fileName}`, import.meta.url));
+    expect(oldPdf.equals(readFileSync(new URL(`../../../pdf-build/${originalTrip.fileName}`, import.meta.url)))).toBe(true);
+  });
+
   it("uses a guarded insert-only migration matching the source, never a different Thailand spell", () => {
     const sql = readFileSync(new URL("../../../backend/migrations/0085_thailand_full_moon_spell.sql", import.meta.url), "utf8");
     const payload = sql.match(/\$fullmoon\$([\s\S]+?)\$fullmoon\$/)?.[1];
     expect(payload).toBeTruthy();
-    expect(JSON.parse(payload!)).toEqual(fullMoonContent);
+    expect(JSON.parse(payload!)).toEqual(originalContent);
     expect(sql).not.toMatch(/\b(?:update public|delete from|drop table|alter table)\b/i);
     expect(sql).not.toContain("the-starboy-spell");
     expect(sql).toContain("Existing data changed during Full Moon publication");

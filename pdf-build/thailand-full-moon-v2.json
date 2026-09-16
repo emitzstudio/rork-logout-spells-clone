@@ -1,0 +1,134 @@
+{
+  "id": "f2302026-a117-4c3d-9051-280920260001",
+  "departureId": "f2302026-a117-4c3d-9051-280920260002",
+  "changeId": "f2302026-a117-4c3d-9051-280920260005",
+  "slug": "the-thailand-full-moon-spell",
+  "name": "The Thailand Full Moon Spell",
+  "hook": "Sun-soaked days, island nights and one legendary Full Moon Party.",
+  "fileName": "Logout-Spells-Thailand-Full-Moon-23-28-Sep-2026-Grimoire-v2.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "23-28 September 2026",
+  "startDate": "2026-09-23",
+  "endDate": "2026-09-28",
+  "durationDays": 6,
+  "nights": 5,
+  "adults": 10,
+  "rooms": 5,
+  "priceLabel": "TBA",
+  "location": "Koh Samui & Koh Phangan",
+  "route": "Koh Samui → Koh Phangan → Koh Samui",
+  "staySummary": "2 nights in Koh Samui · 3 nights in Koh Phangan",
+  "heroFile": "thailand-full-moon-cover-v1.jpg",
+  "imageNote": "Moon and Samui artwork is AI-generated for atmosphere; it does not depict confirmed hotels or the booked event.",
+  "about": "This is your tropical Thailand spell - from the beaches and cafés of Koh Samui to the electric nights of Koh Phangan.",
+  "summary": ["2 Tropical Islands", "1 Full Moon Party", "Beach Days", "Island Hopping", "Cafés & Beach Clubs", "5 Nights of Island Living"],
+  "closing": "Come for the Full Moon. Stay for the memories.",
+  "days": [
+    {
+      "date": "2026-09-23", "dateLabel": "Wednesday, 23 September 2026",
+      "title": "Arrive in Koh Samui", "titleLines": ["ARRIVE IN", "KOH SAMUI"],
+      "location": "Koh Samui", "imageFile": "thailand-samui-morning-v1.jpg", "illustration": true,
+      "intro": "Touch down in paradise.",
+      "points": [
+        {"title": "KOH SAMUI AIRPORT ARRIVAL", "body": "Arrive at Koh Samui Airport."},
+        {"title": "PRIVATE HOTEL TRANSFER", "body": "Private transfer to your hotel."},
+        {"title": "CHECK IN & SETTLE IN", "body": "Check-in & settle in."},
+        {"title": "REST, RECHARGE OR EXPLORE", "body": "Rest, recharge or head out to explore."},
+        {"title": "YOUR EVENING, YOUR PACE", "body": "Evening free for beach time, local cafés or a relaxed sunset."}
+      ],
+      "overnight": "Koh Samui · Night 1", "note": ""
+    },
+    {
+      "date": "2026-09-24", "dateLabel": "Thursday, 24 September 2026",
+      "title": "Koh Samui - Island Day", "titleLines": ["KOH SAMUI", "ISLAND DAY"],
+      "location": "Koh Samui", "imageFile": "thailand-samui-morning-v1.jpg", "illustration": true,
+      "intro": "No alarms. No rush. Just island time. Spend the day exploring Koh Samui at your own pace. You can choose to:",
+      "points": [
+        {"title": "HIT THE BEACH", "body": "Hit the beach."},
+        {"title": "BIG BUDDHA & WAT PLAI LAEM", "body": "Visit Big Buddha & Wat Plai Laem."},
+        {"title": "FISHERMAN'S VILLAGE", "body": "Explore Fisherman's Village."},
+        {"title": "CAFÉS & BEACH CLUBS", "body": "Go café & beach-club hopping."},
+        {"title": "A TROPICAL SUNSET", "body": "Catch a tropical sunset."},
+        {"title": "SIMPLY DO NOTHING", "body": "Simply do absolutely nothing."}
+      ],
+      "overnight": "Koh Samui · Night 2", "note": "These are optional, self-paced ideas, not included guided tours."
+    },
+    {
+      "date": "2026-09-25", "dateLabel": "Friday, 25 September 2026",
+      "title": "Koh Samui → Koh Phangan", "titleLines": ["KOH SAMUI TO", "KOH PHANGAN"],
+      "location": "Koh Samui → Koh Phangan", "imageFile": "thailand-samui-morning-v1.jpg", "illustration": true,
+      "intro": "Time to switch islands.",
+      "points": [
+        {"title": "BREAKFAST & CHECK-OUT", "body": "Breakfast & check-out."},
+        {"title": "TRANSFER TO THE FERRY TERMINAL", "body": "Transfer to the ferry terminal."},
+        {"title": "FERRY TO KOH PHANGAN", "body": "Ferry from Koh Samui to Koh Phangan. Arrive in Koh Phangan."},
+        {"title": "PRIVATE HOTEL TRANSFER", "body": "Private transfer to the hotel."},
+        {"title": "CHECK IN & RELAX", "body": "Check-in & relax."},
+        {"title": "GET INTO THE FULL MOON MOOD", "body": "Evening free to explore the island. Get into the Full Moon mood."}
+      ],
+      "overnight": "Koh Phangan · Night 3", "note": ""
+    },
+    {
+      "date": "2026-09-26", "dateLabel": "Saturday, 26 September 2026",
+      "title": "Full Moon Party", "titleLines": ["FULL MOON", "PARTY"],
+      "location": "Haad Rin Beach · Koh Phangan", "imageFile": "thailand-full-moon-cover-v1.jpg", "illustration": true,
+      "intro": "The night we've been waiting for.",
+      "points": [
+        {"title": "A SLOW DAY BEFORE THE NIGHT", "body": "Spend the day recovering, swimming, tanning and getting ready for one of Thailand's most iconic nights."},
+        {"title": "TONIGHT: FULL MOON PARTY", "body": "Haad Rin Beach · 26 September 2026. Dance by the sea, meet travellers from around the world and experience Koh Phangan after dark."},
+        {"title": "BACK TO YOUR KOH PHANGAN HOTEL", "body": "After the party, return to the hotel and call it a night - or a morning."}
+      ],
+      "overnight": "Koh Phangan · Night 4",
+      "note": "Full Moon Party entry ticket is at your own cost. Local hotel return arrangements must be confirmed. Event dates may change; reconfirm before travel."
+    },
+    {
+      "date": "2026-09-27", "dateLabel": "Sunday, 27 September 2026",
+      "title": "Recovery Mode", "titleLines": ["RECOVERY", "MODE"],
+      "location": "Koh Phangan", "imageFile": "thailand-full-moon-cover-v1.jpg", "illustration": true,
+      "intro": "Last night's memories. Today's slow mornings. Take it easy after the Full Moon Party.",
+      "points": [
+        {"title": "LATE BREAKFAST / BRUNCH", "body": "Late breakfast / brunch."},
+        {"title": "BEACH & POOL TIME", "body": "Beach & pool time."},
+        {"title": "SPA OR MASSAGE", "body": "Spa or massage."},
+        {"title": "CAFÉ HOPPING", "body": "Café hopping."},
+        {"title": "SUNSET BEACH CLUB", "body": "Sunset beach club."},
+        {"title": "EXPLORE AT YOUR OWN PACE", "body": "Explore the island at your own pace."}
+      ],
+      "overnight": "Koh Phangan · Night 5", "note": "Today has one rule: Do less. Enjoy more. Activities are optional and self-paced."
+    },
+    {
+      "date": "2026-09-28", "dateLabel": "Monday, 28 September 2026",
+      "title": "Koh Phangan → Koh Samui", "titleLines": ["KOH PHANGAN TO", "KOH SAMUI"],
+      "location": "Koh Phangan → Koh Samui Airport", "imageFile": "thailand-samui-morning-v1.jpg", "illustration": true,
+      "intro": "One last island morning.",
+      "points": [
+        {"title": "BREAKFAST", "body": "Breakfast."},
+        {"title": "CHECK-OUT", "body": "Check-out."},
+        {"title": "TRANSFER TO THE FERRY TERMINAL", "body": "Transfer to Koh Phangan ferry terminal."},
+        {"title": "FERRY TO KOH SAMUI", "body": "Ferry to Koh Samui."},
+        {"title": "KOH SAMUI AIRPORT TRANSFER", "body": "Transfer to Koh Samui Airport."},
+        {"title": "TAKE THE MEMORIES HOME", "body": "Depart with a camera roll full of memories."}
+      ],
+      "overnight": "Departure · Spell complete", "note": "SPELL COMPLETE."
+    }
+  ],
+  "hotels": [
+    {"location": "Koh Samui", "nights": 2, "dates": "23 & 24 September", "name": "Malibu Beach Resort Samui", "room": "Studio Room · Twin / Double Sharing", "note": "Or similar."},
+    {"location": "Koh Phangan", "nights": 3, "dates": "25, 26 & 27 September", "name": "Hotel / Resort in Koh Phangan", "room": "Standard Room · Twin / Double Sharing", "note": "Or similar."}
+  ],
+  "inclusions": [
+    "Daily buffet breakfast at the hotel",
+    "All airport transfers on a private basis"
+  ],
+  "exclusions": [
+    "Full Moon Party entry ticket · at your own cost",
+    "Airfare",
+    "Travel insurance · INR 500 per person additional, as quoted",
+    "RT-PCR testing, if required by COVID-related travel rules · additional cost"
+  ],
+  "entryNote": "Indian passport holders may be eligible for visa-exempt tourist entry under the rules in force at travel. This is not a guarantee of free visa-on-arrival. Check passport eligibility and current Thai entry requirements before departure.",
+  "transportNote": "Koh Samui - Koh Phangan - Koh Samui ferries and island transfers are in the itinerary; fares, inclusion and timings must be confirmed. Party-night hotel return is within Koh Phangan. Allow a suitable ferry-to-flight buffer on departure day.",
+  "leisureNote": "Beach clubs, cafés, spa or massage and other free-day activities are optional; their costs and any late breakfast / brunch are not assumed included.",
+  "priceNote": "Price TBA. Pricing, taxes, deposit and booking terms will be announced. Applications are not open yet; no payment is requested."
+}

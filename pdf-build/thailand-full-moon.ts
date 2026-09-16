@@ -1,10 +1,10 @@
-/** A nine-page charcoal-and-gold Grimoire; never rebuilds or overwrites another trip. */
+/** A ten-page charcoal-and-gold Grimoire; never rebuilds or overwrites another trip. */
 import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, PDFName, PDFString, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import * as mupdf from "mupdf";
-import trip from "./thailand-full-moon-v1.json";
+import trip from "./thailand-full-moon-v2.json";
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
 
 const W = 595.28;
@@ -29,8 +29,8 @@ export async function buildFullMoonGrimoire(): Promise<Uint8Array> {
   doc.setTitle(`${trip.name} · Grimoire edition`);
   doc.setAuthor("Logout Spells");
   doc.setSubject(`${trip.dates} · 6 days / 5 nights · 10 adults / 5 rooms · Price TBA`);
-  doc.setCreationDate(new Date("2026-09-13T00:00:00Z"));
-  doc.setModificationDate(new Date("2026-09-13T00:00:00Z"));
+  doc.setCreationDate(new Date("2026-09-16T00:00:00Z"));
+  doc.setModificationDate(new Date("2026-09-16T00:00:00Z"));
   const font = (name: string, subset = false) => doc.embedFont(readFileSync(`fonts/${name}.ttf`), { subset });
   const [serif, italic, sans, semi] = await Promise.all([
     font("cormorant-garamond-v21-latin_latin-ext-500"), font("cormorant-garamond-v21-latin_latin-ext-600italic"),
@@ -102,12 +102,33 @@ export async function buildFullMoonGrimoire(): Promise<Uint8Array> {
   center(cover, "SPELL", 336, 29, serif, CREAM, 10);
   rule(cover, 309, 235, W - 235);
   center(cover, "23-28 SEPTEMBER 2026", 275, 10.5, semi, LIGHT, 2.5);
-  center(cover, "KRABI · KOH SAMUI · KOH PHANGAN · PHUKET", 250, 8.2, semi, MUTED, 0.9);
+  center(cover, "KOH SAMUI × KOH PHANGAN", 250, 8.2, semi, MUTED, 0.9);
   center(cover, "6 DAYS / 5 NIGHTS", 198, 12, serif, CREAM, 2.4);
   center(cover, "10 ADULTS · 5 ROOMS · TWIN / DOUBLE", 174, 8, semi, MUTED, 1.3);
-  center(cover, "Island days. Moonlit nights.", 122, 18, italic, CREAM);
+  center(cover, "Come for the Full Moon.", 136, 18, italic, CREAM);
+  center(cover, "Stay for the memories.", 114, 18, italic, CREAM);
   center(cover, "PRICE TBA", 84, 9, semi, LIGHT, 3);
   center(cover, "AI-generated atmospheric artwork", 46, 6.3, sans, MUTED);
+
+  const overview = page();
+  await photo(overview, "thailand-samui-morning-v1.jpg", 280);
+  text(overview, "THAILAND · KOH SAMUI × KOH PHANGAN", 48, 595, 8, semi, LIGHT, 1.2);
+  text(overview, "THE SPELL", 48, 546, 40, serif, CREAM, 1.3);
+  let overviewY = paragraph(overview, trip.hook, 48, 504, W - 96, 19, 23, italic, CREAM);
+  overviewY = paragraph(overview, trip.about, 48, overviewY - 17, W - 96, 11, 17);
+  rule(overview, overviewY - 8);
+  text(overview, trip.dates.toUpperCase(), 48, overviewY - 35, 10, semi, LIGHT, 1.1);
+  text(overview, trip.route.replaceAll("→", "-"), 48, overviewY - 61, 13, serif, CREAM);
+  text(overview, trip.staySummary, 48, overviewY - 85, 10, sans, MUTED);
+  text(overview, "YOUR THAILAND SPELL", 48, 232, 9, semi, LIGHT, 1.7);
+  trip.summary.forEach((item, i) => {
+    const x = i % 2 === 0 ? 48 : 310;
+    const y = 202 - Math.floor(i / 2) * 27;
+    overview.drawCircle({ x: x + 2, y: y + 3, size: 2, color: GOLD });
+    text(overview, item, x + 13, y, 11, sans, CREAM);
+  });
+  center(overview, trip.closing, 100, 15, italic, LIGHT);
+  footer(overview, 2, "TWO TROPICAL ISLANDS · FIVE NIGHTS");
 
   for (const [index, day] of trip.days.entries()) {
     const p = page();
@@ -117,32 +138,33 @@ export async function buildFullMoonGrimoire(): Promise<Uint8Array> {
     text(p, day.titleLines[0], 48, 548, 37, serif, CREAM, 1);
     text(p, day.titleLines[1], 48, 511, 37, serif, CREAM, 1);
     const introBottom = paragraph(p, day.intro, 49, 477, W - 98, 12, 17, italic, MUTED);
-    assert(introBottom >= 440);
-    let y = 410;
+    assert(introBottom >= 420);
+    let y = Math.min(418, introBottom - 21);
     for (const [i, point] of day.points.entries()) {
-      if (i < day.points.length - 1) p.drawLine({ start: { x: 62, y: y - 7 }, end: { x: 62, y: y - 57 }, color: GOLD, thickness: 0.5, opacity: 0.3 });
+      const rowHeight = 19 + lines(point.body, 10, sans, W - 138).length * 14 + 16;
+      if (i < day.points.length - 1) p.drawLine({ start: { x: 62, y: y - 9 }, end: { x: 62, y: y - rowHeight + 18 }, color: GOLD, thickness: 0.5, opacity: 0.3 });
       p.drawCircle({ x: 62, y: y + 4, size: 13, color: PANEL, borderColor: GOLD, borderWidth: 0.7 });
       const number = String(i + 1).padStart(2, "0");
       text(p, number, 62 - width(number, 7, semi) / 2, y + 1, 7, semi, LIGHT);
       text(p, point.title, 87, y + 2, 10, semi, LIGHT, 0.5);
-      const bottom = paragraph(p, point.body, 87, y - 18, W - 138, 10, 15);
-      assert(bottom >= y - 52, `Timeline overflow: ${point.title}`);
-      y -= 67;
+      const bottom = paragraph(p, point.body, 87, y - 18, W - 138, 10, 14);
+      assert(bottom >= 98, `Timeline overflow: ${point.title}`);
+      y -= rowHeight;
     }
-    if (day.note && index !== 5) {
-      const bottom = paragraph(p, day.note, 49, 136, W - 98, 8.2, 12);
+    if (day.note) {
+      const noteY = Math.min(136, y - 2);
+      const bottom = paragraph(p, day.note, 49, noteY, W - 98, 8.2, 12, index === 5 ? semi : sans, index === 5 ? LIGHT : MUTED);
       assert(bottom >= 79, "Practical note too long");
     }
-    if (index === 5) center(p, "END OF THE SPELL", 179, 10, semi, LIGHT, 3);
-    const imageCredit = day.illustration ? "AI-generated illustrative scenery; not a hotel or booked-event photograph." : index === 5 ? "Phuket Old Town photograph; destination imagery, not an added tour." : "Phuket destination photograph.";
+    const imageCredit = "AI-generated illustrative scenery; not a hotel or booked-event photograph.";
     center(p, imageCredit, 69, 6.1, sans, MUTED);
-    footer(p, index + 2, day.overnight.toUpperCase());
+    footer(p, index + 3, day.overnight.toUpperCase());
   }
 
   const stay = page();
   await photo(stay, "thailand-samui-morning-v1.jpg", 280);
   text(stay, "THE PLACES BETWEEN THE CHAPTERS", 48, 595, 8, semi, LIGHT, 1.4);
-  text(stay, "FIVE NIGHTS. THREE STAYS.", 48, 550, 30, serif, CREAM, 0.6);
+  text(stay, "FIVE NIGHTS. TWO ISLANDS.", 48, 550, 30, serif, CREAM, 0.6);
   text(stay, "10 adults · 5 rooms · Twin / Double", 48, 522, 10, sans, MUTED);
   let hotelY = 488;
   for (const hotel of trip.hotels) {
@@ -153,9 +175,10 @@ export async function buildFullMoonGrimoire(): Promise<Uint8Array> {
     text(stay, hotel.note, 63, nameBottom - 19, 8, sans, MUTED);
     hotelY -= 121;
   }
-  paragraph(stay, "Proposed properties or similar, subject to final confirmation. Hotel room allocation and party-night return arrangements will be confirmed before travel.", 49, 109, W - 98, 8.2, 12);
+  paragraph(stay, "Proposed properties or similar, subject to final confirmation. The Koh Phangan hotel / resort is not yet named. Room allocation, transfers and local party-night return arrangements will be confirmed before travel.", 49, 225, W - 98, 10, 15);
+  paragraph(stay, trip.leisureNote, 49, 138, W - 98, 8.2, 12);
   center(stay, "AI-generated Samui-inspired scenery; not a hotel photograph.", 69, 6.1, sans, MUTED);
-  footer(stay, 8, "YOUR ISLAND STAYS");
+  footer(stay, 9, "YOUR ISLAND STAYS");
 
   const final = page();
   center(final, "YOUR NEXT CHAPTER", 777, 9, semi, LIGHT, 3);
@@ -190,7 +213,7 @@ export async function buildFullMoonGrimoire(): Promise<Uint8Array> {
     Type: "Annot", Subtype: "Link", Rect: [64, 78, W - 64, 122], Border: [0, 0, 0],
     A: { Type: "Action", S: "URI", URI: PDFString.of(websiteUrl) },
   }))]));
-  footer(final, 9, "LOGOUT SPELLS · THAILAND FULL MOON");
+  footer(final, 10, "LOGOUT SPELLS · THAILAND FULL MOON");
   return doc.save();
 }
 
@@ -199,10 +222,10 @@ export function verifyFullMoonGrimoire(bytes: Uint8Array): void {
   const warnings: string[] = [];
   mupdf.setLog({ warning: (s) => warnings.push(s), error: (s) => warnings.push(s) });
   const doc = mupdf.Document.openDocument(bytes, "application/pdf");
-  assert.equal(doc.countPages(), 9);
+  assert.equal(doc.countPages(), 10);
   mkdirSync(".cache", { recursive: true });
   const all: string[] = [];
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 10; i++) {
     const p = doc.loadPage(i);
     const st = p.toStructuredText("preserve-whitespace");
     const t = st.asText(); all.push(t);
@@ -211,26 +234,26 @@ export function verifyFullMoonGrimoire(bytes: Uint8Array): void {
     for (const line of blocks.blocks.flatMap((b) => b.lines ?? [])) {
       const b = line.bbox; assert(b.x >= 25 && b.x + b.w <= W - 25 && b.y >= 20 && b.y + b.h <= H - 20, `Page ${i + 1} unsafe: ${line.text}`);
     }
-    if (i > 0 && i <= 6) {
-      const day = trip.days[i - 1];
+    if (i >= 2 && i <= 7) {
+      const day = trip.days[i - 2];
       let cursor = 0;
       for (const term of [day.dateLabel, ...day.titleLines, day.intro, ...day.points.flatMap((point) => [point.title, point.body])]) {
         const found = compact(t).indexOf(compact(term), cursor); assert(found >= cursor, `Day ${i}: missing/reordered ${term}`); cursor = found + compact(term).length;
       }
       assert(compact(t).includes(compact(day.overnight)));
-      if (day.note && i !== 6) assert(compact(t).includes(compact(day.note)));
+      if (day.note) assert(compact(t).includes(compact(day.note)));
     }
     const links = p.getLinks();
-    assert.deepEqual(links.map((link) => link.getURI()), i === 8 ? [websiteUrl] : []);
-    if (i === 8) [64, H - 122, W - 64, H - 78].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
+    assert.deepEqual(links.map((link) => link.getURI()), i === 9 ? [websiteUrl] : []);
+    if (i === 9) [64, H - 122, W - 64, H - 78].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
     const pix = p.toPixmap(mupdf.Matrix.scale(1.5, 1.5), mupdf.ColorSpace.DeviceRGB, false, true);
-    writeFileSync(`.cache/full-moon-review-p${i + 1}.png`, pix.asPNG());
+    writeFileSync(`.cache/full-moon-v2-review-p${i + 1}.png`, pix.asPNG());
     pix.destroy(); links.forEach((link) => link.destroy()); st.destroy(); p.destroy();
     console.log(`PASS: Full Moon page ${i + 1}, copy, safe bounds and links`);
   }
   const contents = compact(all.join(" "));
-  for (const value of [trip.dates, "THE THAILAND FULL MOON SPELL", "10 ADULTS", "5 ROOMS", "6 DAYS / 5 NIGHTS", "PRICE TBA", "END OF THE SPELL", ...trip.inclusions, ...trip.exclusions, ...trip.hotels.flatMap((h) => [h.name, h.room, h.note]), trip.entryNote, trip.transportNote, trip.priceNote]) assert(contents.includes(compact(value)), `Missing ${value}`);
-  assert(!/Starboy|Weeknd|Blinding|Vietnam|20,000|30%|GST|TCS|APPLY NOW/.test(all.join(" ")), "Unapproved copied commercial terms");
+  for (const value of [trip.dates, "THE THAILAND FULL MOON SPELL", "10 ADULTS", "5 ROOMS", "6 DAYS / 5 NIGHTS", "PRICE TBA", "SPELL COMPLETE.", trip.hook, trip.about, trip.staySummary, ...trip.summary, trip.closing, trip.leisureNote, ...trip.inclusions, ...trip.exclusions, ...trip.hotels.flatMap((h) => [h.name, h.room, h.note]), trip.entryNote, trip.transportNote, trip.priceNote]) assert(contents.includes(compact(value)), `Missing ${value}`);
+  assert(!/Krabi|Phuket|Surat Thani|Four Islands|THB 200|SIC|Starboy|Weeknd|Blinding|Vietnam|20,000|30%|GST|TCS|APPLY NOW/.test(all.join(" ")), "Unapproved copied commercial terms");
   assert.deepEqual(warnings, []);
   doc.destroy();
 }
@@ -241,7 +264,7 @@ if (import.meta.main) {
   const bytes = process.argv.includes("--verify-existing") ? readFileSync(trip.fileName) : await buildFullMoonGrimoire();
   verifyFullMoonGrimoire(bytes);
   if (!process.argv.includes("--verify-existing")) {
-    if (draft) writeFileSync(".cache/thailand-full-moon-v1-draft.pdf", bytes);
+    if (draft) writeFileSync(".cache/thailand-full-moon-v2-draft.pdf", bytes);
     else saveGrimoireCopy(trip.fileName, bytes);
   }
   if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${trip.fileName}`, bytes);
