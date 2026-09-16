@@ -41,14 +41,18 @@ assert.deepEqual(normalize(remaining), normalize(before.rows), "Existing spells,
 const currentFiles = files();
 for (const [name, digest] of Object.entries(before.files)) assert.equal(currentFiles[name], digest, `Existing asset modified: ${name}`);
 const added = Object.keys(currentFiles).filter((name) => !(name in before.files)).sort();
-assert.deepEqual(added, [`/brochures/${trip.fileName}`, "/thailand-full-moon-cover-v1.jpg", "/thailand-krabi-islands-v1.jpg", "/thailand-samui-morning-v1.jpg"].sort());
-for (const path of added) {
-  const r = await fetch(trip.origin + path, { cache: "no-store", signal: AbortSignal.timeout(30000) });
+const releaseAssets = [`/brochures/${trip.fileName}`, "/thailand-full-moon-cover-v1.jpg", "/thailand-krabi-islands-v1.jpg", "/thailand-samui-morning-v1.jpg"];
+// Assets may already be deployed before this publication's immutable baseline.
+assert.deepEqual(added, releaseAssets.filter((path) => !(path in before.files)).sort());
+const referencedAssets = [...new Set([...releaseAssets, ...trip.days.map((day) => `/${day.imageFile}`)])];
+for (const path of referencedAssets) {
+  assert(currentFiles[path], `Missing local asset: ${path}`);
+  const r = await fetch(site + path, { cache: "no-store", signal: AbortSignal.timeout(30000) });
   assert(r.ok, `Asset ${path}: ${r.status}`);
   assert(r.headers.get("content-type")?.includes(path.endsWith(".pdf") ? "application/pdf" : "image/"));
   assert.equal(hash(Buffer.from(await r.arrayBuffer())), currentFiles[path], path);
 }
-console.log("PASS: existing data/assets preserved; all new live assets byte-identical");
+console.log("PASS: existing data/assets preserved; all referenced live assets byte-identical");
 if (process.argv.includes("--assets-only")) {
   assert(!rows.spells.some((s) => s.id === trip.id || s.slug === trip.slug), "Assets-only gate must precede the migration");
   console.log("PASS: assets are ready before production publication");
@@ -56,7 +60,13 @@ if (process.argv.includes("--assets-only")) {
 }
 const row = rows.spells.find((s) => s.id === trip.id);
 assert(row);
-for (const [key, value] of Object.entries(fullMoonContent)) if (key !== "departure") assert.deepEqual(row[key], value, key);
+// Republication preserves the archived entry's cleared urgency and manual order.
+for (const [key, value] of Object.entries({ ...fullMoonContent, urgency: null })) if (key !== "departure") assert.deepEqual(row[key], value, key);
+assert.equal(row.sort_order, 2);
+assert.equal(row.deleted_at, null);
+assert.equal(row.mobile_hero_url, fullMoonContent.hero_url);
+assert.equal(row.hero_as_cover, true);
+assert.deepEqual(row.inclusions, trip.inclusions);
 const dep = rows.spell_departures.find((d) => d.id === trip.departureId);
 assert(dep && dep.spell_id === trip.id && dep.seats_booked === 0);
 for (const [key, value] of Object.entries(fullMoonContent.departure)) assert.deepEqual(dep[key], value, key);
@@ -78,8 +88,11 @@ try {
     assert.deepEqual(await page.locator('a[href*=".pdf"]').evaluateAll((a) => a.map((el) => el.getAttribute("href"))), Array(2).fill(`${trip.origin}/brochures/${trip.fileName}`));
     assert((await page.locator("#price").innerText()).includes("TBA"));
     const journey = await page.locator("#journey").innerText();
-    for (const day of trip.days) assert(journey.includes(day.title), day.title);
-    assert((await page.locator("main").innerText()).includes("10 adults / 5 rooms"));
+    for (const day of trip.days) { assert(journey.includes(day.title), day.title); assert(journey.includes(day.dateLabel), day.dateLabel); }
+    const main = await page.locator("main").innerText();
+    assert(main.includes("10 adults / 5 rooms"));
+    assert(main.includes(trip.dates));
+    assert(!main.includes("₹0"));
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await page.screenshot({ path: new URL(`full-moon-${new URL(site).hostname}-${width}.png`, cache).pathname });
     await page.getByRole("button", { name: /Request your spot/i }).first().click();

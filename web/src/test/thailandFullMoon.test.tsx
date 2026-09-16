@@ -71,6 +71,18 @@ describe("Thailand Full Moon Spell publication", () => {
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
   });
 
+  it("republishes the archived entry by changing only its visibility", () => {
+    const sql = readFileSync(new URL("../../../backend/migrations/0098_republish_thailand_full_moon.sql", import.meta.url), "utf8");
+    expect(sql.match(/update public\.spells set ([^;]+)/g)).toEqual(["update public.spells set status = 'published' where id = v_id"]);
+    expect(sql).toContain(trip.id);
+    expect(sql).toContain(trip.fileName);
+    expect(sql).toContain("v_spell.status <> 'archived'");
+    expect(sql).toContain("v_spell.deleted_at is not null");
+    expect(sql).toContain("Full Moon content changed during visibility update");
+    expect(sql).toContain("Unrelated data changed during Full Moon republication");
+    expect(sql).not.toMatch(/\b(?:delete from|drop table|alter table|insert into public\.spell_departures)\b/i);
+  });
+
   it("uses a guarded insert-only migration matching the source, never a different Thailand spell", () => {
     const sql = readFileSync(new URL("../../../backend/migrations/0085_thailand_full_moon_spell.sql", import.meta.url), "utf8");
     const payload = sql.match(/\$fullmoon\$([\s\S]+?)\$fullmoon\$/)?.[1];
