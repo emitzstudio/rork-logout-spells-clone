@@ -1,0 +1,148 @@
+{
+  "id": "57172026-a117-4c3d-9051-170920260001",
+  "departureId": "57172026-a117-4c3d-9051-170920260002",
+  "changeId": "57172026-a117-4c3d-9051-170920260003",
+  "slug": "the-winter-spiti-spell",
+  "name": "The Winter Spiti Spell",
+  "hook": "Snow landscapes, ancient monasteries and the quiet edge of the Himalayas.",
+  "fileName": "Logout-Spells-Winter-Spiti-Valley-Dates-TBA-Grimoire-v1.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "Dates TBA",
+  "durationDays": 7,
+  "nights": 6,
+  "location": "Spiti Valley & Kinnaur",
+  "route": "Delhi → Shimla → Sangla → Chitkul → Kalpa → Nako → Tabo → Dhankar → Key Monastery → Chicham → Kaza → Hikkim → Komic → Langza → Kalpa → Shimla → Delhi",
+  "transport": "Volvo Bus + Tempo Traveller",
+  "style": "Winter Adventure · Snow Landscapes · Monasteries · Remote Himalayan Villages",
+  "durationNote": "7 days / 6 accommodation nights. The overnight return Volvo leaves Shimla on Day 7 and reaches Delhi on the morning of Day 8. The outbound Delhi-to-Shimla Volvo may depart the previous evening; allow for this additional travel time.",
+  "heroFile": "winter-spiti-valley-cover-v1.jpg",
+  "imageNote": "AI-generated Himalayan illustrations are used for atmosphere, not as photographs of confirmed hotels, exact monuments or guaranteed snow conditions.",
+  "about": "Travel from Delhi into the winter landscapes of Kinnaur and Spiti: Sangla's valley, Chitkul's traditional houses, Kalpa's mountain horizons and the monasteries and remote villages beyond Nako. A road journey through vast, quiet Himalayan country, with each day shaped by winter conditions.",
+  "closing": "Leave with mountain stories. Carry the quiet home.",
+  "staySummary": "Sangla 1N · Kalpa 2N · Tabo 1N · Kaza 2N",
+  "hotels": [
+    {"location": "Sangla", "nights": 1, "dates": "Night 1", "name": "Hotel / Homestay", "room": "Triple or Double Sharing", "note": "Property to be confirmed."},
+    {"location": "Kalpa", "nights": 2, "dates": "Nights 2 & 6", "name": "Hotel / Homestay", "room": "Triple or Double Sharing", "note": "Property to be confirmed."},
+    {"location": "Tabo", "nights": 1, "dates": "Night 3", "name": "Hotel / Guesthouse", "room": "Triple or Double Sharing", "note": "Property to be confirmed."},
+    {"location": "Kaza", "nights": 2, "dates": "Nights 4 & 5", "name": "Hotel / Homestay", "room": "Triple or Double Sharing", "note": "Property to be confirmed."}
+  ],
+  "prices": [
+    {"id": "spiti-triple", "label": "Triple Sharing", "price": 22999},
+    {"id": "spiti-double", "label": "Double Sharing", "price": 24999}
+  ],
+  "priceNote": "Prices per person: INR 22,999 for Triple Sharing; INR 24,999 for Double Sharing. Dates TBA. Tax treatment, deposit, cancellation terms and final package inclusions/exclusions will be confirmed before booking. Applications are not open yet; no payment is requested.",
+  "mealNote": "Day 1: meals as per package, to be confirmed. Days 2-6: Breakfast & Dinner. Day 7: Breakfast. No meals are specified for Day 8 or the Volvo journeys.",
+  "winterNote": "Winter Spiti is highly weather-dependent. Road conditions, snowfall, temporary closures and travel timings can change based on local weather and administration. The final movement plan may therefore be adjusted only for safety and road accessibility, while keeping the planned destinations and route sequence wherever feasible.",
+  "stayNote": "Six accommodation nights are planned in hotels, homestays or guesthouses as listed. Properties and facilities are not yet confirmed. The overnight return Volvo on Day 7 is additional to the six accommodation nights.",
+  "transportNote": "Delhi - Shimla and Shimla - Delhi by Volvo Bus; the mountain circuit by Tempo Traveller. Exact pickup point, reporting time, bus schedule and vehicle arrangements will be shared with the confirmed departure. The outbound Volvo may leave Delhi the previous evening.",
+  "inclusionNote": "The itinerary specifies the transport, six accommodation nights and meals shown here. Final package inclusions, exclusions, entry charges and any additional costs are still to be confirmed; no unspecified activity or service is promised as included.",
+  "highlights": [
+    {"title": "Winter Spiti Valley", "body": "Experience snow landscapes and spectacular Kinnaur and Spiti views, conditions permitting."},
+    {"title": "Remote Himalayan villages", "body": "Explore Sangla Valley, Chitkul, Nako, Hikkim, Komic and Langza."},
+    {"title": "Three monastery chapters", "body": "Visit the historic Tabo, dramatic Dhankar and iconic Key Monasteries."},
+    {"title": "Hikkim Post Office", "body": "Visit Hikkim's iconic high-altitude post office, subject to local opening."},
+    {"title": "Komic & Langza", "body": "Motorable high-altitude villages, Langza's Buddha statue and vast mountain horizons."},
+    {"title": "Delhi to Delhi", "body": "Volvo journeys between Delhi and Shimla, with a Tempo Traveller for the mountain circuit."}
+  ],
+  "days": [
+    {
+      "title": "Delhi → Shimla → Sangla", "titleLines": ["DELHI TO SHIMLA", "INTO SANGLA"], "dateLabel": "Day 01 · Delhi to Sangla",
+      "location": "Delhi → Shimla → Sangla", "imageFile": "winter-kinnaur-valley-v1.jpg",
+      "intro": "Delhi to Shimla by Volvo. Shimla to Sangla by Tempo Traveller.",
+      "points": [
+        {"title": "DELHI TO SHIMLA", "body": "Begin with an overnight / early-morning Volvo bus to Shimla."},
+        {"title": "MEET THE TRIP TEAM", "body": "On reaching Shimla, meet the team and board the Tempo Traveller."},
+        {"title": "THE MOUNTAIN JOURNEY", "body": "Drive towards Sangla through Himalayan roads, river valleys and winter scenery."},
+        {"title": "ARRIVE IN SANGLA", "body": "Check into your hotel / homestay and relax after the journey."}
+      ],
+      "overnight": "Sangla · Night 1", "meals": "As per package", "stay": "Hotel / Homestay",
+      "note": "The outbound Volvo may leave Delhi the previous evening. Exact reporting time and Day 1 meals will be confirmed."
+    },
+    {
+      "title": "Sangla → Chitkul → Kalpa", "titleLines": ["CHITKUL &", "KALPA HORIZONS"], "dateLabel": "Day 02 · Chitkul & Kalpa",
+      "location": "Sangla → Chitkul → Kalpa", "imageFile": "winter-kinnaur-valley-v1.jpg",
+      "intro": "Traditional villages, the Baspa Valley and the Kinnaur Himalayas.",
+      "points": [
+        {"title": "MORNING IN CHITKUL", "body": "Drive to Chitkul, a last inhabited village near the Indo-Tibetan border."},
+        {"title": "BASPA VALLEY", "body": "Explore traditional houses, mountain views and the winter landscape."},
+        {"title": "RAKCHAM & KALPA", "body": "Visit Rakcham along the route, continue to Kalpa and check in."},
+        {"title": "MARKET, MONASTERY & TEMPLES", "body": "Explore Homa Market, Kalpa Monastery, Kalpa Temple and Nagnarayani Temple."},
+        {"title": "KINNER KAILASH SUNSET", "body": "Enjoy views of the Kinnaur Himalayas and Kinner Kailash range around sunset."}
+      ],
+      "overnight": "Kalpa · Night 2", "meals": "Breakfast & Dinner", "stay": "Hotel / Homestay", "note": "Village access and visits remain subject to winter road conditions."
+    },
+    {
+      "title": "Kalpa → Nako → Tabo", "titleLines": ["NAKO & TABO", "ENTER SPITI"], "dateLabel": "Day 03 · Enter the Spiti Valley",
+      "location": "Kalpa → Khab Sangam → Nako → Tabo", "imageFile": "winter-spiti-valley-cover-v1.jpg",
+      "intro": "Leave Kinnaur's horizons for the stark winter landscapes of Spiti.",
+      "points": [
+        {"title": "BREAKFAST & DEPARTURE", "body": "After breakfast, begin the mountain journey towards Spiti Valley."},
+        {"title": "KHAB SANGAM", "body": "Reach Khab, where the Sutlej and Spiti Rivers meet."},
+        {"title": "NAKO VILLAGE", "body": "Continue to high-altitude Nako and explore its winter surroundings."},
+        {"title": "ARRIVE IN TABO", "body": "Proceed into Spiti to Tabo, check in and rest after the long drive."}
+      ],
+      "overnight": "Tabo · Night 3", "meals": "Breakfast & Dinner", "stay": "Hotel / Guesthouse", "note": "Travel times and short stops depend on road and weather conditions."
+    },
+    {
+      "title": "Tabo → Dhankar → Key Monastery → Chicham → Kaza", "titleLines": ["MONASTERY TRAILS", "THE ROAD TO KAZA"], "dateLabel": "Day 04 · Monasteries & Kaza",
+      "location": "Tabo → Dhankar → Key → Chicham → Kaza", "imageFile": "winter-spiti-monastery-v1.jpg",
+      "intro": "Monasteries, high-altitude villages and the heart of Spiti.",
+      "points": [
+        {"title": "TABO MONASTERY", "body": "Begin at historic Tabo Monastery, an important Buddhist centre in Spiti."},
+        {"title": "DHANKAR MONASTERY", "body": "Visit Dhankar Monastery, dramatically situated above the valley."},
+        {"title": "KEY MONASTERY", "body": "Continue to one of Spiti Valley's most iconic monasteries."},
+        {"title": "CHICHAM", "body": "Travel onwards to Chicham for spectacular high-altitude mountain scenery."},
+        {"title": "ARRIVE IN KAZA", "body": "Reach Kaza, Spiti's main town and administrative centre; check in and relax."}
+      ],
+      "overnight": "Kaza · Night 4", "meals": "Breakfast & Dinner", "stay": "Hotel / Homestay", "note": "Monastery visits and the movement plan depend on local access and winter conditions."
+    },
+    {
+      "title": "Kaza Local Sightseeing", "titleLines": ["HIKKIM · KOMIC", "LANGZA"], "dateLabel": "Day 05 · Hikkim, Komic & Langza",
+      "location": "Kaza → Hikkim → Komic → Langza → Kaza", "imageFile": "winter-spiti-valley-cover-v1.jpg",
+      "intro": "A day among the remote villages and vast horizons of central Spiti.",
+      "points": [
+        {"title": "HIKKIM POST OFFICE", "body": "After breakfast, visit Hikkim's high-altitude village and iconic post office."},
+        {"title": "KOMIC", "body": "Explore one of the world's highest motorable villages and its stark landscapes."},
+        {"title": "LANGZA", "body": "See the giant Buddha statue, traditional houses and the village's fossil-rich landscape."},
+        {"title": "WINTER PHOTOGRAPHY", "body": "Enjoy mountain views, photography and village exploration before returning to Kaza."},
+        {"title": "EVENING AT LEISURE", "body": "Relax in Kaza, explore the local market or spend time with the group."}
+      ],
+      "overnight": "Kaza · Night 5", "meals": "Breakfast & Dinner", "stay": "Hotel / Homestay", "note": "Village roads and the post office are subject to local access and opening."
+    },
+    {
+      "title": "Kaza → Kalpa", "titleLines": ["SPITI TO KINNAUR", "BACK TO KALPA"], "dateLabel": "Day 06 · Return through Spiti & Kinnaur",
+      "location": "Kaza → Kalpa", "imageFile": "winter-spiti-valley-cover-v1.jpg",
+      "intro": "Retrace the spectacular route through dramatic valleys and mountain landscapes.",
+      "points": [
+        {"title": "AN EARLY START", "body": "Set off early from Kaza for the return journey to Kalpa."},
+        {"title": "THE SPITI-KINNAUR ROUTE", "body": "Travel back through the valleys and mountain landscapes encountered earlier."},
+        {"title": "PHOTO STOPS", "body": "Take short photo stops where road and weather conditions allow."},
+        {"title": "EVENING IN KALPA", "body": "Arrive by evening, check in and enjoy Kalpa's peaceful winter atmosphere."}
+      ],
+      "overnight": "Kalpa · Night 6", "meals": "Breakfast & Dinner", "stay": "Hotel / Homestay", "note": "Arrival time can change with winter conditions."
+    },
+    {
+      "title": "Kalpa → Shimla → Delhi", "titleLines": ["DOWN TO SHIMLA", "THE OVERNIGHT HOME"], "dateLabel": "Day 07 · Shimla & the return Volvo",
+      "location": "Kalpa → Shimla → Delhi", "imageFile": "winter-kinnaur-valley-v1.jpg",
+      "intro": "Return to Shimla and board the evening Volvo to Delhi.",
+      "points": [
+        {"title": "BREAKFAST & FINAL MOUNTAIN DRIVE", "body": "After breakfast, begin the road journey from Kalpa to Shimla."},
+        {"title": "CHANGING HIMALAYAN LANDSCAPES", "body": "Enjoy the changing mountain scenery as you descend towards Shimla."},
+        {"title": "SHIMLA BUS STAND", "body": "Reach Shimla by evening and transfer to the return Volvo at the bus stand."},
+        {"title": "OVERNIGHT VOLVO TO DELHI", "body": "Board the bus for the overnight journey; Delhi arrival is on Day 8."}
+      ],
+      "overnight": "Overnight Volvo Bus · Return transit", "meals": "Breakfast", "stay": "Volvo Bus", "note": "This bus night is additional to the six accommodation nights. Road and bus timings may change."
+    },
+    {
+      "title": "Arrive in Delhi", "titleLines": ["DELHI ARRIVAL", "SPELL COMPLETE"], "dateLabel": "Day 08 · Morning arrival in Delhi",
+      "location": "Delhi", "imageFile": "winter-spiti-monastery-v1.jpg",
+      "intro": "Arrive in Delhi in the morning, marking the end of your Winter Spiti Valley adventure.",
+      "points": [
+        {"title": "MORNING ARRIVAL", "body": "Arrive in Delhi after the overnight Volvo journey."},
+        {"title": "TRIP ENDS - DELHI", "body": "Thank you for travelling with us!"}
+      ],
+      "overnight": "Trip ends · Delhi", "meals": "Not specified", "stay": "No accommodation", "note": "Keep onward travel flexible until the confirmed bus schedule is shared. END OF THE SPELL."
+    }
+  ]
+}

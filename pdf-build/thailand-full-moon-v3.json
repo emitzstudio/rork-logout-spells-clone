@@ -1,0 +1,151 @@
+{
+  "id": "f2302026-a117-4c3d-9051-280920260001",
+  "departureId": "f2302026-a117-4c3d-9051-280920260002",
+  "changeId": "f2302026-a117-4c3d-9051-280920260006",
+  "slug": "the-thailand-full-moon-spell",
+  "name": "The Thailand Full Moon Spell",
+  "hook": "Luxury island life. Hidden beaches. One legendary Full Moon night.",
+  "fileName": "Logout-Spells-Thailand-Full-Moon-23-28-Sep-2026-Grimoire-v3.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "23-28 September 2026",
+  "startDate": "2026-09-23",
+  "endDate": "2026-09-28",
+  "durationDays": 6,
+  "nights": 5,
+  "adults": 10,
+  "rooms": 5,
+  "priceLabel": "TBA",
+  "location": "Koh Samui & Koh Phangan",
+  "route": "Koh Samui → Koh Phangan → Koh Samui",
+  "staySummary": "2 nights in Koh Samui · 3 nights in Koh Phangan",
+  "heroFile": "thailand-full-moon-cover-v1.jpg",
+  "imageNote": "Moon and Samui artwork is AI-generated for atmosphere; it does not depict confirmed hotels or the booked event.",
+  "about": "A curated island experience combining luxury, hidden beaches, jungle adventures, incredible food, sunset spots and Phangan's legendary nightlife.",
+  "vibe": "Not a typical tourist itinerary. Luxury island life + hidden gems + adventure + incredible food + wellness + nightlife.",
+  "summary": ["Secret beaches & hidden bays", "Private boats & longtails", "Snorkelling & island exploration", "Jungle & waterfall adventure", "Sunset viewpoints & dining", "Full Moon Party & nightlife"],
+  "closing": "Come for the Full Moon. Stay for the memories.",
+  "days": [
+    {
+      "date": "2026-09-23", "dateLabel": "Wednesday, 23 September 2026",
+      "title": "Koh Samui - Arrive in Island Life", "titleLines": ["KOH SAMUI", "ISLAND ARRIVAL"],
+      "location": "Koh Samui", "imageFile": "thailand-samui-morning-v1.jpg",
+      "intro": "Touch down, slow down and let the island set the pace.",
+      "points": [
+        {"title": "ARRIVAL & PRIVATE TRANSFER", "body": "Arrive at Koh Samui Airport and transfer privately to your hotel."},
+        {"title": "CHECK IN & RELAX", "body": "Settle into your hotel and ease into island life."},
+        {"title": "BEACH / RESORT AFTERNOON", "body": "Take the afternoon for the beach or your resort."},
+        {"title": "FISHERMAN'S VILLAGE SUNSET", "body": "Head to Fisherman's Village as the evening light softens."},
+        {"title": "COCKTAILS AT COCO TAM'S", "body": "Pause for cocktails at Coco Tam's."},
+        {"title": "DINNER & BEACHFRONT NIGHTLIFE", "body": "End your first evening with dinner and beachfront nightlife."}
+      ],
+      "overnight": "Koh Samui · Night 1", "note": "Restaurant bills and drinks are extra. Venue visits are subject to availability."
+    },
+    {
+      "date": "2026-09-24", "dateLabel": "Thursday, 24 September 2026",
+      "title": "Koh Samui - Private Boat & Sunset", "titleLines": ["PRIVATE BOAT", "ISLAND AFTERGLOW"],
+      "location": "Koh Samui", "imageFile": "thailand-samui-morning-v1.jpg",
+      "intro": "Hidden shores by day. A dressed-up island evening.",
+      "points": [
+        {"title": "LEISURE BREAKFAST", "body": "Begin with an unhurried breakfast at the hotel."},
+        {"title": "PRIVATE BOAT EXPERIENCE", "body": "Explore the waters around Samui on a private boat."},
+        {"title": "HIDDEN BEACH & SWIMMING", "body": "Stop at a hidden beach for a swim."},
+        {"title": "SNORKELLING & EXPLORATION", "body": "Snorkel and explore the island coastline."},
+        {"title": "SUNSET AT JUNGLE CLUB", "body": "Enjoy sunset drinks at Jungle Club."},
+        {"title": "DRESS-UP DINNER", "body": "Dress up for a curated dinner stop."},
+        {"title": "CHAWENG NIGHTLIFE", "body": "Experience Chaweng after dark."}
+      ],
+      "overnight": "Koh Samui · Night 2", "note": "Private boat and snorkelling are included, subject to sea conditions. Dining and drinks are extra."
+    },
+    {
+      "date": "2026-09-25", "dateLabel": "Friday, 25 September 2026",
+      "title": "Koh Samui → Koh Phangan", "titleLines": ["KOH SAMUI TO", "KOH PHANGAN"],
+      "location": "Koh Samui → Koh Phangan", "imageFile": "thailand-samui-morning-v1.jpg",
+      "intro": "A new island, hidden coves and a sunset worth staying for.",
+      "points": [
+        {"title": "BREAKFAST & CHECK-OUT", "body": "Breakfast, check-out and transfer to the ferry terminal."},
+        {"title": "FERRY TO KOH PHANGAN", "body": "Cross to Koh Phangan, then transfer to your hotel."},
+        {"title": "HOTEL CHECK-IN", "body": "Check in and settle into your Phangan stay."},
+        {"title": "BUBBA'S COFFEE", "body": "Stop for lunch at Bubba's Coffee."},
+        {"title": "SECRET BEACH / HAAD SON", "body": "Spend time beside the water at Secret Beach / Haad Son."},
+        {"title": "SECRET MOUNTAIN VIEWS", "body": "Take in panoramic views at Secret Mountain before sunset."},
+        {"title": "SUNSET AT KOH RAHAM", "body": "Catch the sunset at Koh Raham."},
+        {"title": "DINNER AT DEAR PHANGAN", "body": "Enjoy a curated dinner stop at Dear Phangan."},
+        {"title": "BAAN TAI EVENING", "body": "Ease into a Baan Tai evening."}
+      ],
+      "overnight": "Koh Phangan · Night 3", "note": "Transfers and ferries are included. Venue timings may be adjusted; meals and drinks are extra."
+    },
+    {
+      "date": "2026-09-26", "dateLabel": "Saturday, 26 September 2026",
+      "title": "Bottle Beach & Full Moon Party", "titleLines": ["BOTTLE BEACH", "FULL MOON NIGHT"],
+      "location": "Bottle Beach · Haad Rin · Koh Phangan", "imageFile": "thailand-full-moon-cover-v1.jpg",
+      "intro": "A private longtail morning, then the island's legendary night.",
+      "points": [
+        {"title": "BREAKFAST", "body": "Start the day with breakfast at the hotel."},
+        {"title": "PRIVATE LONGTAIL TO BOTTLE BEACH", "body": "Take a private longtail boat to Bottle Beach."},
+        {"title": "BEACH, SWIMMING & SNORKELLING", "body": "Enjoy beach time, swimming and snorkelling."},
+        {"title": "THONG NAI PAN NOI", "body": "Explore Thong Nai Pan Noi and stop for lunch by the beach."},
+        {"title": "OPTIONAL SPA / WELLNESS", "body": "Pause for an optional spa or wellness experience before the night."},
+        {"title": "CHEF-LED DINNER EXPERIENCE", "body": "Gather for a chef-led dinner experience before heading out."},
+        {"title": "HAAD RIN - FULL MOON PARTY", "body": "Haad Rin Beach · 26 September 2026. Music, Phangan nightlife and dancing until late."},
+        {"title": "RETURN TO YOUR PHANGAN HOTEL", "body": "Return locally to your Koh Phangan hotel after the party."}
+      ],
+      "overnight": "Koh Phangan · Night 4", "note": "Party entry, dining, drinks and wellness are extra. Reconfirm event date and local return timing before travel."
+    },
+    {
+      "date": "2026-09-27", "dateLabel": "Sunday, 27 September 2026",
+      "title": "Koh Phangan - Jungle & Hidden Shores", "titleLines": ["HIDDEN SHORES", "JUNGLE & SUNSET"],
+      "location": "Koh Phangan", "imageFile": "thailand-samui-morning-v1.jpg",
+      "intro": "A slow start after the party, with the day's pace kept flexible.",
+      "points": [
+        {"title": "SLOW BREAKFAST", "body": "Ease into the morning with a slow breakfast."},
+        {"title": "MAE HAAD & KOH MA", "body": "Explore the Mae Haad beach, Koh Ma sandbar and snorkelling spots."},
+        {"title": "AUTHENTIC THAI LUNCH", "body": "Stop for an authentic Thai lunch."},
+        {"title": "PHAENG WATERFALL & DOMSILA", "body": "Explore Phaeng Waterfall and the Domsila viewpoint, conditions permitting."},
+        {"title": "420 CLUB / TOP ROCK BAR", "body": "Choose 420 Club or Top Rock Bar for sunset drinks."},
+        {"title": "BEACHFRONT DINNER", "body": "Close the day with a beachfront dinner."},
+        {"title": "PHANGAN NIGHTLIFE", "body": "Enjoy an optional final island night or turn in early."}
+      ],
+      "overnight": "Koh Phangan · Night 5", "note": "The Full Moon Party is on Day 4, not tonight. Lunch, dinner and drinks are extra; outdoor stops depend on conditions."
+    },
+    {
+      "date": "2026-09-28", "dateLabel": "Monday, 28 September 2026",
+      "title": "Koh Phangan → Koh Samui", "titleLines": ["ONE LAST MORNING", "KOH SAMUI & HOME"],
+      "location": "Koh Phangan → Koh Samui Airport", "imageFile": "thailand-samui-morning-v1.jpg",
+      "intro": "One last island morning, then take the memories home.",
+      "points": [
+        {"title": "LATE BREAKFAST", "body": "Enjoy a late breakfast, subject to hotel service and departure times."},
+        {"title": "FINAL BEACH / POOL TIME", "body": "Make time for one last beach or pool moment if the schedule allows."},
+        {"title": "HOTEL CHECK-OUT", "body": "Check out and transfer to the ferry terminal."},
+        {"title": "FERRY TO KOH SAMUI", "body": "Take the ferry back to Koh Samui."},
+        {"title": "PRIVATE AIRPORT TRANSFER", "body": "Transfer privately to Koh Samui Airport."},
+        {"title": "DEPARTURE", "body": "Depart from Koh Samui with a camera roll full of memories."}
+      ],
+      "overnight": "Departure · Spell complete", "note": "SPELL COMPLETE. Breakfast and beach time depend on the ferry-to-flight connection."
+    }
+  ],
+  "hotels": [
+    {"location": "Koh Samui", "nights": 2, "dates": "23 & 24 September", "name": "Malibu Beach Resort Samui", "room": "Studio Room · Twin / Double Sharing", "note": "Or similar."},
+    {"location": "Koh Phangan", "nights": 3, "dates": "25, 26 & 27 September", "name": "Hotel / Resort in Koh Phangan", "room": "Standard Room · Twin / Double Sharing", "note": "Or similar."}
+  ],
+  "inclusions": [
+    "Daily buffet breakfast at the hotel",
+    "Private boat experience around Koh Samui",
+    "Private longtail boat experience to Bottle Beach",
+    "Snorkelling experiences in the itinerary",
+    "Private transfers and Koh Samui - Koh Phangan - Koh Samui ferry transfers"
+  ],
+  "exclusions": [
+    "Restaurant bills, lunches and dinners, including the chef-led dinner",
+    "Drinks and cocktails",
+    "Full Moon Party entry ticket and other paid nightlife entry",
+    "Optional spa / wellness experiences",
+    "Airfare",
+    "Travel insurance · INR 500 per person additional, as previously quoted",
+    "RT-PCR testing, only if required by travel rules · additional cost"
+  ],
+  "entryNote": "Indian passport holders may be eligible for visa-exempt tourist entry under the rules in force at travel. Check passport eligibility and current Thai entry requirements before departure.",
+  "transportNote": "Private transfers and both island ferry crossings are included. Boat routes, sea conditions, ferry schedules and local party-night return timing must be confirmed. Allow a suitable ferry-to-flight buffer on departure day.",
+  "leisureNote": "Restaurant and chef-led dining experiences are curated stops, not included meal bills. Drinks, party entry and optional wellness are extra. Venues and outdoor activities are subject to availability and conditions; no reservation or hotel upgrade is implied.",
+  "priceNote": "Price TBA. Pricing, taxes, deposit and booking terms will be announced. Applications are not open yet; no payment is requested."
+}
