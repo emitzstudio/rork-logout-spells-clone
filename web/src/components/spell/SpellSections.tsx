@@ -92,7 +92,7 @@ interface BookingStripProps {
 
 /** The slim reservation band right under the hero. */
 export function BookingStrip({ draft, seatsLeft, onBook }: BookingStripProps) {
-  const priceNumber = Number(draft.price);
+  const priceNumber = draft.priceTba ? 0 : Number(draft.price);
   /* Tiered spells lead with their highlight price; the other tiers follow, quieter. */
   const tiers = pricingTiers(draft);
   const lead = tiers[0];
@@ -643,15 +643,15 @@ interface SpellPricingProps {
 /** "Price & booking" - the price tiers as booking cards, the brochure's last page brought to the web. */
 export function SpellPricing({ draft, onBook }: SpellPricingProps) {
   const tiers = pricingTiers(draft);
-  const pricing = draft.pricing;
+  const pricing = draft.pricing ?? { tiers: [], taxNote: "", remainingNote: "", note: "" };
   const brochure = brochureLink(pricing);
-  if (pricing === undefined || (tiers.length === 0 && !brochure)) return <Section id="brochure">
+  if (!draft.priceTba && (draft.pricing === undefined || (tiers.length === 0 && !brochure))) return <Section id="brochure">
     <div className="flex flex-col items-center gap-7 rounded-2xl border border-gold/20 bg-gold/[0.04] px-6 py-9 text-center sm:flex-row sm:justify-between sm:px-9 sm:text-left">
       <div><p className="eyebrow">Your spell, to keep</p><h2 className="mt-3 font-serif text-3xl text-cream">Take the details with you.</h2><p className="mt-2 text-sm text-cream/55">The itinerary and trip details, together in one PDF.</p></div>
       <SpellBrochureAction draft={draft} className="btn-ghost-gold shrink-0 !rounded-full !px-6" />
     </div>
   </Section>;
-  const isTba = tiers.length === 0 && !(Number(draft.price) > 0);
+  const isTba = draft.priceTba === true || (tiers.length === 0 && !(Number(draft.price) > 0));
 
   return (
     <Section id="price">

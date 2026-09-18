@@ -178,8 +178,8 @@ export default function SpellCard({
             <h3 className="mt-0.5 truncate font-serif text-[19px] leading-tight text-cream">{spell.name}</h3>
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-sans text-[14px] font-semibold text-gold-light">{formatINR(spell.price)}</p>
-            <p className="font-sans text-[9px] uppercase tracking-[0.16em] text-cream/35">per seat</p>
+            <p className="font-sans text-[14px] font-semibold text-gold-light">{spell.price > 0 ? formatINR(spell.price) : "TBA"}</p>
+            {spell.price > 0 && <p className="font-sans text-[9px] uppercase tracking-[0.16em] text-cream/35">per seat</p>}
           </div>
         </div>
 

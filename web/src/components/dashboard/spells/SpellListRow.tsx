@@ -200,7 +200,7 @@ export default function SpellListRow({
 
       {/* Price */}
       <span className={cn(COLS.price, "font-sans text-[12.5px] font-medium text-gold-light")}>
-        {formatINR(spell.price)}
+        {spell.price > 0 ? formatINR(spell.price) : "TBA"}
       </span>
 
       {/* Seats */}

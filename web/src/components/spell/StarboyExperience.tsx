@@ -109,7 +109,7 @@ export default function StarboyExperience({ draft, onBook }: { draft: SpellDraft
     {draft.gallery.length > 0 && <section aria-label="Gallery" className="border-y border-white/10 bg-[#110d0c] py-16"><div className={container}><p className={kicker}>03 / In the frame</p><h2 className={cn(title, "mt-4 text-5xl md:text-7xl")}>A different kind of escape.</h2></div><div className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 sm:px-8 lg:px-14">{draft.gallery.map((image) => <figure key={image.id} className="relative aspect-[4/3] w-[80vw] max-w-[480px] shrink-0 snap-center overflow-hidden"><img src={image.url} alt={image.name} loading="lazy" className="h-full w-full object-cover" /></figure>)}</div></section>}
     {highlights.length > 0 && <section className={cn(container, "py-16 md:py-24")}><p className={kicker}>The highlights</p><div className="mt-8 grid gap-px bg-white/10 sm:grid-cols-2 md:grid-cols-4">{highlights.map((item, index) => <div key={item.id} className="bg-[#090909] p-6"><p className="font-concert text-4xl font-bold text-gold/60">{String(index + 1).padStart(2, "0")}</p><h3 className={cn(title, "mt-5 text-3xl")}>{item.title}</h3><p className="mt-4 text-sm leading-relaxed text-white/60">{item.description}</p></div>)}</div></section>}
     <SpellStay draft={draft} />
-    {draft.pricing?.packages?.length ? (
+    {!draft.priceTba && draft.pricing?.packages?.length ? (
       <div className="starboy-shared"><StarboyPackages packages={draft.pricing.packages} draft={draft} onBook={onBook} /></div>
     ) : <>
     <div className="starboy-shared"><SpellPricing draft={draft} onBook={onBook} /></div>

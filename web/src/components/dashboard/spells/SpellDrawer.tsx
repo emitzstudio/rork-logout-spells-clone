@@ -105,7 +105,7 @@ export default function SpellDrawer({
     { id: "location", label: "Location", icon: MapPin, value: `${spell.location} · ${spell.region}` },
     { id: "duration", label: "Duration", icon: Clock, value: `${spell.durationDays} days` },
     { id: "dates", label: "Dates", icon: CalendarDays, value: spell.dates },
-    { id: "price", label: "Price", icon: IndianRupee, value: `${formatINR(spell.price)} / person` },
+    { id: "price", label: "Price", icon: IndianRupee, value: spell.price > 0 ? `${formatINR(spell.price)} / person` : "TBA" },
     {
       id: "category",
       label: "Category",
@@ -300,7 +300,7 @@ export default function SpellDrawer({
                   </p>
                   <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
                     <span className="font-sans text-[10.5px] text-cream/50">
-                      {spell.dates} · {spell.seatsTotal} seats · {formatINR(spell.price)}
+                      {spell.dates} · {spell.seatsTotal} seats · {spell.price > 0 ? formatINR(spell.price) : "Prices TBA"}
                     </span>
                     <span
                       aria-hidden

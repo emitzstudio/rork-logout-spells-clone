@@ -78,7 +78,7 @@ export function spellBrochure(draft: SpellDraft): SpellBrochure {
   add("Good to know", "Your questions, answered", draft.faqs.map((item) => clean([item.question, item.answer]).join("\n")));
 
   const tiers = pricingTiers(draft).filter((tier) => Number.isFinite(tier.price));
-  const price = Number(draft.price);
+  const price = draft.priceTba ? 0 : Number(draft.price);
   const terms = tiers.length > 0 ? tiers.map((tier) => clean([
     `${tier.label || "Per person"}: ${formatINR(tier.price)} per person`,
     tier.badge,

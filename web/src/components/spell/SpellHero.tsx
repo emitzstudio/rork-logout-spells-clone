@@ -32,7 +32,7 @@ interface SpellHeroProps {
 export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) {
   const symbol = draft.category ? CATEGORY_META[draft.category].symbol : "✦";
   const family = draft.category ? CATEGORY_FAMILY[draft.category] : "A Logout Spell";
-  const priceNumber = Number(draft.price);
+  const priceNumber = draft.priceTba ? 0 : Number(draft.price);
 
   const spellName = draft.name.trim() !== "" ? draft.name : "Untitled Spell";
   const titleWords = spellName.split(" ");
@@ -69,6 +69,7 @@ export default function SpellHero({ draft, seatsLeft, onBook }: SpellHeroProps) 
   if (duration !== "") meta.push({ icon: Moon, text: duration, gold: false });
   if (draft.dates.trim() !== "") meta.push({ icon: CalendarDays, text: draft.dates, gold: false });
   if (priceNumber > 0) meta.push({ icon: null, text: `From ${formatINR(priceNumber)}`, gold: true });
+  else if (draft.priceTba) meta.push({ icon: null, text: "Prices TBA", gold: true });
   if (seatsLeft !== null && draft.maxSeats > 0)
     meta.push({
       icon: Users,

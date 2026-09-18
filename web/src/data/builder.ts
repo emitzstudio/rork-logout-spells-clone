@@ -205,6 +205,8 @@ export interface SpellDraft {
   dates: string;
   /** Raw digits only - formatted with Indian separators for display. */
   price: string;
+  /** Explicitly announce the price later; saved tiers stay intact but are not displayed. */
+  priceTba?: boolean;
   maxSeats: number;
   category: SpellCategoryId | null;
   urgency: UrgencyId | null;
@@ -532,8 +534,13 @@ export const stayHasContent = (d: SpellDraft): boolean =>
   d.stay.amenities.some((a) => a.text.trim() !== "") ||
   d.stay.highlights.some((h) => h.text.trim() !== "");
 
+/** Legacy unpriced spells are TBA; a new empty amount remains incomplete until explicitly selected. */
+export const isPriceTba = (d: SpellDraft): boolean =>
+  d.priceTba ?? (!(Number(d.price) > 0) && !(d.pricing?.tiers ?? []).some((tier) => tier.price > 0));
+
 /** The priced tiers of a spell, lead tier first - empty for spells with one price. */
 export const pricingTiers = (d: SpellDraft): PriceTier[] => {
+  if (d.priceTba) return [];
   const tiers = (d.pricing?.tiers ?? []).filter((tier) => tier.price > 0);
   const lead = tiers.find((tier) => tier.highlight);
   return lead ? [lead, ...tiers.filter((tier) => tier !== lead)] : tiers;
@@ -559,6 +566,7 @@ export const createEmptyDraft = (): SpellDraft => ({
   nights: DEFAULT_DAYS - 1,
   dates: "",
   price: "",
+  priceTba: false,
   maxSeats: 12,
   category: null,
   urgency: null,
@@ -605,6 +613,7 @@ export const draftFromSpell = (spell: ManagedSpell): SpellDraft => {
     nights: Math.max(0, spell.durationDays - 1),
     dates: spell.dates,
     price: String(spell.price),
+    priceTba: spell.price <= 0,
     maxSeats: spell.seatsTotal,
     category: spell.category,
     urgency: spell.urgency,
@@ -631,7 +640,7 @@ const basicState = (d: SpellDraft): SectionState => {
     d.hook.trim() !== "",
     d.location.trim() !== "",
     d.dates.trim() !== "",
-    Number(d.price) > 0,
+    isPriceTba(d) || Number(d.price) > 0,
     d.maxSeats > 0,
     d.category !== null,
   ];

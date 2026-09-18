@@ -99,7 +99,7 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
   const heroImage = isMobile ? (draft.mobileHero ?? draft.hero) : draft.hero;
   const symbol = draft.category ? CATEGORY_META[draft.category].symbol : "✦";
   const family = draft.category ? CATEGORY_FAMILY[draft.category] : "A Logout Spell";
-  const priceNumber = Number(draft.price);
+  const priceNumber = draft.priceTba ? 0 : Number(draft.price);
   /* Tiered spells lead the booking bar with their highlight price. */
   const tiers = pricingTiers(draft);
   const leadTier = tiers[0];
@@ -452,11 +452,11 @@ export function SpellPageBody({ draft, device, live = false, onBook }: SpellPage
             {draft.location.trim() !== "" ? ` · ${draft.location}` : ""}
           </p>
           <p className="mt-0.5 font-serif text-[16px] leading-none text-gold-light">
-            {leadTier !== undefined ? formatINR(leadTier.price) : priceNumber > 0 ? formatINR(priceNumber) : "₹ -"}{" "}
-            <span className="font-sans text-[8px] uppercase tracking-[0.14em] text-cream/35">
+            {leadTier !== undefined ? formatINR(leadTier.price) : priceNumber > 0 ? formatINR(priceNumber) : "Prices TBA"}{" "}
+            {(leadTier !== undefined || priceNumber > 0) && <span className="font-sans text-[8px] uppercase tracking-[0.14em] text-cream/35">
               {leadTier !== undefined && leadTier.label.trim() !== "" ? leadTier.label : "per seat"}
               {leadTier !== undefined && leadTier.availability.trim() !== "" && ` · ${leadTier.availability}`}
-            </span>
+            </span>}
           </p>
         </div>
         <button

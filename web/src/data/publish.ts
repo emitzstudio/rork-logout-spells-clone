@@ -166,7 +166,7 @@ export const spellFromDraft = ({ draft, slug, status, existing }: BuildSpellArgs
     region: draft.location.trim(),
     durationDays: draft.days,
     dates: draft.dates.trim() !== "" ? draft.dates.trim() : "Dates TBC",
-    price: Number(draft.price) > 0 ? Number(draft.price) : 0,
+    price: !draft.priceTba && Number(draft.price) > 0 ? Number(draft.price) : 0,
     status,
     urgency: draft.urgency,
     seatsBooked: existing?.seatsBooked ?? 0,

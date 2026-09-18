@@ -120,6 +120,7 @@ const revivePricing = (raw: unknown): PricingBlock | undefined => {
 /** Serializes the builder page sections into the v1 `spells.page` document. */
 export const pageFromDraft = (draft: SpellDraft): Record<string, unknown> => ({
   version: 1,
+  ...(draft.priceTba === true || (draft.priceTba === false && !(Number(draft.price) > 0)) ? { priceTba: draft.priceTba } : {}),
   gallery: stripImages(draft.gallery),
   quickInfo: draft.quickInfo,
   about: { ...draft.about, image: stripImage(draft.about.image) },
@@ -143,6 +144,7 @@ const draftFromRow = (row: SpellRow, dep: ActiveDepartureRow | undefined): Spell
   if (row.page === null || typeof row.page !== "object") return undefined;
   const doc = row.page as Record<string, unknown>;
   const base = createEmptyDraft();
+  const pricing = revivePricing(doc.pricing);
   const asImage = (url: string, id: string, name: string): DraftImage | null =>
     url !== "" ? { id, url, name, isLocal: false } : null;
 
@@ -166,7 +168,9 @@ const draftFromRow = (row: SpellRow, dep: ActiveDepartureRow | undefined): Spell
     days: row.duration_days,
     nights: row.nights,
     dates: dep?.date_label ? dep.date_label : "Dates TBC",
-    price: row.price_minor > 0 ? String(Math.round(row.price_minor / 100)) : "",
+    price: doc.priceTba === true ? "" : row.price_minor > 0 ? String(Math.round(row.price_minor / 100)) : "",
+    // Legacy unpriced drafts stay implicit, so setting an amount does not retain a stale override.
+    priceTba: typeof doc.priceTba === "boolean" ? doc.priceTba : row.price_minor > 0 || (pricing?.tiers.length ?? 0) > 0 ? false : undefined,
     maxSeats: dep?.seats_total ?? 0,
     category: row.category,
     urgency: row.urgency,
@@ -190,7 +194,7 @@ const draftFromRow = (row: SpellRow, dep: ActiveDepartureRow | undefined): Spell
       ? (doc.tripHighlights as SpellDraft["tripHighlights"])
       : [],
     faqs: Array.isArray(doc.faqs) ? (doc.faqs as SpellDraft["faqs"]) : [],
-    pricing: revivePricing(doc.pricing),
+    pricing,
   };
 };
 
@@ -227,7 +231,7 @@ export const mapSpell = (
     region: row.region,
     durationDays: row.duration_days,
     dates: dep?.date_label ? dep.date_label : "Dates TBC",
-    price: Math.round(row.price_minor / 100),
+    price: row.page !== null && typeof row.page === "object" && !Array.isArray(row.page) && row.page.priceTba === true ? 0 : Math.round(row.price_minor / 100),
     status: row.status,
     urgency: row.urgency,
     seatsBooked: dep?.seats_booked ?? 0,
@@ -282,7 +286,7 @@ export const spellWritePayload = (
     region: record.region !== "" ? record.region : record.location,
     duration_days: record.durationDays,
     nights: draft ? draft.nights : Math.max(0, record.durationDays - 1),
-    price_minor: Math.round(record.price * 100),
+    price_minor: draft?.priceTba ? 0 : Math.round(record.price * 100),
     currency: "INR",
     host_name: record.host.name,
     host_role: record.host.role,

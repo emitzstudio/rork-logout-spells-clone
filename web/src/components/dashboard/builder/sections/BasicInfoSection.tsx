@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import BrochureField from "@/components/dashboard/builder/BrochureField";
 import DateRangeField from "@/components/dashboard/builder/DateRangeField";
+import PriceField from "@/components/dashboard/builder/PriceField";
 import {
   SegmentedField,
   StepperField,
@@ -15,8 +16,6 @@ import {
 import { CategoryChip, UrgencyBadge } from "@/components/dashboard/spells/SpellBadges";
 import {
   CATEGORY_FAMILY,
-  digitsOnly,
-  formatIndianDigits,
   sanitizeSlugInput,
   slugify,
 } from "@/data/builder";
@@ -261,14 +260,7 @@ export default function BasicInfoSection({ draft, patch }: BasicInfoSectionProps
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <TextField
-          label="Price"
-          value={formatIndianDigits(draft.price)}
-          onChange={(value) => patch({ price: digitsOnly(value) })}
-          placeholder="42,000"
-          prefix="₹"
-          helper="Per seat, in INR."
-        />
+        <PriceField draft={draft} patch={patch} />
         <StepperField
           label="Maximum seats"
           value={draft.maxSeats}

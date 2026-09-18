@@ -253,7 +253,7 @@ interface PreviewPricingProps {
 /** Mirrors public pricing and the brochure link, even when prices are still TBA. */
 export function PreviewPricing({ draft, tiers, isMobile }: PreviewPricingProps) {
   const pricing = draft.pricing ?? { tiers: [], taxNote: "", remainingNote: "", note: "" };
-  const price = Number(draft.price);
+  const price = draft.priceTba ? 0 : Number(draft.price);
   return (
     <div className={blockClass}>
       <p className={eyebrowClass}>Price & booking</p>
