@@ -1,0 +1,61 @@
+{
+  "method": "Saved photographs of the published Udaipur spell only. Landscape pages are placed on the brochure's portrait charcoal canvas and faded into the page colour; day bands are proportional crops; the stay photograph is unmodified. No scene, face or detail is regenerated.",
+  "photos": [
+    {
+      "page": "1",
+      "role": "cover",
+      "image": "img/udaipur/cover.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/hero-udaipur-cover.jpg",
+      "note": "Full-width placement at the top of the page; lake faded into the page colour beneath the title."
+    },
+    {
+      "page": "7",
+      "role": "closing background",
+      "image": "img/udaipur/night.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/lakeside-dinner.jpg",
+      "note": "Placed 150 px below the top edge so the headline sits in the night sky; table faded into the page colour."
+    },
+    {
+      "page": "2",
+      "role": "stay",
+      "image": "img/udaipur/stay.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/page/img-1789041107007-vvl4b-68c57e97-3d0a.jpg",
+      "note": "The saved stay photograph, copied unmodified; the renderer letterboxes it proportionally."
+    },
+    {
+      "page": "3",
+      "role": "day band, left",
+      "image": "img/udaipur/day1-jagdish.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/day-1-jagdish.jpg",
+      "note": "Unmodified; paired proportionally with the bazaar photograph."
+    },
+    {
+      "page": "3",
+      "role": "day band, right",
+      "image": "img/udaipur/day1-bazaar.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/old-city-market.jpg",
+      "note": "Unmodified; paired proportionally with the Jagdish Temple photograph."
+    },
+    {
+      "page": "4",
+      "role": "day band, left",
+      "image": "img/udaipur/day2-saheliyon.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/day-2-saheliyon.jpg",
+      "note": "Unmodified; paired proportionally with the lake photograph."
+    },
+    {
+      "page": "4",
+      "role": "day band, right",
+      "image": "img/udaipur/day2-lake.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/boat-island.jpg",
+      "note": "Unmodified; paired proportionally with the Saheliyon Ki Bari photograph."
+    },
+    {
+      "page": "5",
+      "role": "day band",
+      "image": "img/udaipur/day3-chittorgarh.jpg",
+      "sourceUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/spell-media/spells/dc753201-d070-4404-9b10-038d9746ad89/hd/day-3-chittorgarh.jpg",
+      "note": "Proportional crop to the single-band ratio, keeping the Vijay Stambh and the sunset sky."
+    }
+  ]
+}

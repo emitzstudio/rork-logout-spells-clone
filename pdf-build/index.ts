@@ -10,6 +10,8 @@
  * Editions:
  *   bir      The Bir Spell, 11-13 September 2026            -> Logout-Spells-Bir-Sept-2026.pdf
  *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf
+ *   udaipur  The Udaipur Spell, 2-4 October 2026             -> Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf
+ *            (bun run index.ts udaipur --publish; immutable, seven pages in the Content Spell structure)
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees, pushGraphicsState, popGraphicsState, rectangle, clip, endPath } from "pdf-lib";
@@ -48,11 +50,15 @@ type DaySpec = {
   items: DayItem[];
   chip: string;
   footer: string;
+  /** Long day lists: tighter rows and smaller discs so nine or ten points still clear the footer. */
+  dense?: boolean;
 };
 type CoverSpec = {
   img: string;
   eyebrow: string;
   title: string;
+  /** Display title size; long place names start smaller than the 150 pt default and shrink further to fit. */
+  titleSize?: number;
   sub: string;
   dateLine: string;
   locLine: string;
@@ -66,6 +72,8 @@ type CoverSpec = {
 type StaySpec = {
   img: string;
   preserveImageAspect?: boolean;
+  /** Share of the cropped overflow removed above the frame (0 keeps the top, 1 keeps the bottom); defaults to 0.65. */
+  imageFocus?: number;
   eyebrow: string;
   titleA: string;
   titleB: string;
@@ -79,7 +87,14 @@ type StaySpec = {
   note: string;
   footer: string;
 };
-type PriceCard = { label: string; price: string; booking: string; highlight: boolean };
+type PriceCard = {
+  label: string;
+  price: string;
+  booking: string;
+  highlight: boolean;
+  /** Label over the booking figure; defaults to BOOKING AMOUNT. */
+  bookingLabel?: string;
+};
 type FinalSpec = {
   img: string;
   subline: string;
@@ -95,8 +110,13 @@ type FinalSpec = {
   closeHand: string;
 };
 type MemoriesSpec = {
-  photos: { attachment: number; group: "bir" | "anshika"; image: string }[];
-  reviews: { id: string; author: string | null; excerpt: string; featured?: boolean }[];
+  photos: { attachment?: number; group: string; image: string }[];
+  /** The two photo strips in order; defaults to the Content Spell's groups. */
+  strips?: { group: string; title: string }[];
+  wordsSubtitle?: string;
+  reviews: { id: string; author: string | null; excerpt: string; featured?: boolean; featuredTag?: string }[];
+  closing?: string;
+  footer?: string;
 };
 type EditionSpec = {
   fileName: string;
@@ -127,9 +147,14 @@ const serifHasRupee = fontkit.create(serifBoldBytes).hasGlyphForCodePoint(0x20b9
 const sansHasRupee = fontkit.create(sansSemiBytes).hasGlyphForCodePoint(0x20b9);
 const rupee = (amount: string) => (serifHasRupee || sansHasRupee ? `\u20B9${amount}` : `INR ${amount}`);
 
+/** `--out <dir>` renders into a scratch folder (regression checks) without touching the real or public PDFs. */
+const outIndex = process.argv.indexOf("--out");
+const outDir = outIndex === -1 ? undefined : process.argv[outIndex + 1];
+if (outIndex !== -1 && !outDir) throw new Error("--out needs a folder");
+
 /* ----------------------------- Edition builder --------------------------- */
 async function buildEdition(spec: EditionSpec): Promise<void> {
-  if (spec.immutable && (existsSync(spec.fileName) || (process.argv.includes("--publish") && existsSync(`../web/public/brochures/${spec.fileName}`)))) {
+  if (!outDir && spec.immutable && (existsSync(spec.fileName) || (process.argv.includes("--publish") && existsSync(`../web/public/brochures/${spec.fileName}`)))) {
     throw new Error(`Preserving immutable edition: ${spec.fileName}. Publish the verified copy or choose a new version.`);
   }
   const doc = await PDFDocument.create();
@@ -349,11 +374,15 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     o: { cx: number; y: number; size: number; colorA?: ReturnType<typeof rgb>; colorB?: ReturnType<typeof rgb> },
   ) => {
     assertClean(a + b);
-    const wa = serifMed.widthOfTextAtSize(a, o.size);
-    const wb = serifSemiItal.widthOfTextAtSize(b, o.size);
+    /* Titles wider than the text column step down until they fit; the existing editions' titles are narrower. */
+    let size = o.size;
+    const width = (at: number) => serifMed.widthOfTextAtSize(a, at) + serifSemiItal.widthOfTextAtSize(b, at);
+    while (width(size) > W - 96 && size > 24) size -= 1;
+    const wa = serifMed.widthOfTextAtSize(a, size);
+    const wb = serifSemiItal.widthOfTextAtSize(b, size);
     const x = o.cx - (wa + wb) / 2;
-    page.drawText(a, { x, y: o.y, size: o.size, font: serifMed, color: o.colorA ?? CREAM });
-    page.drawText(b, { x: x + wa, y: o.y, size: o.size, font: serifSemiItal, color: o.colorB ?? GOLD_LIGHT });
+    page.drawText(a, { x, y: o.y, size, font: serifMed, color: o.colorA ?? CREAM });
+    page.drawText(b, { x: x + wa, y: o.y, size, font: serifSemiItal, color: o.colorB ?? GOLD_LIGHT });
   };
 
   const eyebrowRule = (page: PDFPage, y: number, halfGap: number, len = 38) => {
@@ -393,14 +422,14 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     else page.drawRectangle({ x: 0, y: yTop - h, width: W, height: h, color: CHARCOAL_SOFT });
   };
 
-  const realStayImage = (page: PDFPage, img: PDFImage | null) => {
-    if (!img) throw new Error("The Content Spell's real Qudrat photograph is missing");
+  const realStayImage = (page: PDFPage, img: PDFImage | null, focus = 0.65) => {
+    if (!img) throw new Error("The real stay photograph is missing");
     const height = 310;
     const scale = Math.max(W / img.width, height / img.height);
     const drawW = img.width * scale;
     const drawH = img.height * scale;
     page.pushOperators(pushGraphicsState(), rectangle(0, H - height, W, height), clip(), endPath());
-    page.drawImage(img, { x: (W - drawW) / 2, y: H - drawH + (drawH - height) * 0.65, width: drawW, height: drawH });
+    page.drawImage(img, { x: (W - drawW) / 2, y: H - drawH + (drawH - height) * focus, width: drawW, height: drawH });
     page.pushOperators(popGraphicsState());
   };
 
@@ -462,9 +491,14 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     if (imgLogo) p.drawImage(imgLogo, { x: W / 2 - 23, y: H - 84, width: 46, height: 46 });
     drawTracked(p, "LOGOUT SPELLS", { cx: W / 2, y: H - 104, font: sansSemi, size: 10, color: GOLD_LIGHT, tr: 4.4 });
 
-    drawTracked(p, c.eyebrow, { cx: W / 2, y: 524, font: sansSemi, size: 8.5, color: GOLD, tr: 3.4 });
+    /* Letter-spacing scales with the title; the eyebrow keeps its 21 pt clearance above the capitals. */
+    let titleSize = c.titleSize ?? 150;
+    const titleTracking = (size: number) => (14 * size) / 150;
+    while (trackW(serifBold, c.title, titleSize, titleTracking(titleSize)) > W - 72 && titleSize > 40) titleSize -= 1;
+    const eyebrowY = Math.round((404 + titleSize * 0.66 + 21) * 100) / 100;
+    drawTracked(p, c.eyebrow, { cx: W / 2, y: eyebrowY, font: sansSemi, size: 8.5, color: GOLD, tr: 3.4 });
 
-    drawTracked(p, c.title, { cx: W / 2, y: 404, font: serifBold, size: 150, color: CREAM, tr: 14 });
+    drawTracked(p, c.title, { cx: W / 2, y: 404, font: serifBold, size: titleSize, color: CREAM, tr: titleTracking(titleSize) });
     dt(p, c.sub, { x: W / 2 - serifItal.widthOfTextAtSize(c.sub, 19.5) / 2, y: 372, font: serifItal, size: 19.5, color: GOLD_HI });
 
     eyebrowRule(p, 349, 8, 30);
@@ -492,7 +526,7 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     const p = doc.addPage([W, H]);
     bgFill(p);
     if (s.preserveImageAspect) {
-      realStayImage(p, await loadImage(s.img));
+      realStayImage(p, await loadImage(s.img), s.imageFocus);
       await photoFade(p, H, 70, 0.4, 0);
       await photoFade(p, 715, 185, 0, 1);
     } else {
@@ -556,13 +590,16 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     const textX = 122;
     const bodyW = 392;
     let cursor = iy - 24;
+    const rows = day.dense
+      ? { title: 13.5, body: 13, gap: 8, disc: 11, number: 12, numberDrop: 4.1 }
+      : { title: 15, body: 13.8, gap: 17, disc: 12.5, number: 13.5, numberDrop: 4.6 };
 
     const positions: { discY: number; titleY: number; bodyLines: string[] }[] = [];
     for (const item of day.items) {
       const bodyLines = wrap(sansReg, item.body, 9.3, bodyW);
       const titleY = cursor;
       positions.push({ discY: titleY + 3, titleY, bodyLines });
-      cursor = titleY - 15 - bodyLines.length * 13.8 - 17;
+      cursor = titleY - rows.title - bodyLines.length * rows.body - rows.gap;
     }
 
     const first = positions[0];
@@ -574,15 +611,15 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     for (const [i, pos] of positions.entries()) {
       const item = day.items[i];
       if (!item) continue;
-      p.drawCircle({ x: spineX, y: pos.discY, size: 12.5, color: CHARCOAL_SOFT, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.5 });
-      const num = `0${i + 1}`;
-      dt(p, num, { x: spineX - serifSemi.widthOfTextAtSize(num, 13.5) / 2, y: pos.discY - 4.6, font: serifSemi, size: 13.5, color: GOLD_LIGHT });
+      p.drawCircle({ x: spineX, y: pos.discY, size: rows.disc, color: CHARCOAL_SOFT, borderColor: GOLD, borderWidth: 0.9, borderOpacity: 0.5 });
+      const num = String(i + 1).padStart(2, "0");
+      dt(p, num, { x: spineX - serifSemi.widthOfTextAtSize(num, rows.number) / 2, y: pos.discY - rows.numberDrop, font: serifSemi, size: rows.number, color: GOLD_LIGHT });
       if (trackW(sansSemi, item.title, 9.8, 2) > bodyW) throw new Error(`${spec.fileName}: day heading is too wide: ${item.title}`);
       drawTracked(p, item.title, { x: textX, y: pos.titleY, font: sansSemi, size: 9.8, color: CREAM, tr: 2 });
-      let by = pos.titleY - 15;
+      let by = pos.titleY - rows.title;
       for (const line of pos.bodyLines) {
         dt(p, line, { x: textX, y: by, font: sansReg, size: 9.3, color: MUTED, opacity: 0.95 });
-        by -= 13.8;
+        by -= rows.body;
       }
     }
 
@@ -629,7 +666,7 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
       dt(p, card.price, { x: cx - priceFont.widthOfTextAtSize(card.price, priceSize) / 2, y: cardTop - 64, font: priceFont, size: priceSize, color: CREAM });
       drawTracked(p, "PER PERSON", { cx, y: cardTop - 80, font: sansMed, size: 6.8, color: MUTED, tr: 2.4, opacity: 0.85 });
       hline(p, cx - 62, cx + 62, cardTop - 92, GOLD, 0.22);
-      drawTracked(p, "BOOKING AMOUNT", { cx, y: cardTop - 106, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
+      drawTracked(p, card.bookingLabel ?? "BOOKING AMOUNT", { cx, y: cardTop - 106, font: sansMed, size: 6.4, color: MUTED, tr: 1.8 });
       dt(p, card.booking, { x: cx - serifSemi.widthOfTextAtSize(card.booking, 17) / 2, y: cardTop - 124, font: serifSemi, size: 17, color: GOLD_HI });
       f.priceNotes.forEach((note, i) => {
         const noteW = sansReg.widthOfTextAtSize(note, 7.5);
@@ -638,8 +675,11 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     };
 
     const [cardA, cardB] = f.cards;
-    if (cardA) priceCard(64, cardA);
-    if (cardB) priceCard(307.28, cardB);
+    if (f.cards.length === 1 && cardA) priceCard((W - cardW) / 2, cardA);
+    else {
+      if (cardA) priceCard(64, cardA);
+      if (cardB) priceCard(307.28, cardB);
+    }
 
     if (f.upgradeNote) {
       para(p, f.upgradeNote, { cx: W / 2, y: 497, font: sansMed, size: 8.6, color: GOLD_HI, maxW: 470, leading: 12 });
@@ -650,13 +690,15 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     drawTracked(p, "WHAT'S INCLUDED", { x: 72, y: 470, font: sansSemi, size: 8.5, color: GOLD, tr: 2.8 });
     drawTracked(p, "NOT INCLUDED", { x: 330, y: 470, font: sansSemi, size: 8.5, color: MUTED, tr: 2.8 });
 
+    /* Lists longer than the original eight rows tighten so they clear the booking panel. */
+    const listStep = Math.max(f.included.length, f.excluded.length) > 8 ? 14.2 : 15.8;
     f.included.forEach((item, i) => {
-      const yy = 448 - i * 15.8;
+      const yy = 448 - i * listStep;
       checkDisc(p, 77, yy + 2.6);
       dt(p, item, { x: 89, y: yy, font: sansReg, size: 8.6, color: CREAM, opacity: 0.88 });
     });
     f.excluded.forEach((item, i) => {
-      const yy = 448 - i * 15.8;
+      const yy = 448 - i * listStep;
       crossMark(p, 335, yy + 2.6);
       dt(p, item, { x: 347, y: yy, font: sansReg, size: 8.6, color: MUTED, opacity: 0.82 });
     });
@@ -701,7 +743,7 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
     mixedTitle(p, "Spells that ", "Stay", { cx: W / 2, y: 760, size: 40 });
     eyebrowRule(p, 743, 8, 30);
 
-    const photoStrip = async (group: "bir" | "anshika", title: string, labelY: number, photoTop: number) => {
+    const photoStrip = async (group: string, title: string, labelY: number, photoTop: number) => {
       const photos = memories.photos.filter((photo) => photo.group === group);
       if (photos.length !== 4) throw new Error(`Expected four ${group} photographs`);
       const images = await Promise.all(photos.map(async (photo) => {
@@ -724,11 +766,17 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
       if (Math.abs(x - gap - (W - margin)) > 0.01) throw new Error("Photo strip exceeds its page margins");
     };
 
-    await photoStrip("bir", "PREVIOUS BIR SPELLS", 718, 704);
-    await photoStrip("anshika", "PREVIOUS SPELLS WITH ANSHIKA", 598, 584);
+    const strips = memories.strips ?? [
+      { group: "bir", title: "PREVIOUS BIR SPELLS" },
+      { group: "anshika", title: "PREVIOUS SPELLS WITH ANSHIKA" },
+    ];
+    const [firstStrip, secondStrip] = strips;
+    if (strips.length !== 2 || !firstStrip || !secondStrip) throw new Error("The memories page shows exactly two photo strips");
+    await photoStrip(firstStrip.group, firstStrip.title, 718, 704);
+    await photoStrip(secondStrip.group, secondStrip.title, 598, 584);
 
     mixedTitle(p, "In their ", "Words", { cx: W / 2, y: 472, size: 29 });
-    drawTracked(p, "EXCERPTS FROM THE UDAIPUR SPELL GROUP", { cx: W / 2, y: 453, font: sansMed, size: 6.7, color: MUTED, tr: 1.9 });
+    drawTracked(p, memories.wordsSubtitle ?? "EXCERPTS FROM THE UDAIPUR SPELL GROUP", { cx: W / 2, y: 453, font: sansMed, size: 6.7, color: MUTED, tr: 1.9 });
 
     const featured = memories.reviews.filter((review) => review.featured);
     const highlight = featured[0];
@@ -743,7 +791,7 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
       drawTracked(p, line, { cx: W / 2, y: quoteY, font: serifSemiItal, size: 14.2, color: GOLD_HI, tr: 0 });
       quoteY -= 17;
     }
-    drawTracked(p, `${highlight.author.toUpperCase()} · ON ANSHIKA'S WORKSHOP`, { cx: W / 2, y: quoteY + 1, font: sansSemi, size: 7, color: GOLD_LIGHT, tr: 1.7 });
+    drawTracked(p, `${highlight.author.toUpperCase()} · ${highlight.featuredTag ?? "ON ANSHIKA'S WORKSHOP"}`, { cx: W / 2, y: quoteY + 1, font: sansSemi, size: 7, color: GOLD_LIGHT, tr: 1.7 });
 
     const reviews = memories.reviews.filter((review) => !review.featured);
     const gap = 26;
@@ -772,13 +820,18 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
       rowTop -= rowHeight + 12;
     }
 
-    const closing = "your story could be next.";
+    const closing = memories.closing ?? "your story could be next.";
     dt(p, closing, { x: W / 2 - hand.widthOfTextAtSize(closing, 16) / 2, y: 72, font: hand, size: 16, color: GOLD_LIGHT, rotate: -1.5 });
-    footerLabel(p, "06 · THE CIRCLE BEFORE YOURS");
+    footerLabel(p, memories.footer ?? "06 · THE CIRCLE BEFORE YOURS");
   }
 
   /* -------------------------------- Output --------------------------------- */
   const bytes = await doc.save();
+  if (outDir) {
+    writeFileSync(`${outDir}/${spec.fileName}`, bytes);
+    console.log("Scratch PDF written:", `${outDir}/${spec.fileName}`, (bytes.length / 1024).toFixed(0), "KB,", doc.getPageCount(), "pages");
+    return;
+  }
   writeFileSync(spec.fileName, bytes, { flag: spec.immutable ? "wx" : "w" });
   console.log("PDF written:", spec.fileName, (bytes.length / 1024).toFixed(0), "KB,", doc.getPageCount(), "pages");
   if (process.argv.includes("--publish")) {
@@ -1052,9 +1105,142 @@ const content: EditionSpec = {
   },
 };
 
+/* ================= THE UDAIPUR SPELL WITH ADITI · 2-4 OCT 2026 ================ */
+/* The Content Spell's seven-page structure, re-set for Udaipur: cover, the homestay, three
+ * days, the circle before yours, booking. Copy follows the founder's own day plan; photos are
+ * the live spell's saved images (img/udaipur/sources.json) and the previous Udaipur group. */
+const udaipur: EditionSpec = {
+  fileName: "Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf",
+  docTitle: "Logout Spells · The Udaipur Spell · 2-4 October 2026",
+  docSubject: "Udaipur, Rajasthan · trip itinerary and booking",
+  memoriesFile: "img/udaipur/memories.json",
+  immutable: true,
+  cover: {
+    img: "img/udaipur/cover.jpg",
+    eyebrow: "THE UDAIPUR SPELL · WITH ADITI",
+    title: "UDAIPUR",
+    titleSize: 104,
+    sub: "Where every sunset feels regal.",
+    dateLine: "2 - 4 OCTOBER 2026",
+    locLine: "UDAIPUR · RAJASTHAN",
+    poem1: "Three days. Lake breeze. Good people.",
+    poem2: "Palace mornings. Ghat sunsets. Stories worth taking home.",
+    para: "Leave the usual behind and spend three days in Udaipur with Aditi, where palace courtyards, ghat steps, old city bazaars, hilltop sunrises and fort sunsets become part of the journey.",
+    ital1: "This isn't about ticking places off a list.",
+    ital2: "It's about arriving, connecting, wandering, and letting Udaipur set the pace.",
+    pill: "15 SPOTS ONLY",
+  },
+  stay: {
+    img: "img/udaipur/stay.jpg",
+    preserveImageAspect: true,
+    imageFocus: 1,
+    eyebrow: "OUR STAY",
+    titleA: "Lasani Homestay, ",
+    titleB: "Udaipur",
+    tagline: "COMFORT WITH VINTAGE CHARM",
+    para1:
+      "Lasani House is a charming homestay that blends comfort with vintage charm: spacious rooms, antique décor that exudes elegance and warmth, and a terrace right in front of the rooms that is made for slow mornings and late conversations.",
+    para2:
+      "With its own separate entrance and a quiet lane outside, it lets the city wait until you're ready for it. We stay at Lasani Homestay or a similar property.",
+    homeLabel: "YOUR HOME FOR THE SPELL",
+    nights: "02",
+    nightsLabel: "NIGHTS IN UDAIPUR",
+    panelPara:
+      "A comfortable base for our days of palaces, ghats, bazaars and hill sunsets. Udaipur is known for its lakes, its royal courtyards, its rooftop cafés and the Aravalli hills that frame every evening.",
+    note: "this is where our little community lives for three days",
+    footer: "02 · OUR STAY",
+  },
+  days: [
+    {
+      img: "img/udaipur/day1-jagdish.jpg",
+      companionImg: "img/udaipur/day1-bazaar.jpg",
+      eyebrow: "DAY 01 · FRIDAY, 2 OCTOBER · UDAIPUR",
+      titleA: "Arrive, Connect & ",
+      titleB: "Wander",
+      intro: "Off the overnight traveller from Delhi and straight into the old city: the first day is about arriving, meeting your people and letting Udaipur set the pace.",
+      dense: true,
+      items: [
+        { title: "CHECK-IN & BREAKFAST", body: "Drop your bags at the homestay, meet your fellow travellers and start slow over breakfast." },
+        { title: "CITY PALACE", body: "Grand courtyards, ornate balconies and Lake Pichola spread out below." },
+        { title: "LUNCH BY LAKE PICHOLA", body: "Rooftop lunch at Rainbow or Natural View, with the lake right there beside the table." },
+        { title: "JAGDISH TEMPLE", body: "Intricate carvings, towering spires and pigeons wheeling overhead." },
+        { title: "BAGORE KI HAVELI", body: "A traditional Rajasthani puppet show inside the old haveli." },
+        { title: "GANGAUR GHAT & CHAND POLE", body: "Ghat steps, the footbridge over the water and the old city from the other side." },
+        { title: "BAZAAR WANDER", body: "Market lanes, miniature paintings and whatever catches your eye." },
+        { title: "SUNSET AT AMBRAI GHAT", body: "The City Palace turning gold across the water." },
+        { title: "DINNER AT A CUTE CAFÉ", body: "Good food, easy conversations and your first night together." },
+      ],
+      chip: "ARRIVE · CONNECT · WANDER",
+      footer: "03 · DAY ONE",
+    },
+    {
+      img: "img/udaipur/day2-saheliyon.jpg",
+      companionImg: "img/udaipur/day2-lake.jpg",
+      eyebrow: "DAY 02 · SATURDAY, 3 OCTOBER · UDAIPUR",
+      titleA: "Sunrise to ",
+      titleB: "Sunset",
+      intro: "Up before the city for a hilltop sunrise, a picnic in the hills, lakes and gardens through the afternoon, and Sajjangarh for the last light.",
+      items: [
+        { title: "BAHUBALI HILL SUNRISE TREK", body: "An early start and a short climb for sunrise over Badi Lake and the Aravallis." },
+        { title: "RAITA HILLS PICNIC · SPELLBOUND", body: "A picnic lunch out in the hills: this spell's Spellbound experience." },
+        { title: "FATEH SAGAR LAKE WALK", body: "Slow laps along the lakefront, chai in hand." },
+        { title: "SAHELIYON KI BARI", body: "The royal garden of fountains, lotus pools and marble pavilions." },
+        { title: "NEHRU PARK", body: "A boat across Fateh Sagar to the garden island in the middle of the lake." },
+        { title: "MONSOON PALACE SUNSET", body: "Sajjangarh at golden hour, with the whole city and its lakes below you." },
+      ],
+      chip: "SUNRISE · LAKES · SUNSET",
+      footer: "04 · DAY TWO",
+    },
+    {
+      img: "img/udaipur/day3-chittorgarh.jpg",
+      eyebrow: "DAY 03 · SUNDAY, 4 OCTOBER · CHITTORGARH",
+      titleA: "One Last ",
+      titleB: "Sunset",
+      intro: "No rush. A hilltop temple, the great fort at golden hour, and then the road takes us home.",
+      items: [
+        { title: "BREAKFAST & CHECK-OUT", body: "One last slow breakfast at the homestay before we pack up." },
+        { title: "KARNI MATA MANDIR", body: "The hilltop temple with wide views over Udaipur and its lakes." },
+        { title: "CHITTORGARH FORT SUNSET", body: "Monumental walls, the Vijay Stambh and golden light washing over the ramparts." },
+        { title: "OVERNIGHT TO DELHI", body: "Board the traveller after sunset and wake up in Delhi on Monday morning." },
+      ],
+      chip: "PAUSE · FORT · RETURN",
+      footer: "05 · DAY THREE",
+    },
+  ],
+  final: {
+    img: "img/udaipur/night.jpg",
+    subline: "UDAIPUR · 2 - 4 OCTOBER 2026 · ONLY 15 SPOTS",
+    cards: [{ label: "SPELL PRICE", price: rupee("13,999"), booking: rupee("4,200"), highlight: true, bookingLabel: "BOOKING AMOUNT · 30%" }],
+    priceNotes: [`remaining ${rupee("9,799")} due 7 days before departure`, "5% GST is applicable on the total amount"],
+    cardNote: `One price for everyone. Book with ${rupee("4,200")} now (30% of the trip price) and settle the rest 7 days before departure.`,
+    included: [
+      "2 nights accommodation in Udaipur",
+      "2 breakfasts",
+      "Farewell dinner",
+      "AC traveller from Delhi & back",
+      "City Palace entry",
+      "Bagore Ki Haveli puppet show",
+      "Spellbound picnic in the Raita Hills",
+      "Chittorgarh excursion",
+      "All local sightseeing",
+      "Trip coordination & community experience",
+    ],
+    excluded: [
+      "Meals beyond those listed",
+      "Personal expenses",
+      "Optional activities",
+      "Anything not mentioned above",
+    ],
+    qrBody:
+      "Pay the booking amount on this QR to confirm your spot. Seats are confirmed in the order payments arrive. Once it's done, our team reaches out with everything else.",
+    closeThanks: "Thank you for choosing to wander with us.",
+    closeHand: "15 spots. one little lake city story.",
+  },
+};
+
 /* -------------------------------- Build --------------------------------- */
-const editions: Record<string, EditionSpec> = { bir, content, "bir-september": birSeptember, "bir-september-18-20": birSeptember18To20 };
-const only = process.argv.slice(2).filter((arg) => arg !== "--publish");
+const editions: Record<string, EditionSpec> = { bir, content, "bir-september": birSeptember, "bir-september-18-20": birSeptember18To20, udaipur };
+const only = process.argv.slice(2).filter((arg, index, args) => arg !== "--publish" && arg !== "--out" && args[index - 1] !== "--out");
 const unknown = only.filter((key) => !(key in editions));
 if (unknown.length > 0) throw new Error(`unknown edition(s): ${unknown.join(", ")} (known: ${Object.keys(editions).join(", ")})`);
 console.log("rupee glyph:", { serifHasRupee, sansHasRupee });

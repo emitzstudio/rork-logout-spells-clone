@@ -16,6 +16,10 @@ bun run index.ts content --publish  # also write its versioned PDF to the public
 bun run verify-content-memories.ts --published  # original-page pixel checks, photos, review provenance and QR
 bun run trips.ts vietnam    # the no-stay Grimoire brochures (keys: vof, jibhi, ziro, vietnam)
 bun run trips.ts vietnam --publish  # also copy the built PDF to the public brochures folder
+python3 prepare-udaipur-grimoire.py     # prepare the Udaipur page artwork from the live spell's saved photos
+bun run index.ts udaipur --publish      # the seven-page Udaipur Grimoire (immutable, never overwrites)
+bun run verify-udaipur-grimoire.ts --published --live  # itinerary order, price, circle page, QR, public and live copies
+bun run index.ts bir content --out .cache/scratch      # scratch renders for regression checks; real PDFs untouched
 ```
 
 Editions in `index.ts` share the original Grimoire renderer and baseline copy.
@@ -29,6 +33,19 @@ Its current output is `Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf`;
 previous public PDFs remain untouched. Memory photo sources, visible review
 transcriptions and excerpt provenance are recorded in `img/content-memories/sources.json`.
 Earlier real photo sources and AI enhancement references remain in `img/content-real/sources.json`.
+
+The `udaipur` edition reuses the Content Spell's seven-page structure (cover, stay, three days,
+the circle before yours, booking) for The Udaipur Spell with Aditi, 2-4 October 2026:
+`Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf`. Its copy follows the founder's own day
+plan (City Palace, Jagdish Temple, Bagore Ki Haveli, Gangaur Ghat, Ambrai sunset; Bahubali
+sunrise, the Raita Hills Spellbound picnic, Fateh Sagar, Saheliyon Ki Bari, Nehru Park, Monsoon
+Palace; Karni Mata, Chittorgarh sunset, overnight to Delhi) at ₹13,999 with the house 30% split.
+Page artwork is prepared from the live spell's saved photographs only (`img/udaipur/sources.json`);
+the circle page (`img/udaipur/memories.json`) shows the previous Udaipur group, four earlier Bir
+photographs and the same transcribed Udaipur group messages, naming no host or workshop. The
+renderer's additions for it (cover `titleSize`, `dense` day rows, single centred price card,
+`bookingLabel`, memories `strips`/`wordsSubtitle`/`featuredTag`) leave the Bir and Content Spell
+renders pixel-identical. The earlier 13-page `-Grimoire-v1.pdf` remains published and untouched.
 
 The no-stay brochures in `trips.ts` share one renderer. A day may be marked as the
 spell's `spotlight` (gold frame and tag, an hour-by-hour schedule and a good-to-know

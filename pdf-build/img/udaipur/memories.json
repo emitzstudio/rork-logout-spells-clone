@@ -1,0 +1,68 @@
+{
+  "purpose": "The circle before yours page of the Udaipur Grimoire (Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf).",
+  "photoMethod": "Original founder-supplied photographs already prepared for the Content Spell (img/content-memories, attachments 1-8 of that request). The previous Udaipur spell strip uses the four Udaipur photographs (attachments 5-8); the previous Logout Spells strip uses the four Bir photographs (attachments 1-4). Full image proportions are retained; no faces, scenes or details are regenerated.",
+  "reviewMethod": "Excerpts are contiguous passages from the visible message transcriptions recorded in img/content-memories/sources.json (attachments 9-14 of the Content Spell request, messages from the previous Udaipur spell group), with punctuation and initial capitalization normalized only. Passages that name a host or a workshop are not used. Unnamed messages are attributed only to the group.",
+  "strips": [
+    { "group": "udaipur", "title": "THE PREVIOUS UDAIPUR SPELL" },
+    { "group": "bir", "title": "PREVIOUS LOGOUT SPELLS" }
+  ],
+  "photos": [
+    { "attachment": 5, "group": "udaipur", "image": "img/content-memories/05-anshika.jpg" },
+    { "attachment": 6, "group": "udaipur", "image": "img/content-memories/06-anshika.jpg" },
+    { "attachment": 7, "group": "udaipur", "image": "img/content-memories/07-anshika.jpg" },
+    { "attachment": 8, "group": "udaipur", "image": "img/content-memories/08-anshika.jpg" },
+    { "attachment": 1, "group": "bir", "image": "img/content-memories/01-bir.jpg" },
+    { "attachment": 2, "group": "bir", "image": "img/content-memories/02-bir.jpg" },
+    { "attachment": 3, "group": "bir", "image": "img/content-memories/03-bir.jpg" },
+    { "attachment": 4, "group": "bir", "image": "img/content-memories/04-bir.jpg" }
+  ],
+  "wordsSubtitle": "EXCERPTS FROM THE PREVIOUS UDAIPUR SPELL GROUP",
+  "reviews": [
+    {
+      "id": "riya-friends",
+      "author": "Riya",
+      "featured": true,
+      "featuredTag": "THE UDAIPUR SPELL GROUP",
+      "sourceNote": "Contiguous passage from Riya's message (attachment 12); the sentence about the host's workshop is not used.",
+      "excerpt": "Not a single person made me feel like I am a stranger to them, everyone made me feel like we are friends."
+    },
+    {
+      "id": "group-connection",
+      "author": null,
+      "sourceNote": "Attachment 9; the sender name is outside the screenshot.",
+      "excerpt": "I felt like I've known you guys forever. That instant connection I felt with each one of you really means everything to me."
+    },
+    {
+      "id": "arpita",
+      "author": "Arpita",
+      "sourceNote": "Attachments 10 and 11; printed once.",
+      "excerpt": "This trip felt like a reunion trip more than going with strangers."
+    },
+    {
+      "id": "mehak",
+      "author": "Mehak",
+      "sourceNote": "Attachment 11; complete message with the emoji and group mention omitted.",
+      "excerpt": "Loved the trip and the people! It was such a great experience. Would love to do more of these with you guys soon!"
+    },
+    {
+      "id": "group-memories",
+      "author": null,
+      "sourceNote": "Attachment 13; the sender name is outside the screenshot.",
+      "excerpt": "It was lovely meeting all of you. Really grateful for all the laughs, conversations, random moments, and memories we made together."
+    },
+    {
+      "id": "ankush",
+      "author": "Ankush",
+      "sourceNote": "Attachment 14; the complete closing sentence followed by the visible signature.",
+      "excerpt": "Here's to having more magic super soooon."
+    },
+    {
+      "id": "yashvi",
+      "author": "Yashvi Sood",
+      "sourceNote": "Attachment 14; the sender name is visible above the full message.",
+      "excerpt": "I NEVER THOUGHT I WOULD HAVE THIS MUCH FUN. You guys made it worth it and im genuinely looking forward to hanging out againnn with yall."
+    }
+  ],
+  "closing": "your story could be next.",
+  "footer": "06 · THE CIRCLE BEFORE YOURS"
+}
