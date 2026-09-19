@@ -49,7 +49,7 @@ export class GrimoirePdf {
   private fadeUp?: PDFImage;
   private fadeDown?: PDFImage;
 
-  constructor(private readonly doc: PDFDocument, private readonly fonts: GrimoireFonts, private readonly artwork: GrimoireArtwork) {}
+  constructor(private readonly doc: PDFDocument, private readonly fonts: GrimoireFonts, private readonly artwork: GrimoireArtwork, private readonly pointerGap = 22) {}
 
   async prepare(): Promise<void> {
     const optionalPng = async (bytes?: Uint8Array): Promise<PDFImage | undefined> => {
@@ -233,7 +233,7 @@ export class GrimoirePdf {
     points.forEach((point, index) => {
       const heading = this.wrap(point.heading.toUpperCase(), 9.3, this.fonts.semi, 392, 1.5);
       const body = this.wrap(point.text, 9.5, this.fonts.body, 392);
-      const totalHeight = heading.length * 14 + body.length * 14 + 24;
+      const totalHeight = heading.length * 14 + body.length * 14 + this.pointerGap + 3;
       this.ensure(totalHeight <= 500 ? totalHeight : 150);
       const center = this.y + 3;
       if (previous?.page === this.page) this.page.drawLine({ start: { x: 92, y: previous.center - 12.5 }, end: { x: 92, y: center + 12.5 }, color: GOLD, thickness: 0.7, opacity: 0.28 });
@@ -253,7 +253,7 @@ export class GrimoirePdf {
         this.text(line, 122, this.y, 9.5);
         this.y -= 14;
       }
-      this.y -= 22;
+      this.y -= this.pointerGap;
     });
   }
 

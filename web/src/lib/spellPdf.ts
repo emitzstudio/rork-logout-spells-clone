@@ -36,7 +36,7 @@ export function wrapPdfText(text: string, font: PDFFont, size: number, width: nu
 }
 
 /** Builds a fresh Grimoire from the current spell; historical/custom PDFs never enter this renderer. */
-export async function renderSpellBrochure(content: SpellBrochure, assets: BrochureAssets): Promise<Uint8Array> {
+export async function renderSpellBrochure(content: SpellBrochure, assets: BrochureAssets, options: { pointerGap?: number } = {}): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   doc.setTitle(`${content.title} — Grimoire`);
@@ -49,7 +49,7 @@ export async function renderSpellBrochure(content: SpellBrochure, assets: Brochu
     embed(assets.italicFont ?? assets.headingFont, false), embed(assets.semiFont ?? assets.bodyFont),
     embed(assets.handFont ?? assets.headingFont), embed(assets.fallbackFont ?? assets.bodyFont),
   ]);
-  const layout = new GrimoirePdf(doc, { body, heading, bold, italic, semi, hand, fallback }, assets);
+  const layout = new GrimoirePdf(doc, { body, heading, bold, italic, semi, hand, fallback }, assets, Math.max(8, Math.min(22, options.pointerGap ?? 22)));
   await layout.prepare();
   layout.cover(content);
   const sections = content.sections.filter((section) => !["Included", "Not included", "Price & booking"].includes(section.label));
