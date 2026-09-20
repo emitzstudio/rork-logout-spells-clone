@@ -2895,6 +2895,34 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0103 — Numbered Vietnam brochure attached to the live spell (2026-09-20)
+
+- **APPLIED** as `vietnam-numbered-brochure-link`. Source:
+  [`0103_vietnam_numbered_brochure_link.sql`](../migrations/0103_vietnam_numbered_brochure_link.sql).
+- WHY: the numbered 11-page Vietnam brochure (18-24 November 2026, gold numbered
+  circles, one line per point, Naksi's creator page) was published on 2026-09-11 but
+  the live spell's `pricing` block never carried a `brochureUrl`, so the website's
+  Download brochure buttons still generated the automatic PDF. The founder noticed.
+- WHAT: `jsonb_set(page, '{pricing,brochureUrl}', <numbered PDF>)` on
+  `the-vietnam-spell` only. Both tiers (₹65,000 early bird / ₹70,000 normal, ₹18,000
+  booking amount), the GST/TCS note, the price FAQ, itinerary, host, departure
+  (18-24 Nov 2026, 10 seats) and manual order are untouched; every other spell,
+  departure, form, archive, review, booking, payment and receipt is protected by
+  before/after equality checks. Guards: exact reviewed `updated_at`, pricing block
+  present with both tiers and no `brochureUrl`, scheduled departure, unused change
+  id. One `edited` log entry (`…3c5f`). No schema, policy or destructive statement.
+- Result: hero, price section and footer buttons link to
+  `/brochures/Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf`. The older
+  `Logout-Spells-Vietnam.pdf`, the 6-12 Nov numbered/concise copies and the
+  girls-only deck remain published and untouched.
+- Validation: live REST shows only the `brochureUrl` key added (pre-migration row
+  captured in `pdf-build/vietnam-brochure-source.json`); `vietnamBrochure.test.tsx`
+  renders the three download buttons and both tiers against that row + key, confirms
+  a dashboard round-trip changes nothing else, and pins the migration's guards;
+  `verify-vietnam.ts` still passes; web typecheck, lint and build pass.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
