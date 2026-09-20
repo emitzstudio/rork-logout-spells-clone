@@ -2872,6 +2872,29 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0102 — Udaipur Grimoire v2 attached to the live spell (2026-09-20)
+
+- **APPLIED** as `udaipur-grimoire-v2-link`. Source: [`0102_udaipur_grimoire_v2_link.sql`](../migrations/0102_udaipur_grimoire_v2_link.sql).
+- WHY: the founder asked for the seven-page Udaipur Grimoire (Content Spell structure,
+  corrected day plan, ₹13,999 with the 30% booking amount) to be downloadable from the
+  Udaipur spell page instead of the automatic brochure.
+- WHAT: adds `page.pricing` = `{tiers: [], remainingNote: "", taxNote: "", note: "",
+  brochureUrl: <v2 PDF>}` to `the-udaipur-spell` only. The column price (₹13,999), FAQs,
+  itinerary, host, stay, form, departure (2-4 Oct 2026, 15 seats) and manual order are
+  untouched; every other spell, departure, form, archive, review, booking, payment and
+  receipt is protected by before/after equality checks. Guards: exact reviewed
+  `updated_at`, no existing `pricing`/`priceTba`, scheduled departure, unused change id.
+  One `edited` log entry (`…ad8c`). No schema, policy or destructive statement.
+- Result: the hero, pricing card and brochure buttons link to
+  `/brochures/Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf`; the page still shows
+  ₹13,999 (not TBA). The 13-page v1 PDF and the Content Spell PDF remain published.
+- Validation: live REST shows only the pricing block added; `udaipurGrimoire.test.tsx`
+  renders the three download buttons against the reviewed row + block, confirms a
+  dashboard round-trip changes nothing else, and pins the migration's guards; web
+  typecheck, lint and build pass.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one
