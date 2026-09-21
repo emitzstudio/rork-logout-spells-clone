@@ -14,3 +14,4 @@ pdf-build/Logout-Spells-Europe-Christmas-NYE-20-Dec-2026-2-Jan-2027-Grimoire-v1.
 web/public/brochures/Logout-Spells-Europe-Christmas-NYE-20-Dec-2026-2-Jan-2027-Grimoire-v1.pdf filter=lfs diff=lfs merge=lfs -text
 pdf-build/Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf filter=lfs diff=lfs merge=lfs -text
 web/public/brochures/Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf filter=lfs diff=lfs merge=lfs -text
+web/public/reels/Logout-Spells-Blinding-Nights-Reel-v1.mp4 filter=lfs diff=lfs merge=lfs -text
