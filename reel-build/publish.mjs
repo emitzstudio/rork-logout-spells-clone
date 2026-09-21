@@ -1,7 +1,7 @@
 /**
  * Publishes only the finished MP4 to a dedicated Supabase Storage bucket.
  * Does not build, deploy, or modify the website or mobile app.
- * Usage: node publish.mjs inspect | upload
+ * Usage: node publish.mjs inspect | upload [name] [expectedDurationSeconds]
  * Requires the CLI's short-lived SUPABASE_ACCESS_TOKEN, provided by Rork.
  * API keys are consumed in memory only; never written to disk or printed.
  */
@@ -13,7 +13,11 @@ import assert from "node:assert/strict";
 const ref = "ultwonqxcgoadthneqqn";
 const origin = `https://${ref}.supabase.co`;
 const bucket = "reel-exports";
-const filename = "Logout-Spells-Blinding-Nights-Cinematic-v2-Silent.mp4";
+const name = process.argv[3] ?? "Logout-Spells-Blinding-Nights-Reel-v2-After-Hours-Silent";
+assert(/^[a-zA-Z0-9_-]+$/.test(name), "Invalid export name");
+const expectedDuration = Number(process.argv[4] ?? 52.5);
+assert(Number.isFinite(expectedDuration) && expectedDuration > 5, "Invalid expected duration");
+const filename = `${name}.mp4`;
 const object = `blinding-nights/${filename}`;
 const hash = (data) => createHash("sha256").update(data).digest("hex");
 
@@ -57,7 +61,7 @@ async function main() {
   assert.equal(stream?.height, 1920);
   assert.equal(stream?.r_frame_rate, "60/1");
   assert.equal(metadata.streams.filter((s) => s.codec_type === "audio").length, 0);
-  assert(Math.abs(Number(metadata.format.duration) - 36.5) < .05);
+  assert(Math.abs(Number(metadata.format.duration) - expectedDuration) < .05);
 
   const existing = buckets.find((b) => b.id === bucket);
   if (!existing) {
