@@ -1,0 +1,26 @@
+{
+  "title": "Blinding Nights — Cinematic v2",
+  "status": "visual-master-complete-audio-pending",
+  "downloadUrl": "https://ultwonqxcgoadthneqqn.supabase.co/storage/v1/object/public/reel-exports/blinding-nights/Logout-Spells-Blinding-Nights-Cinematic-v2-Silent.mp4?download=Logout-Spells-Blinding-Nights-Cinematic-v2-Silent.mp4",
+  "sha256": "d171aaecb06867a0f8e81eda4697e173f07b77873625ffbca409b0fcb5e1e82d",
+  "bytes": 32148215,
+  "width": 1080,
+  "height": 1920,
+  "fps": 60,
+  "durationSeconds": 36.483333,
+  "encodedFrames": 2189,
+  "codec": "h264",
+  "audioStreams": 0,
+  "editorialGridBpm": 171,
+  "suggestedSong": "Blinding Lights — The Weeknd",
+  "recordingSynchronized": false,
+  "audioNextStep": "Receive a user-supplied authorized recording, analyze its actual downbeats, align the selected excerpt, and export a separately named music version.",
+  "validation": {
+    "sourceSyntax": "passed",
+    "timelineContinuity": "passed",
+    "fullVideoDecode": "passed",
+    "remoteSha256": "matched",
+    "openingAndDay3ImagesDistinct": true
+  },
+  "deployment": "Standalone storage export; no website or app build or deployment."
+}

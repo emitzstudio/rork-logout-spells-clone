@@ -1,717 +1,435 @@
 /**
- * Logout Spells — "Blinding Nights" 7-day reel renderer.
- * Renders 1080x1920 @ 30fps frames with @napi-rs/canvas and pipes them to ffmpeg.
- *
- *   node render.mjs stills 1,3.5,4.4      -> probe/still_*.png + probe/sheet.png
- *   node render.mjs render                -> out/<name>.mp4 (muxed with audio/track_a.mp3)
+ * Blinding Nights — cinematic revision, 1080×1920 / 60 fps.
+ * Run from reel-build: node render.mjs stills [times] [full]
+ *                     node render.mjs render [name]
+ *                     node render.mjs check
+ * The visual master is deliberately silent. The editorial grid is 171 BPM;
+ * actual recording alignment is pending a user-supplied authorized audio file.
  */
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import assert from "node:assert/strict";
 
 const W = 1080;
 const H = 1920;
-const FPS = 30;
-const END = 36.5;
-const OUT_NAME = process.argv[3] && process.argv[2] === "render" ? process.argv[3] : "Logout-Spells-Blinding-Nights-Reel";
+const FPS = 60;
+const BPM = 171;
+const beat = (n) => n * 60 / BPM;
+const END = beat(104);
+const C = { white: "#FFF9EF", muted: "#E4DCD0", orange: "#F17549", gold: "#E8BD71" };
+const F = { bold: "PoppinsEB", medium: "PoppinsM", light: "PoppinsL", serif: "CormorantSB", condensed: "BarlowCond" };
+for (const [path, family] of [
+  ["Poppins-ExtraBold.ttf", F.bold], ["Poppins-Medium.ttf", F.medium],
+  ["Poppins-Light.ttf", F.light], ["cormorant-garamond-v21-latin_latin-ext-600.ttf", F.serif],
+  ["BarlowCondensed-Bold.ttf", F.condensed],
+]) {
+  if (!GlobalFonts.registerFromPath(`fonts/${path}`, family)) throw new Error(`Font unavailable: ${path}`);
+}
 
-const F = {
-  EB: "PoppinsEB",
-  B: "PoppinsB",
-  SB: "PoppinsSB",
-  M: "PoppinsM",
-  L: "PoppinsL",
-  XL: "PoppinsXL",
-  SERIF: "CormorantSB",
-  COND: "BarlowCond",
-  SYM: "DejaVu",
+const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
+const lerp = (a, b, p) => a + (b - a) * p;
+const progress = (t, at, duration) => clamp((t - at) / duration);
+const smooth = (p) => { const x = clamp(p); return x * x * (3 - 2 * x); };
+const easeOut = (p) => 1 - Math.pow(1 - clamp(p), 4);
+const inOut = (p) => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const imagePaths = {
+  opening: "../web/public/starboy-weeknd-portrait-v4.jpeg",
+  bangkok: "../web/public/starboy-bangkok-night-20260911.jpg",
+  river: "../web/public/starboy-skyline-20260911.jpg",
+  museum: "bg/day1.jpg",
+  concert: "bg/day3.jpg",
+  crowd: "../web/public/starboy-concert-20260911.jpg",
+  flight: "bg/day4.jpg",
+  beach: "../web/public/starboy-phuket-beach-20260911.jpg",
+  islands: "bg/day5.jpg",
+  atv: "bg/day6.jpg",
+  town: "bg/day7.jpg",
+  mark: "src/logo-mark.png",
 };
-GlobalFonts.registerFromPath("fonts/Poppins-ExtraBold.ttf", F.EB);
-GlobalFonts.registerFromPath("fonts/Poppins-Bold.ttf", F.B);
-GlobalFonts.registerFromPath("fonts/Poppins-SemiBold.ttf", F.SB);
-GlobalFonts.registerFromPath("fonts/Poppins-Medium.ttf", F.M);
-GlobalFonts.registerFromPath("fonts/Poppins-Light.ttf", F.L);
-GlobalFonts.registerFromPath("fonts/Poppins-ExtraLight.ttf", F.XL);
-GlobalFonts.registerFromPath("fonts/cormorant-garamond-v21-latin_latin-ext-600.ttf", F.SERIF);
-GlobalFonts.registerFromPath("fonts/BarlowCondensed-Bold.ttf", F.COND);
-GlobalFonts.registerFromPath("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", F.SYM);
+const images = {};
 
-const ORANGE = "#E3492F";
-const GOLD = "#E8B842";
-const LIGHT = "#DADADA";
-
-const INTRO_END = 8.56;
-const OUTRO_START = 32.56;
-
-const DAYS = [
-  {
-    n: 1, start: 8.56, end: 12.56, city: "BANGKOK", accent: ORANGE, dim: 0.34,
-    head: [["ARRIVAL", F.EB, "#FFFFFF"], ["ART + NIGHTLIFE", F.XL, LIGHT]],
-    sub: ["ART MUSEUM  |  DRAG SHOW  |  UNDERGROUND BANGKOK"],
-    chips: ["MUSEUM", "DRAG SHOW", "NIGHTLIFE"],
-    foot: ["CULTURE BY DAY", "CHAOS BY NIGHT"],
-  },
-  {
-    n: 2, start: 12.56, end: 16.56, city: "BANGKOK", accent: ORANGE, riser: true,
-    head: [["SHOP.", F.EB, "#FFFFFF"], ["EAT.", F.EB, "#FFFFFF"], ["PARTY.", F.XL, ORANGE]],
-    sub: ["ICONSIAM  |  CHINATOWN  |  ROOFTOP  |  NIGHTLIFE"],
-    chips: ["ICONSIAM", "CHINATOWN FOOD", "ROOFTOP"],
-    foot: ["GOOD FOOD", "BEAUTIFUL CITY"],
-  },
-  {
-    n: 3, start: 16.56, end: 20.56, city: "BANGKOK", accent: ORANGE, hero: true,
-    head: [["THE WEEKND", F.EB, "#FFFFFF"], ["LIVE", F.XL, ORANGE]],
-    sub: ["CONCERT NIGHT.", "BANGKOK"],
-    chips: ["THE STAGE", "THE CROWD", "THE WEEKND"],
-    foot: ["CONCERT NIGHT", "UNFORGETTABLE"],
-  },
-  {
-    n: 4, start: 20.56, end: 23.56, city: "BANGKOK ✈ PHUKET", accent: ORANGE, dim: 0.2,
-    head: [["SPA DAY.", F.EB, "#FFFFFF"], ["HELLO", F.XL, LIGHT], ["BEACHES.", F.XL, LIGHT]],
-    sub: ["THAI MASSAGE", "FLY TO PHUKET"],
-    chips: ["THAI MASSAGE", "FLY TO PHUKET", "BEACHSIDE DINNER"],
-    foot: ["GOOD THINGS", "TRAVEL WITH YOU"],
-  },
-  {
-    n: 5, start: 23.56, end: 26.56, city: "PHI PHI ISLAND", accent: "#F2FBF8", dim: 0.26,
-    head: [["PHI PHI", F.EB, "#FFFFFF"], ["ISLAND HOPPING", F.XL, "#E6F4F0"]],
-    sub: ["BOAT RIDES", "SWIMMING", "BEACH STOP", "TURQUOISE WATER"],
-    chips: ["BOAT RIDES", "SWIMMING", "BEACH STOP"],
-    foot: ["CLEARER WATER", "HAPPIER DAYS"],
-  },
-  {
-    n: 6, start: 26.56, end: 29.56, city: "PHUKET", accent: "#CFCFCF", dim: 0.12,
-    head: [["ADVENTURE", F.EB, "#FFFFFF"], ["+ CHAOS", F.XL, LIGHT]],
-    sub: ["ATV RIDE", "CAFÉ DEL MAR", "SUNSET DRINKS", "PATONG NIGHTLIFE"],
-    chips: ["ATV RIDE", "PATONG NIGHTLIFE", "CAFÉ DEL MAR"],
-    foot: ["BREATHTAKING", "ATV ADVENTURES"],
-  },
-  {
-    n: 7, start: 29.56, end: 32.56, city: "PHUKET", accent: "#D3E0E6", last: true, dim: 0.34,
-    head: [["SLOW", F.EB, "#FFFFFF"], ["GOODBYES.", F.XL, LIGHT]],
-    sub: ["OLD TOWN MARKET", "CAFÉS", "SHOPPING", "AIRPORT"],
-    chips: ["OLD TOWN MARKET", "CAFÉS", "AIRPORT"],
-    foot: ["7 DAYS  |  2 CITIES", "TOO MANY MEMORIES"],
-  },
+// Camera values: zoom, normalized horizontal focus, normalized vertical focus,
+// roll in radians. Every shot moves throughout its entire hold, not just on entry.
+const shot = (from, to, image, cameraA, cameraB, transition = "glide", overlap = 0.52) => ({
+  start: beat(from), end: beat(to), image, cameraA, cameraB, transition, overlap,
+});
+const SHOTS = [
+  shot(0, 8, "opening", [1.24, .54, .26, -.010], [1.04, .46, .30, .004], "glide"),
+  shot(8, 16, "bangkok", [1.08, .45, .38, -.006], [1.18, .61, .43, .003], "push", .58),
+  shot(16, 24, "museum", [1.03, .34, .56, .003], [1.18, .64, .58, -.004], "glide", .62),
+  shot(24, 30, "river", [1.04, .72, .48, .003], [1.12, .58, .49, -.004], "sweep", .46),
+  shot(30, 36, "bangkok", [1.24, .67, .56, -.004], [1.08, .39, .51, .003], "sweep", .42),
+  shot(36, 46, "concert", [1.17, .45, .03, -.008], [1.09, .51, .03, .002], "push", .56),
+  shot(46, 52, "crowd", [1.04, .35, .68, -.009], [1.15, .55, .77, .005], "sweep", .38),
+  shot(52, 57, "flight", [1.04, .51, .48, .005], [1.18, .64, .43, -.004], "glide", .70),
+  shot(57, 60, "beach", [1.16, .41, .41, -.004], [1.07, .57, .53, .002], "glide", .40),
+  shot(60, 68, "islands", [1.07, .42, .47, .003], [1.18, .59, .43, -.004], "glide", .60),
+  shot(68, 72, "islands", [1.38, .71, .79, -.004], [1.29, .55, .78, .004], "push", .40),
+  shot(72, 80, "atv", [1.02, .61, .54, -.012], [1.17, .69, .47, .007], "sweep", .46),
+  shot(80, 84, "beach", [1.20, .63, .43, .005], [1.07, .48, .52, -.002], "glide", .52),
+  shot(84, 92, "town", [1.14, .63, .57, -.003], [1.025, .45, .48, .003], "glide", .62),
+  shot(92, 104, "islands", [1.06, .48, .52, .003], [1.18, .55, .57, -.003], "glide", .76),
 ];
 
-// ---------- audio analysis (kicks + loudness envelope) ----------
-const ANALYSIS = JSON.parse(readFileSync("audio/track_a.analysis.json", "utf8"));
-const KICKS = ANALYSIS.kicks.filter((k) => k.s >= 20);
-const ENV_MAX = Math.max(...ANALYSIS.env);
-const kickAt = (t) => {
-  let v = 0;
-  for (const k of KICKS) {
-    const dt = t - k.t;
-    if (dt < 0 || dt > 0.45) continue;
-    v = Math.max(v, Math.min(1, k.s / 190) * Math.exp(-dt / 0.09));
-  }
-  return v;
-};
-const envAt = (t) => {
-  const i = Math.round(t * 30);
-  return Math.min(1, (ANALYSIS.env[i] ?? 0) / ENV_MAX);
-};
+const SEQUENCES = [
+  { start: beat(0), end: beat(8), type: "opening" },
+  { start: beat(8), end: beat(16), type: "title" },
+  { start: beat(16), end: beat(24), type: "day", day: 1, label: "09 OCT / BANGKOK", y: 1180,
+    lines: ["CULTURE BY DAY.", "Chaos by night."], detail: "ART MUSEUM · DRAG SHOW · UNDERGROUND BANGKOK" },
+  { start: beat(24), end: beat(36), type: "day", day: 2, label: "10 OCT / BANGKOK", y: 1000,
+    lines: ["SHOP.", "EAT.", "PARTY."], detail: "ICONSIAM · CHINATOWN · ROOFTOPS", stack: true },
+  { start: beat(36), end: beat(52), type: "day", day: 3, label: "11 OCT / CONCERT NIGHT", y: 390,
+    lines: ["THE WEEKND", "LIVE."], detail: "BANGKOK. ONE UNFORGETTABLE NIGHT.", hero: true },
+  { start: beat(52), end: beat(60), type: "day", day: 4, label: "12 OCT / BANGKOK TO PHUKET", y: 1190,
+    lines: ["EXHALE.", "Hello, beaches."], detail: "THAI MASSAGE · FLY TO PHUKET · BEACHSIDE DINNER" },
+  { start: beat(60), end: beat(72), type: "day", day: 5, label: "13 OCT / PHI PHI ISLANDS", y: 1150,
+    lines: ["LESS SIGNAL.", "More paradise."], detail: "ISLAND HOPPING · BOAT RIDES · SWIMMING" },
+  { start: beat(72), end: beat(84), type: "day", day: 6, label: "14 OCT / PHUKET", y: 1150,
+    lines: ["ADVENTURE.", "After-hours."], detail: "ATV · CAFÉ DEL MAR · PATONG NIGHTLIFE" },
+  { start: beat(84), end: beat(92), type: "day", day: 7, label: "15 OCT / PHUKET", y: 1160,
+    lines: ["SLOW", "goodbyes."], detail: "OLD TOWN · CAFÉS · ONE LAST WANDER" },
+  { start: beat(92), end: beat(104), type: "outro" },
+];
 
-// ---------- easing ----------
-const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-const P = (t, start, dur) => clamp01((t - start) / dur);
-const outExpo = (p) => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p));
-const outCubic = (p) => 1 - Math.pow(1 - p, 3);
-const outBack = (p) => {
-  const c1 = 1.4;
-  const c3 = c1 + 1;
-  return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
-};
-const decay = (t, at, life) => (t < at ? 0 : Math.exp(-(t - at) / life));
-
-// ---------- text ----------
-const SYMS = new Set(["✈", "→"]);
-const setFont = (ctx, fam, size) => {
-  ctx.font = `${size}px "${fam}"`;
-};
-function measureText(ctx, text, fam, size, tracking = 0) {
-  if (tracking === 0 && ![...text].some((c) => SYMS.has(c))) {
-    setFont(ctx, fam, size);
-    return ctx.measureText(text).width;
-  }
-  let w = 0;
-  for (const ch of text) {
-    const sym = SYMS.has(ch);
-    setFont(ctx, sym ? F.SYM : fam, sym ? size * 0.92 : size);
-    w += ctx.measureText(ch).width + tracking;
-  }
-  return w - tracking;
+function textWidth(ctx, text, size, font, tracking = 0) {
+  ctx.font = `${size}px "${font}"`;
+  if (!tracking) return ctx.measureText(text).width;
+  return [...text].reduce((w, ch) => w + ctx.measureText(ch).width + tracking, -tracking);
 }
-/** Draws text with optional letter tracking; symbol glyphs fall back to DejaVu. Returns width. */
-function drawText(ctx, text, x, y, o) {
-  const { fam, size, tracking = 0, color = "#FFFFFF", align = "left", alpha = 1, shadow = 0 } = o;
-  const w = measureText(ctx, text, fam, size, tracking);
-  let cx = align === "left" ? x : align === "right" ? x - w : x - w / 2;
+
+function text(ctx, value, x, y, opts = {}) {
+  const { font = F.medium, size = 30, tracking = 0, color = C.white, alpha = 1, align = "left", maxWidth = 880 } = opts;
   ctx.save();
-  ctx.globalAlpha *= alpha;
+  const initialWidth = textWidth(ctx, value, size, font, tracking);
+  const fit = Math.min(1, maxWidth / initialWidth);
+  const finalSize = size * fit;
+  const finalTracking = tracking * fit;
+  const width = textWidth(ctx, value, finalSize, font, finalTracking);
+  let left = align === "center" ? x - width / 2 : align === "right" ? x - width : x;
+  ctx.globalAlpha *= clamp(alpha);
   ctx.fillStyle = color;
-  if (shadow > 0) {
-    ctx.shadowColor = `rgba(0,0,0,${shadow})`;
-    ctx.shadowBlur = Math.max(10, size * 0.22);
-    ctx.shadowOffsetY = Math.max(2, size * 0.04);
-  }
   ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "left";
-  if (tracking === 0 && ![...text].some((c) => SYMS.has(c))) {
-    setFont(ctx, fam, size);
-    ctx.fillText(text, cx, y);
-  } else {
-    for (const ch of text) {
-      const sym = SYMS.has(ch);
-      setFont(ctx, sym ? F.SYM : fam, sym ? size * 0.92 : size);
-      ctx.fillText(ch, cx, sym ? y - size * 0.02 : y);
-      cx += ctx.measureText(ch).width + tracking;
-    }
+  if (finalTracking === 0) ctx.fillText(value, left, y);
+  else for (const ch of value) {
+    ctx.fillText(ch, left, y);
+    left += ctx.measureText(ch).width + finalTracking;
   }
   ctx.restore();
-  return w;
+  return width;
 }
 
-// ---------- drawing helpers ----------
-function rr(ctx, x, y, w, h, r) {
+function titleLine(ctx, value, x, y, local, delay, opts = {}) {
+  const p = easeOut(progress(local, delay, .72));
+  if (p <= 0) return;
+  const size = opts.size ?? 118;
+  ctx.save();
+  // A line-reveal mask, rather than a bouncing card or hard text slam.
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-function drawCover(ctx, img, dx, dy, dw, dh, zoom = 1, fx = 0.5, fy = 0.5) {
-  const ir = img.width / img.height;
-  const r = dw / dh;
-  let sw;
-  let sh;
-  if (ir > r) {
-    sh = img.height;
-    sw = sh * r;
-  } else {
-    sw = img.width;
-    sh = sw / r;
-  }
-  sw /= zoom;
-  sh /= zoom;
-  const sx = (img.width - sw) * fx;
-  const sy = (img.height - sh) * fy;
-  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-}
-function fillFlash(ctx, alpha, color = "#FFFFFF") {
-  if (alpha <= 0.002) return;
-  ctx.save();
-  ctx.globalAlpha = Math.min(1, alpha);
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, W, H);
-  ctx.restore();
-}
-function tintWhite(img) {
-  const c = createCanvas(img.width, img.height);
-  const x = c.getContext("2d");
-  x.drawImage(img, 0, 0);
-  x.globalCompositeOperation = "source-in";
-  x.fillStyle = "#FFFFFF";
-  x.fillRect(0, 0, img.width, img.height);
-  return c;
-}
-function buildShade() {
-  const c = createCanvas(W, H);
-  const x = c.getContext("2d");
-  const top = x.createLinearGradient(0, 0, 0, 640);
-  top.addColorStop(0, "rgba(0,0,0,0.62)");
-  top.addColorStop(1, "rgba(0,0,0,0)");
-  x.fillStyle = top;
-  x.fillRect(0, 0, W, 640);
-  const bot = x.createLinearGradient(0, 880, 0, H);
-  bot.addColorStop(0, "rgba(0,0,0,0)");
-  bot.addColorStop(0.45, "rgba(0,0,0,0.42)");
-  bot.addColorStop(1, "rgba(0,0,0,0.9)");
-  x.fillStyle = bot;
-  x.fillRect(0, 880, W, H - 880);
-  const vig = x.createRadialGradient(W / 2, H / 2, H * 0.28, W / 2, H / 2, H * 0.72);
-  vig.addColorStop(0, "rgba(0,0,0,0)");
-  vig.addColorStop(1, "rgba(0,0,0,0.38)");
-  x.fillStyle = vig;
-  x.fillRect(0, 0, W, H);
-  return c;
-}
-function buildGrain(seed) {
-  const c = createCanvas(W, H);
-  const x = c.getContext("2d");
-  const id = x.createImageData(W, H);
-  let s = seed >>> 0;
-  const rnd = () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-  const d = id.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const v = 90 + Math.floor(rnd() * 76);
-    d[i] = v;
-    d[i + 1] = v;
-    d[i + 2] = v;
-    d[i + 3] = 255;
-  }
-  x.putImageData(id, 0, 0);
-  return c;
-}
-
-// ---------- assets ----------
-const IMG = { bg: [], chips: [], markGold: null, markWhite: null };
-let SHADE;
-let GRAIN;
-async function loadAll() {
-  for (const d of DAYS) {
-    IMG.bg.push(await loadImage(`bg/day${d.n}.jpg`));
-    const row = [];
-    for (let i = 1; i <= 3; i++) row.push(await loadImage(`chips/d${d.n}_${i}.png`));
-    IMG.chips.push(row);
-  }
-  IMG.markGold = await loadImage("src/logo-mark.png");
-  IMG.markWhite = tintWhite(IMG.markGold);
-  SHADE = buildShade();
-  GRAIN = [buildGrain(7), buildGrain(99), buildGrain(1234)];
-}
-
-// ---------- shared pieces ----------
-function drawWordmark(ctx, cx, topY, markSize, serifSize, alpha, gold = true) {
-  if (alpha <= 0) return;
-  ctx.save();
-  ctx.globalAlpha *= alpha;
-  const mark = gold ? IMG.markGold : IMG.markWhite;
-  ctx.drawImage(mark, cx - markSize / 2, topY, markSize, markSize);
-  const y1 = topY + markSize + serifSize * 0.78;
-  drawText(ctx, "Logout", cx, y1, { fam: F.SERIF, size: serifSize, align: "center", color: "#FFFFFF" });
-  drawText(ctx, "SPELLS", cx + serifSize * 0.06, y1 + serifSize * 0.42, {
-    fam: F.M, size: serifSize * 0.27, tracking: serifSize * 0.14, align: "center", color: "#F1F1F1",
-  });
-  ctx.restore();
-}
-function drawGrain(ctx, t, alpha = 0.04) {
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(GRAIN[Math.floor(t * FPS) % GRAIN.length], 0, 0);
+  ctx.rect(36, y - size * 1.13, W - 72, size * 1.39);
+  ctx.clip();
+  text(ctx, value, x, y + (1 - p) * size * .8, { ...opts, alpha: p });
   ctx.restore();
 }
 
-// ---------- INTRO 0 → 8.56 ----------
-function renderIntro(ctx, t) {
-  ctx.fillStyle = "#070707";
-  ctx.fillRect(0, 0, W, H);
-
-  const bgA = 0.6 * outCubic(P(t, 4.05, 0.5));
-  if (bgA > 0) {
-    ctx.save();
-    ctx.globalAlpha = bgA;
-    drawCover(ctx, IMG.bg[2], 0, 0, W, H, 1.28 - 0.14 * P(t, 4.05, 4.5) + 0.01 * kickAt(t), 0.5, 0.3);
-    ctx.restore();
-    ctx.drawImage(SHADE, 0, 0);
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  const move = outExpo(P(t, 3.06, 0.6));
-  const markS = 300 - 108 * move;
-  const markTop = 560 - 210 * move;
-  const glowA = 0.42 * outCubic(P(t, 0.35, 1.1)) * (0.6 + 0.9 * envAt(t)) * (1 - 0.45 * move);
-  if (glowA > 0) {
-    const gcx = W / 2;
-    const gcy = markTop + markS / 2;
-    const g = ctx.createRadialGradient(gcx, gcy, 10, gcx, gcy, 620 - 200 * move);
-    g.addColorStop(0, `rgba(232,184,66,${glowA})`);
-    g.addColorStop(0.5, `rgba(232,184,66,${glowA * 0.25})`);
-    g.addColorStop(1, "rgba(232,184,66,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  const markA = outCubic(P(t, 0.35, 1.0));
-  const wordA = outCubic(P(t, 1.62, 0.5));
-  if (markA > 0) {
-    ctx.save();
-    ctx.globalAlpha = markA;
-    const pop = 0.9 + 0.1 * outExpo(P(t, 0.35, 1.2));
-    const s = markS * pop;
-    ctx.drawImage(IMG.markGold, W / 2 - s / 2, markTop + (markS - s) / 2, s, s);
-    ctx.restore();
-  }
-  if (wordA > 0) {
-    ctx.save();
-    ctx.globalAlpha = wordA;
-    const serif = 124 - 40 * move;
-    const y1 = markTop + markS + serif * 0.85 + (1 - wordA) * 30;
-    drawText(ctx, "Logout", W / 2, y1, { fam: F.SERIF, size: serif, align: "center" });
-    drawText(ctx, "SPELLS", W / 2 + 4, y1 + serif * 0.45, {
-      fam: F.M, size: serif * 0.27, tracking: serif * 0.16, align: "center", color: "#F1F1F1",
-    });
-    ctx.restore();
-  }
-
-  // Title slams
-  const a1 = P(t, 4.05, 0.3);
-  if (a1 > 0) {
-    const sc = 1.28 - 0.28 * outExpo(a1);
-    ctx.save();
-    ctx.globalAlpha = outCubic(P(t, 4.05, 0.12));
-    ctx.translate(W / 2, 930);
-    ctx.scale(sc, sc);
-    drawText(ctx, "BLINDING", 0, 0, { fam: F.EB, size: 176, align: "center" });
-    ctx.restore();
-  }
-  const a2 = P(t, 4.33, 0.3);
-  if (a2 > 0) {
-    const sc = 1.28 - 0.28 * outExpo(a2);
-    ctx.save();
-    ctx.globalAlpha = outCubic(P(t, 4.33, 0.12));
-    ctx.translate(W / 2, 1090);
-    ctx.scale(sc, sc);
-    drawText(ctx, "NIGHTS", 0, 0, { fam: F.XL, size: 176, align: "center", color: LIGHT });
-    ctx.restore();
-  }
-  const l1 = outExpo(P(t, 5.33, 0.5));
-  if (l1 > 0) {
-    drawText(ctx, "BANGKOK ✈ PHUKET   ·   9–15 OCT 2026", W / 2, 1200 + (1 - l1) * 40, {
-      fam: F.M, size: 31, tracking: 8, align: "center", color: "#F2F2F2", alpha: l1,
-    });
-  }
-  const l2 = outExpo(P(t, 7.07, 0.5));
-  if (l2 > 0) {
-    drawText(ctx, "7 DAYS   ·   2 CITIES   ·   1 CONCERT", W / 2, 1268 + (1 - l2) * 40, {
-      fam: F.SB, size: 31, tracking: 8, align: "center", color: ORANGE, alpha: l2,
-    });
-  }
-  drawGrain(ctx, t, 0.05);
-  fillFlash(ctx, 0.55 * decay(t, 4.05, 0.07) + 0.45 * decay(t, 4.33, 0.07));
-}
-
-// ---------- DAY CARD ----------
-function drawProgress(ctx, idx, frac, alpha) {
-  const gap = 8;
-  const total = W - 120;
-  const segW = (total - gap * 6) / 7;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  for (let i = 0; i < 7; i++) {
-    const x = 60 + i * (segW + gap);
-    ctx.fillStyle = "rgba(255,255,255,0.28)";
-    rr(ctx, x, 232, segW, 4, 2);
-    ctx.fill();
-    const f = i < idx ? 1 : i === idx ? frac : 0;
-    if (f > 0) {
-      ctx.fillStyle = "rgba(255,255,255,0.95)";
-      rr(ctx, x, 232, Math.max(4, segW * f), 4, 2);
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-}
-
-function renderDay(ctx, t, d, idx) {
-  const lt = t - d.start;
-  const dur = d.end - d.start;
-  const bg = IMG.bg[idx];
-  const kick = kickAt(t);
-
-  const punch = outExpo(P(lt, 0, d.hero ? 0.55 : 0.75));
-  let zoom = (d.hero ? 1.22 : 1.13) - (d.hero ? 0.22 : 0.13) * punch + 0.05 * (lt / dur) + 0.014 * kick;
-  const riser = d.riser ? outCubic(P(lt, dur - 1.0, 1.0)) : 0;
-  zoom += 0.14 * riser;
-  const fx = 0.5 + 0.035 * (lt / dur) * (idx % 2 ? -1 : 1);
-  drawCover(ctx, bg, 0, 0, W, H, zoom, fx, 0.5);
-  ctx.drawImage(SHADE, 0, 0);
-  if (d.dim) {
-    const dg = ctx.createLinearGradient(0, 0, 0, H);
-    dg.addColorStop(0, `rgba(0,0,0,${d.dim})`);
-    dg.addColorStop(0.5, `rgba(0,0,0,${d.dim * 0.85})`);
-    dg.addColorStop(0.74, "rgba(0,0,0,0)");
-    ctx.fillStyle = dg;
-    ctx.fillRect(0, 0, W, H);
-  }
-  if (riser > 0) fillFlash(ctx, 0.6 * riser, "#000000");
-
-  const uiA = outCubic(P(lt, 0.05, 0.35));
-  drawProgress(ctx, idx, clamp01(lt / dur), uiA);
-
-  // Top-left labels
-  const lab = outExpo(P(lt, 0.05, 0.45));
-  drawText(ctx, `DAY 0${d.n}`, 60 - (1 - lab) * 24, 300, {
-    fam: F.SB, size: 27, tracking: 9, color: d.accent, alpha: lab, shadow: 0.5,
-  });
-  drawText(ctx, d.city, 60 - (1 - lab) * 24, 348, {
-    fam: F.M, size: 33, tracking: 10, color: "#FFFFFF", alpha: lab, shadow: 0.5,
-  });
-
-  // Top-right wordmark
-  ctx.save();
-  ctx.globalAlpha = uiA;
-  const serif = 44;
-  const ww = measureText(ctx, "Logout", F.SERIF, serif);
-  drawText(ctx, "Logout", W - 60, 312, { fam: F.SERIF, size: serif, align: "right" });
-  drawText(ctx, "SPELLS", W - 60 - ww / 2 + 2, 340, { fam: F.M, size: 13, tracking: 6, align: "center", color: "#F1F1F1" });
-  ctx.drawImage(IMG.markWhite, W - 60 - ww - 78, 268, 66, 66);
-  ctx.restore();
-
-  // Headline
-  const baseSize = d.head.length <= 2 ? 138 : 118;
-  let maxW = 0;
-  for (const [txt, fam] of d.head) maxW = Math.max(maxW, measureText(ctx, txt, fam, baseSize));
-  const size = Math.min(baseSize, baseSize * (958 / maxW));
-  const lineH = size * 1.0;
-  const headTop = 432;
-  d.head.forEach(([txt, fam, color], i) => {
-    const st = i * 0.11;
-    const p = P(lt, st, 0.55);
-    if (p <= 0) return;
-    const y = headTop + size * 0.84 + i * lineH;
-    ctx.save();
-    ctx.globalAlpha = outCubic(P(lt, st, 0.25));
-    if (d.hero) {
-      const sc = 1.16 - 0.16 * outExpo(p);
-      ctx.translate(60, y);
-      ctx.scale(sc, sc);
-      drawText(ctx, txt, 0, 0, { fam, size, color, shadow: 0.5 });
-    } else {
-      drawText(ctx, txt, 60, y + (1 - outExpo(p)) * 72, { fam, size, color, shadow: 0.5 });
-    }
-    ctx.restore();
-  });
-  const headBottom = headTop + (d.head.length - 1) * lineH + size * 1.02;
-
-  // Sub lines (auto-fit to the 960px column)
-  d.sub.forEach((line, i) => {
-    const st = 0.42 + i * 0.09;
-    const p = outExpo(P(lt, st, 0.5));
-    if (p <= 0) return;
-    let subSize = 26;
-    let subTrack = 6;
-    const lw = measureText(ctx, line, F.M, subSize, subTrack);
-    if (lw > 956) {
-      const k = 956 / lw;
-      subSize = Math.floor(subSize * k * 10) / 10;
-      subTrack *= k;
-    }
-    drawText(ctx, line, 62, headBottom + 62 + i * 42 + (1 - p) * 30, {
-      fam: F.M, size: subSize, tracking: subTrack, color: "#ECECEC", alpha: p * 0.95, shadow: 0.6,
-    });
-  });
-
-  // Chips
-  const cy = 1118;
-  const ch = 300;
-  const gap = 16;
-  const cw = (W - 120 - gap * 2) / 3;
-  for (let i = 0; i < 3; i++) {
-    const ct = 1.0 + i * 0.5;
-    const p = P(lt, ct, 0.42);
-    if (p <= 0) continue;
-    const eb = outBack(p);
-    const a = outCubic(P(lt, ct, 0.18));
-    const x = 60 + i * (cw + gap);
-    const y = cy + (1 - eb) * 56;
-    const sc = 0.84 + 0.16 * eb;
-    ctx.save();
-    ctx.globalAlpha = a;
-    ctx.translate(x + cw / 2, y + ch / 2);
-    ctx.scale(sc, sc);
-    ctx.translate(-(x + cw / 2), -(y + ch / 2));
-    rr(ctx, x, y, cw, ch, 24);
-    ctx.save();
-    ctx.clip();
-    drawCover(ctx, IMG.chips[idx][i], x, y, cw, ch, 1.0 + 0.06 * clamp01((lt - ct) / 3));
-    const g = ctx.createLinearGradient(0, y + ch * 0.45, 0, y + ch);
-    g.addColorStop(0, "rgba(0,0,0,0)");
-    g.addColorStop(1, "rgba(0,0,0,0.78)");
-    ctx.fillStyle = g;
-    ctx.fillRect(x, y + ch * 0.45, cw, ch * 0.55);
-    ctx.restore();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "rgba(255,255,255,0.8)";
-    rr(ctx, x + 1, y + 1, cw - 2, ch - 2, 23);
-    ctx.stroke();
-    const numW = measureText(ctx, `0${i + 1}`, F.M, 20, 2);
-    const avail = cw - 44 - numW - 16;
-    let capSize = 20;
-    let capTrack = 3.5;
-    const capW = measureText(ctx, d.chips[i], F.M, capSize, capTrack);
-    if (capW > avail) {
-      const k = avail / capW;
-      capSize = Math.max(14, Math.floor(capSize * k * 10) / 10);
-      capTrack = Math.max(1.2, capTrack * k);
-    }
-    drawText(ctx, d.chips[i], x + 22, y + ch - 24, { fam: F.M, size: capSize, tracking: capTrack, color: "#FFFFFF" });
-    drawText(ctx, `0${i + 1}`, x + cw - 22, y + ch - 24, { fam: F.M, size: 20, tracking: 2, align: "right", color: "#FFFFFF" });
-    ctx.restore();
-  }
-
-  // Footer caption + rule
-  const ft = dur >= 4 ? 2.05 : 1.55;
-  const fp = outExpo(P(lt, ft, 0.55));
-  if (fp > 0) {
-    drawText(ctx, d.foot[0], 60 - (1 - fp) * 50, 1520, { fam: F.M, size: 24, tracking: 8, color: "#F4F4F4", alpha: fp, shadow: 0.5 });
-    drawText(ctx, d.foot[1], 60 - (1 - fp) * 50, 1562, { fam: F.M, size: 24, tracking: 8, color: "#F4F4F4", alpha: fp * 0.9, shadow: 0.5 });
-    ctx.save();
-    ctx.globalAlpha = fp;
-    ctx.fillStyle = d.accent;
-    ctx.fillRect(610, 1540, 170 * fp, 2);
-    ctx.restore();
-  }
-
-  // Big number
-  const np = outExpo(P(lt, 0.18, 0.6));
-  if (np > 0) {
-    ctx.save();
-    ctx.globalAlpha = outCubic(P(lt, 0.18, 0.3));
-    const pulse = 1 + 0.05 * kick;
-    ctx.translate(W - 58, 1590);
-    ctx.scale(pulse, pulse);
-    drawText(ctx, `0${d.n}`, 0, (1 - np) * 90, { fam: F.COND, size: 262, align: "right", color: d.accent });
-    ctx.restore();
-  }
-
-  drawGrain(ctx, t, 0.04);
-
-  // Kick pulse + cut flash
-  fillFlash(ctx, (d.hero ? 0.12 : 0.045) * kick);
-  fillFlash(ctx, (d.hero ? 0.95 : 0.5) * decay(lt, 0, 0.07));
-  if (d.last) fillFlash(ctx, outCubic(P(lt, dur - 0.4, 0.4)), "#000000");
-}
-
-// ---------- OUTRO 32.56 → 36.5 ----------
-function renderOutro(ctx, t) {
-  ctx.fillStyle = "#070707";
-  ctx.fillRect(0, 0, W, H);
-  ctx.save();
-  ctx.globalAlpha = 0.32;
-  drawCover(ctx, IMG.bg[4], 0, 0, W, H, 1.12 + 0.05 * P(t, OUTRO_START, 4), 0.5, 0.45);
-  ctx.restore();
-  ctx.drawImage(SHADE, 0, 0);
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(0, 0, W, H);
-
-  const glowA = 0.32 * outCubic(P(t, OUTRO_START + 0.1, 1.0)) * (0.7 + 0.6 * envAt(t));
-  const g = ctx.createRadialGradient(W / 2, 700, 10, W / 2, 700, 560);
-  g.addColorStop(0, `rgba(232,184,66,${glowA})`);
-  g.addColorStop(0.5, `rgba(232,184,66,${glowA * 0.22})`);
-  g.addColorStop(1, "rgba(232,184,66,0)");
+function shade(ctx, top, bottom, dark = 0) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, `rgba(3,7,10,${top})`);
+  g.addColorStop(.36, `rgba(3,7,10,${dark})`);
+  g.addColorStop(.58, `rgba(3,7,10,${Math.max(dark, bottom * .12)})`);
+  g.addColorStop(.86, `rgba(3,7,10,${bottom})`);
+  g.addColorStop(1, `rgba(3,7,10,${Math.min(.96, bottom + .10)})`);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
+}
 
-  const m = outCubic(P(t, OUTRO_START + 0.15, 0.7));
-  drawWordmark(ctx, W / 2, 470 + (1 - m) * 30, 230, 96, m, true);
+function drawPhoto(ctx, img, zoom, fx, fy, roll = 0, pan = 0) {
+  const base = Math.max(W / img.width, H / img.height);
+  const scale = base * Math.max(1.025, zoom);
+  const width = img.width * scale;
+  const height = img.height * scale;
+  const x = (W - width) * clamp(fx) + pan;
+  const y = (H - height) * clamp(fy);
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(roll);
+  ctx.translate(-W / 2, -H / 2);
+  ctx.drawImage(img, x, y, width, height);
+  ctx.restore();
+}
 
-  const b1 = outExpo(P(t, 33.35, 0.45));
-  if (b1 > 0) drawText(ctx, "BLINDING", W / 2, 1010 + (1 - b1) * 50, { fam: F.EB, size: 118, align: "center", alpha: b1 });
-  const b2 = outExpo(P(t, 33.5, 0.45));
-  if (b2 > 0) drawText(ctx, "NIGHTS", W / 2, 1122 + (1 - b2) * 50, { fam: F.XL, size: 118, align: "center", color: LIGHT, alpha: b2 });
-  const l1 = outExpo(P(t, 33.9, 0.5));
-  if (l1 > 0) {
-    drawText(ctx, "BANGKOK ✈ PHUKET   ·   9–15 OCT 2026", W / 2, 1210 + (1 - l1) * 40, {
-      fam: F.M, size: 29, tracking: 8, align: "center", color: "#F2F2F2", alpha: l1,
-    });
+const sceneA = createCanvas(W, H);
+const sceneB = createCanvas(W, H);
+const sceneAX = sceneA.getContext("2d");
+const sceneBX = sceneB.getContext("2d");
+
+function drawShot(ctx, current, t, extraZoom = 0, extraPan = 0) {
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "#090B0C";
+  ctx.fillRect(0, 0, W, H);
+  const raw = clamp((t - current.start + .4) / (current.end - current.start + .8));
+  // Linear drift under an eased move prevents the camera stopping at every cut.
+  const p = .60 * raw + .40 * smooth(raw);
+  const camera = current.cameraA.map((v, i) => lerp(v, current.cameraB[i], p));
+  drawPhoto(ctx, images[current.image], camera[0] + extraZoom, camera[1], camera[2], camera[3], extraPan);
+  ctx.fillStyle = "rgba(18,8,2,0.035)";
+  ctx.fillRect(0, 0, W, H);
+}
+
+function composite(ctx, canvas, alpha, blur = 0) {
+  if (alpha < .001) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (blur > .3) ctx.filter = `blur(${blur.toFixed(2)}px)`;
+  // Overscan hides filtered edge transparency.
+  const border = blur * 1.6;
+  ctx.drawImage(canvas, -border, -border, W + border * 2, H + border * 2);
+  ctx.restore();
+}
+
+function lightLeak(ctx, p, warm = true) {
+  const envelope = Math.pow(Math.sin(Math.PI * clamp(p)), 4) * .17;
+  if (envelope < .001) return;
+  const x = W * lerp(-.30, 1.30, p);
+  const gradient = ctx.createRadialGradient(x, H * .38, 2, x, H * .38, 770);
+  const rgb = warm ? "255,137,62" : "130,206,234";
+  gradient.addColorStop(0, `rgba(${rgb},${envelope})`);
+  gradient.addColorStop(.40, `rgba(${rgb},${envelope * .45})`);
+  gradient.addColorStop(1, `rgba(${rgb},0)`);
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function renderPhotography(ctx, t) {
+  const boundary = SHOTS.findIndex((s, i) => i > 0 && Math.abs(t - s.start) < s.overlap / 2);
+  if (boundary > 0) {
+    const incoming = SHOTS[boundary];
+    const outgoing = SHOTS[boundary - 1];
+    const p = progress(t, incoming.start - incoming.overlap / 2, incoming.overlap);
+    const mix = smooth(p);
+    const arc = Math.sin(p * Math.PI);
+    const push = incoming.transition === "push";
+    const sweep = incoming.transition === "sweep";
+    const magnify = push ? .13 * inOut(p) : sweep ? .07 * arc : .012 * arc;
+    drawShot(sceneAX, outgoing, t, magnify, sweep ? -32 * inOut(p) : 0);
+    drawShot(sceneBX, incoming, t, push ? .13 * (1 - inOut(p)) : sweep ? .07 * arc : 0, sweep ? 32 * (1 - inOut(p)) : 0);
+    const blur = (sweep ? 9 : push ? 5 : 1.2) * arc * arc;
+    composite(ctx, sceneA, 1, blur);
+    composite(ctx, sceneB, mix, blur);
+    if ([1, 5, 7, 14].includes(boundary)) lightLeak(ctx, p, boundary !== 7);
+    return;
   }
-  const c1 = P(t, 34.3, 0.45);
-  if (c1 > 0) {
-    const eb = outBack(c1);
-    const pw = 560;
-    const ph = 96;
-    ctx.save();
-    ctx.globalAlpha = outCubic(P(t, 34.3, 0.2));
-    ctx.translate(W / 2, 1338);
-    ctx.scale(0.85 + 0.15 * eb, 0.85 + 0.15 * eb);
-    ctx.fillStyle = ORANGE;
-    rr(ctx, -pw / 2, -ph / 2, pw, ph, ph / 2);
-    ctx.fill();
-    drawText(ctx, "BOOK YOUR SPELL", 0, 11, { fam: F.SB, size: 28, tracking: 7, align: "center", color: "#FFFFFF" });
-    ctx.restore();
+  const current = SHOTS.find((s) => t >= s.start && t < s.end) ?? SHOTS.at(-1);
+  drawShot(ctx, current, t);
+}
+
+function brand(ctx, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.drawImage(images.mark, 73, 196, 77, 77);
+  text(ctx, "Logout", 164, 240, { font: F.serif, size: 48, maxWidth: 280 });
+  text(ctx, "S P E L L S", 165, 263, { size: 13, tracking: 1.5, maxWidth: 280 });
+  ctx.restore();
+}
+
+function opening(ctx, t) {
+  brand(ctx, .92);
+  const alpha = 1 - smooth(progress(t, beat(8) - .30, .30));
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  text(ctx, "THIS OCTOBER,", 80, 1203, { size: 26, tracking: 7, color: C.gold, alpha: easeOut(progress(t, .05, .4)) });
+  titleLine(ctx, "THE WEEKND.", 74, 1333, t, .06, { font: F.bold, size: 116, maxWidth: 880 });
+  titleLine(ctx, "You. Bangkok.", 79, 1453, t, .25, { font: F.serif, size: 118, color: C.white, maxWidth: 865 });
+  ctx.restore();
+}
+
+function mainTitle(ctx, local) {
+  brand(ctx);
+  text(ctx, "NOT JUST A CONCERT. A WHOLE SPELL.", 80, 954, { size: 22, tracking: 5, color: C.gold, alpha: easeOut(progress(local, .10, .45)) });
+  titleLine(ctx, "BLINDING", 73, 1090, local, .06, { font: F.bold, size: 161, maxWidth: 880 });
+  titleLine(ctx, "Nights.", 74, 1258, local, .22, { font: F.serif, size: 204, maxWidth: 890 });
+  text(ctx, "BANGKOK  /  PHUKET", 80, 1370, { size: 30, tracking: 6, alpha: easeOut(progress(local, .60, .48)) });
+  text(ctx, "7 DAYS. 2 CITIES. 1 CONCERT.", 80, 1422, { size: 22, tracking: 4, color: C.muted, alpha: easeOut(progress(local, .76, .48)) });
+}
+
+function dayTypography(ctx, s, t) {
+  const local = t - s.start;
+  const length = s.end - s.start;
+  const out = 1 - smooth(progress(local, length - .30, .28));
+  brand(ctx, s.hero ? .82 : .78);
+  ctx.save();
+  ctx.globalAlpha = out;
+  const labelY = s.hero ? 325 : s.y - 78;
+  text(ctx, s.label, 80, labelY, { size: 25, tracking: 4.5, color: s.hero ? C.gold : C.white, alpha: easeOut(progress(local, .05, .40)) });
+  if (s.stack) {
+    s.lines.forEach((line, i) => titleLine(ctx, line, 73, s.y + i * 146, local, .06 + i * beat(1), {
+      font: i === 2 ? F.serif : F.bold, size: i === 2 ? 184 : 157, color: i === 2 ? C.orange : C.white,
+    }));
+    text(ctx, s.detail, 80, s.y + 372, { size: 23, tracking: 3.1, alpha: easeOut(progress(local, 1.02, .5)) });
+  } else if (s.hero) {
+    titleLine(ctx, s.lines[0], 72, 449, local, .04, { font: F.bold, size: 124, maxWidth: 880 });
+    titleLine(ctx, s.lines[1], 76, 586, local, .20, { font: F.serif, size: 166, color: C.gold });
+    text(ctx, s.detail, 81, 649, { size: 22, tracking: 4, alpha: easeOut(progress(local, .62, .48)) });
+    const second = easeOut(progress(local, beat(10) + .15, .7));
+    text(ctx, "ONE NIGHT.", 78, 1224, { font: F.bold, size: 118, alpha: second });
+    text(ctx, "All the feels.", 80, 1350, { font: F.serif, size: 146, alpha: second });
+  } else {
+    titleLine(ctx, s.lines[0], 76, s.y + 24, local, .05, { font: F.bold, size: 111, maxWidth: 870 });
+    titleLine(ctx, s.lines[1], 78, s.y + 146, local, .20, { font: F.serif, size: 139, maxWidth: 870 });
+    text(ctx, s.detail, 81, s.y + 222, { size: 24, tracking: 2.5, color: C.muted, alpha: easeOut(progress(local, .64, .48)), maxWidth: 870 });
   }
-  const l2 = outExpo(P(t, 34.65, 0.5));
-  if (l2 > 0) {
-    drawText(ctx, "logoutspells.com", W / 2, 1470 + (1 - l2) * 30, {
-      fam: F.M, size: 31, tracking: 3, align: "center", color: "#C9C9C9", alpha: l2,
-    });
-  }
-  drawGrain(ctx, t, 0.05);
-  fillFlash(ctx, 1 - outCubic(P(t, OUTRO_START, 0.55)), "#000000");
-  fillFlash(ctx, P(t, 35.55, 0.85), "#000000");
+  ctx.restore();
+}
+
+function outro(ctx, local) {
+  const show = easeOut(progress(local, .05, .65));
+  ctx.save();
+  ctx.globalAlpha = show;
+  ctx.drawImage(images.mark, 448, 354, 184, 184);
+  text(ctx, "Logout", 540, 603, { font: F.serif, size: 92, align: "center" });
+  text(ctx, "S P E L L S", 543, 645, { size: 22, tracking: 4, align: "center" });
+  titleLine(ctx, "BLINDING", 540, 910, local, .13, { font: F.bold, size: 151, align: "center", maxWidth: 865 });
+  titleLine(ctx, "Nights.", 540, 1086, local, .26, { font: F.serif, size: 208, align: "center" });
+  text(ctx, "9–15 OCTOBER 2026", 540, 1181, { size: 32, tracking: 5, align: "center", color: C.gold, alpha: easeOut(progress(local, .45, .55)) });
+  text(ctx, "BANGKOK  /  PHUKET", 540, 1235, { size: 27, tracking: 5, align: "center", alpha: easeOut(progress(local, .55, .5)) });
+  text(ctx, "MAKE THIS YOUR WEEK.", 540, 1380, { font: F.bold, size: 39, tracking: 2, align: "center", alpha: easeOut(progress(local, .9, .55)) });
+  text(ctx, "logoutspells.com", 540, 1455, { size: 32, tracking: 2, align: "center", color: C.muted, alpha: easeOut(progress(local, 1.05, .55)) });
+  ctx.restore();
+}
+
+function renderGrade(ctx, t) {
+  const grade = (seq) => seq.type === "opening" ? [.42, .78, .03]
+    : seq.type === "title" ? [.44, .80, .18]
+      : seq.type === "outro" ? [.68, .86, .52]
+        : seq.hero ? [.62, .32, .03] : [.27, .84, .01];
+  const boundary = SEQUENCES.findIndex((s, i) => i > 0 && Math.abs(t - s.start) < .38);
+  if (boundary > 0) {
+    const p = smooth(progress(t, SEQUENCES[boundary].start - .38, .76));
+    const a = grade(SEQUENCES[boundary - 1]);
+    const b = grade(SEQUENCES[boundary]);
+    shade(ctx, ...a.map((v, i) => lerp(v, b[i], p)));
+  } else shade(ctx, ...grade(SEQUENCES.find((s) => t >= s.start && t < s.end) ?? SEQUENCES.at(-1)));
 }
 
 function renderFrame(ctx, t) {
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
-  if (t < INTRO_END) return renderIntro(ctx, t);
-  if (t >= OUTRO_START) return renderOutro(ctx, t);
-  for (let i = 0; i < DAYS.length; i++) {
-    const d = DAYS[i];
-    if (t >= d.start && t < d.end) return renderDay(ctx, t, d, i);
+  ctx.filter = "none";
+  ctx.fillStyle = "#090B0C";
+  ctx.fillRect(0, 0, W, H);
+  renderPhotography(ctx, t);
+  renderGrade(ctx, t);
+  const seq = SEQUENCES.find((s) => t >= s.start && t < s.end) ?? SEQUENCES.at(-1);
+  if (seq.type === "opening") opening(ctx, t);
+  else if (seq.type === "day") dayTypography(ctx, seq, t);
+  else {
+    ctx.save();
+    if (seq.type === "title") {
+      const opacity = smooth(progress(t, seq.start - .01, .25)) * (1 - smooth(progress(t, seq.end - .28, .28)));
+      ctx.globalAlpha = opacity;
+      mainTitle(ctx, t - seq.start);
+    } else outro(ctx, t - seq.start);
+    ctx.restore();
   }
-  return renderOutro(ctx, t);
+  // Gentle continuous vignette. No flashes, progress indicator, or blackout cuts.
+  const vig = ctx.createRadialGradient(W / 2, H * .48, W * .34, W / 2, H * .48, H * .78);
+  vig.addColorStop(0, "rgba(0,0,0,0)");
+  vig.addColorStop(1, "rgba(0,0,0,0.30)");
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
 }
 
-// ---------- entry ----------
+async function loadAssets() {
+  await Promise.all(Object.entries(imagePaths).map(async ([key, path]) => { images[key] = await loadImage(path); }));
+}
+
+function validateTimeline() {
+  for (const timeline of [SHOTS, SEQUENCES]) {
+    assert.equal(timeline[0].start, 0);
+    assert.equal(timeline.at(-1).end, END);
+    for (let i = 0; i < timeline.length; i++) {
+      const item = timeline[i];
+      assert(item.end > item.start);
+      if (i > 0) assert.equal(timeline[i - 1].end, item.start, "Timeline must be gapless");
+      if (item.image) {
+        assert(images[item.image], `Missing image ${item.image}`);
+        assert(item.overlap < item.end - item.start);
+        assert(item.cameraA[0] >= 1 && item.cameraB[0] >= 1);
+      }
+    }
+  }
+  assert.notEqual(SHOTS[0].image, SHOTS.find((s) => s.start === beat(36)).image);
+  assert.equal(SEQUENCES.filter((s) => s.type === "day").length, 7);
+  console.log(`Validated gapless ${END.toFixed(3)}s / ${SHOTS.length} shots / seven days / silent master`);
+}
+
 async function main() {
   const mode = process.argv[2] ?? "stills";
-  await loadAll();
+  if (!["render", "stills", "check"].includes(mode)) throw new Error("Use render, stills, or check");
+  await loadAssets();
+  validateTimeline();
+  if (mode === "check") return;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
-
   if (mode === "stills") {
-    const times = (process.argv[3] ?? "1,3.5,4.4,6,8,9.7,11,12.6,14.6,16.4,16.7,17.8,19.5,21.5,23,25,27.5,30.5,32,34,35")
+    const times = (process.argv[3] ?? "0.5,1.9,3.8,6.7,9.4,11.6,13.8,15.6,17.4,19.2,20.6,22.3,24.5,26.6,28.6,30.8,33.5,35.8")
       .split(",").map(Number);
+    assert(times.every((t) => Number.isFinite(t) && t >= 0 && t < END));
     mkdirSync("probe", { recursive: true });
-    const cols = 5;
-    const rows = Math.ceil(times.length / cols);
+    const cols = 4;
     const tw = 270;
     const th = 480;
-    const sheet = createCanvas(cols * tw, rows * th);
-    const sx = sheet.getContext("2d");
-    sx.fillStyle = "#222";
-    sx.fillRect(0, 0, sheet.width, sheet.height);
-    times.forEach((t, i) => {
+    const sheet = createCanvas(cols * tw, Math.ceil(times.length / cols) * (th + 32));
+    const c = sheet.getContext("2d");
+    c.fillStyle = "#202020";
+    c.fillRect(0, 0, sheet.width, sheet.height);
+    for (const [i, t] of times.entries()) {
       renderFrame(ctx, t);
-      sx.drawImage(canvas, (i % cols) * tw, Math.floor(i / cols) * th, tw, th);
-      sx.fillStyle = "#0f0";
-      sx.font = '18px "PoppinsM"';
-      sx.fillText(`${t}s`, (i % cols) * tw + 8, Math.floor(i / cols) * th + 22);
+      const x = i % cols * tw;
+      const y = Math.floor(i / cols) * (th + 32);
+      c.drawImage(canvas, x, y, tw, th);
+      text(c, `${t.toFixed(2)}s`, x + 8, y + th + 23, { size: 16 });
       if (process.argv[4] === "full") writeFileSync(`probe/still_${t}.png`, canvas.toBuffer("image/png"));
-    });
+    }
     writeFileSync("probe/sheet.png", sheet.toBuffer("image/png"));
-    console.log("wrote probe/sheet.png", times.length, "stills");
+    console.log(`Wrote ${times.length} reviewed stills to probe/sheet.png`);
     return;
   }
-
   mkdirSync("out", { recursive: true });
-  const outPath = `out/${OUT_NAME}.mp4`;
-  const args = [
-    "-y", "-loglevel", "error", "-stats",
+  const name = process.argv[3] ?? "Logout-Spells-Blinding-Nights-Cinematic-v2-Silent";
+  assert(/^[a-zA-Z0-9_-]+$/.test(name), "Invalid output name");
+  const path = `out/${name}.mp4`;
+  const ff = spawn("ffmpeg", [
+    "-y", "-loglevel", "error",
     "-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${W}x${H}`, "-r", String(FPS), "-i", "pipe:0",
-    "-i", "audio/track_a.mp3",
-    "-filter_complex", `[1:a]afade=t=out:st=${END - 1.7}:d=1.7,atrim=0:${END}[a]`,
-    "-map", "0:v", "-map", "[a]",
-    "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.1",
-    "-x264-params", "keyint=60:min-keyint=30",
-    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-t", String(END), outPath,
-  ];
-  const ff = spawn("ffmpeg", args, { stdio: ["pipe", "inherit", "inherit"] });
-  const total = Math.round(END * FPS);
+    "-map", "0:v", "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+    "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.2",
+    "-x264-params", "keyint=120:min-keyint=30", "-movflags", "+faststart",
+    "-metadata", "title=Blinding Nights - Cinematic v2 (silent visual master)",
+    "-metadata", "comment=171 BPM editorial grid; no recording embedded; audio synchronization pending.",
+    "-t", String(END), path,
+  ], { stdio: ["pipe", "inherit", "inherit"] });
+  const exited = once(ff, "close");
+  let inputError = null;
+  ff.stdin.on("error", (err) => { inputError = err; });
+  const frames = Math.ceil(END * FPS);
   const started = Date.now();
-  for (let f = 0; f < total; f++) {
-    renderFrame(ctx, f / FPS);
-    const buf = Buffer.from(ctx.getImageData(0, 0, W, H).data.buffer);
-    if (!ff.stdin.write(buf)) await once(ff.stdin, "drain");
-    if (f % 90 === 0) console.log(`frame ${f}/${total} (${((Date.now() - started) / 1000).toFixed(1)}s)`);
+  for (let frame = 0; frame < frames; frame++) {
+    if (inputError) throw inputError;
+    renderFrame(ctx, frame / FPS);
+    const rgba = ctx.getImageData(0, 0, W, H).data;
+    if (!ff.stdin.write(Buffer.from(rgba.buffer, rgba.byteOffset, rgba.byteLength))) await once(ff.stdin, "drain");
+    if (frame % 180 === 0) console.log(`Rendered ${frame}/${frames} frames (${((Date.now() - started) / 1000).toFixed(1)}s)`);
   }
   ff.stdin.end();
-  const [code] = await once(ff, "close");
-  console.log(code === 0 ? `done ${outPath} in ${((Date.now() - started) / 1000).toFixed(1)}s` : `ffmpeg exited ${code}`);
-  process.exitCode = code ?? 1;
+  const [code] = await exited;
+  if (code !== 0) throw new Error(`Encoder exited with ${code}`);
+  console.log(`DONE ${path}: ${frames} frames, ${END.toFixed(3)} seconds, ${((Date.now() - started) / 1000).toFixed(1)}s rendering time`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main().catch((error) => { console.error(error); process.exitCode = 1; });
