@@ -2923,6 +2923,76 @@ functions are unchanged. No staged migrations remain.
 
 ---
 
+## 0101 — The Winter Spiti Spell · Delhi to Delhi (applied 2026-09-17, logged 2026-09-22)
+
+- **APPLIED** as `winter-spiti-spell` on 2026-09-17 (live `published_at`
+  12:01 UTC). Source: [`0101_winter_spiti_spell.sql`](../migrations/0101_winter_spiti_spell.sql).
+  This entry was written retroactively when the founder re-sent the same itinerary
+  on 2026-09-22; the live row and page were re-read and match the migration file
+  byte for byte, so nothing was re-inserted (the migration's own `%spiti%` collision
+  guard would have refused a duplicate in any case).
+- Insert-only: one published spell (`the-winter-spiti-spell`, wandering), one
+  label-only departure (`Dates TBA`, null dates, zero seats, no price override) and
+  one publication-log entry. Existing spells, departures, changes, forms, responses,
+  archives, reviews, bookings, payments and receipts are protected by before/after
+  equality checks. No schema, policy, booking, email or payment changes.
+- All supplied days, in order: Delhi → Shimla → Sangla · Sangla → Chitkul → Kalpa ·
+  Kalpa → Khab Sangam → Nako → Tabo · Tabo → Dhankar → Key → Chicham → Kaza · Kaza
+  local (Hikkim, Komic, Langza) · Kaza → Kalpa · Kalpa → Shimla → overnight Volvo ·
+  Day 8 morning arrival in Delhi. 7 days / 6 accommodation nights (Sangla 1N ·
+  Kalpa 2N · Tabo 1N · Kaza 2N); the return bus night is stated as additional.
+  Meals as supplied (Day 1 as per package, Days 2-6 B&D, Day 7 breakfast).
+- **Prices published as supplied**: ₹22,999 Triple Sharing / ₹24,999 Double Sharing
+  per person (`price_minor` 2299900 = the leading triple tier; two tiers in
+  `page.pricing`, no booking amount, no tax note). Dates TBA; no form, host, hotel
+  names, ratings, deposits or cancellation terms invented. The winter weather note
+  and the AI-illustration disclaimer are carried into the About story and FAQs.
+- Grimoire v1 attached as `pricing.brochureUrl`
+  (`/brochures/Logout-Spells-Winter-Spiti-Valley-Dates-TBA-Grimoire-v1.pdf`);
+  three labelled AI illustrations served from the published web origin.
+- Validation (2026-09-22 re-check): live REST row equals the migration payload for
+  every column and the full `page` document; `/live/the-winter-spiti-spell` and the
+  Grimoire both return 200.
+
+---
+
+## 0104 — The Bali Padel Spell · 5 days / 4 nights in Kuta (2026-09-22)
+
+- **APPLIED** as `bali-padel-spell`. Source:
+  [`0104_bali_padel_spell.sql`](../migrations/0104_bali_padel_spell.sql), generated
+  by `pdf-build/prepare-bali-migration.ts` from `bali-padel-v1.json` +
+  `bali-padel-content.ts` (one publication source for the website and the editor).
+- Insert-only: one published spell (`the-bali-padel-spell`, movement), one
+  label-only departure (`Dates TBA`, null dates, zero seats, no price override) and
+  one publication-log entry. Existing spells, departures, changes, forms, responses,
+  archives, reviews, bookings, payments and receipts are protected by before/after
+  equality checks, plus an identity guard on the slug and any `%bali%` / `%padel%`
+  name. New spell appended at `sort_order` 18; nothing on the site moved.
+- All **21 supplied activities across five days**, verbatim and in order: arrival
+  and welcome dinner · padel + guided ice bath + FINNS sunset · padel + Uluwatu Temple
+  + Kecak & Fire Dance · final padel + half-day Ubud + Tegalalang · sunrise yoga or
+  beginner surf lesson + departure. Four Kuta nights; meals per day derived only
+  from the supplied inclusions (daily breakfast + four dinners).
+- **Inclusions (16) and exclusions (13) published exactly as supplied**, including
+  the founder's addition "FINNS Beach Club entry"; the card-level `inclusions`
+  column mirrors `page.included` and the migration asserts the projection.
+- **Price TBA** (`price_minor` 0 + `page.priceTba: true`, empty tiers, TBA note);
+  no form, host, hotel name, rating, deposit or tax rate invented. No custom PDF:
+  the Download brochure buttons fall back to the automatic brochure.
+- Five new, explicitly labelled AI illustrations (padel court hero, Kuta sunset,
+  clifftop temple at dusk, Tegalalang, sunrise surf/yoga) served from the published
+  web origin as versioned JPEGs; `prepare-bali-assets.py` refuses to overwrite.
+- Validation: `baliPadel.test.tsx` (7 tests) pins the supplied activities, the
+  inclusions/exclusions, TBA rendering, a builder round-trip, the shipped JPEGs and
+  the migration's guards; web typecheck, lint and build pass.
+  `web/scripts/verify-bali-padel.mjs` confirmed the pre-publication snapshot, then
+  after publication: existing public data and assets unchanged, all five images live
+  and byte-identical, live row + departure equal to the source, and 390px / 1440px
+  browser checks (listing, five-day journey, 16 + 13 inclusion lines, TBA, no
+  overflow, closed applications, no page errors). Browser checks submit no forms.
+
+---
+
 ## Planned next
 
 1. **7B — gateway integration (LAST; blocked on founder decisions)**: one

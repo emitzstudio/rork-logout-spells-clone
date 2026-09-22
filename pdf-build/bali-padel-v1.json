@@ -1,0 +1,135 @@
+{
+  "id": "ba110926-4b7a-4c3d-9051-220920260001",
+  "departureId": "ba110926-4b7a-4c3d-9051-220920260002",
+  "changeId": "ba110926-4b7a-4c3d-9051-220920260003",
+  "slug": "the-bali-padel-spell",
+  "name": "The Bali Padel Spell",
+  "hook": "Three padel matches. One ice bath. Sunsets from FINNS to Uluwatu.",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "Dates TBA",
+  "durationDays": 5,
+  "nights": 4,
+  "location": "Kuta, Bali",
+  "region": "Bali, Indonesia",
+  "heroFile": "bali-padel-court-v1.jpg",
+  "priceLabel": "TBA",
+  "priceNote": "Price TBA. Pricing, taxes, deposit and booking terms will be announced. Applications are not open yet; no payment is requested.",
+  "imageNote": "AI-generated Bali-inspired artwork illustrates the atmosphere; it is not photography of the confirmed hotel, padel venue, beach club or performances.",
+  "about": "Five days in Bali built around the court. Base yourself in Kuta for four nights, play three 90-minute padel matches, recover with a guided ice bath, and spend the golden hours at FINNS Beach Club and on the Uluwatu cliffs for the Kecak & Fire Dance. A half-day in Ubud brings the Tegalalang Rice Terraces, cafés and artisan shops, and the last morning is yours: sunrise yoga or a first surf lesson before the flight home.",
+  "stayNote": "All four nights are in Kuta, so the padel, Uluwatu and Ubud days return to the same base. The hotel, room category and sharing will be confirmed with pricing.",
+  "mealsNote": "Daily breakfast at the hotel and four dinners are included: the welcome dinner on Day 1 and dinners on Days 2, 3 and 4. Lunches and beverages are not included.",
+  "padelNote": "Three 90-minute padel court sessions on Days 2, 3 and 4, with court rental charges included. Equipment details will be confirmed before departure.",
+  "transportNote": "Airport arrival and departure transfers and a private air-conditioned vehicle with an English-speaking local driver for all sightseeing and transfers are included. International and domestic flights are not included.",
+  "days": [
+    {
+      "title": "Welcome to Bali",
+      "location": "Ngurah Rai Airport → Kuta",
+      "imageFile": "bali-kuta-beach-sunset-v1.jpg",
+      "intro": "Land in Bali, settle into Kuta and meet the group over dinner.",
+      "points": [
+        { "title": "Arrival", "body": "Arrive at Ngurah Rai International Airport." },
+        { "title": "Transfer & check-in", "body": "Transfer to Kuta and check in." },
+        { "title": "Kuta Beach", "body": "Leisure time at Kuta Beach or nearby cafés." },
+        { "title": "Welcome dinner", "body": "Welcome dinner with the group." }
+      ],
+      "meals": "Dinner",
+      "overnight": "Overnight: Kuta",
+      "note": "The airport arrival transfer is included. Check-in time follows the hotel's policy; early check-in is not included."
+    },
+    {
+      "title": "Padel, Recovery & Beach Club",
+      "location": "Kuta · FINNS Beach Club",
+      "imageFile": "bali-padel-court-v1.jpg",
+      "intro": "The first court session, a guided cold plunge and a beach-club sunset.",
+      "points": [
+        { "title": "Padel match", "body": "90-minute padel match." },
+        { "title": "Ice bath & recovery", "body": "Guided ice bath & recovery session." },
+        { "title": "FINNS sunset", "body": "Sunset experience at FINNS Beach Club." },
+        { "title": "Dinner", "body": "Dinner at a local restaurant." }
+      ],
+      "meals": "Breakfast & Dinner",
+      "overnight": "Overnight: Kuta",
+      "note": "FINNS Beach Club entry is included; food and drinks at the club are at your own expense."
+    },
+    {
+      "title": "Padel & Uluwatu Sunset",
+      "location": "Kuta → Uluwatu → Kuta",
+      "imageFile": "bali-clifftop-temple-dusk-v1.jpg",
+      "intro": "A second court session, then the clifftop temple and the fire dance at sunset.",
+      "points": [
+        { "title": "Padel match", "body": "90-minute padel match." },
+        { "title": "Uluwatu Temple", "body": "Visit the iconic Uluwatu Temple." },
+        { "title": "Kecak & Fire Dance", "body": "Enjoy the Kecak & Fire Dance at sunset." },
+        { "title": "Dinner", "body": "Dinner before returning to Kuta." }
+      ],
+      "meals": "Breakfast & Dinner",
+      "overnight": "Overnight: Kuta",
+      "note": "The Uluwatu Temple entrance ticket and the Kecak & Fire Dance show ticket are included. Sarongs are provided at the temple entrance; keep sunglasses and phones secure around the resident monkeys."
+    },
+    {
+      "title": "Padel & Ubud Explorer",
+      "location": "Kuta → Ubud → Kuta",
+      "imageFile": "bali-tegalalang-rice-terraces-v1.jpg",
+      "intro": "The final court session, then the green heart of Bali.",
+      "points": [
+        { "title": "Final padel match", "body": "Final 90-minute padel match." },
+        { "title": "Ubud excursion", "body": "Half-day Ubud excursion." },
+        { "title": "Tegalalang Rice Terraces", "body": "Visit Tegalalang Rice Terraces." },
+        { "title": "Cafés & artisan shops", "body": "Explore local cafés, artisan shops and scenic surroundings." },
+        { "title": "Back to Kuta", "body": "Return to Kuta for dinner." }
+      ],
+      "meals": "Breakfast & Dinner",
+      "overnight": "Overnight: Kuta",
+      "note": "The Ubud half-day tour and the Tegalalang visit are included. Lunch and any café or shopping spend are your own."
+    },
+    {
+      "title": "Wellness or Adventure & Departure",
+      "location": "Kuta → Ngurah Rai Airport",
+      "imageFile": "bali-sunrise-surf-yoga-v1.jpg",
+      "intro": "One last sunrise, your way, before the flight home.",
+      "points": [
+        { "title": "Sunrise yoga or surf", "body": "Choose between a sunrise yoga session or beginner surf lesson." },
+        { "title": "Breakfast & check-out", "body": "Breakfast and hotel check-out." },
+        { "title": "Airport transfer", "body": "Transfer to Ngurah Rai International Airport." },
+        { "title": "Trip ends", "body": "Trip ends with wonderful memories of Bali!" }
+      ],
+      "meals": "Breakfast",
+      "overnight": "Departure day · no overnight stay",
+      "note": "The chosen sunrise session is part of the itinerary; surfboard upgrades or additional surf lessons beyond the included session are extra. Late check-out is not included."
+    }
+  ],
+  "included": [
+    "4 Nights accommodation in Kuta",
+    "Daily breakfast at the hotel",
+    "4 Dinners as mentioned in the itinerary",
+    "Airport arrival transfer",
+    "Airport departure transfer",
+    "Private air-conditioned vehicle for all sightseeing and transfers",
+    "English-speaking local driver",
+    "3 x 90-minute Padel Court Sessions",
+    "Padel court rental charges",
+    "Ice Bath & Recovery Session",
+    "FINNS Beach Club entry",
+    "Uluwatu Temple entrance ticket",
+    "Kecak & Fire Dance Show ticket",
+    "Ubud Half-Day Tour",
+    "Visit to Tegalalang Rice Terraces",
+    "All applicable local taxes"
+  ],
+  "excluded": [
+    "International & domestic flights",
+    "Indonesia Visa (if applicable)",
+    "Travel Insurance",
+    "Lunches and beverages",
+    "Personal expenses",
+    "Tips & gratuities",
+    "FINNS Beach Club food and drinks",
+    "Surfboard upgrades or additional surfing lessons beyond the included session",
+    "Camera/video charges at attractions",
+    "Optional activities not mentioned in the itinerary",
+    "Early check-in or late check-out at hotels",
+    "Any expenses arising due to flight delays, natural calamities, weather conditions or circumstances beyond our control",
+    "Anything not specifically mentioned under \"Package Inclusions\""
+  ]
+}
