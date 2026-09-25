@@ -33,9 +33,10 @@ const historicalV9 = process.argv.includes("--v9");
 const historicalV10 = process.argv.includes("--v10");
 const historicalV11 = process.argv.includes("--v11");
 const historicalV12 = process.argv.includes("--v12");
-assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12].filter(Boolean).length <= 1, "Choose one historical edition");
-const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : 13;
-// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF.
+const historicalV13 = process.argv.includes("--v13");
+assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12, historicalV13].filter(Boolean).length <= 1, "Choose one historical edition");
+const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : historicalV13 ? 13 : 14;
+// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF; v14 includes the drag show / art museum tickets.
 const starboyPackagePdfUrl = version < 13 ? "https://example.com/starboy-package.pdf" : `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${premium.fileName}`;
 spec.fileName = `Logout-Spells-${version < 10 ? "Starboy" : "Blinding-Nights"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
 spec.docSubject = historicalV8 ? "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000" : "Bangkok & Phuket · 7 days / 6 nights · XO and all-inclusive Starboy packages · Early-bird prices";
@@ -65,6 +66,15 @@ spec.final.announcement = {
 spec.final.leftHeading = "WHAT'S INCLUDED";
 spec.final.rightHeading = "NOT INCLUDED / OPTIONAL";
 spec.final.lists = { left: spell.page.included.map((i) => printable(i.text)), right: spell.page.notIncluded.map((i) => printable(i.text)) };
+if (version >= 14) {
+  // The drag show / art museum tickets are included from September 25; the snapshot still lists them as optional.
+  const optionalTerm = "Drag show/Art musuem tickets · Optional";
+  assert(spec.final.lists.right.includes(optionalTerm), "Snapshot lost the optional drag-show term");
+  spec.final.lists = {
+    left: [...spec.final.lists.left, "Drag show/Art museum tickets · Included"],
+    right: spec.final.lists.right.filter((item) => item !== optionalTerm),
+  };
+}
 const bodies = spell.page.itinerary.map((day) => printable(day.body));
 const edition = { price: spell.price_minor / 100, bodies };
 const bytes = process.argv.includes("--verify-existing")
@@ -161,5 +171,5 @@ if (!process.argv.includes("--verify-existing")) {
   }
 }
 if (process.argv.includes("--publish")) assert(bytes.equals(readFileSync(`../web/public/brochures/${spec.fileName}`)));
-console.log(`PASS: Grimoire v${version}, seven complete itinerary days, 10 inclusions, 7 ${historicalV8 ? "" : "XO-only "}exclusions, ${version >= 11 ? "early-bird/regular final-page price boxes and all-inclusive inquiry text" : version === 10 ? "renamed cover without prices and no package page" : historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing final-page taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
+console.log(`PASS: Grimoire v${version}, seven complete itinerary days, ${spec.final.lists.left.length} inclusions, ${spec.final.lists.right.length} ${historicalV8 ? "" : "XO-only "}exclusions, ${version >= 11 ? "early-bird/regular final-page price boxes and all-inclusive inquiry text" : version === 10 ? "renamed cover without prices and no package page" : historicalV8 ? "INR 85,000" : "both packages and early-bird prices"}, existing final-page taxes, booking terms and inquiry link; ${bytes.length} bytes.`);
 doc.destroy();

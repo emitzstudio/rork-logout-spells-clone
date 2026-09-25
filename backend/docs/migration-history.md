@@ -3009,3 +3009,39 @@ functions are unchanged. No staged migrations remain.
    refused), **E** (balance collection mechanism), **G** (waitlist
    allocation — manual), **H** (refund authority — admin-only), **I**
    (email/WhatsApp providers — outbox is neutral).
+
+---
+
+## 0105 — Blinding Nights: drag show / art museum tickets included (2026-09-25)
+
+- **APPLIED.** Source:
+  [`0105_blinding_nights_drag_tickets_included.sql`](../migrations/0105_blinding_nights_drag_tickets_included.sql),
+  applied byte-exact via the management query path (founder instruction in chat).
+- Page-only revision of the published Blinding Nights spell
+  (`the-starboy-spell`): **"Drag Show / Art Museum Tickets" moved from the
+  excluded/optional list into inclusions in the XO and STARBOY package cards**
+ (appended to each `included` array without detail, mirroring TIMELESS, which
+  already included it). TIMELESS card untouched; prices, FAQs, itinerary,
+  forms, bookings and every other spell unchanged.
+- Main brochure pointer `page.pricing.brochureUrl` moved from Grimoire v13 to
+  **v14** (`Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v14.pdf`),
+  which lists the tickets under "WHAT'S INCLUDED" as
+  "Drag show/Art museum tickets · Included" (11 inclusions / 6 exclusions).
+  v13 remains published and immutable; its saved references upgrade client-side.
+- Guards: idempotent early-return, `updated_at` pinned to
+  `2026-09-15T08:17:32.660183+00:00`, old brochure URL asserted, exactly one
+  optional drag-show exclusion per reviewed package, TIMELESS baseline
+  asserted, page diffs confined to `pricing.packages` + `pricing.brochureUrl`,
+  per-package non-list fields unchanged, and bookings/payments/receipts + all
+  other spells checksummed before/after. No destructive statements.
+- Companion PDFs regenerated and published from the same sources:
+  XO **Grimoire-v2** (day-1 prose now "tickets are included", inclusion list
+  ends with the tickets; 7 pages) and STARBOY **Grimoire-v3** (10 pages);
+  TIMELESS v1 unchanged. Both `vercel.json` redirect destinations for retired
+  Starboy URLs now target v14.
+- Validation: full web unit suite 392 passed (package card counts, migration
+  composition chain 0091 → 0096 → 0105, byte-identical brochure pins with new
+  v14/v13 hashes, redirect destinations); web static checks + build green;
+  post-apply REST check as anon confirms both cards and the v14 URL; all three
+  new PDFs serve 200 `application/pdf` from the live web origin, text-verified
+  (no "optional add on" remains; included lists carry the term).

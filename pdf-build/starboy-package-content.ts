@@ -27,7 +27,7 @@ export function starboyPackageContent(card: PackageCard) {
     { image: "starboy-old-town-band.jpg", stops: [{ title: "PHUKET OLD TOWN MARKET", paragraphs: [1] }, { title: "CAFÉS & LAST PHOTOS", paragraphs: [2] }, { title: "ONE LAST SHOP", paragraphs: [3] }, { title: "HEAD TO THE AIRPORT", paragraphs: [4] }], closing: [5, 6] },
   ].slice(0, days.length);
   const first = days[0].body.trim().split(/\n\s*\n/);
-  first[1] += timeless ? " Drag show / art museum tickets are included in TIMELESS." : " Drag show / art museum tickets are an optional add on.";
+  first[1] += " Drag show / art museum tickets are included.";
   days[0].body = first.join("\n\n");
   if (xo) {
     // XO finishes in Bangkok; do not reuse the shared Day 4 flight to Phuket.

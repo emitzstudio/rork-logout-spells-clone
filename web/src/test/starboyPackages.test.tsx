@@ -12,6 +12,7 @@ import { STARBOY_BROCHURE_URL } from "@/data/starboyBrochure";
 import { STARBOY_PACKAGE_BROCHURES } from "@/data/starboyPackageBrochures";
 import sql from "../../../backend/migrations/0091_starboy_three_packages.sql?raw";
 import flightSql from "../../../backend/migrations/0096_starboy_outbound_flight_excluded.sql?raw";
+import dragSql from "../../../backend/migrations/0105_blinding_nights_drag_tickets_included.sql?raw";
 
 const packages = packageCardsSchema.parse(packagesJson);
 const draft = {
@@ -30,7 +31,7 @@ describe("Starboy three package comparison", () => {
       ["STARBOY", 140000, 150000, "9–15 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
       ["TIMELESS", 190000, 200000, "9–15 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
     ]);
-    expect(packages.map((p) => [p.included.length, p.excluded.length])).toEqual([[5, 5], [11, 6], [16, 2]]);
+    expect(packages.map((p) => [p.included.length, p.excluded.length])).toEqual([[6, 4], [12, 5], [16, 2]]);
     expect(html).toContain("grid-cols-1");
     expect(html).toContain("lg:grid-cols-3");
     expect(html.indexOf('data-package="xo"')).toBeLessThan(html.indexOf('data-package="starboy"'));
@@ -104,12 +105,23 @@ describe("Starboy three package comparison", () => {
       included: p.included.filter((item) => item.title !== flight.title),
       excluded: [flight, ...p.excluded],
     });
-    expect(revised).toEqual(packages);
+    const dragTickets = { title: "Drag Show / Art Museum Tickets" };
+    const withDrag = revised.map((p) => p.id === "timeless" ? p : {
+      ...p,
+      included: [...p.included, dragTickets],
+      excluded: p.excluded.filter((item) => item.title !== dragTickets.title),
+    });
+    expect(withDrag).toEqual(packages);
     expect(flightSql).toContain("2026-09-14T12:24:57.698041+00:00");
     expect(flightSql).toContain("update public.spells set page = v_page where id = v_id");
     expect(flightSql).toContain("India → Bangkok and Phuket → India international flights are not included.");
     expect(flightSql).toContain("v_protected is distinct from v_after_protected");
     expect(flightSql).not.toMatch(/\b(?:alter table|drop table|delete from|truncate|create policy)\b/i);
+    expect(dragSql).toContain("2026-09-15T08:17:32.660183+00:00");
+    expect(dragSql).toContain("update public.spells set page = v_page where id = v_id");
+    expect(dragSql).toContain("v_protected is distinct from v_after_protected");
+    expect(dragSql).toContain("Grimoire-v14.pdf");
+    expect(dragSql).not.toMatch(/\b(?:alter table|drop table|delete from|truncate|create policy)\b/i);
     expect(sql).toContain("2026-09-14T08:08:49.233689+00:00");
     expect(sql).toContain("update public.spells set page = v_page where id = v_id");
     expect(sql).toContain("v_protected is distinct from v_after_protected");

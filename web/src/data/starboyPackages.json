@@ -13,12 +13,12 @@
       { "title": "3 Nights Accommodation", "detail": "Premium party villas / 3 to 4 star hotels in Bangkok" },
       { "title": "Internal Transfers", "detail": "Airport pickup, drop off and all planned internal transportation" },
       { "title": "Meals", "detail": "3 breakfasts" },
-      { "title": "BKK Food Crawl" }
+      { "title": "BKK Food Crawl" },
+      { "title": "Drag Show / Art Museum Tickets" }
     ],
     "excludedHeading": "NOT INCLUDED / OPTIONAL",
     "excluded": [
       { "title": "International Flights", "detail": "India ↔ Bangkok not included" },
-      { "title": "Drag Show / Art Museum Tickets", "detail": "Optional add on" },
       { "title": "Visa / Travel Insurance", "detail": "Not included" },
       { "title": "Meals Not Specifically Mentioned", "detail": "Not included" },
       { "title": "Alcoholic Beverages", "detail": "Not included" }
@@ -44,14 +44,14 @@
       { "title": "Traditional Thai Massage" },
       { "title": "Phi Phi Island Tour" },
       { "title": "Café Del Mar Drop & Entry" },
-      { "title": "Phuket Old Town Market Visit" }
+      { "title": "Phuket Old Town Market Visit" },
+      { "title": "Drag Show / Art Museum Tickets" }
     ],
     "excludedHeading": "NOT INCLUDED / OPTIONAL",
     "excluded": [
       { "title": "International Flight", "detail": "India → Bangkok" },
       { "title": "Return International Flight", "detail": "Phuket → India not included" },
       { "title": "Visa / Travel Insurance", "detail": "Not included" },
-      { "title": "Drag Show / Art Museum Tickets", "detail": "Optional add on" },
       { "title": "Meals Not Specifically Mentioned" },
       { "title": "Alcoholic Beverages" }
     ]

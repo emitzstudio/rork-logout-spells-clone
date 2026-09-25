@@ -1,7 +1,7 @@
-/** Immutable, independently shareable PDFs for the September 14 package terms. */
+/** Immutable, independently shareable PDFs; drag-show/art-museum tickets moved to inclusions on September 25. */
 export const STARBOY_PACKAGE_BROCHURES = {
-  xo: "/brochures/Logout-Spells-Blinding-Nights-XO-9-12-Oct-2026-Grimoire-v1.pdf",
-  starboy: "/brochures/Logout-Spells-Blinding-Nights-STARBOY-9-15-Oct-2026-Grimoire-v2.pdf",
+  xo: "/brochures/Logout-Spells-Blinding-Nights-XO-9-12-Oct-2026-Grimoire-v2.pdf",
+  starboy: "/brochures/Logout-Spells-Blinding-Nights-STARBOY-9-15-Oct-2026-Grimoire-v3.pdf",
   timeless: "/brochures/Logout-Spells-Blinding-Nights-TIMELESS-9-15-Oct-2026-Grimoire-v1.pdf",
 } as const;
 

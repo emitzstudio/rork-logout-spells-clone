@@ -35,8 +35,8 @@ describe("Package-specific Grimoires", () => {
     expect(starboy.spec.final.lists.left.join(" ")).not.toContain("International Flight");
     expect(starboy.spec.final.lists.right[0]).toBe("International Flight · India → Bangkok");
     expect(starboy.spec.final.lists.left).toContain("Internal Flight · Bangkok → Phuket");
-    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("Grimoire-v2.pdf");
-    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("Grimoire-v1.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("Grimoire-v3.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("Grimoire-v2.pdf");
     expect(STARBOY_PACKAGE_BROCHURES.timeless).toContain("Grimoire-v1.pdf");
   });
 
@@ -92,7 +92,8 @@ describe("Package-specific Grimoires", () => {
     expect(timeless.dashboard.bodies[3]).toContain("premium traditional Thai massage");
     expect(starboy.dashboard.bodies[6]).toContain("Phuket → India international flight is not included");
     expect(timeless.dashboard.bodies[6]).toContain("Phuket → India international flight is included");
-    expect(starboy.dashboard.bodies[0]).toContain("tickets are an optional add on");
-    expect(timeless.dashboard.bodies[0]).toContain("tickets are included in TIMELESS");
+    expect(starboy.dashboard.bodies[0]).toContain("tickets are included");
+    expect(starboy.dashboard.bodies[0]).not.toContain("optional add on");
+    expect(timeless.dashboard.bodies[0]).toContain("tickets are included");
   });
 });
