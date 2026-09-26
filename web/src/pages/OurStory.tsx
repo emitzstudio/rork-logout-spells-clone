@@ -496,7 +496,7 @@ function ChapterTeam() {
         />
         <Reveal delay={0.12} className="mt-7 text-center">
           <p className="mx-auto max-w-xl font-sans text-[15px] leading-relaxed text-cream/50">
-            Seven believers who dream, build, sell, tell and run every journey, the whole
+            The believers who dream, build, sell, tell and run every journey, the whole
             coven, card by card.
           </p>
           <HandNote className="mt-4">tap a card to meet them ↓</HandNote>

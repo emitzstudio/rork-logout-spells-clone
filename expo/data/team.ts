@@ -45,9 +45,12 @@ export interface TeamMember {
 }
 
 const fetchTeam = async (): Promise<TeamMember[]> => {
+  /* Explicit active filter: RLS lets staff sessions read retired rows too, and
+     the roster must look the same to the founder as to every traveller. */
   const { data, error } = await supabase
     .from("team_members")
     .select("*")
+    .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return data.map(mapTeamMember);

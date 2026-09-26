@@ -182,7 +182,7 @@ export default function TeamSection() {
           <GradientText style={styles.titleItalic}>the Spells</GradientText>
         </View>
         <Text style={styles.sub}>
-          Seven people, one shared belief — flip a card, meet a keeper of the magic.
+          One team, one shared belief — flip a card, meet a keeper of the magic.
         </Text>
       </View>
 

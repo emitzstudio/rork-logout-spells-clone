@@ -2,9 +2,9 @@
  * Team domain - the people behind Logout Spells.
  *
  * M5: the roster is served from Supabase (`team_members`, active rows under
- * RLS). The seeded constants below double as placeholder data - identical to
- * the database seeds - so the About page paints instantly and settles onto
- * live content.
+ * RLS). The constants below double as placeholder data - a mirror of the live
+ * active roster (0003 seeds as revised by 0086 and 0106) - so the About page
+ * paints instantly and settles onto live content.
  */
 import {
   useMutation,
@@ -94,26 +94,11 @@ const TEAM: TeamMember[] = [
     socials: SOCIAL_PLACEHOLDER,
   },
   {
-    id: "tm-himanshu",
-    name: "Himanshu",
-    designation: "Backend Engineering",
-    department: "Technology",
-    photo: "/team/himanshu.jpg",
-    initial: "H",
-    intro: "The quiet force behind the curtain. If it stores, syncs or simply works, it's him.",
-    focus:
-      "Owns the backend: the data, APIs and infrastructure every spell runs on, from first click to final booking.",
-    contribution:
-      "Keeps bookings, journeys and traveller data flowing safely while the rest of the team takes the applause.",
-    quote: "The best systems are the ones nobody ever notices.",
-    socials: SOCIAL_PLACEHOLDER,
-  },
-  {
     id: "tm-jagriti",
     name: "Jagriti",
     designation: "Sales & Partnerships",
     department: "Sales",
-    photo: "/team/jagriti.jpg",
+    photo: "",
     initial: "J",
     intro: "The first voice most travellers and partners ever hear, and the reason they stay.",
     focus:
@@ -128,7 +113,7 @@ const TEAM: TeamMember[] = [
     name: "Shreshta",
     designation: "Social Media & Content",
     department: "Social Media",
-    photo: "/team/shreshta.jpg",
+    photo: "",
     initial: "S",
     intro: "Storyteller-in-chief of the feed. She makes the internet stop scrolling.",
     focus:
@@ -139,25 +124,11 @@ const TEAM: TeamMember[] = [
     socials: SOCIAL_PLACEHOLDER,
   },
   {
-    id: "tm-namya",
-    name: "Namya",
-    designation: "Social Media & Community",
-    department: "Social Media",
-    photo: "/team/namya.jpg",
-    initial: "N",
-    intro: "Keeper of the comment section. She knows travellers by name before they ever board.",
-    focus:
-      "Grows the community: DMs, collabs and keeping the conversation warm between journeys.",
-    contribution: "Made the Logout circle feel like a group chat you never want to leave.",
-    quote: "Every follower is a friend we haven't travelled with yet.",
-    socials: SOCIAL_PLACEHOLDER,
-  },
-  {
     id: "tm-sagar",
     name: "Sagar",
     designation: "Operations & On-ground",
     department: "Operations",
-    photo: "/team/sagar.jpg",
+    photo: "",
     initial: "S",
     intro: "The one on the ground while you're in the moment. Logistics is his love language.",
     focus:
@@ -170,9 +141,12 @@ const TEAM: TeamMember[] = [
 ];
 
 const fetchTeam = async (): Promise<TeamMember[]> => {
+  /* Explicit active filter: RLS lets staff sessions read retired rows too, and
+     the roster must look the same to the founder as to every visitor. */
   const { data, error } = await supabase
     .from("team_members")
     .select("*")
+    .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return data.map(mapTeamMember);

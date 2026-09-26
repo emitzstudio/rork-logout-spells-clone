@@ -350,6 +350,10 @@ yet**; wiring it is a deliberate M6+ console feature), timestamps.
 Index `(is_active, sort_order)`.
 RLS: SELECT anyone where active, staff all · INSERT/UPDATE staff · no DELETE policy.
 Future expansion (multiple roles, achievements) is additive: join tables, no redesign.
+Roster state since 0106 (2026-09-26): 7 rows, **5 active** (Vidushi · Bhuvan ·
+Jagriti · Shreshta · Sagar); Himanshu and Namya retired via `is_active = false`;
+Jagriti, Shreshta and Sagar carry `photo_url = ''` (monogram cards). Both clients
+filter `is_active = true` explicitly in addition to RLS.
 
 ---
 

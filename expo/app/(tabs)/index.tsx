@@ -417,7 +417,7 @@ export default function HomeScreen() {
                 <Feather size={20} color={Colors.goldLight} />
                 <Text style={styles.doorTitle}>Our Story</Text>
                 <Text style={styles.doorSub}>
-                  The question that started it, and the seven people keeping it alive.
+                  The question that started it, and the people keeping it alive.
                 </Text>
                 <Handwritten size={20} style={styles.doorNote}>
                   “what if strangers became your people?”

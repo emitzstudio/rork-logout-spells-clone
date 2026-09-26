@@ -3045,3 +3045,33 @@ functions are unchanged. No staged migrations remain.
   post-apply REST check as anon confirms both cards and the v14 URL; all three
   new PDFs serve 200 `application/pdf` from the live web origin, text-verified
   (no "optional add on" remains; included lists carry the term).
+
+---
+
+## 0106 — Team roster revision: two cards retired, three portraits cleared (2026-09-26)
+
+- **APPLIED.** Source:
+  [`0106_team_roster_revision.sql`](../migrations/0106_team_roster_revision.sql),
+  applied byte-exact via the management query path (founder instruction in chat);
+  a second run confirmed the idempotent early return.
+- `team_members` only. **Himanshu** (`e…03`) and **Namya** (`e…06`) →
+  `is_active = false` (deactivate-never-delete, per the 0003 rule — the rows,
+  their copy and any future byline links survive; the select policy hides them
+  from every public reader). **Jagriti** (`e…04`), **Shreshta** (`e…05`) and
+  **Sagar** (`e…07`) keep their cards but `photo_url = ''`, so the website and
+  the app render the gold monogram in place of a portrait. Vidushi and Bhuvan
+  untouched. Active roster is now five.
+- No storage objects were removed: `site-media/team/{himanshu,jagriti,namya,
+  shreshta,sagar}.jpg` remain in the bucket, simply unreferenced.
+- Guards: exact reviewed pre-state asserted (7 rows; ids, names and storage
+  portrait URLs; `updated_at` pinned to `2026-08-23T14:43:30.570624+00:00` on
+  the five touched rows; founder and Bhuvan rows verified), full-roster
+  before/after equality outside the five intended cells, post-state checks
+  (5 active, two retired, three empty portraits). A partial state raises
+  rather than proceeding.
+- Client side (same milestone): both readers (`web/src/data/team.ts`,
+  `expo/data/team.ts`) now filter `is_active = true` explicitly so a staff
+  session sees the same roster as a visitor; the web placeholder mirrors the
+  live active roster; head-count copy ("Seven believers…", "Seven people…",
+  "the seven people…") made count-neutral on Our Story, the app's team section
+  and the app home door.
