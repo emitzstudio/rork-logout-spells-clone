@@ -2570,7 +2570,7 @@ export type Database = {
         Returns: number
       }
       enqueue_form_sheet_backfill: {
-        Args: { _form_id: string }
+        Args: { _form_id: string; _reset_done?: boolean }
         Returns: number
       }
       generate_referral_code: { Args: { _first_name: string }; Returns: string }

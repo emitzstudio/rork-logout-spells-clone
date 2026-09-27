@@ -3122,3 +3122,27 @@ functions are unchanged. No staged migrations remain.
   and the migration's guards; full web suite 399 passed; web typecheck, lint and
   build green. Post-apply: live `page` deep-equal to `goa-content.ts`, departure
   and change row as reviewed, `/live/the-goa-spell` serves 200.
+
+## 0108 — Sheet mirror & exports drop Submitted At / Submission ID (2026-09-27)
+
+- **APPLIED.** Source: [`0108_sheet_backfill_queue_dedupe.sql`](../migrations/0108_sheet_backfill_queue_dedupe.sql).
+  Guards: refuses unless exactly the 0087 single-argument
+  `enqueue_form_sheet_backfill(uuid)` exists (idempotent early return once the new
+  signature is the only one; refuses on partial state) and the sync queue is
+  fully settled (0 open jobs). Post-asserts: exactly one overload, signature
+  `(_form_id uuid, _reset_done boolean)`, execute granted to `service_role` only.
+- Founder request: responses carry no use for `Submitted At` / `Submission ID`.
+  The Google Sheet mirror, the per-form Excel export and the response drawer
+  now show only the traveller's answers (+ Submitted via / Source). The inbox
+  workbook (Name · Phone · Spell · Form · Submitted · Status) is unchanged.
+- Dedupe moves from the sheet's id column to the queue: `_reset_done := false`
+  on a same-tab reconnect leaves `done` jobs alone; a different tab re-files all.
+  The redeployed `sheets-sync` retires untouched legacy `__submitted` / `__id`
+  columns from older tabs once (sheet + stored layout); founder-renamed headers
+  survive as foreign columns.
+- Verification (net-zero probe staff user, deleted after): live linked form
+  "LOGOUT WITH ANSHIKA (AGAIN... LESSGOOOO)" (77 rows) → `sync` returned
+  `written 0 / remaining 0`, layout keys went from 9 to 7 with `__submitted` and
+  `__id` gone, `synced_count` 77 unchanged, status `active`; direct
+  `enqueue_form_sheet_backfill(form, false)` re-filed 0 and left all 77 `done`
+  jobs byte-identical; `auth.users` 6 → 6, jobs 77 → 77. Web tests: 400 pass.

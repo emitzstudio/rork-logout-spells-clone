@@ -46,14 +46,14 @@ const makeResponse = (overrides: Partial<FormResponse>): FormResponse => ({
 });
 
 describe("buildResponsesTable", () => {
-  it("derives columns from the form definition - no internal fields", () => {
+  it("derives columns from the form definition - no internal fields, no Submission ID / Submitted At (0108)", () => {
     const { columns, rows } = buildResponsesTable(makeForm(), []);
     expect(columns.map((c) => c.header)).toEqual([
-      "Submission ID",
-      "Submitted At",
       "What should we call you?",
       "Why do you want to log out?",
     ]);
+    expect(columns.map((c) => c.header)).not.toContain("Submission ID");
+    expect(columns.map((c) => c.header)).not.toContain("Submitted At");
     expect(rows).toEqual([]);
   });
 
@@ -66,10 +66,10 @@ describe("buildResponsesTable", () => {
     });
     const { rows } = buildResponsesTable(makeForm(), [response]);
     expect(rows).toHaveLength(1);
-    expect(rows[0][0]).toEqual({ kind: "text", value: "r-1", wrap: false });
-    expect(rows[0][1]).toEqual({ kind: "date", value: "2026-08-20T08:12:00.000Z" });
-    expect(rows[0][2]).toEqual({ kind: "text", value: "Asha", wrap: false });
-    expect(rows[0][3]).toEqual({ kind: "text", value: "Too many tabs open.\nIn life.", wrap: true });
+    expect(rows[0]).toHaveLength(2);
+    expect(rows[0][0]).toEqual({ kind: "text", value: "Asha", wrap: false });
+    expect(rows[0][1]).toEqual({ kind: "text", value: "Too many tabs open.\nIn life.", wrap: true });
+    expect(rows[0].some((cell) => cell.value === "r-1")).toBe(false);
   });
 
   it("keeps answers for questions the form no longer contains", () => {
@@ -80,15 +80,13 @@ describe("buildResponsesTable", () => {
     });
     const { columns, rows } = buildResponsesTable(makeForm(), [response]);
     expect(columns.map((c) => c.header)).toEqual([
-      "Submission ID",
-      "Submitted At",
       "What should we call you?",
       "Why do you want to log out?",
       "An old deleted question",
     ]);
     /* Unanswered current questions stay empty; the legacy answer is preserved. */
-    expect(rows[0][2]).toEqual({ kind: "text", value: "", wrap: false });
-    expect(rows[0][4]).toEqual({ kind: "text", value: "Still here", wrap: false });
+    expect(rows[0][0]).toEqual({ kind: "text", value: "", wrap: false });
+    expect(rows[0][2]).toEqual({ kind: "text", value: "Still here", wrap: false });
   });
 
   it("adds a provenance column only when a response came through a spell", () => {
@@ -115,7 +113,7 @@ describe("buildResponsesTable", () => {
   it("labels untitled questions by position instead of dropping them", () => {
     const form = { ...makeForm(), questions: [question("q-blank", "short_text", "  ")] };
     const { columns } = buildResponsesTable(form, []);
-    expect(columns.map((c) => c.header)).toEqual(["Submission ID", "Submitted At", "Question 1"]);
+    expect(columns.map((c) => c.header)).toEqual(["Question 1"]);
   });
 
   it("excludes switched-off questions from the active columns", () => {
@@ -129,8 +127,6 @@ describe("buildResponsesTable", () => {
     };
     const { columns } = buildResponsesTable(form, []);
     expect(columns.map((c) => c.header)).toEqual([
-      "Submission ID",
-      "Submitted At",
       "What should we call you?",
       "Why do you want to log out?",
     ]);
@@ -163,13 +159,11 @@ describe("buildResponsesTable", () => {
     /* The switched-off question is not an active field - it trails after the
        asked columns, exactly like a deleted question, so nothing is lost. */
     expect(columns.map((c) => c.header)).toEqual([
-      "Submission ID",
-      "Submitted At",
       "What should we call you?",
       "Which city are you joining us from?",
     ]);
-    expect(rows[0][3]).toEqual({ kind: "text", value: "", wrap: false });
-    expect(rows[1][3]).toEqual({ kind: "text", value: "Mumbai", wrap: false });
+    expect(rows[0][1]).toEqual({ kind: "text", value: "", wrap: false });
+    expect(rows[1][1]).toEqual({ kind: "text", value: "Mumbai", wrap: false });
   });
 });
 

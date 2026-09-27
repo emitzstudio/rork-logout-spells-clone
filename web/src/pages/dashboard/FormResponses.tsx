@@ -32,9 +32,9 @@ const formatSubmitted = (iso: string): string =>
 /* ----------------------------- Response drawer ----------------------------- */
 
 /**
- * The individual response view - submission id, timestamp and every stored
- * answer in submission order, long text never truncated. Only submitted data
- * is shown; internal fields (user ids, status flags) stay out of sight.
+ * The individual response view - when it arrived and every stored answer in
+ * submission order, long text never truncated. Only submitted data is shown;
+ * internal fields (submission id, user ids, status flags) stay out of sight.
  */
 function ResponseDetail({
   response,
@@ -85,12 +85,6 @@ function ResponseDetail({
             </button>
           </div>
           <dl className="mt-4 space-y-2">
-            <div>
-              <dt className="font-sans text-[9.5px] uppercase tracking-[0.22em] text-cream/35">
-                Submission ID
-              </dt>
-              <dd className="mt-0.5 break-all font-mono text-[11.5px] text-cream/65">{response.id}</dd>
-            </div>
             <div>
               <dt className="font-sans text-[9.5px] uppercase tracking-[0.22em] text-cream/35">
                 Submitted

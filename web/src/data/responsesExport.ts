@@ -4,7 +4,8 @@
  * Two downloads share this module:
  *
  * - `buildResponsesTable` - the per-form sheet on /dashboard/responses/:formId
- *   (Submission ID · Submitted At · one column per question · Submitted via).
+ *   (one column per question · Submitted via). No Submission ID or Submitted
+ *   At column (0108) - the team only wants what the traveller answered.
  * - `buildInboxWorkbook` - the Forms → Responses inbox download: Name · Phone ·
  *   Spell · Form · Submitted · Status, then ONE COLUMN PER QUESTION. Forms
  *   with different questions never share a sheet - the workbook gets one
@@ -151,8 +152,6 @@ export const buildResponsesTable = (
   const hasSpellProvenance = responses.some((response) => response.spellName !== null);
 
   const columns: ExportColumn[] = [
-    { header: "Submission ID", width: 38, wrap: false },
-    { header: "Submitted At", width: 24, wrap: false },
     ...fields.map(
       (field): ExportColumn => ({
         header: field.header,
@@ -168,8 +167,6 @@ export const buildResponsesTable = (
   const rows: ExportCell[][] = responses.map((response) => {
     const byQuestion = answerRecordsById(response);
     return [
-      { kind: "text", value: response.id, wrap: false },
-      { kind: "date", value: response.submittedAt },
       ...fields.map((field): ExportCell => answerCell(field, byQuestion.get(field.id), isWide(field))),
       ...(hasSpellProvenance
         ? [

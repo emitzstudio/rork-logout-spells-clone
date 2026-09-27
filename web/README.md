@@ -105,16 +105,17 @@ no schema changes, all reads through the existing staff-only RLS.
   time ("No responses yet" at 0). Opening a form lists only its own
   responses, newest first — number, timestamp, and a preview of the first
   answered fields, all derived from the stored submission (never
-  hardcoded). The individual view shows Submission ID, timestamp and every
-  answer in order; long text is never truncated; internal fields (user
+  hardcoded). The individual view shows the timestamp and every answer in
+  order; long text is never truncated; internal fields (submission id, user
   ids, status flags) stay hidden. Loading / failure / empty are distinct
   (M10): a failed read shows "Couldn't load responses." + Try again —
   never a fake "0 responses".
 - **Excel export**: per-form "Export Excel" downloads a real `.xlsx`
   (`write-excel-file`, lazy-loaded on click) named
   `logout-spells-{form}-responses.xlsx` — one row per submission, columns
-  generated from the form definition: Submission ID, Submitted At, every
-  question in form order (new questions appear automatically), answers to
+  generated from the form definition: every question in form order (new
+  questions appear automatically; no Submission ID / Submitted At columns
+  since 0108), answers to
   since-deleted questions appended so nothing is dropped, and a "Submitted
   via" column only when some response came through a spell. The pure table
   builder is unit-tested (`src/test/responsesExport.test.ts`).

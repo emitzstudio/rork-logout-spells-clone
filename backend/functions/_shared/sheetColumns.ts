@@ -4,10 +4,14 @@
  *
  * A sheet's header row is described by an ordered list of columns, each with
  * a stable KEY and the header TEXT as it stands in the sheet:
- *   `__submitted` Submitted At · `q:<questionId>` one per question ·
- *   `__via` Submitted via · `__source` Source (enquiry forms) ·
- *   `__id` Submission ID (the dedupe key) · `x:<index>` a column the founder
+ *   `q:<questionId>` one per question · `__via` Submitted via ·
+ *   `__source` Source (enquiry forms) · `x:<index>` a column the founder
  *   added by hand (preserved, never written).
+ *
+ * 0108: the sheet carries only what the traveller answered plus provenance -
+ * no Submitted At and no Submission ID column. "Already mirrored?" is
+ * answered by the sync queue (a settled job is never re-filed for the same
+ * sheet), not by reading ids back out of the sheet.
  *
  * Reconciliation runs in two passes over the sheet's header cells:
  *   1. text matches a wanted header  → that column (survives founder reorders)
@@ -25,17 +29,13 @@ export interface SheetColumn {
 }
 
 export const COLUMN_KEYS = {
-  submitted: "__submitted",
   via: "__via",
   source: "__source",
-  id: "__id",
 } as const;
 
 export const FIXED_HEADERS: Record<string, string> = {
-  [COLUMN_KEYS.submitted]: "Submitted At",
   [COLUMN_KEYS.via]: "Submitted via",
   [COLUMN_KEYS.source]: "Source",
-  [COLUMN_KEYS.id]: "Submission ID",
 };
 
 export const questionKey = (questionId: string): string => `q:${questionId}`;
@@ -79,15 +79,15 @@ export const readAnswers = (raw: unknown): SheetAnswer[] => {
 };
 
 /**
- * The columns a form wants right now: Submitted At, its switched-on
- * questions in form order, then any answered question the form no longer
- * asks (so backfilled answers keep a home), then provenance and the id.
+ * The columns a form wants right now: its switched-on questions in form
+ * order, then any answered question the form no longer asks (so backfilled
+ * answers keep a home), then provenance.
  */
 export const desiredColumns = (
   form: SheetFormShape,
   responses: readonly SheetResponse[],
 ): SheetColumn[] => {
-  const columns: SheetColumn[] = [{ key: COLUMN_KEYS.submitted, header: FIXED_HEADERS[COLUMN_KEYS.submitted] }];
+  const columns: SheetColumn[] = [];
   const seen = new Set<string>();
 
   form.questions.forEach((question, index) => {
@@ -108,7 +108,6 @@ export const desiredColumns = (
 
   columns.push({ key: COLUMN_KEYS.via, header: FIXED_HEADERS[COLUMN_KEYS.via] });
   if (form.isEnquiry) columns.push({ key: COLUMN_KEYS.source, header: FIXED_HEADERS[COLUMN_KEYS.source] });
-  columns.push({ key: COLUMN_KEYS.id, header: FIXED_HEADERS[COLUMN_KEYS.id] });
   return columns;
 };
 
@@ -201,18 +200,16 @@ export const sourceLabel = (source: string | null, creator: string): string => {
   return "";
 };
 
-/** One sheet row for a response, aligned to the reconciled columns. */
-export const buildRow = (
-  columns: readonly SheetColumn[],
-  response: SheetResponse,
-  formatSubmitted: (iso: string) => string,
-): string[] => {
+/**
+ * One sheet row for a response, aligned to the reconciled columns. Columns
+ * the layout doesn't own (founder-added, or a legacy Submitted At /
+ * Submission ID header from before 0108) stay blank.
+ */
+export const buildRow = (columns: readonly SheetColumn[], response: SheetResponse): string[] => {
   const byQuestion = new Map(response.answers.map((answer) => [questionKey(answer.questionId), answer.value]));
   return columns.map((column) => {
-    if (column.key === COLUMN_KEYS.submitted) return formatSubmitted(response.createdAt);
     if (column.key === COLUMN_KEYS.via) return response.spellName.trim() !== "" ? response.spellName.trim() : "Direct link";
     if (column.key === COLUMN_KEYS.source) return sourceLabel(response.source, response.sourceCreator);
-    if (column.key === COLUMN_KEYS.id) return response.id;
     if (column.key.startsWith("q:")) return byQuestion.get(column.key) ?? "";
     return "";
   });
@@ -251,25 +248,3 @@ export const parseSheetReference = (input: string): SheetReference | null => {
   return null;
 };
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** "13 Sep 2026, 4:12 PM IST" - the wall-clock time the team lives in. */
-export const formatSubmittedIst = (iso: string): string => {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const part = (type: Intl.DateTimeFormatPartTypes): string =>
-    parts.find((p) => p.type === type)?.value ?? "";
-  const hour24 = Number(part("hour")) % 24;
-  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-  const month = MONTHS[Number(part("month")) - 1] ?? "";
-  return `${part("day")} ${month} ${part("year")}, ${hour12}:${part("minute")} ${hour24 >= 12 ? "PM" : "AM"} IST`;
-};

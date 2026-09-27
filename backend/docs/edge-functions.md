@@ -116,24 +116,35 @@ constant time. Anonymous, traveller and wrong-key calls answer 401.
 
 **Pipeline per run.** Take a 90-second lease on the link → claim ≤ 200 jobs
 (`claim_sheet_sync_jobs`, `SKIP LOCKED`) → read the sheet's header row →
-reconcile columns (`_shared/sheetColumns.ts`: Submitted At · the form's
-switched-on questions in order · orphaned answered questions · Submitted via ·
-Source on enquiry forms · Submission ID; new questions append at the end,
-renamed questions follow the form unless the founder edited the cell,
-founder-moved columns are matched by text, foreign columns are preserved and
-never written) → skip responses whose Submission ID already sits in the sheet
-→ one `values:append` with `RAW` input (no traveller text can become a
-formula) → settle jobs → loop while the queue is non-empty (≤ 12 batches per
+reconcile columns (`_shared/sheetColumns.ts`: the form's switched-on questions
+in order · orphaned answered questions · Submitted via · Source on enquiry
+forms; new questions append at the end, renamed questions follow the form
+unless the founder edited the cell, founder-moved columns are matched by text,
+foreign columns are preserved and never written) → one `values:append` with
+`RAW` input (no traveller text can become a formula), one row per claimed job
+→ settle jobs → loop while the queue is non-empty (≤ 12 batches per
 invocation). A Google failure marks the claimed jobs `failed` with the reason,
 sets the link to `error` with founder-facing copy (share with `<email>`, API
 not enabled, not found, rate-limited) and the sweep retries on a growing
 backoff up to 8 attempts.
 
+**0108 — no bookkeeping columns.** The sheet carries only the answers and
+provenance: no `Submitted At`, no `Submission ID`. "Already mirrored?" is
+owned by the queue — a job settles `done` right after its row is appended, and
+a reconnect to the SAME tab calls `enqueue_form_sheet_backfill(_form_id,
+_reset_done := false)`, which leaves settled jobs alone (a different tab
+re-files everything). Tabs connected before 0108 are tidied once by the
+function: a stored `__submitted` / `__id` column whose header cell still reads
+exactly what we wrote is deleted from the sheet and dropped from the stored
+layout; a header the founder renamed becomes an ordinary foreign column.
+Verified live 2026-09-27 on the one connected form (77 rows): the two columns
+left the sheet and the layout, `synced_count` unchanged, a same-tab reconnect
+re-filed 0 jobs.
+
 **Google side.** A service account (Sheets API scope) authenticates with a
 WebCrypto-signed RS256 JWT → OAuth token, cached in-process. The founder
 shares each sheet with the service-account email as an Editor, exactly like
-sharing with a colleague. Timestamps are written as Indian wall-clock text
-(`13 Sep 2026, 4:12 PM IST`).
+sharing with a colleague.
 
 **Gate.** The `GOOGLE_SERVICE_ACCOUNT_JSON` secret was set on 2026-09-27 via the
 secrets widget → `syncEdgeFunctionSecrets` (service account

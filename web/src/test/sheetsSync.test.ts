@@ -4,8 +4,9 @@
  * helpers.
  *
  * The rules under test:
- *  · a sheet's header follows the form - Submitted At, the switched-on
- *    questions in form order, orphaned answered questions, provenance, id;
+ *  · a sheet's header follows the form - the switched-on questions in form
+ *    order, orphaned answered questions, then provenance. No Submitted At and
+ *    no Submission ID column (0108) - the queue owns "already mirrored?";
  *  · reconciliation never reorders or drops a live column: founder-moved
  *    columns are matched by text, renamed questions follow the form unless
  *    the founder edited the cell, foreign columns are preserved and left
@@ -21,7 +22,7 @@ import {
   COLUMN_KEYS,
   columnLetter,
   desiredColumns,
-  formatSubmittedIst,
+  FIXED_HEADERS,
   parseSheetReference as parseInFunction,
   readAnswers,
   reconcileColumns,
@@ -56,15 +57,17 @@ const response = (overrides: Partial<SheetResponse> = {}): SheetResponse => ({
 });
 
 describe("desiredColumns", () => {
-  it("follows the form: submitted, switched-on questions in order, via, id", () => {
-    expect(desiredColumns(form, []).map((c) => c.header)).toEqual([
-      "Submitted At",
+  it("follows the form: switched-on questions in order, then via - no bookkeeping columns", () => {
+    const headers = desiredColumns(form, []).map((c) => c.header);
+    expect(headers).toEqual([
       "What should we call you?",
       "Drop your digits!",
       "Why do you want to log out with me?",
       "Submitted via",
-      "Submission ID",
     ]);
+    expect(headers).not.toContain("Submitted At");
+    expect(headers).not.toContain("Submission ID");
+    expect(Object.values(FIXED_HEADERS)).toEqual(["Submitted via", "Source"]);
   });
 
   it("keeps a column for answered questions the form no longer asks, and adds Source for enquiry forms", () => {
@@ -73,20 +76,18 @@ describe("desiredColumns", () => {
     });
     const headers = desiredColumns({ ...form, isEnquiry: true }, [orphan]).map((c) => c.header);
     expect(headers).toEqual([
-      "Submitted At",
       "What should we call you?",
       "Drop your digits!",
       "Why do you want to log out with me?",
       "An old question",
       "Submitted via",
       "Source",
-      "Submission ID",
     ]);
   });
 
   it("gives untitled questions a positional fallback header", () => {
     const columns = desiredColumns({ isEnquiry: false, questions: [{ id: "q-blank", title: "   " }] }, []);
-    expect(columns[1]).toEqual({ key: "q:q-blank", header: "Question 1" });
+    expect(columns[0]).toEqual({ key: "q:q-blank", header: "Question 1" });
   });
 });
 
@@ -125,7 +126,7 @@ describe("reconcileColumns", () => {
     };
     const result = reconcileColumns(desired.map((c) => c.header), desired, desiredColumns(renamed, []));
     expect(result.headerChanged).toBe(true);
-    expect(result.columns[2]).toEqual({ key: "q:q-phone", header: "Phone number" });
+    expect(result.columns[1]).toEqual({ key: "q:q-phone", header: "Phone number" });
   });
 
   it("the founder's own header wording wins over a form rename", () => {
@@ -135,40 +136,46 @@ describe("reconcileColumns", () => {
       questions: form.questions.map((q) => (q.id === "q-phone" ? { ...q, title: "Phone number" } : q)),
     };
     const result = reconcileColumns(cells, desired, desiredColumns(renamed, []));
-    expect(result.columns[2]).toEqual({ key: "q:q-phone", header: "Mobile (WhatsApp)" });
+    expect(result.columns[1]).toEqual({ key: "q:q-phone", header: "Mobile (WhatsApp)" });
     expect(result.headerChanged).toBe(false);
   });
 
   it("columns the founder moved are matched by text, foreign columns are preserved", () => {
-    /* Founder dragged "Submission ID" to column A and inserted a "Notes" column. */
-    const cells = ["Submission ID", "Submitted At", "What should we call you?", "Notes", "Drop your digits!", "Why do you want to log out with me?", "Submitted via"];
+    /* Founder dragged "Submitted via" to column A and inserted a "Notes" column. */
+    const cells = ["Submitted via", "What should we call you?", "Notes", "Drop your digits!", "Why do you want to log out with me?"];
     const result = reconcileColumns(cells, desired, desired);
     expect(result.columns.map((c) => c.key)).toEqual([
-      COLUMN_KEYS.id,
-      COLUMN_KEYS.submitted,
+      COLUMN_KEYS.via,
       "q:q-name",
-      "x:3",
+      "x:2",
       "q:q-phone",
       "q:q-why",
-      COLUMN_KEYS.via,
     ]);
     expect(result.headerChanged).toBe(false);
   });
 
   it("a moved column is never claimed twice by the positional fallback", () => {
     /* "Drop your digits!" moved to the end; its old slot now holds a founder column. */
-    const cells = ["Submitted At", "What should we call you?", "Team notes", "Why do you want to log out with me?", "Submitted via", "Submission ID", "Drop your digits!"];
+    const cells = ["What should we call you?", "Team notes", "Why do you want to log out with me?", "Submitted via", "Drop your digits!"];
     const result = reconcileColumns(cells, desired, desired);
     expect(result.columns.map((c) => c.key)).toEqual([
-      COLUMN_KEYS.submitted,
       "q:q-name",
-      "x:2",
+      "x:1",
       "q:q-why",
       COLUMN_KEYS.via,
-      COLUMN_KEYS.id,
       "q:q-phone",
     ]);
     expect(result.columns.filter((c) => c.key === "q:q-phone")).toHaveLength(1);
+  });
+
+  it("a sheet connected before 0108 keeps its Submitted At / Submission ID headers as foreign, never-written columns", () => {
+    const legacy = ["Submitted At", "What should we call you?", "Drop your digits!", "Why do you want to log out with me?", "Submitted via", "Submission ID"];
+    const result = reconcileColumns(legacy, [], desired);
+    expect(result.columns.map((c) => c.key)).toEqual(["x:0", "q:q-name", "q:q-phone", "q:q-why", COLUMN_KEYS.via, "x:5"]);
+    expect(result.headerChanged).toBe(false);
+    const row = buildRow(result.columns, response());
+    expect(row[0]).toBe("");
+    expect(row[5]).toBe("");
   });
 
   it("trailing blank header cells are ignored, a blank interior cell becomes a foreign column", () => {
@@ -177,35 +184,24 @@ describe("reconcileColumns", () => {
     const result = reconcileColumns(cells, [], desired);
     expect(result.columns).toHaveLength(desired.length + 1);
     expect(result.columns[2]).toEqual({ key: "x:2", header: "" });
-    expect(result.columns.slice(-1)[0].key).toBe(COLUMN_KEYS.id);
+    expect(result.columns.slice(-1)[0].key).toBe(COLUMN_KEYS.via);
   });
 });
 
 describe("buildRow", () => {
-  const stamp = (iso: string): string => `@${iso}`;
-
-  it("aligns every value to its column and leaves foreign columns blank", () => {
+  it("aligns every value to its column and leaves foreign columns blank - never the id or timestamp", () => {
     const columns: SheetColumn[] = [
-      { key: COLUMN_KEYS.id, header: "Submission ID" },
-      { key: COLUMN_KEYS.submitted, header: "Submitted At" },
       { key: "q:q-name", header: "Name" },
-      { key: "x:3", header: "Notes" },
+      { key: "x:1", header: "Notes" },
       { key: "q:q-phone", header: "Phone" },
       { key: "q:q-missing", header: "Never answered" },
       { key: COLUMN_KEYS.via, header: "Submitted via" },
       { key: COLUMN_KEYS.source, header: "Source" },
     ];
-    const row = buildRow(columns, response({ spellName: "The Bir Spell", source: "creator", sourceCreator: "vidushi" }), stamp);
-    expect(row).toEqual([
-      "11111111-1111-4111-8111-111111111111",
-      "@2026-09-13T10:42:00.000Z",
-      "Asha",
-      "",
-      "+91 98765 43210",
-      "",
-      "The Bir Spell",
-      "Creator · vidushi",
-    ]);
+    const row = buildRow(columns, response({ spellName: "The Bir Spell", source: "creator", sourceCreator: "vidushi" }));
+    expect(row).toEqual(["Asha", "", "+91 98765 43210", "", "The Bir Spell", "Creator · vidushi"]);
+    expect(row).not.toContain("11111111-1111-4111-8111-111111111111");
+    expect(row.some((cell) => cell.includes("2026"))).toBe(false);
   });
 
   it("direct submissions read “Direct link”; unattributed sources are blank", () => {
@@ -213,7 +209,7 @@ describe("buildRow", () => {
       { key: COLUMN_KEYS.via, header: "Submitted via" },
       { key: COLUMN_KEYS.source, header: "Source" },
     ];
-    expect(buildRow(columns, response(), stamp)).toEqual(["Direct link", ""]);
+    expect(buildRow(columns, response())).toEqual(["Direct link", ""]);
     expect(sourceLabel("logout_spells", "")).toBe("Logout Spells");
     expect(sourceLabel("creator", "")).toBe("Creator");
   });
@@ -230,13 +226,6 @@ describe("helpers", () => {
 
   it("columnLetter follows the A1 alphabet", () => {
     expect([0, 25, 26, 27, 51, 52, 701, 702].map(columnLetter)).toEqual(["A", "Z", "AA", "AB", "AZ", "BA", "ZZ", "AAA"]);
-  });
-
-  it("formatSubmittedIst prints Indian wall-clock time", () => {
-    expect(formatSubmittedIst("2026-09-13T10:42:00.000Z")).toBe("13 Sep 2026, 4:12 PM IST");
-    expect(formatSubmittedIst("2026-01-01T18:30:00.000Z")).toBe("2 Jan 2026, 12:00 AM IST");
-    expect(formatSubmittedIst("2026-06-30T06:30:00.000Z")).toBe("30 Jun 2026, 12:00 PM IST");
-    expect(formatSubmittedIst("not a date")).toBe("not a date");
   });
 
   it("parseSheetReference accepts links, tab links and bare ids identically in console and function", () => {
