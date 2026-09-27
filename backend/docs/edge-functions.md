@@ -135,10 +135,21 @@ shares each sheet with the service-account email as an Editor, exactly like
 sharing with a colleague. Timestamps are written as Indian wall-clock text
 (`13 Sep 2026, 4:12 PM IST`).
 
-**Gate.** Until the `GOOGLE_SERVICE_ACCOUNT_JSON` secret is set (secrets
-widget → `syncEdgeFunctionSecrets`), `status` reports `configured: false`,
-every other action answers `503 GOOGLE_NOT_CONFIGURED`, and the console panel
-explains that Sheets isn't switched on yet. Nothing else changes.
+**Gate.** The `GOOGLE_SERVICE_ACCOUNT_JSON` secret was set on 2026-09-27 via the
+secrets widget → `syncEdgeFunctionSecrets` (service account
+`logout-spells-sheets@logout-spells-sheets.iam.gserviceaccount.com`, Google Cloud
+project `logout-spells-sheets`). Until then `status` reported `configured: false`,
+every other action answered `503 GOOGLE_NOT_CONFIGURED`, and the console panel
+explained that Sheets wasn't switched on yet.
+
+Verified live on 2026-09-27 with a net-zero staff probe (temporary user created
+through GoTrue's signup, confirmed, granted `staff`, deleted afterwards —
+`auth.users`/`forms`/`form_sheet_links` counts unchanged): `status` returned
+`configured: true` with the service-account email, and a `connect` attempt against
+a deliberately nonexistent spreadsheet id returned Google's 404 — proving the
+secret parsed, the RS256 JWT → OAuth exchange succeeded and the Sheets API is
+enabled — with no link row written. The console panel reads the same `status`
+action, so the Connect Google Sheet flow is live there too.
 
 ### Admin manual operations — not Edge Functions · LIVE (M7A, verified)
 Four audited, admin-gated SQL RPCs (0007 §16 + 0007b) form the complete
