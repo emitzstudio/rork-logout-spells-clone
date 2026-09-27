@@ -20,6 +20,11 @@ python3 prepare-udaipur-grimoire.py     # prepare the Udaipur page artwork from 
 bun run index.ts udaipur --publish      # the seven-page Udaipur Grimoire (immutable, never overwrites)
 bun run verify-udaipur-grimoire.ts --published --live  # itinerary order, price, circle page, QR, public and live copies
 bun run index.ts bir content --out .cache/scratch      # scratch renders for regression checks; real PDFs untouched
+python3 prepare-goa-assets.py           # website JPEGs + Grimoire crops from the reviewed raw Goa renders (refuses to overwrite)
+bun run goa.ts --draft                  # nine-page Goa Grimoire to .cache, with page renders for review
+bun run goa.ts --publish                # immutable v1 copy here and in the public brochures folder
+bun run goa.ts --verify-existing        # re-verify the published PDF: every supplied point in order, bounds, single link
+bun run prepare-goa-migration.ts        # insert-only 0107 from goa-v1.json + goa-content.ts; never touches production
 ```
 
 Editions in `index.ts` share the original Grimoire renderer and baseline copy.
@@ -46,6 +51,14 @@ photographs and the same transcribed Udaipur group messages, naming no host or w
 renderer's additions for it (cover `titleSize`, `dense` day rows, single centred price card,
 `bookingLabel`, memories `strips`/`wordsSubtitle`/`featuredTag`) leave the Bir and Content Spell
 renders pixel-identical. The earlier 13-page `-Grimoire-v1.pdf` remains published and untouched.
+
+The `goa.ts` edition (The Goa Spell, 23-27 October 2026) is an isolated nine-page Grimoire:
+cover, a route page, five day chapters with numbered timelines, a stays + practical page
+(adventure caveats, optional add-ons, arrivals and departures) and a closing page whose only
+link is the website. `goa-v1.json` is the single source for the PDF, the website page
+(`goa-content.ts`) and the migration; the verifier asserts all 33 supplied points appear in
+order on the right pages and that no commercial terms, payment requests or arrow glyphs leak
+into print (routes use `›` in the PDF because the embedded fonts have no `→`).
 
 The no-stay brochures in `trips.ts` share one renderer. A day may be marked as the
 spell's `spotlight` (gold frame and tag, an hour-by-hour schedule and a good-to-know

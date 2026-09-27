@@ -1,0 +1,111 @@
+{
+  "id": "60a23102-6a17-4c3d-9051-271020260001",
+  "departureId": "60a23102-6a17-4c3d-9051-271020260002",
+  "changeId": "60a23102-6a17-4c3d-9051-271020260003",
+  "slug": "the-goa-spell",
+  "name": "The Goa Spell",
+  "hook": "Forts at sunset. Rapids in the Ghats. The secret south.",
+  "fileName": "Logout-Spells-Goa-23-27-Oct-2026-Grimoire-v1.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "23-27 October 2026",
+  "startDate": "2026-10-23",
+  "endDate": "2026-10-27",
+  "durationDays": 5,
+  "nights": 4,
+  "location": "Goa · Vagator to Palolem",
+  "region": "Goa, India",
+  "heroFile": "goa-chapora-fort-sunset-v1.jpg",
+  "routeFile": "goa-fontainhas-v1.jpg",
+  "priceLabel": "TBA",
+  "priceNote": "Price TBA. Pricing, taxes, deposit and booking terms will be announced. Applications are not open yet; no payment is requested.",
+  "imageNote": "AI-generated Goa-inspired artwork illustrates the atmosphere; it is not photography of confirmed hotels, operators, boats or the exact viewpoints.",
+  "about": "Five days that move through Goa the way most packages never do. Begin with the classic north: Vagator's sands, Chapora's ramparts at sunset and an Anjuna evening. Then turn inland to Mayem Lake, Harvalem Waterfall and the Arvalem Caves before a quiet Morjim sunset. Day three is the big one: white-water rafting on the Mhadei, a slow heritage walk through Fontainhas and the drive south. The last two days belong to the secret south: Cabo de Rama, Cola, Agonda and Palolem, with a sunrise and a free morning before the transfers home.",
+  "durationNote": "5 days / 4 nights: two nights in North Goa (Vagator / Anjuna / Arpora) and two in South Goa (Palolem / Patnem / Canacona), from the Friday 23 October pickup to the Tuesday 27 October drop.",
+  "stayNote": "Hotel names, categories and room sharing are to be confirmed. Day 1 check-in follows the hotel's policy; the Day 3 check-in in the south is planned for around 8:00 PM, after Panaji.",
+  "transportNote": "Travel to and from Goa is arranged by each traveller; the itinerary begins at the Day 1 pickup and ends at the Day 5 drop. Pickups from Mopa Airport, Dabolim Airport, Thivim or Madgaon depend on each arrival; drops at Dabolim Airport, Mopa Airport, Madgaon Railway Station or Thivim Railway Station depend on each departure.",
+  "adventureNote": "Mhadei white-water rafting is weather and river-condition dependent. Goa Tourism runs the operation during the rainy season, June-October, in the Mhadei Wildlife Sanctuary area; it is planned, not guaranteed, until the operator reconfirms river conditions for 25 October. The Mayem Lake kayaking / boating is reconfirmed locally because late-monsoon operating conditions can change. Swim only where conditions are officially safe.",
+  "optionalNote": "The Mandovi sunset cruise on Day 3 and the Silent Noise-style nightlife / beachside evening on Day 4 are optional add-ons, not part of the group plan.",
+  "inclusionNote": "The itinerary describes planned experiences, not price inclusions. Hotels, meals, transfers, activity fees, boating, rafting, cruise and entry tickets have not been confirmed as included or excluded. Final inclusions and exclusions will be announced with the price.",
+  "route": [
+    {"place": "Day 1 · Arrive + classic North Goa", "detail": "Pickup from Mopa / Dabolim / Thivim / Madgaon · Vagator Beach, Chapora Fort, Anjuna · Chapora / Vagator sunset"},
+    {"place": "Day 2 · Hidden Goa + adventure", "detail": "Mayem Lake with kayaking / boating · Harvalem Waterfall + Arvalem Caves · Bicholim, Siolim, Morjim · Morjim / Ashwem sunset"},
+    {"place": "Day 3 · The big adventure + Panjim", "detail": "Mhadei white-water rafting, weather permitting · Fontainhas Heritage Quarter · Mandovi riverside · check in around Palolem / Patnem / Canacona"},
+    {"place": "Day 4 · The secret south", "detail": "Cabo de Rama Fort · Cabo de Rama Beach / Cola · Agonda Beach free time · Palolem sunset"},
+    {"place": "Day 5 · Slow morning + departure", "detail": "Palolem sunrise · free time · check out and lunch · drop at Dabolim / Mopa / Madgaon / Thivim"}
+  ],
+  "stays": [
+    {"location": "North Goa", "area": "Vagator / Anjuna / Arpora", "dates": "23-25 Oct 2026", "nightsLabel": "Nights 1-2", "nights": 2},
+    {"location": "South Goa", "area": "Palolem / Patnem / Canacona", "dates": "25-27 Oct 2026", "nightsLabel": "Nights 3-4", "nights": 2}
+  ],
+  "days": [
+    {
+      "date": "2026-10-23", "dateLabel": "Friday 23 October 2026", "title": "Arrive + Classic North Goa", "location": "Airport / Railway Station → Vagator → Chapora → Anjuna", "imageFile": "goa-vagator-beach-v1.jpg",
+      "intro": "Land, check in and meet Goa the classic way: Vagator's sands, Chapora's ramparts at sunset and an Anjuna evening.",
+      "points": [
+        {"title": "Arrival in Goa", "body": "Pickup from Mopa Airport / Dabolim Airport / Thivim / Madgaon, depending on arrival."},
+        {"title": "Transfer & check-in", "body": "Transfer to Vagator / Anjuna / Arpora and check in."},
+        {"title": "Afternoon · Vagator Beach → Chapora Fort → Anjuna", "body": "After lunch and some rest. Chapora gives the group the classic Goa viewpoint without spending the entire day on the heavily commercialised beach belt."},
+        {"title": "Sunset · Chapora Fort / Vagator", "body": ""},
+        {"title": "Evening · Free time around Anjuna-Vagator", "body": "For those who want nightlife, this is the night to explore North Goa's cafés, bars and clubs."}
+      ],
+      "overnight": "Overnight: North Goa", "note": ""
+    },
+    {
+      "date": "2026-10-24", "dateLabel": "Saturday 24 October 2026", "title": "Hidden Goa + Adventure", "location": "Mayem → Harvalem → Goa Hinterland → Morjim / Ashwem", "imageFile": "goa-harvalem-waterfall-v1.jpg",
+      "intro": "The day that makes this different from a standard Goa package: a hinterland lake, a waterfall and caves, village roads and a quiet northern sunset.",
+      "points": [
+        {"title": "8:00 AM · Breakfast & departure", "body": ""},
+        {"title": "9:30 AM · Mayem Lake", "body": "Into the Bicholim hinterland. Mayem Lake is surrounded by wooded hills and quieter villages, and Goa Tourism promotes it as an offbeat hinterland experience. Boating is available."},
+        {"title": "Adventure option · Kayaking / boating", "body": "On the lake. The exact water activity is reconfirmed locally, since late-monsoon operating conditions can change."},
+        {"title": "11:30 AM · Harvalem Waterfall + Arvalem Caves", "body": "A much more natural Goa experience than another commercial beach."},
+        {"title": "Lunch · Local Goan lunch", "body": ""},
+        {"title": "Afternoon · Interior roads & villages", "body": "Drive through Goa's interior. Possible route: Bicholim → Siolim → Morjim."},
+        {"title": "Evening · Morjim / Ashwem", "body": "Relax, walk along the beach and watch the sunset."},
+        {"title": "Night · Return to North Goa", "body": ""}
+      ],
+      "overnight": "Overnight: North Goa", "note": ""
+    },
+    {
+      "date": "2026-10-25", "dateLabel": "Sunday 25 October 2026", "title": "The Big Adventure + Panjim", "location": "Mhadei → Panaji → South Goa", "imageFile": "goa-mhadei-rafting-v1.jpg",
+      "intro": "An early start for white water in the Mhadei sanctuary, a slower heritage afternoon in Panaji, then the road south.",
+      "points": [
+        {"title": "6:30-7:00 AM · Early departure", "body": ""},
+        {"title": "Morning · Mhadei white-water rafting", "body": "The main adventure of the spell. Goa Tourism runs the operation during the rainy season, June-October, in the Mhadei Wildlife Sanctuary area. Allow roughly half a day including transfers, briefing and changing."},
+        {"title": "Afternoon · Lunch & drive towards Panaji", "body": ""},
+        {"title": "4:00 PM · Fontainhas Heritage Quarter", "body": "Colourful Portuguese-style houses, narrow lanes, cafés and local architecture make this a great slower-paced experience after rafting. Goa Tourism describes Fontainhas as one of Panaji's distinctive heritage neighbourhoods."},
+        {"title": "Evening · Panaji / Mandovi riverside", "body": "Optional: a Mandovi sunset cruise, kept as an add-on rather than the whole group on a cruise."},
+        {"title": "8:00 PM · Proceed towards South Goa", "body": "Check in around Palolem / Patnem / Canacona."}
+      ],
+      "overnight": "Overnight: South Goa", "note": "Rafting is weather and river-condition dependent. It is planned, not guaranteed, until the operator reconfirms river conditions for the exact date."
+    },
+    {
+      "date": "2026-10-26", "dateLabel": "Monday 26 October 2026", "title": "The Secret South", "location": "Cabo de Rama → Cola → Agonda → Palolem", "imageFile": "goa-cabo-de-rama-v1.jpg",
+      "intro": "The slow, scenic, hidden Goa day: a clifftop fort, a cove away from the circuit, an unhurried beach and a Palolem sunset.",
+      "points": [
+        {"title": "8:00 AM · Breakfast", "body": ""},
+        {"title": "9:00 AM · Cabo de Rama Fort", "body": "Explore the fort, with time for the viewpoint and photography."},
+        {"title": "11:00 AM · Cabo de Rama Beach / Cola", "body": "This is where the group gets away from Goa's commercial tourist circuit."},
+        {"title": "Lunch · Local beachside / Goan restaurant", "body": ""},
+        {"title": "Afternoon · Agonda Beach", "body": "Free time and no rushed sightseeing. Swim where conditions are officially safe, relax on the beach, café-hop, read, explore independently or take photographs."},
+        {"title": "5:00 PM · Palolem", "body": "A more relaxed South Goa atmosphere, with options for dolphin trips, kayaking and other coastal activities, subject to sea conditions."},
+        {"title": "Sunset · Palolem sunset", "body": ""},
+        {"title": "Evening · Free evening", "body": "Optional: Silent Noise-style nightlife or a beachside evening."}
+      ],
+      "overnight": "Overnight: South Goa", "note": ""
+    },
+    {
+      "date": "2026-10-27", "dateLabel": "Tuesday 27 October 2026", "title": "Slow Morning + Departure", "location": "Palolem → Dabolim / Mopa / Madgaon / Thivim", "imageFile": "goa-palolem-sunrise-v1.jpg",
+      "intro": "No sightseeing on the final morning. A sunrise, a slow breakfast and time that is entirely yours before the transfers.",
+      "points": [
+        {"title": "7:30 AM · Palolem sunrise", "body": ""},
+        {"title": "8:30 AM · Breakfast", "body": ""},
+        {"title": "9:30 AM-12:00 PM · Free time", "body": "Beach, café, local shopping, photography, relaxation or solo exploration: the morning is yours."},
+        {"title": "12:00 PM · Check out", "body": ""},
+        {"title": "Lunch · Local Goan lunch", "body": ""},
+        {"title": "Departure transfers", "body": "Drop at Dabolim Airport, Mopa Airport, Madgaon Railway Station or Thivim Railway Station, depending on each traveller's departure."}
+      ],
+      "overnight": "Departure day · no overnight stay", "note": ""
+    }
+  ]
+}
