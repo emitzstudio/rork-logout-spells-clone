@@ -71,6 +71,10 @@ type DaySpec = {
   points?: DayItem[];
   /** Optional compact heading size for unusually long supplied labels. */
   pointTitleSize?: number;
+  /** Step-by-step supplied day: every supplied line in its order, one gold marker each; `**bold**` phrases print in cream. */
+  steps?: string[];
+  /** Closing block under the steps of the last day: a pill, one serif line and a handwritten sign-off. */
+  close?: { chip: string; line: string; hand: string };
   ending?: string;
   /** Visible image provenance; source/license links are only included when supplied. */
   imageCredit?: { text: string; note: string; sourceUrl?: string; licenseUrl?: string };
@@ -647,6 +651,98 @@ async function buildTrip(spec: TripSpec): Promise<void> {
       /* Per-character draw avoids broken fi/ff ligature advances in the italics. */
       drawTracked(p, line, { cx: W / 2, y: iy, font: serifItal, size: 12, color: CREAM, tr: 0, opacity: 0.78 });
       iy -= 17.5;
+    }
+
+    if (day.steps) {
+      /* Step-by-step supplied day: the founder's lines in their order, one gold marker each on a thin
+         trail, bold phrases in cream. The step spacing breathes to fill the page above the footer
+         (or above the closing block on the last day); nothing is added, merged or reordered. */
+      const spineX = 92;
+      const textX = 116;
+      const bodyW = W - textX - 60;
+      const size = 9.6;
+      const continuation = 12.6;
+      type Token = { text: string; bold: boolean };
+      const tokenize = (step: string): Token[] => {
+        assertClean(step);
+        const tokens: Token[] = [];
+        for (const part of step.split(/(\*\*[^*]+\*\*)/g)) {
+          if (part === "") continue;
+          const bold = part.startsWith("**") && part.endsWith("**");
+          for (const word of (bold ? part.slice(2, -2) : part).split(" ").filter(Boolean)) tokens.push({ text: word, bold });
+        }
+        if (tokens.length === 0) throw new Error(`${day.footer}: empty step`);
+        return tokens;
+      };
+      const fontOf = (token: Token): PDFFont => (token.bold ? sansSemi : sansReg);
+      const space = sansReg.widthOfTextAtSize(" ", size);
+      const layout = day.steps.map((step) => {
+        const lines: Token[][] = [];
+        let line: Token[] = [];
+        let width = 0;
+        for (const token of tokenize(step)) {
+          const w = fontOf(token).widthOfTextAtSize(token.text, size);
+          const probe = line.length > 0 ? width + space + w : w;
+          if (line.length > 0 && probe > bodyW) {
+            lines.push(line);
+            line = [token];
+            width = w;
+          } else {
+            line.push(token);
+            width = probe;
+          }
+        }
+        lines.push(line);
+        return lines;
+      });
+      const extraLines = layout.reduce((sum, lines) => sum + lines.length - 1, 0);
+      const top = iy - 22;
+      const floor = day.close ? 214 : 104;
+      const available = top - floor - extraLines * continuation;
+      const lead = Math.max(17, Math.min(23, available / Math.max(1, day.steps.length)));
+      const bottom = top - lead * (day.steps.length - 1) - extraLines * continuation;
+      if (bottom - 14 < floor) throw new Error(`${day.footer}: the steps run into the footer (${bottom.toFixed(1)})`);
+
+      const markers: number[] = [];
+      let y = top;
+      for (const lines of layout) {
+        markers.push(y + 3.3);
+        for (const [lineIndex, line] of lines.entries()) {
+          let x = textX;
+          for (const token of line) {
+            const font = fontOf(token);
+            dt(p, token.text, { x, y, font, size, color: token.bold ? CREAM : MUTED, opacity: token.bold ? 1 : 0.95 });
+            x += font.widthOfTextAtSize(token.text, size) + space;
+          }
+          if (lineIndex < lines.length - 1) y -= continuation;
+        }
+        y -= lead;
+      }
+      const firstMarker = markers[0];
+      const lastMarker = markers[markers.length - 1];
+      if (firstMarker !== undefined && lastMarker !== undefined && markers.length > 1) {
+        p.drawLine({ start: { x: spineX, y: firstMarker }, end: { x: spineX, y: lastMarker }, thickness: 0.7, color: GOLD, opacity: 0.28 });
+      }
+      for (const markerY of markers) {
+        p.drawCircle({ x: spineX, y: markerY, size: 5, color: DEEP, borderColor: GOLD, borderWidth: 0.7, borderOpacity: 0.5 });
+        p.drawCircle({ x: spineX, y: markerY, size: 2.1, color: GOLD_LIGHT });
+      }
+
+      if (day.close) {
+        const c = day.close;
+        const chipTop = y + lead - 30;
+        pill(p, c.chip, { cx: W / 2, cyTop: chipTop, font: sansSemi, size: 8.3, tr: 3, color: GOLD_LIGHT, h: 24, borderOpacity: 0.55 });
+        drawTracked(p, c.line, { cx: W / 2, y: chipTop - 47, font: serifItal, size: 13.5, color: CREAM, tr: 0, opacity: 0.94 });
+        let handY = chipTop - 72;
+        for (const line of wrap(hand, c.hand, 15, 430)) {
+          dt(p, line, { x: W / 2 - hand.widthOfTextAtSize(line, 15) / 2, y: handY, font: hand, size: 15, color: GOLD_LIGHT, rotate: -1.5 });
+          handY -= 20;
+        }
+        if (handY + 20 < 92) throw new Error(`${day.footer}: the closing block runs into the footer`);
+      }
+
+      footerLabel(p, day.footer);
+      continue;
     }
 
     if (day.spotlight) {
