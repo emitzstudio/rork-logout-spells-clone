@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import dashboard from "../../../pdf-build/starboy-dashboard-20260912-v5.json";
+import dashboard from "../../../pdf-build/starboy-dashboard-20260929-v6.json";
 import StarboyExperience from "@/components/spell/StarboyExperience";
 import { SpellPageBody } from "@/components/dashboard/builder/SpellPreview";
 import { brochureLink, withBrochureUrl } from "@/data/publishedPricing";
@@ -24,7 +24,7 @@ const departure = { ...dashboard.departure, seats_on_hold: 0 } as ActiveDepartur
 const currentDraft = mapSpell(currentRow, departure, []).draft!;
 
 describe("Approved Starboy Grimoire distribution", () => {
-  it("uses v14 in all three live download buttons and the dashboard preview", () => {
+  it("uses v15 in all three live download buttons and the dashboard preview", () => {
     const live = renderToStaticMarkup(<MemoryRouter><StarboyExperience draft={currentDraft} onBook={() => {}} /></MemoryRouter>);
     const downloads = [...live.matchAll(/href="([^"]+\.pdf)"/g)].map((match) => match[1]);
     expect(downloads).toEqual(Array(3).fill(STARBOY_BROCHURE_URL));
@@ -63,12 +63,14 @@ describe("Approved Starboy Grimoire distribution", () => {
     expect(brochureLink(withBrochureUrl(pricing, `https://user:password@example.com${RETIRED_STARBOY_BROCHURE_PATHS[0]}`))).toBeNull();
   });
 
-  it("keeps the approved PDF byte-identical, preserves v6/v7/v8/v9/v10/v11/v12/v13 and excludes retired themed editions", () => {
+  it("keeps the approved PDF byte-identical, preserves v6-v14 and excludes retired themed editions", () => {
     const published = readFileSync(new URL(`../../public${STARBOY_BROCHURE_PATH}`, import.meta.url));
     const original = readFileSync(new URL(`../../../pdf-build/${STARBOY_BROCHURE_PATH.split("/").pop()}`, import.meta.url));
     expect(published.equals(original)).toBe(true);
-    expect(published.length).toBe(2804358);
-    expect(createHash("sha256").update(published).digest("hex")).toBe("46381971daf6ca2df8533df9b694fea1aeaa2cf7b5c520d6591cc820bc557396");
+    expect(published.length).toBe(2804244);
+    expect(createHash("sha256").update(published).digest("hex")).toBe("7529767bedb5334702a8dcf54bd885f4eb6ac71c9c6bef891d3e02d23ccc9043");
+    const v14 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v14.pdf", import.meta.url));
+    expect(createHash("sha256").update(v14).digest("hex")).toBe("46381971daf6ca2df8533df9b694fea1aeaa2cf7b5c520d6591cc820bc557396");
     const v13 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v13.pdf", import.meta.url));
     expect(createHash("sha256").update(v13).digest("hex")).toBe("19f3e1abb56e654d495c0c7f5900f0f0c80869a500972d4fd52d8c1ae97870c6");
     const v12 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-9-15-Oct-2026-Grimoire-v12.pdf", import.meta.url));
@@ -89,11 +91,13 @@ describe("Approved Starboy Grimoire distribution", () => {
   });
 
   it("publishes a separate premium Starboy PDF without replacing it with the XO edition", () => {
-    const path = "/brochures/Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf";
+    const path = "/brochures/Logout-Spells-Blinding-Nights-Starboy-Package-11-17-Oct-2026-v2.pdf";
     const published = readFileSync(new URL(`../../public${path}`, import.meta.url));
     const source = readFileSync(new URL(`../../../pdf-build/${path.split("/").pop()}`, import.meta.url));
     expect(published.equals(source)).toBe(true);
-    expect(createHash("sha256").update(published).digest("hex")).toBe("8953dabba2d435fe0ae9b0852aab83f1754b08d9b9c669141b0f8ec9842622b9");
+    expect(createHash("sha256").update(published).digest("hex")).toBe("c61197fa98a0e31dcd433fd3118db963b4ce37bb2b4d486f76c92375fff6f108");
+    const v1 = readFileSync(new URL("../../public/brochures/Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf", import.meta.url));
+    expect(createHash("sha256").update(v1).digest("hex")).toBe("8953dabba2d435fe0ae9b0852aab83f1754b08d9b9c669141b0f8ec9842622b9");
     expect(replaceRetiredStarboyBrochure(path)).toBe(path);
     expect(replaceRetiredStarboyBrochure(`https://z57wkqd89o09lsi6kc7v1-web.rork.live${path}`)).toBe(`https://z57wkqd89o09lsi6kc7v1-web.rork.live${path}`);
   });

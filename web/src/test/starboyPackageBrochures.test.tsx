@@ -35,9 +35,9 @@ describe("Package-specific Grimoires", () => {
     expect(starboy.spec.final.lists.left.join(" ")).not.toContain("International Flight");
     expect(starboy.spec.final.lists.right[0]).toBe("International Flight · India → Bangkok");
     expect(starboy.spec.final.lists.left).toContain("Internal Flight · Bangkok → Phuket");
-    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("Grimoire-v3.pdf");
-    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("Grimoire-v2.pdf");
-    expect(STARBOY_PACKAGE_BROCHURES.timeless).toContain("Grimoire-v1.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("STARBOY-11-17-Oct-2026-Grimoire-v4.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("XO-11-14-Oct-2026-Grimoire-v3.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.timeless).toContain("TIMELESS-11-17-Oct-2026-Grimoire-v2.pdf");
   });
 
   it("never falls back from an unknown package to someone else's PDF", () => {
@@ -73,7 +73,7 @@ describe("Package-specific Grimoires", () => {
   it("ends XO in Bangkok on day four without any Phuket or cooking itinerary", () => {
     const { spec, dashboard } = starboyPackageContent(packages[0]);
     expect(spec.days).toHaveLength(4);
-    expect(spec.days[3].eyebrow).toBe("DAY 04 · 12 OCTOBER · BANGKOK");
+    expect(spec.days[3].eyebrow).toBe("DAY 04 · 14 OCTOBER · BANGKOK");
     expect(dashboard.bodies.join(" ")).not.toMatch(/Phuket|Phi Phi|ATV|massage|cooking/i);
     expect(dashboard.bodies[3]).toContain("airport drop off is included");
     expect(dashboard.bodies[3]).toContain("International flights between India and Bangkok are not included");
@@ -85,7 +85,7 @@ describe("Package-specific Grimoires", () => {
     for (const edition of [starboy, timeless]) {
       expect(edition.spec.days).toHaveLength(7);
       expect(edition.dashboard.bodies.join(" ")).not.toMatch(/cooking/i);
-      expect(edition.spec.days[6].eyebrow).toBe("DAY 07 · 15 OCTOBER · PHUKET");
+      expect(edition.spec.days[6].eyebrow).toBe("DAY 07 · 17 OCTOBER · PHUKET");
     }
     expect(starboy.dashboard.bodies[5]).toContain("optional ATV ride");
     expect(timeless.dashboard.bodies[5]).toContain("included ATV ride");

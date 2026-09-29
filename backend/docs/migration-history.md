@@ -3161,3 +3161,31 @@ functions are unchanged. No staged migrations remain.
   booking page are pixel-identical to v1 (mupdf render compare); v1 stays published untouched.
 - Live: `/brochures/...-v2.pdf` answered HTTP 200 (4,436,642 bytes) before apply; spell's
   brochure link now points at v2; `spell_changes` entry `…e3d8` added.
+
+## 0110 — Blinding Nights dates move to 11-17 October 2026 (2026-09-29)
+
+- **APPLIED.** Source: [`0110_blinding_nights_dates_11_17_oct.sql`](../migrations/0110_blinding_nights_dates_11_17_oct.sql).
+  Founder request: shift the WEEKND / Weekend Spell (The Blinding Nights Spell, slug
+  `the-starboy-spell`) forward by exactly two days, 9-15 → 11-17 October 2026, everywhere.
+- Guards: published spell with `updated_at` 2026-09-25 09:02:25.506799+00, brochure v14, departure
+  `9-15 October 2026` / 2026-10-09 → 2026-10-15 scheduled, form `logout-with-weekend-in-thailand`
+  description starting `9-15 Oct`, all seven day subtitles, the about body, duration quick info, dates
+  FAQ and package `dates` exactly as reviewed, zero bookings. Idempotent when v15 + 11 October is already
+  live; refuses partial states. Dry-run inside a rolled-back transaction before apply (a first attempt
+  was rejected by Postgres for an ambiguous `jsonb - unknown` operator before any write; fixed with casts).
+- Writes: day subtitles Sunday 11 → Saturday 17 October, about body, duration quick info, dates FAQ,
+  package dates (XO 11–14, STARBOY/TIMELESS 11–17), `pricing.brochureUrl` → Grimoire v15; departure
+  row label/start/end; form description `11-17 Oct …`. Post-asserts prove nothing else changed
+  (itinerary minus subtitles, packages minus dates, pricing minus brochure link, other page sections,
+  every other spell, md5 of bookings/payments/receipts/form_responses). `spell_changes` entry `…0110`.
+- Brochures (all new immutable files, published before apply, older editions untouched):
+  `Logout-Spells-Blinding-Nights-11-17-Oct-2026-Grimoire-v15.pdf` (main),
+  `…-Starboy-Package-11-17-Oct-2026-v2.pdf` (premium, linked from v15's final page),
+  `…-XO-11-14-Oct-2026-Grimoire-v3.pdf`, `…-STARBOY-11-17-Oct-2026-Grimoire-v4.pdf`,
+  `…-TIMELESS-11-17-Oct-2026-Grimoire-v2.pdf`. Sources: `pdf-build/starboy-dashboard-20260929-v6.json`
+  (frozen prose, dates shifted), `starboy-premium-v2.json`, `starboy-grimoire.json`; `starboy-dashboard.ts`
+  keeps `--v8…--v14` reproducible from the 20260912 snapshot. Web: `starboyBrochure.ts` (v14 now
+  superseded), `starboyPackageBrochures.ts`, `starboyPackages.json`, both `vercel.json` redirect targets.
+- Not changed on purpose: receipts LS-2026-0001 / LS-2026-0004 (issued documents that say 9-15 / 9-12 October;
+  reissue manually if the travellers need updated paperwork) and the already-exported Instagram reel
+  (`reel-build/`), whose source still reads 9–15 October and would need a re-render.

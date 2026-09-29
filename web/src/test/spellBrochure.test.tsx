@@ -62,7 +62,7 @@ describe("Automatic spell brochures", () => {
 
   it("keeps exact commercial terms, INR amounts, title-only days and optional experiences", () => {
     const draft = makeDraft();
-    draft.dates = "9–15 October 2026";
+    draft.dates = "11–17 October 2026";
     draft.included = [{ id: "included", icon: "sun", text: "Breakfast every day" }];
     draft.notIncluded = [{ id: "excluded", icon: "sun", text: "International flights" }];
     draft.itinerary = [

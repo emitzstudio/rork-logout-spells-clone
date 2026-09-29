@@ -4,7 +4,7 @@ import * as mupdf from "mupdf";
 import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-template";
 import type { TripSpec } from "./trips";
 import packages from "./starboy-packages-v9.json";
-import premium from "./starboy-premium-v1.json";
+import premium from "./starboy-premium-v2.json";
 
 interface Day { title: string; subtitle: string; body: string; locationTag: string }
 interface DashboardSnapshot {
@@ -14,15 +14,19 @@ interface DashboardSnapshot {
 // The PDF font lacks decorative emoji glyphs. Preserve all words, punctuation and order.
 const printable = (value: string): string => value.replace(/[\p{Extended_Pictographic}\uFE0F\u200D\u{1F3FB}-\u{1F3FF}]/gu, "").replace(/\*+/g, "").replace(/[—–]/g, "-").replace(/[ \t]+/g, " ").trim();
 const compact = (value: string): string => printable(value).normalize("NFKC").toLowerCase().replace(/\s+/g, "");
-const snapshot = JSON.parse(readFileSync("starboy-dashboard-20260912-v5.json", "utf8")) as DashboardSnapshot;
+const historical = process.argv.some((arg) => /^--v(8|9|1[0-4])$/.test(arg));
+// v15 shifts the departure by two days (11-17 October 2026); earlier editions rebuild from the frozen 9-15 October snapshot.
+const snapshot = JSON.parse(readFileSync(historical ? "starboy-dashboard-20260912-v5.json" : "starboy-dashboard-20260929-v6.json", "utf8")) as DashboardSnapshot;
+const dayOffset = historical ? 9 : 11;
+const dateLabel = historical ? "9-15 October 2026" : "11-17 October 2026";
 const { spell, departure } = snapshot;
 assert.equal(spell.currency, "INR");
 assert.equal(spell.price_minor, 8500000);
 assert.equal(spell.duration_days, 7);
 assert.equal(spell.nights, 6);
-assert.equal(departure.date_label, "9-15 October 2026");
-assert(spell.page.itinerary[0].subtitle.includes("9 October 2026"));
-assert(spell.page.itinerary[6].subtitle.includes("15 October 2026"));
+assert.equal(departure.date_label, dateLabel);
+assert(spell.page.itinerary[0].subtitle.includes(`${dayOffset} October 2026`));
+assert(spell.page.itinerary[6].subtitle.includes(`${dayOffset + 6} October 2026`));
 const spec = JSON.parse(readFileSync("starboy-grimoire.json", "utf8")) as TripSpec;
 // --grimoire remains accepted for older commands; it is now the only public edition.
 const draft = process.argv.includes("--draft");
@@ -34,11 +38,17 @@ const historicalV10 = process.argv.includes("--v10");
 const historicalV11 = process.argv.includes("--v11");
 const historicalV12 = process.argv.includes("--v12");
 const historicalV13 = process.argv.includes("--v13");
-assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12, historicalV13].filter(Boolean).length <= 1, "Choose one historical edition");
-const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : historicalV13 ? 13 : 14;
-// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF; v14 includes the drag show / art museum tickets.
-const starboyPackagePdfUrl = version < 13 ? "https://example.com/starboy-package.pdf" : `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${premium.fileName}`;
-spec.fileName = `Logout-Spells-${version < 10 ? "Starboy" : "Blinding-Nights"}-9-15-Oct-2026-Grimoire-v${version}.pdf`;
+const historicalV14 = process.argv.includes("--v14");
+assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12, historicalV13, historicalV14].filter(Boolean).length <= 1, "Choose one historical edition");
+const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : historicalV13 ? 13 : historicalV14 ? 14 : 15;
+// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF; v14 includes the drag show / art museum tickets; v15 moves the dates to 11-17 October.
+const starboyPackagePdfUrl = version < 13 ? "https://example.com/starboy-package.pdf" : `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${version < 15 ? "Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf" : premium.fileName}`;
+if (historical) {
+  spec.cover.dateLine = "9 - 15 OCTOBER 2026";
+  spec.docTitle = spec.docTitle.replace("11-17 October 2026", "9-15 October 2026");
+  spec.final.subline = spec.final.subline.replace("11 - 17 OCTOBER 2026", "9 - 15 OCTOBER 2026");
+}
+spec.fileName = `Logout-Spells-${version < 10 ? "Starboy" : "Blinding-Nights"}-${dayOffset}-${dayOffset + 6}-Oct-2026-Grimoire-v${version}.pdf`;
 spec.docSubject = historicalV8 ? "Current dashboard itinerary · Bangkok & Phuket · 7 days / 6 nights · INR 85,000" : "Bangkok & Phuket · 7 days / 6 nights · XO and all-inclusive Starboy packages · Early-bird prices";
 spec.cover.locLine = "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET · THAILAND";
 spec.cover.ital2 = "INR 85,000 per person · 7 days / 6 nights";
@@ -46,10 +56,10 @@ assert.equal(spell.page.itinerary.length, 7);
 for (const [index, day] of spell.page.itinerary.entries()) {
   spec.days[index].titleA = printable(day.title);
   spec.days[index].titleB = "";
-  spec.days[index].eyebrow = `DAY ${String(index + 1).padStart(2, "0")} · ${index + 9} OCTOBER · ${printable(day.locationTag).toUpperCase()}`;
+  spec.days[index].eyebrow = `DAY ${String(index + 1).padStart(2, "0")} · ${index + dayOffset} OCTOBER · ${printable(day.locationTag).toUpperCase()}`;
 }
 if (version >= 10) {
-  spec.docTitle = "Logout Spells · The Blinding Nights Spell · 9-15 October 2026";
+  spec.docTitle = `Logout Spells · The Blinding Nights Spell · ${dateLabel}`;
   spec.docSubject = "The Blinding Nights Spell · Bangkok & Phuket · 7 days / 6 nights";
   spec.cover.titleLines = [
     { text: "THE BLINDING", size: 58, tr: 3, y: 445 },

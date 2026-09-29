@@ -27,9 +27,9 @@ const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;
 describe("Starboy three package comparison", () => {
   it("preserves the supplied prices, dates, durations and order", () => {
     expect(packages.map(({ name, earlyBird, regular, dates, duration, location }) => [name, earlyBird, regular, dates, duration, location])).toEqual([
-      ["XO", 80000, 85000, "9–12 October", "4 Days / 3 Nights", "Bangkok"],
-      ["STARBOY", 140000, 150000, "9–15 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
-      ["TIMELESS", 190000, 200000, "9–15 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
+      ["XO", 80000, 85000, "11–14 October", "4 Days / 3 Nights", "Bangkok"],
+      ["STARBOY", 140000, 150000, "11–17 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
+      ["TIMELESS", 190000, 200000, "11–17 October", "7 Days / 6 Nights", "Bangkok + Phuket"],
     ]);
     expect(packages.map((p) => [p.included.length, p.excluded.length])).toEqual([[6, 4], [12, 5], [16, 2]]);
     expect(html).toContain("grid-cols-1");
@@ -111,7 +111,10 @@ describe("Starboy three package comparison", () => {
       included: [...p.included, dragTickets],
       excluded: p.excluded.filter((item) => item.title !== dragTickets.title),
     });
-    expect(withDrag).toEqual(packages);
+    // 0110 moved the departure two days later; only the date labels differ from the reviewed cards.
+    const shifted = withDrag.map((p) => ({ ...p, dates: p.id === "xo" ? "11–14 October" : "11–17 October" }));
+    expect(withDrag.map((p) => p.dates)).toEqual(["9–12 October", "9–15 October", "9–15 October"]);
+    expect(shifted).toEqual(packages);
     expect(flightSql).toContain("2026-09-14T12:24:57.698041+00:00");
     expect(flightSql).toContain("update public.spells set page = v_page where id = v_id");
     expect(flightSql).toContain("India → Bangkok and Phuket → India international flights are not included.");

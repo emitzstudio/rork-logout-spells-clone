@@ -5,7 +5,7 @@ import fontkit from "@pdf-lib/fontkit";
 import type { TripSpec } from "./trips";
 import type { StarboyDashboardEdition } from "./starboy-cinematic";
 import type packageEdition from "./starboy-packages-v9.json";
-import type premiumEdition from "./starboy-premium-v1.json";
+import type premiumEdition from "./starboy-premium-v2.json";
 import type { PackageCard } from "../web/src/data/packageCards";
 
 const W = 595.28;
@@ -233,7 +233,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     center(cover, "PACKAGE", 562, 22, serif, GOLD_HI, 10);
     ornament(cover, 532);
     center(cover, "THE BLINDING NIGHTS SPELL", 219, 27, serif, CREAM, 0.9);
-    center(cover, "9 to 15 OCTOBER 2026", 181, 11, semi, GOLD_HI, 2.7);
+    center(cover, revision.premium.dateLine, 181, 11, semi, GOLD_HI, 2.7);
     center(cover, "7 DAYS / 6 NIGHTS · BANGKOK & PHUKET", 158, 8, semi, MUTED, 1.8);
     center(cover, "Our most premium way to experience", 111, 14, italic, CREAM);
     center(cover, "The Blinding Nights Spell.", 92, 14, italic, CREAM);
@@ -352,7 +352,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     p.drawImage(logo, { x: W / 2 - 18, y: 778, width: 36, height: 36 });
     center(p, "CHOOSE YOUR EXPERIENCE", 752, 8, semi, GOLD_LIGHT, 3);
     center(p, "One Spell. Two Ways.", 704, 42, italic, CREAM);
-    center(p, "9 - 15 OCTOBER 2026 · 7 DAYS / 6 NIGHTS", 678, 8, semi, MUTED, 1.8);
+    center(p, `${spec.cover.dateLine} · 7 DAYS / 6 NIGHTS`, 678, 8, semi, MUTED, 1.8);
     for (const [index, tier] of packages.packages.entries()) {
       const top = 650 - index * 211;
       box(p, 58, top, W - 116, 191, 14, true, index ? 0.95 : 0.45);
@@ -462,7 +462,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     const premium = revision.premium;
     p.drawImage(logo, { x: W / 2 - 13, y: 790, width: 26, height: 26 });
     center(p, "YOUR STARBOY SPELL AWAITS", 755, 30, serif, CREAM, 0.5);
-    center(p, "THE BLINDING NIGHTS SPELL · 9 to 15 OCTOBER 2026", 733, 7.6, semi, GOLD_LIGHT, 1.5);
+    center(p, `THE BLINDING NIGHTS SPELL · ${premium.dateLine}`, 733, 7.6, semi, GOLD_LIGHT, 1.5);
     center(p, "STARBOY PACKAGE · PREMIUM ALL INCLUSIVE", 710, 8, semi, GOLD_HI, 1.7);
     const cardWidth = (W - 128 - 16) / 2;
     for (const [index, tier] of [{ label: "EARLY BIRD", amount: premium.earlyBird }, { label: "REGULAR", amount: premium.regular }].entries()) {

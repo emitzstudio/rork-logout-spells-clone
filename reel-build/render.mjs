@@ -83,13 +83,13 @@ const day = (from, to, number, label, lines, detail, y, extra = {}) => ({
 const SEQUENCES = [
   { start: 0, end: bar(3), type: "opening" },
   { start: bar(3), end: bar(5), type: "title" },
-  day(5, 7, 1, "FRI 9 OCT · BANGKOK", ["CULTURE BY DAY.", "Chaos by night."], "ART MUSEUM · DRAG SHOW · UNDERGROUND CLUBS", 1180),
-  day(7, 9, 2, "SAT 10 OCT · BANGKOK", ["SHOP.", "EAT.", "PARTY."], "ICONSIAM · CHINATOWN FOOD CRAWL · ROOFTOP", 1000, { stack: true }),
-  day(9, 15, 3, "SUN 11 OCT · CONCERT NIGHT", ["THE WEEKND", "LIVE."], "BANGKOK. ONE UNFORGETTABLE NIGHT.", 390, { hero: true }),
-  day(15, 17, 4, "MON 12 OCT · BANGKOK TO PHUKET", ["EXHALE.", "Hello, beaches."], "THAI MASSAGE · FLY TO PHUKET · BEACHSIDE DINNER", 1190),
-  day(17, 19, 5, "TUE 13 OCT · PHI PHI ISLANDS", ["LESS SIGNAL.", "More paradise."], "ISLAND HOPPING · LONGTAIL BOATS · LUNCH INCLUDED", 1150),
-  day(19, 21, 6, "WED 14 OCT · PHUKET", ["ADVENTURE.", "After-hours."], "ATV · CAFÉ DEL MAR SUNSET · PATONG NIGHT", 1150),
-  day(21, 23, 7, "THU 15 OCT · PHUKET", ["SLOW", "goodbyes."], "OLD TOWN · CAFÉS · ONE LAST WANDER", 1160),
+  day(5, 7, 1, "SUN 11 OCT · BANGKOK", ["CULTURE BY DAY.", "Chaos by night."], "ART MUSEUM · DRAG SHOW · UNDERGROUND CLUBS", 1180),
+  day(7, 9, 2, "MON 12 OCT · BANGKOK", ["SHOP.", "EAT.", "PARTY."], "ICONSIAM · CHINATOWN FOOD CRAWL · ROOFTOP", 1000, { stack: true }),
+  day(9, 15, 3, "TUE 13 OCT · CONCERT NIGHT", ["THE WEEKND", "LIVE."], "BANGKOK. ONE UNFORGETTABLE NIGHT.", 390, { hero: true }),
+  day(15, 17, 4, "WED 14 OCT · BANGKOK TO PHUKET", ["EXHALE.", "Hello, beaches."], "THAI MASSAGE · FLY TO PHUKET · BEACHSIDE DINNER", 1190),
+  day(17, 19, 5, "THU 15 OCT · PHI PHI ISLANDS", ["LESS SIGNAL.", "More paradise."], "ISLAND HOPPING · LONGTAIL BOATS · LUNCH INCLUDED", 1150),
+  day(19, 21, 6, "FRI 16 OCT · PHUKET", ["ADVENTURE.", "After-hours."], "ATV · CAFÉ DEL MAR SUNSET · PATONG NIGHT", 1150),
+  day(21, 23, 7, "SAT 17 OCT · PHUKET", ["SLOW", "goodbyes."], "OLD TOWN · CAFÉS · ONE LAST WANDER", 1160),
   { start: bar(23), end: END, type: "outro" },
 ];
 const DAYS = SEQUENCES.filter((s) => s.type === "day");
@@ -362,7 +362,7 @@ function outro(ctx, t) {
   text(ctx, "S P E L L S", 543, 645, { size: 22, tracking: 4, align: "center" });
   titleLine(ctx, "BLINDING", 540, 910, t, at(23), { font: F.bold, size: 151, align: "center", maxWidth: 865 });
   titleLine(ctx, "Nights.", 540, 1086, t, at(23, 1), { font: F.serif, size: 208, align: "center" });
-  label(ctx, "9–15 OCTOBER 2026", 540, 1181, t, at(23, 2), { size: 32, tracking: 5, align: "center", color: C.gold });
+  label(ctx, "11–17 OCTOBER 2026", 540, 1181, t, at(23, 2), { size: 32, tracking: 5, align: "center", color: C.gold });
   label(ctx, "BANGKOK  /  PHUKET", 540, 1235, t, at(23, 3), { size: 27, tracking: 5, align: "center" });
   titleLine(ctx, "MAKE THIS YOUR WEEK.", 540, 1380, t, at(24), { font: F.bold, size: 39, tracking: 2, align: "center" });
   label(ctx, "logoutspells.com", 540, 1455, t, at(24, 1), { size: 32, tracking: 2, align: "center", color: C.muted });

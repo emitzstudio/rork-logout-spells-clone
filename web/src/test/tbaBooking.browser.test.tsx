@@ -8,7 +8,7 @@ vi.mock("@/data/account/AccountProvider", () => ({ useAccount: () => ({ session:
 vi.mock("@/integrations/supabase/client", () => ({ isUuid: () => false, supabase: { rpc: vi.fn() } }));
 const spell: ManagedSpell = {
   id: "test-starboy", slug: "the-starboy-spell", name: "The Starboy Spell", type: "Celebration", hook: "Bangkok nights.",
-  category: "celebration", location: "Bangkok & Phuket", region: "Thailand", durationDays: 7, dates: "9-15 October 2026",
+  category: "celebration", location: "Bangkok & Phuket", region: "Thailand", durationDays: 7, dates: "11-17 October 2026",
   price: 0, seatsTotal: 0, seatsBooked: 0, status: "published", urgency: "new", host: { name: "", initial: "", role: "" },
   image: "", gradient: "", symbol: "", createdAt: "2026-09-11", updatedAt: "2026-09-11", views: 0, revenue: 0, wishlists: 0,
   inclusions: [], changes: [],

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import base from "./starboy-grimoire.json";
-import snapshot from "./starboy-dashboard-20260912-v5.json";
+import snapshot from "./starboy-dashboard-20260929-v6.json";
 import type { PackageCard } from "../web/src/data/packageCards";
 import { starboyPackageBrochure } from "../web/src/data/starboyPackageBrochures";
 
@@ -45,7 +45,7 @@ export function starboyPackageContent(card: PackageCard) {
   spec.docTitle = `Logout Spells · The Blinding Nights Spell · ${card.name} Grimoire`;
   spec.docSubject = `${card.label} · ${card.dates} 2026 · ${card.duration} · ${card.location}`;
   spec.cover.titleLines = [{ text: "THE BLINDING", size: 58, tr: 3, y: 445 }, { text: "NIGHTS SPELL", size: 58, tr: 3, y: 380 }];
-  spec.days = spec.days.slice(0, days.length).map((day, index) => ({ ...day, titleA: printable(days[index].title), titleB: "", eyebrow: `DAY ${String(index + 1).padStart(2, "0")} · ${index + 9} OCTOBER · ${printable(days[index].locationTag).toUpperCase()}` }));
+  spec.days = spec.days.slice(0, days.length).map((day, index) => ({ ...day, titleA: printable(days[index].title), titleB: "", eyebrow: `DAY ${String(index + 1).padStart(2, "0")} · ${index + 11} OCTOBER · ${printable(days[index].locationTag).toUpperCase()}` }));
   spec.final.announcement = { url: "https://www.logoutspells.com/forms/logout-with-weekend-in-thailand", label: "REQUEST YOUR SPOT", body: "No payment is collected and no seat is reserved by submitting the form." };
   spec.final.lists = { left: card.included.map((item) => [item.title, item.detail].filter(Boolean).join(" · ")), right: card.excluded.map((item) => [item.title, item.detail].filter(Boolean).join(" · ")) };
   const bodies = days.map((day) => printable(day.body));
