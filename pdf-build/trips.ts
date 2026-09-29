@@ -12,6 +12,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFName, PDFPage, PDFString, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { stampConnectFooter } from "./connect-footer";
+import { JIBHI_V4, JIBHI_V4_FILE, jibhiEyebrow } from "./jibhi-v4-content";
 
 const W = 595.28;
 const H = 841.89;
@@ -1423,14 +1424,22 @@ const vof: TripSpec = {
 };
 
 /* ================================ JIBHI ================================== */
-/* v2 (2026-09-29): the generic previous-spells page joins as page 07, right before booking.
-   v3 (2026-09-29): the stay-connected strip on every page. */
+/* v2 (2026-09-29): the generic previous-spells page joins right before booking.
+   v3 (2026-09-29): the stay-connected strip on every page.
+   v4 (2026-09-29): the founder's step-by-step itinerary - 3 days / 2 nights, Delhi to Jibhi to Delhi
+   (Shoja, Jalori Pass, Serolsar Lake · Tirthan Valley, Chhoie Waterfall, Bahu Village · Mini Thailand,
+   Jibhi Waterfall, the journey home). Every supplied line, in its order; the memories page is now 06. */
+const jibhiDay = (index: number): { eyebrow: string; intro: string; steps: string[]; items: DayItem[] } => {
+  const day = JIBHI_V4.days[index];
+  if (!day) throw new Error(`Jibhi day ${index + 1} is not in jibhi-v4-content.ts`);
+  return { eyebrow: jibhiEyebrow(index), intro: day.tagline, steps: [...day.steps], items: [] };
+};
 const jibhi: TripSpec = {
-  fileName: "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026-v3.pdf",
-  docTitle: "Logout Spells · The Spell to the Himalayas · Jibhi with Kavya Lilhare",
-  docSubject: "1 - 4 October 2026 · 4 days · Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village · itinerary and booking",
+  fileName: JIBHI_V4_FILE,
+  docTitle: "Logout Spells · Spell to Jibhi · 2 Nights · 3 Days with Kavya Lilhare",
+  docSubject: "1 - 4 October 2026 · 3 days · 2 nights · Delhi to Jibhi to Delhi · Shoja, Jalori Pass, Serolsar Lake, Tirthan Valley, Chhoie Waterfall, Bahu Village, Mini Thailand and Jibhi Waterfall · itinerary and booking",
   memoriesFile: "img/spell-memories/sources.json",
-  memoriesFooter: "07 · THE CIRCLE BEFORE YOURS",
+  memoriesFooter: "06 · THE CIRCLE BEFORE YOURS",
   cover: {
     img: "img2/final/jb-cover.jpg",
     eyebrow: "THE SPELL TO THE HIMALAYAS",
@@ -1438,9 +1447,9 @@ const jibhi: TripSpec = {
     sub: "A slow escape into the Himachal hills.",
     subY: 372,
     ruleY: 349,
-    dateLine: "1 - 4 OCTOBER 2026 · 4 DAYS",
+    dateLine: "1 - 4 OCTOBER 2026 · 2 NIGHTS · 3 DAYS",
     dateY: 322,
-    locLine: "HIMACHAL PRADESH · DELHI TO DELHI",
+    locLine: "HIMACHAL PRADESH · DELHI TO JIBHI TO DELHI",
     locY: 301,
     poem1: "Pine forests. Mountain cafés.",
     poem2: "Waterfalls. Quiet riversides.",
@@ -1464,7 +1473,7 @@ const jibhi: TripSpec = {
     url: "https://www.instagram.com/kavya.lilhare/?hl=en",
     bio: [
       "Meet Kavya Lilhare, the creator joining you on this Himalayan escape.",
-      "Four days of forest trails, mountain cafés and quiet riversides,",
+      "Three days of mountain trails, waterfalls and quiet riversides,",
       "with space to slow down, connect and make a few stories of your own.",
     ],
     bioSize: 11,
@@ -1473,102 +1482,31 @@ const jibhi: TripSpec = {
   },
   days: [
     {
-      img: "img2/final/jb-d1.jpg",
-      eyebrow: "DAY 01 · PINE FORESTS & LITTLE HIDEAWAYS",
-      titleA: "",
-      titleB: "Jibhi",
-      intro: "Arrive in Jibhi and ease into the rhythm of the mountains.",
-      items: [
-        {
-          title: "JIBHI WATERFALL",
-          body: "Begin with a visit to the beautiful Jibhi Waterfall, tucked away among the trees and surrounded by the peaceful energy of the valley.",
-        },
-        {
-          title: "MINI THAILAND",
-          body: "From there, head towards Mini Thailand, a naturally beautiful spot known for its rocky landscape and clear mountain surroundings.",
-        },
-        {
-          title: "AND THEN, NO RUSHING",
-          body: "Spend the rest of the day café hopping through Jibhi, discovering cosy mountain cafés, sipping something warm and taking in the slow village life.",
-        },
-      ],
-      mood: "Waterfalls · Pine Forests · Cafés · Slow Evenings",
+      ...jibhiDay(0),
+      img: "img2/final/jb-d2.jpg",
+      titleA: "Jalori Pass & ",
+      titleB: "Serolsar Lake",
       footer: "03 · DAY ONE",
     },
     {
-      img: "img2/final/jb-d2.jpg",
-      eyebrow: "DAY 02 · ABOVE THE TREELINE",
-      titleA: "Shoja & ",
-      titleB: "Jalori",
-      intro: "Today, the road takes us higher.",
-      items: [
-        {
-          title: "SHOJA & JALORI PASS",
-          body: "Head towards Shoja and Jalori Pass, where dense forests open up to expansive Himalayan views. At Jalori Pass, breathe in the mountain air and take in the changing landscape as the valley stretches out below.",
-        },
-        {
-          title: "THE TREK",
-          body: "Then comes the adventure. Choose one beautiful trek from Jalori Pass and spend the day surrounded by forests, mountain trails and panoramic views.",
-        },
-        {
-          title: "LET THE MOUNTAINS DO THE REST",
-          body: "No need to rush to the next thing. Just walk, explore, stop when the view makes you stop, and let the mountains do the rest.",
-        },
-      ],
-      mood: "Mountain Roads · Forest Trails · Big Views · Adventure",
+      ...jibhiDay(1),
+      img: "img2/final/jb-d34.jpg",
+      titleA: "Tirthan ",
+      titleB: "Valley",
       footer: "04 · DAY TWO",
     },
     {
-      img: "img2/final/jb-d34.jpg",
-      eyebrow: "DAY 03 · WATERFALLS & VALLEY VIEWS",
-      titleA: "Tirthan ",
-      titleB: "Valley",
-      intro: "Today is all about slowing down and getting closer to the valley.",
-      items: [
-        {
-          title: "CHHOIE WATERFALL",
-          body: "Begin with the beautiful Chhoie Waterfall, surrounded by the raw greenery and peaceful atmosphere of Tirthan.",
-        },
-        {
-          title: "BAHU VILLAGE",
-          body: "Later, head towards Bahu Village and take in the scenic mountain views from higher up.",
-        },
-        {
-          title: "A LITTLE SPACE TO WANDER",
-          body: "It's a day for wandering without a schedule that feels too full. Fresh air. Green valleys. Quiet roads. And views that make you forget about the outside world.",
-        },
-      ],
-      mood: "Waterfalls · Villages · Valley Views · Slow Exploring",
-      footer: "05 · DAY THREE",
-    },
-    {
-      img: "img2/final/jb-river.jpg",
-      eyebrow: "DAY 04 · ONE LAST SLOW MORNING",
-      titleA: "Tirthan ",
-      titleB: "River",
-      intro: "Before heading back, spend some time by the Tirthan River.",
-      items: [
-        {
-          title: "BY THE RIVERSIDE",
-          body: "Walk along the riverside, sit by the water, soak in the mountain air and enjoy one final slow moment in the valley.",
-        },
-        {
-          title: "A LITTLE MORE TIME",
-          body: "No packed itinerary. No rushing from one place to another. Just the river, the mountains and a little more time to take it all in.",
-        },
-        {
-          title: "TIME TO HEAD HOME",
-          body: "And then, time to head home. Four days of mountains, forests, waterfalls and little moments worth remembering.",
-        },
-      ],
-      chip: "TIRTHAN TO DELHI",
-      note: "until the next spell.",
-      footer: "06 · DAY FOUR · LOGOUT SPELLS",
+      ...jibhiDay(2),
+      img: "img2/final/jb-d1.jpg",
+      titleA: "Jibhi to ",
+      titleB: "Delhi",
+      close: { chip: JIBHI_V4.ending.heading, line: JIBHI_V4.ending.line, hand: JIBHI_V4.ending.note },
+      footer: "05 · DAY THREE · LOGOUT SPELLS",
     },
   ],
   final: {
     img: "img2/final/jb-cover2.jpg",
-    subline: "JIBHI · 4 DAYS · 3 NIGHTS · DELHI TO DELHI",
+    subline: "JIBHI · 3 DAYS · 2 NIGHTS · DELHI TO DELHI",
     cards: [
       {
         label: "EARLY BIRD",
@@ -1595,7 +1533,7 @@ const jibhi: TripSpec = {
     rightRows: [],
     lists: {
       left: [
-        "Accommodation in Jibhi (3 nights)",
+        "Accommodation in Jibhi (2 nights)",
         "Breakfast on 3 days",
         "Farewell dinner",
         "All local transfers & sightseeing",
@@ -1616,7 +1554,7 @@ const jibhi: TripSpec = {
     },
     qrBody: `Pay the ${rupee("4,000")} booking amount on this QR to confirm your spot. Once it's done, our team reaches out with everything else.`,
     closeThanks: "Come for the mountains. Stay for the feeling.",
-    closeHand: "four days. little moments worth remembering.",
+    closeHand: "three days. a head full of mountain stories.",
   },
 };
 

@@ -38,6 +38,9 @@ bun run goa.ts --draft                  # nine-page Goa Grimoire to .cache, with
 bun run goa.ts --publish                # immutable v1 copy here and in the public brochures folder
 bun run goa.ts --verify-existing        # re-verify the published PDF: every supplied point in order, bounds, single link
 bun run prepare-goa-migration.ts        # insert-only 0107 from goa-v1.json + goa-content.ts; never touches production
+bun run trips.ts jibhi --publish        # Jibhi v4: the founder's step-by-step days from jibhi-v4-content.ts (immutable file)
+bun run verify-jibhi-v4.ts --live       # 31 supplied lines in order, 2 nights / 3 days, strip, QR, published + deployed copies
+bun run prepare-jibhi-v4-migration.ts   # 0112 from jibhi-v4-content.ts; never touches production
 ```
 
 Editions in `index.ts` share the original Grimoire renderer and baseline copy.
@@ -78,8 +81,10 @@ spell's `spotlight` (gold frame and tag, an hour-by-hour schedule and a good-to-
 box; Vietnam's Ha Long Bay day), a trip may open with a `creator` page (a minimal
 portrait-focused page for the cinematography spell's host and the girls-only Vietnam
 escape; the creator may carry short `bio` lines) and carry CREATE / VIBE
-metadata lines on its day pages (a lone `vibe` draws as THE VIBE), and a trip may carry a generic previous-spells page
-before booking through `memoriesFile`. The girls-only Vietnam deck (`vnGirls`) skips
+metadata lines on its day pages (a lone `vibe` draws as THE VIBE), a day may be drawn step by step
+(`steps`: every supplied line in its order beside one gold marker, `**bold**` places in cream, and an
+optional `close` block - pill, serif line, handwritten sign-off - for the last day; Jibhi v4), and a trip
+may carry a generic previous-spells page before booking through `memoriesFile`. The girls-only Vietnam deck (`vnGirls`) skips
 chips on its day pages; its free days (Day 06 and 07) are four plain spine options.
 The generic page (`img/spell-memories/`) shows
 eight real photographs of previous Logout Spells groups in two rows and seven review
