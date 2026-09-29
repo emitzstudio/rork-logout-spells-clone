@@ -98,11 +98,10 @@ describe("sitemap.xml", () => {
     expect(xml.match(/<url>/g)).toHaveLength(2);
   });
 
-  it("includes every static public route and every discover mood", () => {
+  it("includes every static public route and keeps the archived Discover pages out", () => {
     for (const core of [
       "/",
       "/live",
-      "/discover",
       "/blog",
       "/our-story",
       "/creators",
@@ -113,8 +112,9 @@ describe("sitemap.xml", () => {
     ]) {
       expect(STATIC_SITEMAP_PATHS).toContain(core);
     }
+    expect(STATIC_SITEMAP_PATHS).not.toContain("/discover");
     for (const category of CATEGORIES) {
-      expect(STATIC_SITEMAP_PATHS).toContain(`/discover/${category.slug}`);
+      expect(STATIC_SITEMAP_PATHS).not.toContain(`/discover/${category.slug}`);
     }
   });
 

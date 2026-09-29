@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 
 import HomeWelcome from "@/components/account/HomeWelcome";
 import { useApply } from "@/components/site/ApplyModal";
-import BucketListSection from "@/components/site/BucketListSection";
 import Page from "@/components/site/Layout";
 import LoadError from "@/components/site/LoadError";
 import PreviousSpellsSection from "@/components/site/PreviousSpellsSection";
@@ -250,8 +249,8 @@ function FinalCta() {
             A private invitation. A quiet movement. Find the spell that calls to you, or cast one of your own.
           </p>
           <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link to="/discover" className="btn-gold">
-              Discover Your Spell <ArrowRight size={16} />
+            <Link to="/live" className="btn-gold">
+              See Live Spells <ArrowRight size={16} />
             </Link>
             <button type="button" onClick={openApply} className="btn-ghost-gold">
               Apply to Host
@@ -275,8 +274,7 @@ export default function Home() {
       {/* Signed-in travellers get their next trip + picks right up front. */}
       <HomeWelcome />
       <SpellsSection />
-      {/* Bucket-list recommendations - the cauldron's picks, or the invitation. */}
-      <BucketListSection />
+      {/* The bucket-list rail is archived with Discover (2026-09-29); the component is kept for later. */}
       <StoryTeaser />
       {/* Completed journeys - the proof, just before the invitation. */}
       <PreviousSpellsSection />

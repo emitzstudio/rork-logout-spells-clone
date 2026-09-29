@@ -4,8 +4,9 @@
  * Two downloads share this module:
  *
  * - `buildResponsesTable` - the per-form sheet on /dashboard/responses/:formId
- *   (one column per question · Submitted via). No Submission ID or Submitted
- *   At column (0108) - the team only wants what the traveller answered.
+ *   (Submitted At · one column per question · Submitted via). Submitted At
+ *   came back in 0111 as a real date-and-time cell - the team tracks when
+ *   each form was filled. There is still no Submission ID column.
  * - `buildInboxWorkbook` - the Forms → Responses inbox download: Name · Phone ·
  *   Spell · Form · Submitted · Status, then ONE COLUMN PER QUESTION. Forms
  *   with different questions never share a sheet - the workbook gets one
@@ -152,6 +153,7 @@ export const buildResponsesTable = (
   const hasSpellProvenance = responses.some((response) => response.spellName !== null);
 
   const columns: ExportColumn[] = [
+    { header: "Submitted At", width: 22, wrap: false },
     ...fields.map(
       (field): ExportColumn => ({
         header: field.header,
@@ -167,6 +169,7 @@ export const buildResponsesTable = (
   const rows: ExportCell[][] = responses.map((response) => {
     const byQuestion = answerRecordsById(response);
     return [
+      { kind: "date", value: response.submittedAt } satisfies ExportCell,
       ...fields.map((field): ExportCell => answerCell(field, byQuestion.get(field.id), isWide(field))),
       ...(hasSpellProvenance
         ? [

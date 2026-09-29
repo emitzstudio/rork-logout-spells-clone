@@ -1,5 +1,18 @@
 # pdf-build
 
+**Every page of every brochure ends with the stay-connected strip** (2026-09-29): the
+founder's words, the Instagram and WhatsApp-community links (clickable) and the gold
+butterfly / bee marks (`img/connect/`, drawn as images so no viewer shows a missing-emoji
+box). Wording and links live in `web/src/data/stayConnected.ts` - the same source the public
+forms use - and the drawing in `web/src/lib/connectFooterPdf.ts`; `connect-footer.ts` is the
+pdf-build wrapper. Each builder calls `stampConnectFooter(doc, { font, color, accent })` right
+before `doc.save()`, so a new brochure carries the strip by default; verifiers use
+`withoutConnectLinks()` to check their own links. Keep page footers at baseline 32pt or above.
+Editions built before the strip are not byte-reproducible with it; the historical files stay
+published unchanged and the live links moved to the reissued versions in migration 0111
+(`fileName` in the trip JSONs stays the edition the publishing migration inserted;
+`currentFileName` is the edition linked live).
+
 To install dependencies:
 
 ```bash

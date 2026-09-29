@@ -1,4 +1,5 @@
 import sql from "../../../backend/migrations/0064_content_spell_anshika.sql?raw";
+import stayConnectedSql from "../../../backend/migrations/0111_stay_connected_brochures.sql?raw";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -84,7 +85,9 @@ describe("Content Spell with Anshika brochure parity", () => {
     expect(host).toContain("https://www.instagram.com/anshikapathakk/?hl=en");
     const pricing = renderToStaticMarkup(createElement(SpellPricing, { draft, onBook: () => {} }));
     for (const value of ["₹13,000", "₹15,000", "₹4,000", "₹9,000", "₹11,000", "5% GST", "4-bed dorm", "₹2,000 extra"]) expect(pricing).toContain(value);
+    // 0064 attached v3; 0111 (2026-09-29) moved the live link to v4 (stay-connected strip). The historical row still renders v3.
     expect(pricing).toContain("Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf");
+    expect(stayConnectedSql).toContain('"old":"Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf","new":"Logout-Spells-Content-Spell-25-27-Sept-2026-v4.pdf"');
   });
 
   it("uses the fixed deposit for reserve requests without enabling payments", async () => {

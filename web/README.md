@@ -114,7 +114,8 @@ no schema changes, all reads through the existing staff-only RLS.
   (`write-excel-file`, lazy-loaded on click) named
   `logout-spells-{form}-responses.xlsx` — one row per submission, columns
   generated from the form definition: every question in form order (new
-  questions appear automatically; no Submission ID / Submitted At columns
+  questions appear automatically; `Submitted At` - date and time the form was
+  filled, IST - leads every sheet since 0111; there is no Submission ID column
   since 0108), answers to
   since-deleted questions appended so nothing is dropped, and a "Submitted
   via" column only when some response came through a spell. The pure table

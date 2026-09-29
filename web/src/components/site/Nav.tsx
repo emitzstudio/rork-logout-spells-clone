@@ -17,7 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Spells", to: "/#spells" },
   { label: "Become a Spellcaster", to: "/creators" },
   { label: "Blog", to: "/blog" },
-  { label: "Discover", to: "/discover" },
+  { label: "Previous Spells", to: "/live-spells/previous" },
   { label: "Our Story", to: "/our-story" },
   { label: "Live Spells", to: "/live", live: true },
 ];

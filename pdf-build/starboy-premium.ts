@@ -33,7 +33,7 @@ const bytes = await buildGrimoireStarboy(spec, { price: premium.regular, bodies 
 if (process.argv.includes("--draft")) {
   assert(!process.argv.includes("--publish"));
   mkdirSync(".cache", { recursive: true });
-  writeFileSync(".cache/starboy-premium-v2-draft.pdf", bytes);
+  writeFileSync(".cache/starboy-premium-v3-draft.pdf", bytes);
 } else {
   saveGrimoireCopy(spec.fileName, bytes);
   if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${spec.fileName}`, bytes);

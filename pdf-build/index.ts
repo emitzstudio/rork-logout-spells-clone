@@ -9,13 +9,14 @@
  *
  * Editions:
  *   bir      The Bir Spell, 11-13 September 2026            -> Logout-Spells-Bir-Sept-2026.pdf
- *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf
- *   udaipur  The Udaipur Spell, 2-4 October 2026             -> Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf
+ *   content  The Content Spell with Anshika, 25-27 Sept 2026 -> Logout-Spells-Content-Spell-25-27-Sept-2026-v4.pdf
+ *   udaipur  The Udaipur Spell, 2-4 October 2026             -> Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v3.pdf
  *            (bun run index.ts udaipur --publish; immutable, seven pages in the Content Spell structure)
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, degrees, pushGraphicsState, popGraphicsState, rectangle, clip, endPath } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { stampConnectFooter } from "./connect-footer";
 import { PNG } from "pngjs";
 
 const W = 595.28;
@@ -826,6 +827,8 @@ async function buildEdition(spec: EditionSpec): Promise<void> {
   }
 
   /* -------------------------------- Output --------------------------------- */
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: sansMed, color: MUTED, accent: GOLD_LIGHT });
   const bytes = await doc.save();
   if (outDir) {
     writeFileSync(`${outDir}/${spec.fileName}`, bytes);
@@ -1023,7 +1026,7 @@ const birSeptember18To20: EditionSpec = {
  * A seventh page of previous spells and review excerpts precedes booking. */
 const contentDayThree = dayThree("DAY 03 · SUNDAY, 27 SEPTEMBER · BAIJNATH");
 const content: EditionSpec = {
-  fileName: "Logout-Spells-Content-Spell-25-27-Sept-2026-v3.pdf",
+  fileName: "Logout-Spells-Content-Spell-25-27-Sept-2026-v4.pdf",
   docTitle: "Logout Spells · The Content Spell with Anshika · 25-27 September 2026",
   docSubject: "Bir, Himachal Pradesh · Content Spell itinerary and booking",
   memoriesFile: "img/content-memories/sources.json",
@@ -1110,7 +1113,7 @@ const content: EditionSpec = {
  * days, the circle before yours, booking. Copy follows the founder's own day plan; photos are
  * the live spell's saved images (img/udaipur/sources.json) and the previous Udaipur group. */
 const udaipur: EditionSpec = {
-  fileName: "Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf",
+  fileName: "Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v3.pdf",
   docTitle: "Logout Spells · The Udaipur Spell · 2-4 October 2026",
   docSubject: "Udaipur, Rajasthan · trip itinerary and booking",
   memoriesFile: "img/udaipur/memories.json",

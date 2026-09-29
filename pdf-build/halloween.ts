@@ -6,6 +6,7 @@ import fontkit from "@pdf-lib/fontkit";
 import * as mupdf from "mupdf";
 import trip from "./halloween-v1.json";
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
+import { stampConnectFooter, withoutConnectLinks } from "./connect-footer";
 
 const W = 595.28;
 const H = 841.89;
@@ -174,6 +175,8 @@ export async function buildHalloweenGrimoire(): Promise<Uint8Array> {
   center(final, "Until the next spell", 108, 22, hand, LIGHT);
   center(final, "GOOD PEOPLE · WILD PLACES · REAL STORIES", 80, 7, semi, MUTED, 1.8);
   footer(final, 9, "LOGOUT SPELLS · THE HALLOWEEN SPELL");
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: semi, color: MUTED, accent: LIGHT });
   return doc.save();
 }
 
@@ -202,7 +205,8 @@ export function verifyHalloweenGrimoire(bytes: Uint8Array): void {
       }
     }
     const links = p.getLinks();
-    assert.deepEqual(links.map((link) => link.getURI()), i === 8 ? [websiteUrl] : []);
+    assert.deepEqual(withoutConnectLinks(links.map((link) => link.getURI())), i === 8 ? [websiteUrl] : []);
+    assert.equal(links.length, i === 8 ? 3 : 2, `Page ${i + 1}: stay-connected links missing`);
     if (i === 8) [64, H - 199, W - 64, H - 151].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
     const pix = p.toPixmap(mupdf.Matrix.scale(1.2, 1.2), mupdf.ColorSpace.DeviceRGB, false, true);
     writeFileSync(`/tmp/halloween-grimoire-p${i + 1}.png`, pix.asPNG());

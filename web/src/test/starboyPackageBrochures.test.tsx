@@ -35,9 +35,9 @@ describe("Package-specific Grimoires", () => {
     expect(starboy.spec.final.lists.left.join(" ")).not.toContain("International Flight");
     expect(starboy.spec.final.lists.right[0]).toBe("International Flight · India → Bangkok");
     expect(starboy.spec.final.lists.left).toContain("Internal Flight · Bangkok → Phuket");
-    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("STARBOY-11-17-Oct-2026-Grimoire-v4.pdf");
-    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("XO-11-14-Oct-2026-Grimoire-v3.pdf");
-    expect(STARBOY_PACKAGE_BROCHURES.timeless).toContain("TIMELESS-11-17-Oct-2026-Grimoire-v2.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.starboy).toContain("STARBOY-11-17-Oct-2026-Grimoire-v5.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.xo).toContain("XO-11-14-Oct-2026-Grimoire-v4.pdf");
+    expect(STARBOY_PACKAGE_BROCHURES.timeless).toContain("TIMELESS-11-17-Oct-2026-Grimoire-v3.pdf");
   });
 
   it("never falls back from an unknown package to someone else's PDF", () => {

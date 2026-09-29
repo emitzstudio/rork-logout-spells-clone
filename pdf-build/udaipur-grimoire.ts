@@ -118,6 +118,7 @@ if (process.argv.includes("--publish") || process.argv.includes("--live")) {
     semiFont: asset("grimoire-semi-v1.ttf"), handFont: asset("grimoire-hand-v1.ttf"),
     fallbackFont: asset("brochure-noto-sans-v1.ttf"), logo: asset("grimoire-logo-v1.png"),
     fadeUp: asset("grimoire-fade-up-v1.png"), fadeDown: asset("grimoire-fade-down-v1.png"),
+    connectButterfly: asset("connect-butterfly-v1.png"), connectBee: asset("connect-bee-v1.png"),
     images: new Map(photos),
   };
   bytes = await renderSpellBrochure(content, assets, { pointerGap: 10 });

@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import sql from "../../../backend/migrations/0102_udaipur_grimoire_v2_link.sql?raw";
+import stayConnectedSql from "../../../backend/migrations/0111_stay_connected_brochures.sql?raw";
 import source from "../../../pdf-build/udaipur-grimoire-source-v1.json";
 import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import SpellHero from "@/components/spell/SpellHero";
@@ -12,7 +13,9 @@ import { brochureLink } from "@/data/publishedPricing";
 import { mapSpell, pageFromDraft } from "@/integrations/supabase/mappers";
 import type { ActiveDepartureRow, SpellRow } from "@/integrations/supabase/mappers";
 
+/* 0102 attached v2; 0111 (2026-09-29) moved the live link to v3, which adds the stay-connected strip. */
 const fileName = "Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v2.pdf";
+const currentFileName = "Logout-Spells-Udaipur-2-4-Oct-2026-Grimoire-v3.pdf";
 const url = `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${fileName}`;
 const pricing = { tiers: [], remainingNote: "", taxNote: "", note: "", brochureUrl: url };
 /* The reviewed live row (captured for the v1 edition) plus exactly the block the migration adds. */
@@ -27,6 +30,9 @@ describe("Udaipur Grimoire v2 attached to the live spell", () => {
     const published = readFileSync(new URL(`../../public/brochures/${fileName}`, import.meta.url));
     expect(published.subarray(0, 5).toString()).toBe("%PDF-");
     expect(published.equals(readFileSync(new URL(`../../../pdf-build/${fileName}`, import.meta.url)))).toBe(true);
+    const current = readFileSync(new URL(`../../public/brochures/${currentFileName}`, import.meta.url));
+    expect(current.equals(readFileSync(new URL(`../../../pdf-build/${currentFileName}`, import.meta.url)))).toBe(true);
+    expect(stayConnectedSql).toContain(`"new":"${currentFileName}"`);
 
     expect(brochureLink(draft.pricing)).toBe(url);
     expect(spell.price).toBe(13999);

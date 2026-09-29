@@ -6,6 +6,7 @@ import fontkit from "@pdf-lib/fontkit";
 import * as mupdf from "mupdf";
 import trip from "./goa-v1.json" with { type: "json" };
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
+import { stampConnectFooter, withoutConnectLinks } from "./connect-footer";
 
 const W = 595.28;
 const H = 841.89;
@@ -241,6 +242,8 @@ export async function buildGoaGrimoire(): Promise<Uint8Array> {
   center(final, "Until the next spell", 108, 22, hand, LIGHT);
   center(final, "GOOD PEOPLE · WILD PLACES · REAL STORIES", 80, 7, semi, MUTED, 1.8);
   footer(final, PAGES, "LOGOUT SPELLS · THE GOA SPELL");
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: semi, color: MUTED, accent: LIGHT });
   return doc.save();
 }
 
@@ -268,7 +271,8 @@ export function verifyGoaGrimoire(bytes: Uint8Array): void {
       }
     }
     const links = p.getLinks();
-    assert.deepEqual(links.map((link) => link.getURI()), i === PAGES - 1 ? [websiteUrl] : []);
+    assert.deepEqual(withoutConnectLinks(links.map((link) => link.getURI())), i === PAGES - 1 ? [websiteUrl] : []);
+    assert.equal(links.length, i === PAGES - 1 ? 3 : 2, `Page ${i + 1}: stay-connected links missing`);
     if (i === PAGES - 1) [64, H - 199, W - 64, H - 151].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
     const pix = p.toPixmap(mupdf.Matrix.scale(1.2, 1.2), mupdf.ColorSpace.DeviceRGB, false, true);
     writeFileSync(`.cache/goa-review-p${i + 1}.png`, pix.asPNG());
@@ -290,12 +294,14 @@ export function verifyGoaGrimoire(bytes: Uint8Array): void {
 if (import.meta.main) {
   const draft = process.argv.includes("--draft");
   assert(!(draft && process.argv.includes("--publish")));
-  const bytes = process.argv.includes("--verify-existing") ? readFileSync(trip.fileName) : await buildGoaGrimoire();
+  // `fileName` is the edition the 0107 migration inserted (frozen); `currentFileName` is the edition linked live since 0111.
+  const output = trip.currentFileName;
+  const bytes = process.argv.includes("--verify-existing") ? readFileSync(output) : await buildGoaGrimoire();
   verifyGoaGrimoire(bytes);
   if (!process.argv.includes("--verify-existing")) {
-    if (draft) writeFileSync(".cache/goa-v1-draft.pdf", bytes);
-    else saveGrimoireCopy(trip.fileName, bytes);
+    if (draft) writeFileSync(".cache/goa-draft.pdf", bytes);
+    else saveGrimoireCopy(output, bytes);
   }
-  if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${trip.fileName}`, bytes);
-  console.log(`PASS: ${trip.fileName}, ${PAGES} pages, ${bytes.length} bytes; all ${trip.days.flatMap((day) => day.points).length} supplied points preserved; TBA with no payment request`);
+  if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${output}`, bytes);
+  console.log(`PASS: ${output}, ${PAGES} pages, ${bytes.length} bytes; all ${trip.days.flatMap((day) => day.points).length} supplied points preserved; TBA with no payment request`);
 }

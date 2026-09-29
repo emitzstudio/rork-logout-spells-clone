@@ -113,7 +113,9 @@ async function loadPhotos(content: SpellBrochure): Promise<Map<string, Uint8Arra
 /** Browser download uses current details on every click, with no upload or production write. */
 export async function downloadSpellBrochure(draft: SpellDraft): Promise<void> {
   const content = spellBrochure(draft);
-  const [bodyFont, headingFont, boldFont, italicFont, semiFont, handFont, fallbackFont, logo, fadeUp, fadeDown, images] = await Promise.all([
+  /* The stay-connected marks are decorative: if they cannot be fetched the strip prints its words alone. */
+  const optionalBytes = (url: string): Promise<Uint8Array | undefined> => fetchBytes(url, 200_000).catch(() => undefined);
+  const [bodyFont, headingFont, boldFont, italicFont, semiFont, handFont, fallbackFont, logo, fadeUp, fadeDown, connectButterfly, connectBee, images] = await Promise.all([
     fetchBytes("/grimoire-body-v1.ttf", 2_000_000),
     fetchBytes("/grimoire-serif-v1.ttf", 2_000_000),
     fetchBytes("/grimoire-bold-v1.ttf", 2_000_000),
@@ -124,9 +126,11 @@ export async function downloadSpellBrochure(draft: SpellDraft): Promise<void> {
     fetchBytes("/grimoire-logo-v1.png", 2_000_000),
     fetchBytes("/grimoire-fade-up-v1.png", 2_000_000),
     fetchBytes("/grimoire-fade-down-v1.png", 2_000_000),
+    optionalBytes("/connect-butterfly-v1.png"),
+    optionalBytes("/connect-bee-v1.png"),
     loadPhotos(content),
   ]);
-  const bytes = await renderSpellBrochure(content, { bodyFont, headingFont, boldFont, italicFont, semiFont, handFont, fallbackFont, logo, fadeUp, fadeDown, images });
+  const bytes = await renderSpellBrochure(content, { bodyFont, headingFont, boldFont, italicFont, semiFont, handFont, fallbackFont, logo, fadeUp, fadeDown, connectButterfly, connectBee, images });
   const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }));
   const anchor = document.createElement("a");
   anchor.href = url;

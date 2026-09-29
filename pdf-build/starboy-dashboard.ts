@@ -5,6 +5,7 @@ import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-templ
 import type { TripSpec } from "./trips";
 import packages from "./starboy-packages-v9.json";
 import premium from "./starboy-premium-v2.json";
+import { withoutConnectLinks } from "./connect-footer";
 
 interface Day { title: string; subtitle: string; body: string; locationTag: string }
 interface DashboardSnapshot {
@@ -39,10 +40,11 @@ const historicalV11 = process.argv.includes("--v11");
 const historicalV12 = process.argv.includes("--v12");
 const historicalV13 = process.argv.includes("--v13");
 const historicalV14 = process.argv.includes("--v14");
-assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12, historicalV13, historicalV14].filter(Boolean).length <= 1, "Choose one historical edition");
-const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : historicalV13 ? 13 : historicalV14 ? 14 : 15;
-// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF; v14 includes the drag show / art museum tickets; v15 moves the dates to 11-17 October.
-const starboyPackagePdfUrl = version < 13 ? "https://example.com/starboy-package.pdf" : `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${version < 15 ? "Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf" : premium.fileName}`;
+const historicalV15 = process.argv.includes("--v15");
+assert([historicalV8, historicalV9, historicalV10, historicalV11, historicalV12, historicalV13, historicalV14, historicalV15].filter(Boolean).length <= 1, "Choose one historical edition");
+const version = historicalV8 ? 8 : historicalV9 ? 9 : historicalV10 ? 10 : historicalV11 ? 11 : historicalV12 ? 12 : historicalV13 ? 13 : historicalV14 ? 14 : historicalV15 ? 15 : 16;
+// v12 remains reproducible with its original placeholder; v13 connects the separate premium PDF; v14 includes the drag show / art museum tickets; v15 moves the dates to 11-17 October; v16 adds the stay-connected strip (older editions were built before the strip existed and are not byte-reproducible with it).
+const starboyPackagePdfUrl = version < 13 ? "https://example.com/starboy-package.pdf" : `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${version < 15 ? "Logout-Spells-Blinding-Nights-Starboy-Package-9-15-Oct-2026-v1.pdf" : version < 16 ? "Logout-Spells-Blinding-Nights-Starboy-Package-11-17-Oct-2026-v2.pdf" : premium.fileName}`;
 if (historical) {
   spec.cover.dateLine = "9 - 15 OCTOBER 2026";
   spec.docTitle = spec.docTitle.replace("11-17 October 2026", "9-15 October 2026");
@@ -122,7 +124,9 @@ for (let index = 0; index < doc.countPages(); index++) {
   if (index === finalIndex) {
     for (const item of [...spec.final.lists.left, ...spec.final.lists.right]) assert(compact(text).includes(compact(item)), `Missing inclusion/exclusion: ${item}`);
     const links = page.getLinks();
-    assert.deepEqual(links.map((l) => l.getURI()), version >= 12 ? [starboyPackagePdfUrl, spec.final.announcement!.url] : [spec.final.announcement!.url]);
+    // Every page also carries the two stay-connected links (2026-09-29); the booking links are checked on their own.
+    assert.deepEqual(withoutConnectLinks(links.map((l) => l.getURI())), version >= 12 ? [starboyPackagePdfUrl, spec.final.announcement!.url] : [spec.final.announcement!.url]);
+    assert.equal(links.length - withoutConnectLinks(links.map((l) => l.getURI())).length, 2, "Stay-connected links missing");
     links.forEach((link) => link.destroy());
   }
   structured.destroy();

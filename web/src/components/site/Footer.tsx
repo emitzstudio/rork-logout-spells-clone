@@ -100,11 +100,6 @@ export default function Footer() {
               <h4 className="eyebrow mb-5">Connect</h4>
               <ul className="space-y-3 font-sans text-sm text-cream/55">
                 <li>
-                  <Link to="/discover" className="transition-colors hover:text-gold-light">
-                    Discover Your Spell
-                  </Link>
-                </li>
-                <li>
                   <Link to="/live" className="transition-colors hover:text-gold-light">
                     Live Spells
                   </Link>

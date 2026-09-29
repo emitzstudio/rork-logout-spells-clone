@@ -20,8 +20,6 @@ import { hasSeenIntro, markIntroSeen } from "@/lib/introGate";
 import Blog from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
 import Creators from "./pages/Creators";
-import Discover from "./pages/Discover";
-import DiscoverCategoryPage from "./pages/DiscoverCategory";
 import FormPage from "./pages/FormPage";
 import Home from "./pages/Home";
 import Live from "./pages/Live";
@@ -96,9 +94,9 @@ const AnimatedRoutes = () => {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/experience" element={<Navigate to="/blog" replace />} />
-        {/* Discover - mood categories, each opening a curated collection. */}
-        <Route path="/discover" element={<Discover />} />
-        <Route path="/discover/:slug" element={<DiscoverCategoryPage />} />
+        {/* Discover is archived (2026-09-29): pages/Discover*.tsx and the cauldron stay in the
+            codebase for later, but nothing links here - old links land on Previous Spells. */}
+        <Route path="/discover/*" element={<Navigate to="/live-spells/previous" replace />} />
         <Route path="/live" element={<Live />} />
         {/* Completed journeys - the archive and its memory pages. */}
         <Route path="/live-spells/previous" element={<PreviousSpells />} />

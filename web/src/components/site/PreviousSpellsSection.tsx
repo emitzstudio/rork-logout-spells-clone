@@ -109,8 +109,8 @@ interface PreviousSpellsSectionProps {
 /**
  * The Previous Spells showcase - same interaction philosophy as the Live
  * Spell carousel (infinite, auto-advancing, centre-crowned) with a memory
- * card instead of a booking card. Dropped in on the homepage and at the
- * bottom of Live Spells.
+ * card instead of a booking card. Dropped in on the homepage; the full
+ * archive is its own page at /live-spells/previous (in the main menu).
  */
 export default function PreviousSpellsSection({
   eyebrow = "A look back",

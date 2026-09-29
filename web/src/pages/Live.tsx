@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 
 import Page from "@/components/site/Layout";
 import LoadError from "@/components/site/LoadError";
-import PreviousSpellsSection from "@/components/site/PreviousSpellsSection";
 import { Reveal } from "@/components/site/Reveal";
 import { CATEGORY_META } from "@/data/spells";
 import type { SpellCategoryId } from "@/data/spells";
@@ -204,8 +203,7 @@ export default function Live() {
         </div>
       </section>
 
-      {/* After every live circle - the ones that already happened. */}
-      <PreviousSpellsSection eyebrow="Where the live spells lead" className="bg-charcoal-deep/30" />
+      {/* Completed journeys live on their own page now - /live-spells/previous (in the main menu). */}
     </Page>
   );
 }

@@ -107,6 +107,8 @@ export interface SyncOutcome {
   skipped: number;
   failed: number;
   error: string | null;
+  /** 0111: existing rows that received their Submitted At time when the column was added (absent on older responses). */
+  backfilled?: number;
 }
 
 export interface ConnectOutcome extends SyncOutcome {

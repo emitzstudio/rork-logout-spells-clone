@@ -128,10 +128,13 @@ export default function GoogleSheetPanel({ formId, compact = false }: GoogleShee
       { formId },
       {
         onSuccess: (outcome) => {
+          const backfilled = outcome.backfilled ?? 0;
           if (outcome.error) {
             toast.error(outcome.error);
           } else if (outcome.written > 0) {
             toast.success(`${outcome.written} response${outcome.written === 1 ? "" : "s"} added to the sheet ✦`);
+          } else if (backfilled > 0) {
+            toast.success(`Submitted At added - ${backfilled} existing row${backfilled === 1 ? "" : "s"} now show their date and time ✦`);
           } else {
             toast.success("The sheet is up to date ✦");
           }

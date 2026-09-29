@@ -164,18 +164,19 @@ describe("answerCell", () => {
 describe("Excel exports keep links clickable and photos readable", () => {
   it("per-form sheet: the link column is a HYPERLINK formula, the photo column wraps", () => {
     const table = buildResponsesTable(form, [response]);
+    /* Submitted At leads every per-form sheet since 0111 (date and time the form was filled). */
     expect(table.columns.map((c) => c.header)).toEqual([
-      "Name", "Share your Instagram profile", "Send us some inspiration",
+      "Submitted At", "Name", "Share your Instagram profile", "Send us some inspiration",
     ]);
-    expect(table.columns[2].wrap).toBe(true);
-    expect(table.rows[0][1]).toEqual({ kind: "link", value: "https://www.instagram.com/example" });
+    expect(table.columns[3].wrap).toBe(true);
+    expect(table.rows[0][2]).toEqual({ kind: "link", value: "https://www.instagram.com/example" });
 
     const [, row] = toSheetData(table.columns, table.rows);
-    expect(row[1]).toMatchObject({
+    expect(row[2]).toMatchObject({
       type: "Formula",
       value: 'HYPERLINK("https://www.instagram.com/example","https://www.instagram.com/example")',
     });
-    expect(row[2]).toMatchObject({ type: String, value: `${photoA}\n${photoB}`, wrap: true });
+    expect(row[3]).toMatchObject({ type: String, value: `${photoA}\n${photoB}`, wrap: true });
   });
 
   it("inbox workbook: same treatment after the six metadata columns", () => {

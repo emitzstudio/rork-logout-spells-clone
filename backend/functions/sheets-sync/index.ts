@@ -18,8 +18,10 @@
  * The queue (form_sheet_sync_jobs) is the source of truth for "what still has
  * to reach the sheet" AND for "what already has": a job settles `done` right
  * after its row is appended, and a reconnect to the SAME tab only files jobs
- * for responses that never had one (0108). The sheet itself carries no
- * Submitted At / Submission ID columns — just the answers and provenance.
+ * for responses that never had one (0108). The sheet carries no Submission ID
+ * column; since 0111 its FIRST column is `Submitted At` (date + time, IST) so
+ * the team can see exactly when each form was filled. Tabs connected before
+ * 0111 get the column inserted and back-filled on their next sync.
  * Writes use RAW input — nothing a traveller typed can become a formula.
  */
 import { adminClient, isStaffUser, requireUser } from "../_shared/auth.ts";
@@ -42,6 +44,8 @@ import {
   COLUMN_KEYS,
   columnLetter,
   desiredColumns,
+  FIXED_HEADERS,
+  formatSubmittedIst,
   parseSheetReference,
   readAnswers,
   reconcileColumns,
@@ -147,7 +151,7 @@ const formatHeader = async (
   columns: readonly SheetColumn[],
 ): Promise<void> => {
   const widths = columns.map((column) => {
-    if (column.key === COLUMN_KEYS.via || column.key === COLUMN_KEYS.source) return 180;
+    if (column.key === COLUMN_KEYS.submitted || column.key === COLUMN_KEYS.via || column.key === COLUMN_KEYS.source) return 180;
     return Math.min(360, Math.max(160, column.header.length * 8 + 40));
   });
   await batchUpdate(account, spreadsheetId, [
@@ -181,17 +185,17 @@ const formatHeader = async (
   ]);
 };
 
-/** Header keys written before 0108 that no sheet should carry any more. */
-const LEGACY_KEYS = new Set(["__submitted", "__id"]);
-const LEGACY_HEADERS = new Set(["submitted at", "submission id"]);
+/** Header keys written before 0108 that no sheet should carry any more (0111 brought `__submitted` back). */
+const LEGACY_KEYS = new Set(["__id"]);
+const LEGACY_HEADERS = new Set(["submission id"]);
 
 /**
- * 0108 one-time tidy for tabs connected earlier: a stored `__submitted` /
- * `__id` column whose header cell still reads exactly what we wrote is
- * deleted from the sheet (highest index first so positions stay valid) and
- * dropped from the stored layout. A header the founder renamed is left alone
- * and becomes an ordinary foreign column. Returns the layout to reconcile
- * against, and the header row as it stands afterwards.
+ * 0108 one-time tidy for tabs connected earlier: a stored `__id` column whose
+ * header cell still reads exactly what we wrote is deleted from the sheet
+ * (highest index first so positions stay valid) and dropped from the stored
+ * layout. A header the founder renamed is left alone and becomes an ordinary
+ * foreign column. Returns the layout to reconcile against, and the header row
+ * as it stands afterwards.
  */
 const retireLegacyColumns = async (
   admin: ReturnType<typeof adminClient>,
@@ -228,6 +232,161 @@ const retireLegacyColumns = async (
   return { stored: nextStored, headerCells: nextHeader };
 };
 
+/**
+ * 0111 one-time adoption for tabs connected between 0108 and 0111: a tab with
+ * rows but no `Submitted At` header gets a new FIRST column (inserted, so
+ * every existing column keeps its order and content), the header cell and
+ * its formatting, and the stored layout shifts along. Fresh tabs need nothing
+ * - their header is written with Submitted At first. Returns whether a column
+ * was inserted so the caller can back-fill it.
+ */
+const adoptSubmittedColumn = async (
+  admin: ReturnType<typeof adminClient>,
+  account: ServiceAccount,
+  link: LinkRow,
+  tabTitle: string,
+  stored: SheetColumn[],
+  headerCells: string[],
+): Promise<{ stored: SheetColumn[]; headerCells: string[]; inserted: boolean }> => {
+  const wanted = FIXED_HEADERS[COLUMN_KEYS.submitted];
+  const hasHeader = headerCells.some((cell) => cell.trim().toLowerCase() === wanted.toLowerCase());
+  const hasKey = stored.some((column) => column.key === COLUMN_KEYS.submitted);
+  const fresh = headerCells.every((cell) => cell.trim() === "");
+  if (hasHeader || hasKey || fresh) return { stored, headerCells, inserted: false };
+
+  await batchUpdate(account, link.spreadsheet_id, [
+    { insertDimension: { range: { sheetId: link.sheet_id, dimension: "COLUMNS", startIndex: 0, endIndex: 1 }, inheritFromBefore: false } },
+    {
+      repeatCell: {
+        range: { sheetId: link.sheet_id, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 1 },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: { red: 0.106, green: 0.102, blue: 0.086 },
+            textFormat: { bold: true, foregroundColor: { red: 0.945, green: 0.914, blue: 0.824 } },
+            verticalAlignment: "MIDDLE",
+            wrapStrategy: "WRAP",
+          },
+        },
+        fields: "userEnteredFormat(backgroundColor,textFormat,verticalAlignment,wrapStrategy)",
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId: link.sheet_id, dimension: "COLUMNS", startIndex: 0, endIndex: 1 },
+        properties: { pixelSize: 180 },
+        fields: "pixelSize",
+      },
+    },
+  ]);
+  await updateValues(account, link.spreadsheet_id, rangeA1(tabTitle, "A1:A1"), [[wanted]]);
+  const nextStored = [{ key: COLUMN_KEYS.submitted, header: wanted }, ...stored];
+  await admin.from("form_sheet_links").update({ columns: nextStored }).eq("form_id", link.form_id);
+  link.columns = nextStored;
+  console.log(`[sheets-sync] form ${link.form_id}: inserted the Submitted At column (0111)`);
+  return { stored: nextStored, headerCells: [wanted, ...headerCells], inserted: true };
+};
+
+/**
+ * 0111 back-fill: rows mirrored before the Submitted At column existed get
+ * their submission time. The sheet carries no ids, so each existing row is
+ * matched to the response whose answers and provenance read exactly the same,
+ * in submission order (identical duplicate submissions pair up in order). Rows
+ * the founder edited, or that match nothing, are left blank - never guessed.
+ * Only the Submitted At column is written; every other cell stays untouched.
+ */
+const backfillSubmittedAt = async (
+  admin: ReturnType<typeof adminClient>,
+  account: ServiceAccount,
+  link: LinkRow,
+  tabTitle: string,
+  columns: readonly SheetColumn[],
+): Promise<number> => {
+  const submittedIndex = columns.findIndex((column) => column.key === COLUMN_KEYS.submitted);
+  if (submittedIndex === -1) return 0;
+  const lastLetter = columnLetter(columns.length - 1);
+  const rows = await getValues(account, link.spreadsheet_id, rangeA1(tabTitle, `A2:${lastLetter}`));
+  if (rows.length === 0) return 0;
+
+  const { data, error } = await admin
+    .from("form_responses")
+    .select("id, created_at, spell_name, source, source_creator, answers")
+    .eq("form_id", link.form_id)
+    .order("created_at", { ascending: true })
+    .limit(5000);
+  if (error) throw new Error(`responses read failed: ${error.message}`);
+  const responses = ((data ?? []) as ResponseRow[]).map(toSheetResponse);
+
+  // Compare only the cells this layout owns (answers + provenance): the new
+  // column is empty and founder-added columns are never ours to read.
+  const owned = columns
+    .map((column, index) => ({ column, index }))
+    .filter(({ column }) => column.key !== COLUMN_KEYS.submitted && (column.key.startsWith("q:") || column.key === COLUMN_KEYS.via || column.key === COLUMN_KEYS.source))
+    .map(({ index }) => index);
+  const signature = (cells: readonly string[]): string => JSON.stringify(owned.map((index) => (cells[index] ?? "").trim()));
+
+  const queues = new Map<string, string[]>();
+  for (const response of responses) {
+    const key = signature(buildRow(columns, response, () => ""));
+    const queue = queues.get(key) ?? [];
+    queue.push(response.createdAt);
+    queues.set(key, queue);
+  }
+
+  let filled = 0;
+  const values = rows.map((row) => {
+    const current = (row[submittedIndex] ?? "").trim();
+    if (current !== "") return [current];
+    const queue = queues.get(signature(row));
+    const createdAt = queue?.shift();
+    if (createdAt === undefined) return [""];
+    filled += 1;
+    return [formatSubmittedIst(createdAt)];
+  });
+  if (filled === 0) return 0;
+  const letter = columnLetter(submittedIndex);
+  await updateValues(account, link.spreadsheet_id, rangeA1(tabTitle, `${letter}2:${letter}${rows.length + 1}`), values);
+  console.log(`[sheets-sync] form ${link.form_id}: back-filled Submitted At for ${filled}/${rows.length} existing rows (0111)`);
+  return filled;
+};
+
+/**
+ * Everything the header needs before rows are appended: the 0108 tidy, the
+ * 0111 Submitted At adoption (+ back-fill), and the usual reconcile of the
+ * sheet's header with the form's current questions. Returns the reconciled
+ * layout, with the header row already written when it changed.
+ */
+const prepareColumns = async (
+  admin: ReturnType<typeof adminClient>,
+  account: ServiceAccount,
+  link: LinkRow,
+  form: FormRow,
+  meta: SpreadsheetMeta,
+  tabTitle: string,
+  responses: readonly SheetResponse[],
+): Promise<{ columns: SheetColumn[]; backfilled: number }> => {
+  const tidied = await retireLegacyColumns(admin, account, link, tabTitle);
+  const adopted = await adoptSubmittedColumn(admin, account, link, tabTitle, tidied.stored, tidied.headerCells);
+  const desired = desiredColumns(
+    { questions: readQuestions(form.questions), isEnquiry: form.is_enquiry },
+    responses,
+  );
+  const { columns, headerChanged, fresh } = reconcileColumns(adopted.headerCells, adopted.stored, desired);
+
+  if (headerChanged || fresh) {
+    await ensureWidth(account, meta, link.spreadsheet_id, link.sheet_id, columns.length);
+    await updateValues(
+      account,
+      link.spreadsheet_id,
+      rangeA1(tabTitle, `A1:${columnLetter(columns.length - 1)}1`),
+      [columns.map((column) => column.header)],
+    );
+    if (fresh) await formatHeader(account, link.spreadsheet_id, link.sheet_id, columns);
+  }
+  // Right after the column is inserted, and on every "Sync now" (no jobs): blanks are filled, nothing else is touched.
+  const backfilled = adopted.inserted || responses.length === 0 ? await backfillSubmittedAt(admin, account, link, tabTitle, columns) : 0;
+  return { columns, backfilled };
+};
+
 /** Makes sure the grid is wide enough for the header (new sheets stop at Z). */
 const ensureWidth = async (
   account: ServiceAccount,
@@ -253,9 +412,11 @@ interface SyncOutcome {
   error: string | null;
   /** Jobs still open for this form after the run. */
   remaining: number;
+  /** 0111: existing rows that received their Submitted At time when the column was added. */
+  backfilled: number;
 }
 
-const EMPTY: SyncOutcome = { written: 0, skipped: 0, failed: 0, error: null, remaining: 0 };
+const EMPTY: SyncOutcome = { written: 0, skipped: 0, failed: 0, error: null, remaining: 0, backfilled: 0 };
 
 /**
  * Drains one form's queue: claim jobs → load the sheet header → reconcile
@@ -301,13 +462,23 @@ const syncForm = async (
   }
   const jobs = (claimed ?? []) as JobRow[];
   if (jobs.length === 0) {
-    // Nothing to write - still give an older tab its 0108 tidy on "Sync now".
+    // Nothing to write - still give an older tab its 0108 tidy and its 0111
+    // Submitted At column on "Sync now", so the team sees it without waiting
+    // for the next submission.
     try {
       const meta = await getSpreadsheet(account, link.spreadsheet_id);
       const tab = meta.sheets.find((s) => s.properties.sheetId === link.sheet_id);
-      if (tab) await retireLegacyColumns(admin, account, link, tab.properties.title);
+      if (tab) {
+        const prepared = await prepareColumns(admin, account, link, form, meta, tab.properties.title, []);
+        if (JSON.stringify(prepared.columns) !== JSON.stringify(readColumns(link.columns))) {
+          await admin.from("form_sheet_links").update({ columns: prepared.columns }).eq("form_id", link.form_id);
+          link.columns = prepared.columns;
+        }
+        await release({});
+        return { ...EMPTY, backfilled: prepared.backfilled };
+      }
     } catch (error) {
-      console.error(`[sheets-sync] form ${link.form_id}: legacy tidy skipped:`, describeSheetsError(error, account.client_email));
+      console.error(`[sheets-sync] form ${link.form_id}: header tidy skipped:`, describeSheetsError(error, account.client_email));
     }
     await release({});
     return EMPTY;
@@ -345,23 +516,7 @@ const syncForm = async (
     if (!tab) throw new Error(`The "${link.sheet_title}" tab no longer exists in this spreadsheet.`);
     const tabTitle = tab.properties.title;
 
-    const { stored, headerCells } = await retireLegacyColumns(admin, account, link, tabTitle);
-    const desired = desiredColumns(
-      { questions: readQuestions(form.questions), isEnquiry: form.is_enquiry },
-      responses,
-    );
-    const { columns, headerChanged, fresh } = reconcileColumns(headerCells, stored, desired);
-
-    if (headerChanged || fresh) {
-      await ensureWidth(account, meta, link.spreadsheet_id, link.sheet_id, columns.length);
-      await updateValues(
-        account,
-        link.spreadsheet_id,
-        rangeA1(tabTitle, `A1:${columnLetter(columns.length - 1)}1`),
-        [columns.map((column) => column.header)],
-      );
-      if (fresh) await formatHeader(account, link.spreadsheet_id, link.sheet_id, columns);
-    }
+    const { columns, backfilled } = await prepareColumns(admin, account, link, form, meta, tabTitle, responses);
 
     /* ---- Append ----
        Every claimed job is a response not yet mirrored into THIS tab: the
@@ -399,13 +554,13 @@ const syncForm = async (
     console.log(
       `[sheets-sync] form ${link.form_id}: +${newRows.length} rows, ${skipped} already present, ${remaining} still queued`,
     );
-    return { written: newRows.length, skipped, failed: 0, error: null, remaining };
+    return { written: newRows.length, skipped, failed: 0, error: null, remaining, backfilled };
   } catch (error) {
     const message = describeSheetsError(error, account.client_email);
     console.error(`[sheets-sync] form ${link.form_id} failed:`, message);
     await settle(jobs.map((job) => job.id), "failed", message);
     await release({ status: "error", last_error: clip(message) });
-    return { written: 0, skipped: 0, failed: jobs.length, error: message, remaining: await openCount() };
+    return { written: 0, skipped: 0, failed: jobs.length, error: message, remaining: await openCount(), backfilled: 0 };
   }
 };
 
@@ -423,6 +578,7 @@ const drainForm = async (
     total.written += outcome.written;
     total.skipped += outcome.skipped;
     total.failed += outcome.failed;
+    total.backfilled += outcome.backfilled;
     total.error = outcome.error;
     total.remaining = outcome.remaining;
     if (outcome.error || outcome.remaining === 0 || outcome.written + outcome.skipped === 0) break;

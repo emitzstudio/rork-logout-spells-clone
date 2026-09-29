@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as mupdf from "mupdf";
 import { buildGrimoireStarboy, saveGrimoireCopy } from "./starboy-grimoire-template";
 import { printable, starboyPackageContent } from "./starboy-package-content";
+import { withoutConnectLinks } from "./connect-footer";
 import packages from "../web/src/data/starboyPackages.json";
 import { packageCardsSchema } from "../web/src/data/packageCards";
 
@@ -45,8 +46,10 @@ for (const card of cards) {
       }
     }
     const links = page.getLinks();
-    if (index === doc.countPages() - 1) assert.deepEqual(links.map((link) => link.getURI()), [spec.final.announcement!.url]);
-    else assert.equal(links.length, 0, "No obsolete upsell PDFs or checkout links");
+    const own = withoutConnectLinks(links.map((link) => link.getURI()));
+    assert.equal(links.length - own.length, 2, `${card.name} p${index + 1}: stay-connected links missing`);
+    if (index === doc.countPages() - 1) assert.deepEqual(own, [spec.final.announcement!.url]);
+    else assert.equal(own.length, 0, "No obsolete upsell PDFs or checkout links");
     links.forEach((link) => link.destroy());
     if (render) {
       const pixmap = page.toPixmap(mupdf.Matrix.scale(1.3, 1.3), mupdf.ColorSpace.DeviceRGB, false);

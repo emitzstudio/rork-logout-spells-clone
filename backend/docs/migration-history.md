@@ -3189,3 +3189,26 @@ functions are unchanged. No staged migrations remain.
 - Not changed on purpose: receipts LS-2026-0001 / LS-2026-0004 (issued documents that say 9-15 / 9-12 October;
   reissue manually if the travellers need updated paperwork) and the already-exported Instagram reel
   (`reel-build/`), whose source still reads 9–15 October and would need a re-render.
+
+## 0111 — Stay-connected strip on every brochure (2026-09-29)
+
+- **APPLIED.** Source: [`0111_stay_connected_brochures.sql`](../migrations/0111_stay_connected_brochures.sql).
+  Founder request: the "Stay connected for future trips" sign-off (Instagram + WhatsApp community links)
+  on every page of every PDF and at the end of every form, both as defaults.
+- Guards (per spell, all nine live spells with a brochure): published + not deleted, brochure link exactly
+  the reviewed file, `updated_at` exactly as reviewed, zero bookings; classifies all rows before writing
+  anything; idempotent when all nine already point at the new files, refuses a partial state. Dry-run
+  in a rolled-back transaction before apply. Post-asserts per spell: only `pricing.brochureUrl` differs;
+  every other spell unchanged; md5 of bookings / payments / receipts / departures / forms unchanged.
+  `spell_changes` entry per spell (`md5('0111' || id)`).
+- New immutable files (older editions stay published): Content Spell v4, Europe v2, Goa v2, Jibhi v3,
+  Blinding Nights Grimoire v16 (+ Starboy Package v3, XO v4, STARBOY v5, TIMELESS v3), Thailand Full Moon
+  v4, Udaipur v3, Vietnam Numbered-v2, Winter Spiti v2. Every file verified: strip text and both links
+  on every page, lowest text baseline 20.9pt, published copy byte-identical, HTTP 200 before apply.
+- Code: `web/src/data/stayConnected.ts` (single source of the words/links), `web/src/lib/connectFooterPdf.ts`
+  (pdf-lib drawing, shared by the dashboard's automatic Grimoire and pdf-build), `pdf-build/connect-footer.ts`,
+  `img/connect/*.png` + `web/public/connect-*.png` (gold marks). Forms: `StayConnected.tsx` at the end of the
+  question page (traditional + conversational) and the thank-you page. Website: Discover archived
+  (`/discover/*` redirects to Previous Spells; pages kept in the codebase), Previous Spells now in the main
+  menu, removed from the foot of Live Spells. Sheets: see 0111 note in edge-functions.md (Submitted At back).
+- Not changed: receipts, the reel, `expo` (its own Discover tab is untouched - separate app).

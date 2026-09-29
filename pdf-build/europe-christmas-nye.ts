@@ -6,6 +6,7 @@ import fontkit from "@pdf-lib/fontkit";
 import * as mupdf from "mupdf";
 import trip from "./europe-christmas-nye-v1.json";
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
+import { stampConnectFooter, withoutConnectLinks } from "./connect-footer";
 
 const W = 595.28;
 const H = 841.89;
@@ -221,6 +222,8 @@ export async function buildEuropeGrimoire(): Promise<Uint8Array> {
     A: { Type: "Action", S: "URI", URI: PDFString.of(websiteUrl) },
   }))]));
   footer(final, 19, "LOGOUT SPELLS · EUROPE CHRISTMAS + NYE");
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: semi, color: MUTED, accent: LIGHT });
   return doc.save();
 }
 
@@ -250,7 +253,8 @@ export function verifyEuropeGrimoire(bytes: Uint8Array): void {
       }
     }
     const links = p.getLinks();
-    assert.deepEqual(links.map((link) => link.getURI()), i === 18 ? [websiteUrl] : []);
+    assert.deepEqual(withoutConnectLinks(links.map((link) => link.getURI())), i === 18 ? [websiteUrl] : []);
+    assert.equal(links.length, i === 18 ? 3 : 2, `Page ${i + 1}: stay-connected links missing`);
     if (i === 18) [64, H - 139, W - 64, H - 95].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
     const pix = p.toPixmap(mupdf.Matrix.scale(1.2, 1.2), mupdf.ColorSpace.DeviceRGB, false, true);
     writeFileSync(`.cache/europe-review-p${i + 1}.png`, pix.asPNG());
@@ -267,12 +271,14 @@ export function verifyEuropeGrimoire(bytes: Uint8Array): void {
 if (import.meta.main) {
   const draft = process.argv.includes("--draft");
   assert(!(draft && process.argv.includes("--publish")));
-  const bytes = process.argv.includes("--verify-existing") ? readFileSync(trip.fileName) : await buildEuropeGrimoire();
+  // `fileName` is the edition the 0097 migration inserted (frozen); `currentFileName` is the edition linked live since 0111.
+  const output = trip.currentFileName;
+  const bytes = process.argv.includes("--verify-existing") ? readFileSync(output) : await buildEuropeGrimoire();
   verifyEuropeGrimoire(bytes);
   if (!process.argv.includes("--verify-existing")) {
     if (draft) writeFileSync(".cache/europe-v1-draft.pdf", bytes);
-    else saveGrimoireCopy(trip.fileName, bytes);
+    else saveGrimoireCopy(output, bytes);
   }
-  if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${trip.fileName}`, bytes);
-  console.log(`PASS: ${trip.fileName}, 19 pages, ${bytes.length} bytes; TBA with no payment request`);
+  if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${output}`, bytes);
+  console.log(`PASS: ${output}, 19 pages, ${bytes.length} bytes; TBA with no payment request`);
 }

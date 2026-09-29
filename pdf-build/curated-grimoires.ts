@@ -7,6 +7,7 @@ import * as mupdf from "mupdf";
 import thailand from "./thailand-full-moon-v3.json";
 import spiti from "./winter-spiti-v1.json";
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
+import { stampConnectFooter, withoutConnectLinks } from "./connect-footer";
 
 type Edition = "thailand" | "spiti";
 const W = 595.28;
@@ -278,6 +279,8 @@ export async function buildCuratedGrimoire(edition: Edition): Promise<Uint8Array
     A: { Type: "Action", S: "URI", URI: PDFString.of(websiteUrl) },
   }))]));
   footer(final, isSpiti ? "LOGOUT SPELLS · WINTER SPITI" : "LOGOUT SPELLS · THAILAND FULL MOON");
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: semi, color: MUTED, accent: LIGHT });
   return doc.save();
 }
 
@@ -312,7 +315,8 @@ export function verifyCuratedGrimoire(edition: Edition, bytes: Uint8Array): void
       for (const term of [day.note, day.overnight, ...("meals" in day ? [`Meals: ${day.meals}`, `Stay: ${day.stay}`] : [])]) assert(compact(body).includes(compact(term)), `Missing day detail ${term}`);
     }
     const links = p.getLinks();
-    assert.deepEqual(links.map((l) => l.getURI()), i === count - 1 ? [`${trip.website}/live/${trip.slug}`] : []);
+    assert.deepEqual(withoutConnectLinks(links.map((l) => l.getURI())), i === count - 1 ? [`${trip.website}/live/${trip.slug}`] : []);
+    assert.equal(links.length, i === count - 1 ? 3 : 2, `Page ${i + 1}: stay-connected links missing`);
     if (i === count - 1) [64, H - 122, W - 64, H - 78].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
     const pix = p.toPixmap(mupdf.Matrix.scale(1.25, 1.25), mupdf.ColorSpace.DeviceRGB, false, true);
     writeFileSync(`.cache/${edition}-curated-review-p${i + 1}.png`, pix.asPNG());
@@ -334,12 +338,14 @@ if (import.meta.main) {
   const trip = edition === "spiti" ? spiti : thailand;
   const draft = process.argv.includes("--draft");
   assert(!(draft && process.argv.includes("--publish")));
-  const bytes = process.argv.includes("--verify-existing") ? readFileSync(trip.fileName) : await buildCuratedGrimoire(edition);
+  // `fileName` is the edition the 0100 / 0101 migrations inserted (frozen); `currentFileName` is the edition linked live since 0111.
+  const output = trip.currentFileName;
+  const bytes = process.argv.includes("--verify-existing") ? readFileSync(output) : await buildCuratedGrimoire(edition);
   verifyCuratedGrimoire(edition, bytes);
   if (!process.argv.includes("--verify-existing")) {
     if (draft) writeFileSync(`.cache/${edition}-curated-draft.pdf`, bytes);
-    else saveGrimoireCopy(trip.fileName, bytes);
+    else saveGrimoireCopy(output, bytes);
   }
-  if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${trip.fileName}`, bytes);
-  console.log(`PASS: ${trip.fileName}, ${bytes.length} bytes; historical PDFs preserved`);
+  if (process.argv.includes("--publish")) saveGrimoireCopy(`../web/public/brochures/${output}`, bytes);
+  console.log(`PASS: ${output}, ${bytes.length} bytes; historical PDFs preserved`);
 }

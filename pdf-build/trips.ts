@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { PDFDocument, PDFFont, PDFImage, PDFName, PDFPage, PDFString, rgb, degrees } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { stampConnectFooter } from "./connect-footer";
 
 const W = 595.28;
 const H = 841.89;
@@ -1129,6 +1130,8 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     dt(p, f.closeHand, { x: W / 2 - hand.widthOfTextAtSize(f.closeHand, 16) / 2, y: 48, font: hand, size: 16, color: GOLD_LIGHT, rotate: -1.5 });
   }
 
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: sansMed, color: MUTED, accent: GOLD_LIGHT });
   const bytes = await doc.save();
   writeFileSync(spec.fileName, bytes);
   console.log("PDF written:", spec.fileName, (bytes.length / 1024).toFixed(0), "KB,", doc.getPageCount(), "pages");
@@ -1324,9 +1327,10 @@ const vof: TripSpec = {
 };
 
 /* ================================ JIBHI ================================== */
-/* v2 (2026-09-29): the generic previous-spells page joins as page 07, right before booking. */
+/* v2 (2026-09-29): the generic previous-spells page joins as page 07, right before booking.
+   v3 (2026-09-29): the stay-connected strip on every page. */
 const jibhi: TripSpec = {
-  fileName: "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026-v2.pdf",
+  fileName: "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026-v3.pdf",
   docTitle: "Logout Spells · The Spell to the Himalayas · Jibhi with Kavya Lilhare",
   docSubject: "1 - 4 October 2026 · 4 days · Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village · itinerary and booking",
   memoriesFile: "img/spell-memories/sources.json",
@@ -1768,7 +1772,7 @@ const ziro: TripSpec = {
  * Scenic imagery only: the original vn-* set plus two scenic vn4-* bands (the Ninh Binh karsts, a Da Nang
  * beach morning). */
 const vietnam: TripSpec = {
-  fileName: "Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf",
+  fileName: "Logout-Spells-Vietnam-18-24-Nov-2026-Numbered-v2.pdf",
   docTitle: "Logout Spells · The Vietnam Spell · 18 - 24 November 2026 · Hanoi to Da Nang",
   docSubject: "18 - 24 November 2026 · Hanoi, Halong Bay, Ninh Binh, Hoi An, Ba Na Hills, Cham Islands · day-by-day itinerary and booking",
   memoriesFile: "img/spell-memories/sources.json",

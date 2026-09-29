@@ -7,6 +7,7 @@ import type { StarboyDashboardEdition } from "./starboy-cinematic";
 import type packageEdition from "./starboy-packages-v9.json";
 import type premiumEdition from "./starboy-premium-v2.json";
 import type { PackageCard } from "../web/src/data/packageCards";
+import { stampConnectFooter } from "./connect-footer";
 
 const W = 595.28;
 const H = 841.89;
@@ -450,6 +451,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     center(booking, "Opens the inquiry form. No payment is collected", 95, 8.5, sans, MUTED);
     center(booking, "and no seat is reserved by submitting the form.", 81, 8.5, sans, MUTED);
     footer(booking, `${pack.name} · UNTIL THE NEXT SPELL`);
+    await stampConnectFooter(doc, { font: semi, color: MUTED, accent: GOLD_LIGHT });
     return doc.save();
   }
   const p = page();
@@ -511,6 +513,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     center(p, "UNTIL THE NEXT SPELL", 62, 6.5, semi, GOLD, 2.6);
     center(p, f.closeThanks, 46, 11, italic, MUTED);
     center(p, "LOGOUT SPELLS · TRAVEL A LITTLE DIFFERENTLY", 29, 6.2, semi, MUTED, 1.8);
+    await stampConnectFooter(doc, { font: semi, color: MUTED, accent: GOLD_LIGHT });
     return doc.save();
   }
   if (revision?.conversionFinal) {
@@ -606,6 +609,7 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
     center(p, f.closeThanks, 53, 10, italic, MUTED);
     center(p, "GOOD PEOPLE · WILD PLACES · REAL STORIES", 41, 6, semi, MUTED, 1.8);
     center(p, f.closeHand, 26, 11, hand, GOLD_LIGHT);
+    await stampConnectFooter(doc, { font: semi, color: MUTED, accent: GOLD_LIGHT });
     return doc.save();
   }
   p.drawImage(logo, { x: W / 2 - 16, y: H - 66, width: 32, height: 32 });
@@ -682,6 +686,8 @@ export async function buildGrimoireStarboy(spec: TripSpec, dashboard: StarboyDas
   center(p, f.closeThanks, 85, 13, italic, CREAM);
   center(p, "GOOD PEOPLE · WILD PLACES · REAL STORIES", 64, 7, semi, MUTED, 2.1);
   center(p, f.closeHand, 39, 16, hand, GOLD_LIGHT);
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: semi, color: MUTED, accent: GOLD_LIGHT });
   return doc.save();
 }
 

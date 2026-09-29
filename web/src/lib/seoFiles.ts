@@ -9,7 +9,8 @@
 /**
  * Discover mood slugs, mirrored from CATEGORIES in src/data/discover.ts.
  * Inlined to keep this module import-free; the unit test in
- * src/test/seo.test.ts asserts this list matches CATEGORIES exactly.
+ * src/test/seo.test.ts asserts this list matches CATEGORIES exactly. Kept
+ * for when Discover returns - the archived pages are not in the sitemap.
  */
 export const DISCOVER_MOOD_SLUGS: readonly string[] = [
   "art",
@@ -54,8 +55,7 @@ export const DISALLOWED_CRAWL_PREFIXES = [
 export const STATIC_SITEMAP_PATHS: string[] = [
   "/",
   "/live",
-  "/discover",
-  ...DISCOVER_MOOD_SLUGS.map((slug) => `/discover/${slug}`),
+  // Discover (/discover and its moods) is archived since 2026-09-29 - not linked, not listed.
   "/live-spells/previous",
   "/blog",
   "/our-story",

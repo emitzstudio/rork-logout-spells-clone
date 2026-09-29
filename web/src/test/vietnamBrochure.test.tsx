@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import sql from "../../../backend/migrations/0103_vietnam_numbered_brochure_link.sql?raw";
+import stayConnectedSql from "../../../backend/migrations/0111_stay_connected_brochures.sql?raw";
 import source from "../../../pdf-build/vietnam-brochure-source.json";
 import SpellBrochureAction from "@/components/spell/SpellBrochureAction";
 import SpellHero from "@/components/spell/SpellHero";
@@ -13,7 +14,9 @@ import { brochureLink } from "@/data/publishedPricing";
 import { mapSpell, pageFromDraft } from "@/integrations/supabase/mappers";
 import type { ActiveDepartureRow, SpellRow } from "@/integrations/supabase/mappers";
 
+/* 0103 attached the numbered edition; 0111 (2026-09-29) moved the live link to -v2, which adds the stay-connected strip. */
 const fileName = "Logout-Spells-Vietnam-18-24-Nov-2026-Numbered.pdf";
+const currentFileName = "Logout-Spells-Vietnam-18-24-Nov-2026-Numbered-v2.pdf";
 const url = `https://z57wkqd89o09lsi6kc7v1-web.rork.live/brochures/${fileName}`;
 const livePricing = source.spell.page.pricing;
 const pricing = { ...livePricing, brochureUrl: url };
@@ -30,6 +33,9 @@ describe("Numbered Vietnam brochure attached to the live spell", () => {
     const published = readFileSync(new URL(`../../public/brochures/${fileName}`, import.meta.url));
     expect(published.subarray(0, 5).toString()).toBe("%PDF-");
     expect(published.equals(readFileSync(new URL(`../../../pdf-build/${fileName}`, import.meta.url)))).toBe(true);
+    const current = readFileSync(new URL(`../../public/brochures/${currentFileName}`, import.meta.url));
+    expect(current.equals(readFileSync(new URL(`../../../pdf-build/${currentFileName}`, import.meta.url)))).toBe(true);
+    expect(stayConnectedSql).toContain(`"new":"${currentFileName}"`);
 
     expect(brochureLink(draft.pricing)).toBe(url);
     expect(draft.priceTba).toBe(false);

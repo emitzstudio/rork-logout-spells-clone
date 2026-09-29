@@ -4,14 +4,15 @@
  *
  * A sheet's header row is described by an ordered list of columns, each with
  * a stable KEY and the header TEXT as it stands in the sheet:
- *   `q:<questionId>` one per question · `__via` Submitted via ·
- *   `__source` Source (enquiry forms) · `x:<index>` a column the founder
- *   added by hand (preserved, never written).
+ *   `__submitted` Submitted At · `q:<questionId>` one per question ·
+ *   `__via` Submitted via · `__source` Source (enquiry forms) ·
+ *   `x:<index>` a column the founder added by hand (preserved, never written).
  *
- * 0108: the sheet carries only what the traveller answered plus provenance -
- * no Submitted At and no Submission ID column. "Already mirrored?" is
- * answered by the sync queue (a settled job is never re-filed for the same
- * sheet), not by reading ids back out of the sheet.
+ * 0108 dropped the bookkeeping columns; 0111 brings Submitted At back as the
+ * FIRST column (date and time, IST) because the team tracks when each form
+ * was filled. There is still no Submission ID column - "already mirrored?"
+ * is answered by the sync queue (a settled job is never re-filed for the
+ * same sheet), not by reading ids back out of the sheet.
  *
  * Reconciliation runs in two passes over the sheet's header cells:
  *   1. text matches a wanted header  → that column (survives founder reorders)
@@ -29,11 +30,13 @@ export interface SheetColumn {
 }
 
 export const COLUMN_KEYS = {
+  submitted: "__submitted",
   via: "__via",
   source: "__source",
 } as const;
 
 export const FIXED_HEADERS: Record<string, string> = {
+  [COLUMN_KEYS.submitted]: "Submitted At",
   [COLUMN_KEYS.via]: "Submitted via",
   [COLUMN_KEYS.source]: "Source",
 };
@@ -79,15 +82,15 @@ export const readAnswers = (raw: unknown): SheetAnswer[] => {
 };
 
 /**
- * The columns a form wants right now: its switched-on questions in form
- * order, then any answered question the form no longer asks (so backfilled
- * answers keep a home), then provenance.
+ * The columns a form wants right now: Submitted At (0111), its switched-on
+ * questions in form order, then any answered question the form no longer
+ * asks (so backfilled answers keep a home), then provenance.
  */
 export const desiredColumns = (
   form: SheetFormShape,
   responses: readonly SheetResponse[],
 ): SheetColumn[] => {
-  const columns: SheetColumn[] = [];
+  const columns: SheetColumn[] = [{ key: COLUMN_KEYS.submitted, header: FIXED_HEADERS[COLUMN_KEYS.submitted] }];
   const seen = new Set<string>();
 
   form.questions.forEach((question, index) => {
@@ -202,12 +205,17 @@ export const sourceLabel = (source: string | null, creator: string): string => {
 
 /**
  * One sheet row for a response, aligned to the reconciled columns. Columns
- * the layout doesn't own (founder-added, or a legacy Submitted At /
- * Submission ID header from before 0108) stay blank.
+ * the layout doesn't own (founder-added, or a legacy Submission ID header
+ * from before 0108) stay blank.
  */
-export const buildRow = (columns: readonly SheetColumn[], response: SheetResponse): string[] => {
+export const buildRow = (
+  columns: readonly SheetColumn[],
+  response: SheetResponse,
+  formatSubmitted: (iso: string) => string = formatSubmittedIst,
+): string[] => {
   const byQuestion = new Map(response.answers.map((answer) => [questionKey(answer.questionId), answer.value]));
   return columns.map((column) => {
+    if (column.key === COLUMN_KEYS.submitted) return formatSubmitted(response.createdAt);
     if (column.key === COLUMN_KEYS.via) return response.spellName.trim() !== "" ? response.spellName.trim() : "Direct link";
     if (column.key === COLUMN_KEYS.source) return sourceLabel(response.source, response.sourceCreator);
     if (column.key.startsWith("q:")) return byQuestion.get(column.key) ?? "";
@@ -248,3 +256,25 @@ export const parseSheetReference = (input: string): SheetReference | null => {
   return null;
 };
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "13 Sep 2026, 4:12 PM IST" - the date AND time the form was filled, in the wall-clock time the team lives in. */
+export const formatSubmittedIst = (iso: string): string => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  const hour24 = Number(part("hour")) % 24;
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  const month = MONTHS[Number(part("month")) - 1] ?? "";
+  return `${part("day")} ${month} ${part("year")}, ${hour12}:${part("minute")} ${hour24 >= 12 ? "PM" : "AM"} IST`;
+};

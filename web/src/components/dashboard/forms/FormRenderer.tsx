@@ -11,6 +11,7 @@ import {
   visibleQuestions,
 } from "@/data/forms";
 import type { FormQuestion, LogoutForm, ResponseAnswer } from "@/data/forms";
+import StayConnected from "@/components/site/StayConnected";
 import { cn } from "@/lib/utils";
 
 import PhotoUploadControl, { isPhotoList, photosIssue, readyPhotoUrls } from "./PhotoUploadControl";
@@ -431,6 +432,15 @@ function SuccessScreen({ form, preview }: { form: LogoutForm; preview: boolean }
             Preview only - nothing was recorded
           </p>
         )}
+        {/* Every thank-you page ends with the stay-connected sign-off (2026-09-29). */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5, ease: EASE }}
+          className="mx-auto mt-8 w-full max-w-[400px]"
+        >
+          <StayConnected />
+        </motion.div>
       </div>
     </div>
   );
@@ -638,11 +648,10 @@ function ConversationalFlow({ form, answers, setValue, onFinish, submitting, sub
       </div>
 
       {/* Footer nav */}
-      <div className="flex items-center justify-between border-t border-cream/[0.05] px-5 py-3">
-        <span className="font-serif text-[12px] italic text-cream/30">
-          Logout Spells <span className="text-gold/50">✦</span>
-        </span>
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-4 border-t border-cream/[0.05] px-5 py-3">
+        {/* The stay-connected sign-off stays in view under every question (2026-09-29). */}
+        <StayConnected variant="inline" className="min-w-0 flex-1" />
+        <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={back}
@@ -761,6 +770,8 @@ function TraditionalFlow({ form, answers, setValue, onFinish, submitting, submit
             {submitError}
           </p>
         )}
+        {/* Every form ends with the stay-connected sign-off (2026-09-29). */}
+        <StayConnected className="mt-8" />
         <p className="mt-4 font-serif text-[12.5px] italic text-cream/30">
           Logout Spells <span className="text-gold/50">✦</span>
         </p>

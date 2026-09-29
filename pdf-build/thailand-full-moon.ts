@@ -6,6 +6,7 @@ import fontkit from "@pdf-lib/fontkit";
 import * as mupdf from "mupdf";
 import trip from "./thailand-full-moon-v2.json";
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
+import { stampConnectFooter, withoutConnectLinks } from "./connect-footer";
 
 const W = 595.28;
 const H = 841.89;
@@ -214,6 +215,8 @@ export async function buildFullMoonGrimoire(): Promise<Uint8Array> {
     A: { Type: "Action", S: "URI", URI: PDFString.of(websiteUrl) },
   }))]));
   footer(final, 10, "LOGOUT SPELLS · THAILAND FULL MOON");
+  // Every page ends with the stay-connected strip (2026-09-29).
+  await stampConnectFooter(doc, { font: semi, color: MUTED, accent: LIGHT });
   return doc.save();
 }
 
@@ -244,7 +247,8 @@ export function verifyFullMoonGrimoire(bytes: Uint8Array): void {
       if (day.note) assert(compact(t).includes(compact(day.note)));
     }
     const links = p.getLinks();
-    assert.deepEqual(links.map((link) => link.getURI()), i === 9 ? [websiteUrl] : []);
+    assert.deepEqual(withoutConnectLinks(links.map((link) => link.getURI())), i === 9 ? [websiteUrl] : []);
+    assert.equal(links.length, i === 9 ? 3 : 2, `Page ${i + 1}: stay-connected links missing`);
     if (i === 9) [64, H - 122, W - 64, H - 78].forEach((n, j) => assert(Math.abs(n - links[0].getBounds()[j]) < 0.01));
     const pix = p.toPixmap(mupdf.Matrix.scale(1.5, 1.5), mupdf.ColorSpace.DeviceRGB, false, true);
     writeFileSync(`.cache/full-moon-v2-review-p${i + 1}.png`, pix.asPNG());

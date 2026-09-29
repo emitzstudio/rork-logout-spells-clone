@@ -128,15 +128,28 @@ sets the link to `error` with founder-facing copy (share with `<email>`, API
 not enabled, not found, rate-limited) and the sweep retries on a growing
 backoff up to 8 attempts.
 
-**0108 — no bookkeeping columns.** The sheet carries only the answers and
-provenance: no `Submitted At`, no `Submission ID`. "Already mirrored?" is
+**0111 — Submitted At is back (first column).** Every mirrored row starts
+with `Submitted At`: the date AND time the form was filled, in IST
+("13 Sep 2026, 4:12 PM IST", `formatSubmittedIst`). Fresh tabs get it in the
+header; tabs connected between 0108 and 0111 get a column INSERTED at A on
+their next sync (all existing columns keep their order and content), and the
+blank cells of rows mirrored earlier are back-filled by matching each row's
+answers + provenance to the response with the same values, in submission
+order — rows the founder edited, or that match nothing, stay blank rather than
+guessed. "Sync now" reports `backfilled`. Verified live 2026-09-29 on all six
+connected tabs (11 + 73 + 161 + 71 + 50 rows back-filled; the first tab had
+already adopted the column on its first run; a second run is a no-op).
+
+**0108 — no Submission ID column.** The sheet carries the answers and
+provenance (and, since 0111, Submitted At) but never a `Submission ID`. "Already mirrored?" is
 owned by the queue — a job settles `done` right after its row is appended, and
 a reconnect to the SAME tab calls `enqueue_form_sheet_backfill(_form_id,
 _reset_done := false)`, which leaves settled jobs alone (a different tab
 re-files everything). Tabs connected before 0108 are tidied once by the
-function: a stored `__submitted` / `__id` column whose header cell still reads
-exactly what we wrote is deleted from the sheet and dropped from the stored
-layout; a header the founder renamed becomes an ordinary foreign column.
+function: a stored `__id` column whose header cell still reads exactly what we
+wrote is deleted from the sheet and dropped from the stored layout; a header
+the founder renamed becomes an ordinary foreign column. (A legacy `Submitted At`
+header is simply re-adopted as the live column since 0111.)
 Verified live 2026-09-27 on the one connected form (77 rows): the two columns
 left the sheet and the layout, `synced_count` unchanged, a same-tab reconnect
 re-filed 0 jobs.

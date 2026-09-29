@@ -4,9 +4,10 @@
  * helpers.
  *
  * The rules under test:
- *  · a sheet's header follows the form - the switched-on questions in form
- *    order, orphaned answered questions, then provenance. No Submitted At and
- *    no Submission ID column (0108) - the queue owns "already mirrored?";
+ *  · a sheet's header follows the form - Submitted At first (0111: the date
+ *    and time the form was filled, IST), the switched-on questions in form
+ *    order, orphaned answered questions, then provenance. No Submission ID
+ *    column (0108) - the queue owns "already mirrored?";
  *  · reconciliation never reorders or drops a live column: founder-moved
  *    columns are matched by text, renamed questions follow the form unless
  *    the founder edited the cell, foreign columns are preserved and left
@@ -23,6 +24,7 @@ import {
   columnLetter,
   desiredColumns,
   FIXED_HEADERS,
+  formatSubmittedIst,
   parseSheetReference as parseInFunction,
   readAnswers,
   reconcileColumns,
@@ -57,17 +59,17 @@ const response = (overrides: Partial<SheetResponse> = {}): SheetResponse => ({
 });
 
 describe("desiredColumns", () => {
-  it("follows the form: switched-on questions in order, then via - no bookkeeping columns", () => {
+  it("follows the form: Submitted At first, switched-on questions in order, then via - never a Submission ID", () => {
     const headers = desiredColumns(form, []).map((c) => c.header);
     expect(headers).toEqual([
+      "Submitted At",
       "What should we call you?",
       "Drop your digits!",
       "Why do you want to log out with me?",
       "Submitted via",
     ]);
-    expect(headers).not.toContain("Submitted At");
     expect(headers).not.toContain("Submission ID");
-    expect(Object.values(FIXED_HEADERS)).toEqual(["Submitted via", "Source"]);
+    expect(Object.values(FIXED_HEADERS)).toEqual(["Submitted At", "Submitted via", "Source"]);
   });
 
   it("keeps a column for answered questions the form no longer asks, and adds Source for enquiry forms", () => {
@@ -76,6 +78,7 @@ describe("desiredColumns", () => {
     });
     const headers = desiredColumns({ ...form, isEnquiry: true }, [orphan]).map((c) => c.header);
     expect(headers).toEqual([
+      "Submitted At",
       "What should we call you?",
       "Drop your digits!",
       "Why do you want to log out with me?",
@@ -87,7 +90,7 @@ describe("desiredColumns", () => {
 
   it("gives untitled questions a positional fallback header", () => {
     const columns = desiredColumns({ isEnquiry: false, questions: [{ id: "q-blank", title: "   " }] }, []);
-    expect(columns[0]).toEqual({ key: "q:q-blank", header: "Question 1" });
+    expect(columns[1]).toEqual({ key: "q:q-blank", header: "Question 1" });
   });
 });
 
@@ -126,7 +129,7 @@ describe("reconcileColumns", () => {
     };
     const result = reconcileColumns(desired.map((c) => c.header), desired, desiredColumns(renamed, []));
     expect(result.headerChanged).toBe(true);
-    expect(result.columns[1]).toEqual({ key: "q:q-phone", header: "Phone number" });
+    expect(result.columns[2]).toEqual({ key: "q:q-phone", header: "Phone number" });
   });
 
   it("the founder's own header wording wins over a form rename", () => {
@@ -136,13 +139,13 @@ describe("reconcileColumns", () => {
       questions: form.questions.map((q) => (q.id === "q-phone" ? { ...q, title: "Phone number" } : q)),
     };
     const result = reconcileColumns(cells, desired, desiredColumns(renamed, []));
-    expect(result.columns[1]).toEqual({ key: "q:q-phone", header: "Mobile (WhatsApp)" });
+    expect(result.columns[2]).toEqual({ key: "q:q-phone", header: "Mobile (WhatsApp)" });
     expect(result.headerChanged).toBe(false);
   });
 
   it("columns the founder moved are matched by text, foreign columns are preserved", () => {
     /* Founder dragged "Submitted via" to column A and inserted a "Notes" column. */
-    const cells = ["Submitted via", "What should we call you?", "Notes", "Drop your digits!", "Why do you want to log out with me?"];
+    const cells = ["Submitted via", "What should we call you?", "Notes", "Drop your digits!", "Why do you want to log out with me?", "Submitted At"];
     const result = reconcileColumns(cells, desired, desired);
     expect(result.columns.map((c) => c.key)).toEqual([
       COLUMN_KEYS.via,
@@ -150,17 +153,19 @@ describe("reconcileColumns", () => {
       "x:2",
       "q:q-phone",
       "q:q-why",
+      COLUMN_KEYS.submitted,
     ]);
     expect(result.headerChanged).toBe(false);
   });
 
   it("a moved column is never claimed twice by the positional fallback", () => {
     /* "Drop your digits!" moved to the end; its old slot now holds a founder column. */
-    const cells = ["What should we call you?", "Team notes", "Why do you want to log out with me?", "Submitted via", "Drop your digits!"];
+    const cells = ["Submitted At", "What should we call you?", "Team notes", "Why do you want to log out with me?", "Submitted via", "Drop your digits!"];
     const result = reconcileColumns(cells, desired, desired);
     expect(result.columns.map((c) => c.key)).toEqual([
+      COLUMN_KEYS.submitted,
       "q:q-name",
-      "x:1",
+      "x:2",
       "q:q-why",
       COLUMN_KEYS.via,
       "q:q-phone",
@@ -168,14 +173,22 @@ describe("reconcileColumns", () => {
     expect(result.columns.filter((c) => c.key === "q:q-phone")).toHaveLength(1);
   });
 
-  it("a sheet connected before 0108 keeps its Submitted At / Submission ID headers as foreign, never-written columns", () => {
+  it("a sheet connected before 0108 re-adopts its Submitted At header by text; Submission ID stays a foreign, never-written column", () => {
     const legacy = ["Submitted At", "What should we call you?", "Drop your digits!", "Why do you want to log out with me?", "Submitted via", "Submission ID"];
     const result = reconcileColumns(legacy, [], desired);
-    expect(result.columns.map((c) => c.key)).toEqual(["x:0", "q:q-name", "q:q-phone", "q:q-why", COLUMN_KEYS.via, "x:5"]);
+    expect(result.columns.map((c) => c.key)).toEqual([COLUMN_KEYS.submitted, "q:q-name", "q:q-phone", "q:q-why", COLUMN_KEYS.via, "x:5"]);
     expect(result.headerChanged).toBe(false);
     const row = buildRow(result.columns, response());
-    expect(row[0]).toBe("");
+    expect(row[0]).toBe("13 Sep 2026, 4:12 PM IST");
     expect(row[5]).toBe("");
+  });
+
+  it("a sheet connected between 0108 and 0111 (no Submitted At header) gets the column appended by reconcile - the function inserts it first instead", () => {
+    const between = ["What should we call you?", "Drop your digits!", "Why do you want to log out with me?", "Submitted via"];
+    const stored = desired.filter((c) => c.key !== COLUMN_KEYS.submitted);
+    const result = reconcileColumns(between, stored, desired);
+    expect(result.headerChanged).toBe(true);
+    expect(result.columns.map((c) => c.key)).toEqual(["q:q-name", "q:q-phone", "q:q-why", COLUMN_KEYS.via, COLUMN_KEYS.submitted]);
   });
 
   it("trailing blank header cells are ignored, a blank interior cell becomes a foreign column", () => {
@@ -189,7 +202,7 @@ describe("reconcileColumns", () => {
 });
 
 describe("buildRow", () => {
-  it("aligns every value to its column and leaves foreign columns blank - never the id or timestamp", () => {
+  it("aligns every value to its column and leaves foreign columns blank - never the id", () => {
     const columns: SheetColumn[] = [
       { key: "q:q-name", header: "Name" },
       { key: "x:1", header: "Notes" },
@@ -202,6 +215,18 @@ describe("buildRow", () => {
     expect(row).toEqual(["Asha", "", "+91 98765 43210", "", "The Bir Spell", "Creator · vidushi"]);
     expect(row).not.toContain("11111111-1111-4111-8111-111111111111");
     expect(row.some((cell) => cell.includes("2026"))).toBe(false);
+  });
+
+  it("writes Submitted At as the IST date and time the form was filled (0111)", () => {
+    const columns: SheetColumn[] = [
+      { key: COLUMN_KEYS.submitted, header: "Submitted At" },
+      { key: "q:q-name", header: "Name" },
+    ];
+    expect(buildRow(columns, response())).toEqual(["13 Sep 2026, 4:12 PM IST", "Asha"]);
+    expect(formatSubmittedIst("2026-09-13T18:30:00.000Z")).toBe("14 Sep 2026, 12:00 AM IST");
+    expect(formatSubmittedIst("2026-01-05T06:30:00.000Z")).toBe("5 Jan 2026, 12:00 PM IST");
+    expect(formatSubmittedIst("not a date")).toBe("not a date");
+    expect(buildRow(columns, response(), () => "custom")).toEqual(["custom", "Asha"]);
   });
 
   it("direct submissions read “Direct link”; unattributed sources are blank", () => {

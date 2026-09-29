@@ -1,6 +1,7 @@
 import { PDFDocument, PDFName, PDFString, clip, endPath, popGraphicsState, pushGraphicsState, rectangle, rgb, type PDFFont, type PDFImage, type PDFPage, type RGB } from "pdf-lib";
 import { brochurePointers, type BrochurePointer } from "@/data/brochurePointers";
 import type { BrochureSection, SpellBrochure } from "@/data/spellBrochure";
+import { drawConnectFooter, type ConnectFooterIcons } from "@/lib/connectFooterPdf";
 
 const W = 595.28;
 const H = 841.89;
@@ -32,6 +33,9 @@ export interface GrimoireArtwork {
   logo?: Uint8Array;
   fadeUp?: Uint8Array;
   fadeDown?: Uint8Array;
+  /** The gold butterfly / bee marks of the stay-connected strip (the words still print without them). */
+  connectButterfly?: Uint8Array;
+  connectBee?: Uint8Array;
   images?: ReadonlyMap<string, Uint8Array>;
 }
 
@@ -48,6 +52,7 @@ export class GrimoirePdf {
   private logo?: PDFImage;
   private fadeUp?: PDFImage;
   private fadeDown?: PDFImage;
+  private connectIcons?: ConnectFooterIcons;
 
   constructor(private readonly doc: PDFDocument, private readonly fonts: GrimoireFonts, private readonly artwork: GrimoireArtwork, private readonly pointerGap = 22) {}
 
@@ -55,7 +60,13 @@ export class GrimoirePdf {
     const optionalPng = async (bytes?: Uint8Array): Promise<PDFImage | undefined> => {
       try { return bytes ? await this.doc.embedPng(bytes) : undefined; } catch { return undefined; }
     };
-    [this.logo, this.fadeUp, this.fadeDown] = await Promise.all([optionalPng(this.artwork.logo), optionalPng(this.artwork.fadeUp), optionalPng(this.artwork.fadeDown)]);
+    let butterfly: PDFImage | undefined;
+    let bee: PDFImage | undefined;
+    [this.logo, this.fadeUp, this.fadeDown, butterfly, bee] = await Promise.all([
+      optionalPng(this.artwork.logo), optionalPng(this.artwork.fadeUp), optionalPng(this.artwork.fadeDown),
+      optionalPng(this.artwork.connectButterfly), optionalPng(this.artwork.connectBee),
+    ]);
+    if (butterfly && bee) this.connectIcons = { butterfly, bee };
     for (const [url, bytes] of this.artwork.images ?? []) {
       try { this.images.set(url, await this.doc.embedJpg(bytes)); } catch { /* Optional photos never block the text. */ }
     }
@@ -375,11 +386,14 @@ export class GrimoirePdf {
       let size = 6.8;
       while (this.width(footer, size, this.fonts.semi, 1) > 490 && size > 4) size -= 0.2;
       this.text(footer, (W - this.width(footer, size, this.fonts.semi, 1)) / 2, 33, size, this.fonts.semi, MUTED, 1);
-      const rects = [[48, 22, W - 48, 54]];
+      // The page-number footer links to the spell page; the strip beneath it carries its own two links.
+      const rects = [[48, 30, W - 48, 54]];
       const action = this.actionAreas.get(page);
       if (action) rects.push(action);
       const annotations = rects.map((rect) => this.doc.context.register(this.doc.context.obj({ Type: "Annot", Subtype: "Link", Rect: rect, Border: [0, 0, 0], A: { Type: "Action", S: "URI", URI: PDFString.of(pageUrl) } })));
       page.node.set(PDFName.of("Annots"), this.doc.context.obj(annotations));
+      // Every page ends with the stay-connected sign-off (2026-09-29) - the default for every generated PDF.
+      drawConnectFooter(this.doc, page, { font: this.fonts.semi, color: MUTED, accent: GOLD_LIGHT, icons: this.connectIcons, pdf: { PDFName, PDFString } });
     });
   }
 }
