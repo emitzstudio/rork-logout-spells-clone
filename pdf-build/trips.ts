@@ -170,6 +170,8 @@ export type TripSpec = {
   final: FinalSpec;
   /** Optional JSON spec for the previous-spells and reviews page inserted before booking. */
   memoriesFile?: string;
+  /** Overrides the memories JSON footer so the page number follows this brochure's own count. */
+  memoriesFooter?: string;
 };
 
 /* ------------------------------- Helpers -------------------------------- */
@@ -981,7 +983,7 @@ async function buildTrip(spec: TripSpec): Promise<void> {
     }
 
     dt(p, memories.closing, { x: W / 2 - hand.widthOfTextAtSize(memories.closing, 16) / 2, y: 72, font: hand, size: 16, color: GOLD_LIGHT, rotate: -1.5 });
-    footerLabel(p, memories.footer);
+    footerLabel(p, spec.memoriesFooter ?? memories.footer);
   }
 
   /* ------------------------------ Final page ----------------------------- */
@@ -1322,10 +1324,13 @@ const vof: TripSpec = {
 };
 
 /* ================================ JIBHI ================================== */
+/* v2 (2026-09-29): the generic previous-spells page joins as page 07, right before booking. */
 const jibhi: TripSpec = {
-  fileName: "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026.pdf",
+  fileName: "Logout-Spells-Jibhi-Kavya-1-4-Oct-2026-v2.pdf",
   docTitle: "Logout Spells · The Spell to the Himalayas · Jibhi with Kavya Lilhare",
   docSubject: "1 - 4 October 2026 · 4 days · Jibhi, Shoja, Jalori, Tirthan Valley and Bahu Village · itinerary and booking",
+  memoriesFile: "img/spell-memories/sources.json",
+  memoriesFooter: "07 · THE CIRCLE BEFORE YOURS",
   cover: {
     img: "img2/final/jb-cover.jpg",
     eyebrow: "THE SPELL TO THE HIMALAYAS",

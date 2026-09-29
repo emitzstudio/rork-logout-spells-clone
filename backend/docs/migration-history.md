@@ -3146,3 +3146,18 @@ functions are unchanged. No staged migrations remain.
   `__id` gone, `synced_count` 77 unchanged, status `active`; direct
   `enqueue_form_sheet_backfill(form, false)` re-filed 0 and left all 77 `done`
   jobs byte-identical; `auth.users` 6 → 6, jobs 77 → 77. Web tests: 400 pass.
+
+## 0109 — Jibhi brochure v2: previous-spells page (2026-09-29)
+
+- **APPLIED.** Source: [`0109_jibhi_brochure_v2_previous_spells.sql`](../migrations/0109_jibhi_brochure_v2_previous_spells.sql).
+  Guards: published `the-jibhi-spell` hosted by Kavya Lilhare, `pricing.brochureUrl` exactly
+  the v1 URL and `updated_at` = 2026-09-12 10:08:04.836929+00 (idempotent when already v2).
+  Post-asserts: only `pricing.brochureUrl` differs; every other page field and column unchanged.
+- Founder request: add the previous-spells page to the Jibhi PDF as the second-last page.
+  `pdf-build/trips.ts` `jibhi` now sets `memoriesFile: img/spell-memories/sources.json`
+  (the generic circle page already used by Vietnam) with a new `memoriesFooter` override
+  ("07 · THE CIRCLE BEFORE YOURS") so the footer follows Jibhi's own page count.
+  Output `Logout-Spells-Jibhi-Kavya-1-4-Oct-2026-v2.pdf` (8 pages): pages 1-6 and the
+  booking page are pixel-identical to v1 (mupdf render compare); v1 stays published untouched.
+- Live: `/brochures/...-v2.pdf` answered HTTP 200 (4,436,642 bytes) before apply; spell's
+  brochure link now points at v2; `spell_changes` entry `…e3d8` added.
