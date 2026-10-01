@@ -1,10 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import type { AnswerMap } from "@/components/dashboard/forms/FormRenderer";
 import RequestSpotDialog from "@/components/spell/RequestSpotDialog";
 import Page from "@/components/site/Layout";
 import LoadError from "@/components/site/LoadError";
+import SpellBatches from "@/components/spell/SpellBatches";
 import SpellHero from "@/components/spell/SpellHero";
 import StarboyExperience from "@/components/spell/StarboyExperience";
 import {
@@ -23,8 +26,11 @@ import {
   SpellTripHighlights,
 } from "@/components/spell/SpellSections";
 import { useAccount } from "@/data/account/AccountProvider";
+import { batchOptionLabel, batchQuestionOf, batchWindow, fetchSpellBatches, hasBatchChoice } from "@/data/batches";
+import type { SpellBatch } from "@/data/batches";
 import { draftFromSpell } from "@/data/builder";
 import type { SpellDraft } from "@/data/builder";
+import { useFormStore } from "@/data/formStore";
 import { isPublic, useSpellStore } from "@/data/spellStore";
 import { isUuid, supabase } from "@/integrations/supabase/client";
 import { breadcrumbJsonLd, tripJsonLd } from "@/lib/seo";
@@ -40,8 +46,11 @@ export default function SpellPage() {
   const { slug } = useParams<{ slug: string }>();
   const { getBySlug, ready, failed, retry } = useSpellStore();
   const { recordSpellView } = useAccount();
+  const { getFormById } = useFormStore();
 
   const [requestedSpellId, setRequestedSpellId] = useState<string | null>(null);
+  /** The batch the visitor picked on the page - pre-filled in the request form, still editable there. */
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
   const spell = slug ? getBySlug(slug) : undefined;
   const visible = spell !== undefined && isPublic(spell);
@@ -65,6 +74,25 @@ export default function SpellPage() {
     if (!spell || !visible) return null;
     return spell.draft ?? draftFromSpell(spell);
   }, [spell, visible]);
+
+  /* Batches (2026-10-01): a spell with two or more scheduled departures lets the visitor choose one. */
+  const batchesQuery = useQuery({
+    queryKey: ["spell-batches", spellDbId ?? ""],
+    queryFn: () => fetchSpellBatches(spellDbId ?? ""),
+    enabled: spellDbId !== null,
+    staleTime: 30_000,
+  });
+  const batches: SpellBatch[] = useMemo(() => batchesQuery.data ?? [], [batchesQuery.data]);
+  const batchChoice = hasBatchChoice(batches);
+  const selectedBatch = batches.find((batch) => batch.id === selectedBatchId) ?? null;
+  const requestForm = spell?.formId ? getFormById(spell.formId) : undefined;
+  const batchAnswers = useMemo<AnswerMap | undefined>(() => {
+    if (selectedBatch === null || requestForm === undefined) return undefined;
+    const question = batchQuestionOf(requestForm);
+    if (question === undefined) return undefined;
+    const label = batchOptionLabel(question, selectedBatch);
+    return label === undefined ? undefined : { [question.id]: label };
+  }, [selectedBatch, requestForm]);
 
   if (!ready && !failed && !spell) {
     return (
@@ -96,6 +124,15 @@ export default function SpellPage() {
 
   const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
   const openBooking = (): void => setRequestedSpellId(spell.id);
+  /* With several batches the hero and strip speak for the whole window; the picked batch takes over. */
+  const pageDraft: SpellDraft = batchChoice
+    ? {
+        ...draft,
+        dates: selectedBatch !== null ? selectedBatch.label : batchWindow(batches),
+        maxSeats: selectedBatch !== null ? selectedBatch.seatsTotal : 0,
+      }
+    : draft;
+  const pageSeatsLeft = batchChoice ? (selectedBatch !== null ? Math.max(0, selectedBatch.seatsTotal - selectedBatch.seatsBooked) : null) : seatsLeft;
 
   return (
     /* SpellHero carries the back orb inside its badge row - no second orb (M11.5). */
@@ -126,8 +163,9 @@ export default function SpellPage() {
       {spell.slug === "the-starboy-spell" ? (
         <StarboyExperience draft={draft} onBook={openBooking} />
       ) : <>
-      <SpellHero draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
-      <BookingStrip draft={draft} seatsLeft={seatsLeft} onBook={openBooking} />
+      <SpellHero draft={pageDraft} seatsLeft={pageSeatsLeft} onBook={openBooking} />
+      <BookingStrip draft={pageDraft} seatsLeft={pageSeatsLeft} onBook={openBooking} />
+      <SpellBatches draft={draft} batches={batches} selectedId={selectedBatchId} onSelect={setSelectedBatchId} onBook={openBooking} />
       <SpellAbout draft={draft} />
       <SpellQuickInfo draft={draft} />
       <SpellHost draft={draft} />
@@ -143,9 +181,10 @@ export default function SpellPage() {
       </>}
 
       <RequestSpotDialog
-        key={spell.id}
+        key={`${spell.id}:${selectedBatchId ?? ""}`}
         open={requestedSpellId === spell.id}
         spell={spell}
+        initialAnswers={batchAnswers}
         onClose={() => setRequestedSpellId(null)}
       />
     </Page>

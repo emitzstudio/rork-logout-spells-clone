@@ -1,4 +1,5 @@
 import FormDialog from "@/components/dashboard/forms/FormDialog";
+import type { AnswerMap } from "@/components/dashboard/forms/FormRenderer";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useFormStore } from "@/data/formStore";
 import type { ManagedSpell } from "@/data/spells";
@@ -6,16 +7,18 @@ import type { ManagedSpell } from "@/data/spells";
 interface RequestSpotDialogProps {
   open: boolean;
   spell: ManagedSpell;
+  /** Answers the page already knows (the picked batch) - pre-filled in the form, still editable. */
+  initialAnswers?: AnswerMap;
   onClose: () => void;
 }
 
 /** Opens only the spell's saved published form, never the old booking choice. */
-export default function RequestSpotDialog({ open, spell, onClose }: RequestSpotDialogProps) {
+export default function RequestSpotDialog({ open, spell, initialAnswers, onClose }: RequestSpotDialogProps) {
   const { getFormById, ready, failed, retry } = useFormStore();
   const form = spell.formId ? getFormById(spell.formId) : undefined;
 
   if (form?.status === "published") {
-    return <FormDialog key={form.id} open={open} form={form} spell={spell} onClose={onClose} />;
+    return <FormDialog key={form.id} open={open} form={form} spell={spell} initialAnswers={initialAnswers} onClose={onClose} />;
   }
 
   const loading = Boolean(spell.formId) && !ready && !failed;

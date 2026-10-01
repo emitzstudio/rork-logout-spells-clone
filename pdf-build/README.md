@@ -41,6 +41,10 @@ bun run prepare-goa-migration.ts        # insert-only 0107 from goa-v1.json + go
 bun run trips.ts jibhi --publish        # Jibhi v4: the founder's step-by-step days from jibhi-v4-content.ts (immutable file)
 bun run verify-jibhi-v4.ts --live       # 31 supplied lines in order, 2 nights / 3 days, strip, QR, published + deployed copies
 bun run prepare-jibhi-v4-migration.ts   # 0112 from jibhi-v4-content.ts; never touches production
+bun run curated-grimoires.ts --spiti-batches --draft    # Winter Spiti v3: the three dated batches from winter-spiti-batches.ts, to .cache
+bun run curated-grimoires.ts --spiti-batches --publish  # immutable v3 copy here and in the public brochures folder (v1/v2 untouched)
+bun run curated-grimoires.ts --spiti-batches --verify-existing  # batches page in order, no TBA copy, strip, links, bounds
+bun run prepare-spiti-batches-migration.ts  # 0113 from winter-spiti-batches.ts; never touches production
 ```
 
 Editions in `index.ts` share the original Grimoire renderer and baseline copy.

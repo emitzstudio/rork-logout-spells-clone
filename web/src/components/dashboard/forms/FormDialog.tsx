@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import FormRenderer from "@/components/dashboard/forms/FormRenderer";
+import type { AnswerMap } from "@/components/dashboard/forms/FormRenderer";
 import type { LogoutForm } from "@/data/forms";
 import { useFormStore } from "@/data/formStore";
 import type { ManagedSpell } from "@/data/spells";
@@ -15,6 +16,8 @@ interface FormDialogProps {
   form: LogoutForm;
   /** The spell the visitor is applying through - null for standalone use. */
   spell: ManagedSpell | null;
+  /** Answers the spell page already collected (the picked batch) - pre-filled, still editable. */
+  initialAnswers?: AnswerMap;
   onClose: () => void;
 }
 
@@ -22,7 +25,7 @@ interface FormDialogProps {
  * A spell's attached application form, as a dialog. Submissions are filed
  * into the response inbox with the spell's name attached.
  */
-export default function FormDialog({ open, form, spell, onClose }: FormDialogProps) {
+export default function FormDialog({ open, form, spell, initialAnswers, onClose }: FormDialogProps) {
   const { addResponse } = useFormStore();
 
   /* One upload folder per dialog - every photo this visitor attaches lands together. */
@@ -107,6 +110,7 @@ export default function FormDialog({ open, form, spell, onClose }: FormDialogPro
                   })
                 }
                 uploadPhoto={uploadPhoto}
+                initialAnswers={initialAnswers}
               />
             </div>
           </motion.div>

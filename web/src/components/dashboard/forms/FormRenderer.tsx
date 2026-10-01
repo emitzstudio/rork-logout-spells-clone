@@ -797,6 +797,11 @@ interface FormRendererProps {
    * the submission records nothing for them.
    */
   uploadPhoto?: (file: File) => Promise<string>;
+  /**
+   * Answers the page already knows (a batch picked on the spell page, for
+   * example), keyed by question id. They arrive pre-filled and stay editable.
+   */
+  initialAnswers?: AnswerMap;
   className?: string;
 }
 
@@ -806,8 +811,8 @@ interface FormRendererProps {
  * preview, the public /forms/{slug} page and spell booking dialogs, so what
  * the founder previews is exactly what gets published.
  */
-export default function FormRenderer({ form, onSubmit, uploadPhoto, className }: FormRendererProps) {
-  const [answers, setAnswers] = useState<AnswerMap>({});
+export default function FormRenderer({ form, onSubmit, uploadPhoto, initialAnswers, className }: FormRendererProps) {
+  const [answers, setAnswers] = useState<AnswerMap>(() => ({ ...(initialAnswers ?? {}) }));
   const [done, setDone] = useState<boolean>(false);
   const [sending, setSending] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);

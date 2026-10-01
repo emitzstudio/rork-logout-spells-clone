@@ -5,11 +5,18 @@ import { PDFDocument, PDFFont, PDFImage, PDFPage, PDFName, PDFString, rgb, pushG
 import fontkit from "@pdf-lib/fontkit";
 import * as mupdf from "mupdf";
 import thailand from "./thailand-full-moon-v3.json";
-import spiti from "./winter-spiti-v1.json";
+import spitiV1 from "./winter-spiti-v1.json";
 import { saveGrimoireCopy } from "./starboy-grimoire-template";
 import { stampConnectFooter, withoutConnectLinks } from "./connect-footer";
+import { SPITI_BATCHES, SPITI_DATES_LINE, batchTitle, longDay, spitiBatchesTrip } from "./winter-spiti-batches";
 
-type Edition = "thailand" | "spiti";
+/**
+ * `spiti` is the frozen "Dates TBA" edition (v1/v2, 0101/0111); `spiti-batches` is the same
+ * Grimoire with the three dated batches (v3, 0113): cover and closing lines carry the batch
+ * window, a batches page follows the stays, and the price note says the price is per batch.
+ */
+type Edition = "thailand" | "spiti" | "spiti-batches";
+const spitiTrip = (edition: Edition) => (edition === "spiti-batches" ? spitiBatchesTrip : spitiV1);
 const W = 595.28;
 const H = 841.89;
 const hex = (value: string) => { const n = parseInt(value.slice(1), 16); return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255); };
@@ -19,7 +26,9 @@ const compact = (value: string) => printable(value).normalize("NFKC").replace(/\
 
 /** Builds only the requested new edition; historical PDFs and generators are untouched. */
 export async function buildCuratedGrimoire(edition: Edition): Promise<Uint8Array> {
-  const isSpiti = edition === "spiti";
+  const isSpiti = edition !== "thailand";
+  const withBatches = edition === "spiti-batches";
+  const spiti = spitiTrip(edition);
   const trip = isSpiti ? spiti : thailand;
   assert.equal(trip.hotels.reduce((sum, h) => sum + h.nights, 0), trip.nights);
   const doc = await PDFDocument.create();
@@ -27,8 +36,9 @@ export async function buildCuratedGrimoire(edition: Edition): Promise<Uint8Array
   doc.setTitle(`${trip.name} · Grimoire edition`);
   doc.setAuthor("Logout Spells");
   doc.setSubject(`${trip.dates} · ${trip.durationDays} days / ${trip.nights} nights`);
-  doc.setCreationDate(new Date("2026-09-17T00:00:00Z"));
-  doc.setModificationDate(new Date("2026-09-17T00:00:00Z"));
+  const stamp = new Date(withBatches ? "2026-10-01T00:00:00Z" : "2026-09-17T00:00:00Z");
+  doc.setCreationDate(stamp);
+  doc.setModificationDate(stamp);
   const font = (name: string, subset = false) => doc.embedFont(readFileSync(`fonts/${name}.ttf`), { subset });
   const [serif, italic, sans, semi] = await Promise.all([
     font("cormorant-garamond-v21-latin_latin-ext-500"), font("cormorant-garamond-v21-latin_latin-ext-600italic"),
@@ -109,13 +119,13 @@ export async function buildCuratedGrimoire(edition: Edition): Promise<Uint8Array
   center(cover, isSpiti ? "SPITI VALLEY" : "FULL MOON", 377, isSpiti ? 57 : 64, serif, CREAM, 2);
   center(cover, "SPELL", 335, 29, serif, CREAM, 10);
   rule(cover, 308, 235, W - 235);
-  center(cover, trip.dates.toUpperCase(), 276, 10.5, semi, LIGHT, 2.5);
+  center(cover, trip.dates.toUpperCase(), 276, withBatches ? 9.6 : 10.5, semi, LIGHT, withBatches ? 1.6 : 2.5);
   center(cover, isSpiti ? "DELHI TO DELHI · VOLVO + TEMPO TRAVELLER" : "KOH SAMUI + KOH PHANGAN", 249, 8, semi, MUTED, 0.8);
   center(cover, `${trip.durationDays} DAYS / ${trip.nights} NIGHTS`, 213, 13, serif, CREAM, 2.4);
   center(cover, isSpiti ? "6 ACCOMMODATION NIGHTS · DELHI ARRIVAL DAY 8" : "10 ADULTS · 5 ROOMS · TWIN / DOUBLE", 189, 7.6, semi, LIGHT, 0.6);
   center(cover, isSpiti ? "INR 22,999 TRIPLE / INR 24,999 DOUBLE" : "PRICE TBA", 151, 9.6, semi, LIGHT, 0.7);
   if (isSpiti) {
-    center(cover, "Per person · Outbound Volvo may leave the previous evening", 132, 7.1);
+    center(cover, withBatches ? "Per person, every batch · Outbound Volvo may leave the previous evening" : "Per person · Outbound Volvo may leave the previous evening", 132, 7.1);
     center(cover, "Leave with mountain stories.", 101, 17, italic, CREAM);
     center(cover, "Carry the quiet home.", 81, 17, italic, CREAM);
   } else {
@@ -226,6 +236,30 @@ export async function buildCuratedGrimoire(edition: Edition): Promise<Uint8Array
   assert(y >= 84, "Stay details overlap footer");
   footer(stays, "YOUR STAYS · PROPERTIES TO BE CONFIRMED");
 
+  if (withBatches) {
+    // The three batches, one card each: the same seven days and the same prices, three sets of dates.
+    const batches = page();
+    text(batches, "THREE WINDOWS INTO WINTER", 48, 776, 8, semi, LIGHT, 1.4);
+    text(batches, "CHOOSE YOUR BATCH", 48, 724, 35, serif, CREAM, 0.6);
+    y = paragraph(batches, "The same route, the same stays and the same prices in every batch. Each batch leaves Delhi on its departure day and returns early on the morning of its return day.", 48, 692, W - 96, 10.5, 15, sans, LIGHT);
+    y -= 24;
+    for (const b of SPITI_BATCHES) {
+      const height = 118;
+      frame(batches, 48, y - height, W - 96, height, true);
+      batches.drawCircle({ x: 86, y: y - 59, size: 19, color: DEEP, borderColor: GOLD, borderWidth: 0.8 });
+      const number = String(b.number).padStart(2, "0");
+      text(batches, number, 86 - width(number, 13, serif) / 2, y - 64, 13, serif, LIGHT);
+      text(batches, `BATCH ${b.number}`, 124, y - 28, 8, semi, LIGHT, 1.2);
+      text(batches, batchTitle(b), 124, y - 56, 18, serif, CREAM, 0.4);
+      text(batches, `Departs Delhi ${longDay(b.start)}`, 124, y - 78, 9, sans, MUTED);
+      text(batches, `Returns early on the morning of ${longDay(b.end)}`, 124, y - 94, 9, sans, MUTED);
+      y -= height + 16;
+    }
+    y = paragraph(batches, "Pick your batch on the spell page and request your spot; your batch travels with the request. 7 days / 6 accommodation nights in every batch; the return bus night is additional. Exact pickup point and reporting time are shared with your confirmed batch.", 48, y - 6, W - 96, 9, 13);
+    assert(y >= 84, "Batches page overlaps footer");
+    footer(batches, "THREE BATCHES · SAME ROUTE · SAME PRICES");
+  }
+
   if (!isSpiti) {
     const costs = page();
     text(costs, "A LITTLE CLARITY BEFORE YOU GO", 48, 776, 8.5, semi, LIGHT, 1.6);
@@ -286,9 +320,11 @@ export async function buildCuratedGrimoire(edition: Edition): Promise<Uint8Array
 
 /** Verifies every ordered activity, date, meal/stay line, commercial term, page boundary and link. */
 export function verifyCuratedGrimoire(edition: Edition, bytes: Uint8Array): void {
-  const isSpiti = edition === "spiti";
+  const isSpiti = edition !== "thailand";
+  const withBatches = edition === "spiti-batches";
+  const spiti = spitiTrip(edition);
   const trip = isSpiti ? spiti : thailand;
-  const count = isSpiti ? 13 : 12;
+  const count = withBatches ? 14 : isSpiti ? 13 : 12;
   const warnings: string[] = [];
   mupdf.setLog({ warning: (message) => warnings.push(message), error: (message) => warnings.push(message) });
   const doc = mupdf.Document.openDocument(bytes, "application/pdf");
@@ -314,6 +350,18 @@ export function verifyCuratedGrimoire(edition: Edition, bytes: Uint8Array): void
       }
       for (const term of [day.note, day.overnight, ...("meals" in day ? [`Meals: ${day.meals}`, `Stay: ${day.stay}`] : [])]) assert(compact(body).includes(compact(term)), `Missing day detail ${term}`);
     }
+    if (withBatches && i === count - 2) {
+      // The batches page: every batch in order, with its long-form departure and return days.
+      let cursor = 0;
+      for (const b of SPITI_BATCHES) {
+        for (const term of [`BATCH ${b.number}`, batchTitle(b), `Departs Delhi ${longDay(b.start)}`, `Returns early on the morning of ${longDay(b.end)}`]) {
+          const found = compact(body).indexOf(compact(term), cursor);
+          assert(found >= cursor, `Batches page: missing/reordered ${term}`);
+          cursor = found + compact(term).length;
+        }
+      }
+    }
+    if (withBatches) assert(!/DATES TBA|Dates TBA|Applications are not open yet|no payment is requested/.test(body), `Page ${i + 1}: TBA copy remains in the batches edition`);
     const links = p.getLinks();
     assert.deepEqual(withoutConnectLinks(links.map((l) => l.getURI())), i === count - 1 ? [`${trip.website}/live/${trip.slug}`] : []);
     assert.equal(links.length, i === count - 1 ? 3 : 2, `Page ${i + 1}: stay-connected links missing`);
@@ -325,6 +373,11 @@ export function verifyCuratedGrimoire(edition: Edition, bytes: Uint8Array): void
   }
   const all = compact(texts.join(" "));
   const required = [trip.dates, trip.hook, trip.about, trip.route, trip.staySummary, trip.priceNote, trip.closing, ...trip.hotels.flatMap((h) => [h.name, h.room, h.note])];
+  if (withBatches) {
+    assert.equal(trip.dates, SPITI_DATES_LINE);
+    assert.equal(compact(texts[0] ?? "").split(compact(SPITI_DATES_LINE)).length, 2, "Cover carries the batch window once");
+    assert(compact(texts[count - 1] ?? "").includes(compact(SPITI_DATES_LINE)), "Closing page carries the batch window");
+  }
   required.push(...(isSpiti ? [spiti.durationNote, spiti.winterNote, spiti.mealNote, spiti.transportNote, spiti.inclusionNote, ...spiti.highlights.flatMap((h) => [h.title, h.body])] : [thailand.vibe, thailand.leisureNote, thailand.entryNote, thailand.transportNote, ...thailand.inclusions, ...thailand.exclusions, ...thailand.summary]));
   for (const term of required) assert(all.includes(compact(term)), `Missing ${term}`);
   assert(!/30%|GST|TCS|APPLY NOW|20,000|5-star|4-star/i.test(texts.join(" ")), "Unapproved commercial terms");
@@ -334,11 +387,12 @@ export function verifyCuratedGrimoire(edition: Edition, bytes: Uint8Array): void
 }
 
 if (import.meta.main) {
-  const edition: Edition = process.argv.includes("--spiti") ? "spiti" : "thailand";
-  const trip = edition === "spiti" ? spiti : thailand;
+  const edition: Edition = process.argv.includes("--spiti-batches") ? "spiti-batches" : process.argv.includes("--spiti") ? "spiti" : "thailand";
+  const trip = edition === "thailand" ? thailand : spitiTrip(edition);
   const draft = process.argv.includes("--draft");
   assert(!(draft && process.argv.includes("--publish")));
-  // `fileName` is the edition the 0100 / 0101 migrations inserted (frozen); `currentFileName` is the edition linked live since 0111.
+  // `fileName` is the edition the 0100 / 0101 migrations inserted (frozen); `currentFileName` is the edition linked live
+  // since 0111 (v2) - or, for --spiti-batches, the v3 edition 0113 links (the dated batches).
   const output = trip.currentFileName;
   const bytes = process.argv.includes("--verify-existing") ? readFileSync(output) : await buildCuratedGrimoire(edition);
   verifyCuratedGrimoire(edition, bytes);
