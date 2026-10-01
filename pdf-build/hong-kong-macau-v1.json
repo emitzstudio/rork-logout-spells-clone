@@ -1,0 +1,152 @@
+{
+  "id": "25312026-a117-4c3d-9051-311020260001",
+  "departureId": "25312026-a117-4c3d-9051-311020260002",
+  "changeId": "25312026-a117-4c3d-9051-311020260003",
+  "formId": "25312026-a117-4c3d-9051-311020260004",
+  "slug": "the-hong-kong-macau-spell",
+  "name": "The Hong Kong × Macau Spell",
+  "hook": "Harbour lights. Macau by ferry. The Weeknd at Kai Tak. Then Halloween takes the city.",
+  "fileName": "Logout-Spells-Hong-Kong-Macau-25-31-Oct-2026-Grimoire-v1.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "25-31 October 2026",
+  "startDate": "2026-10-25",
+  "endDate": "2026-10-31",
+  "durationDays": 7,
+  "nights": 6,
+  "location": "Hong Kong & Macau",
+  "region": "Hong Kong & Macau",
+  "heroFile": "hkm-avenue-of-stars-v1.jpg",
+  "mobileHeroFile": "hkm-harbour-cover-v1.jpg",
+  "coverCrop": "hkm-cover-v1.jpg",
+  "earlyBird": 115000,
+  "regular": 120000,
+  "taxLine": "2% TCS + 5% GST applicable",
+  "concert": {
+    "artist": "The Weeknd",
+    "venue": "Kai Tak Stadium",
+    "date": "2026-10-30",
+    "time": "8:15 PM"
+  },
+  "imageNote": "AI-generated Hong Kong and Macau-inspired artwork illustrates the atmosphere; it is not photography of the venues, the hotels, the concert or the event.",
+  "inclusions": [
+    "Peak Tram ticket",
+    "Star Ferry ticket",
+    "Hong Kong Disneyland ticket",
+    "Round-trip ferry tickets between Hong Kong and Macau",
+    "5-hour Hong Kong city tour by private car",
+    "4-hour Macau city tour by private car",
+    "Private car at disposal for 5 hours on 30 October",
+    "Private car at disposal for 5 hours on 31 October",
+    "Airport pick-up and drop-off",
+    "Two cars will be provided for all included transportation services"
+  ],
+  "exclusions": [
+    "Visa",
+    "International and domestic flight tickets",
+    "Hotel accommodation",
+    "Travel insurance",
+    "Medical insurance",
+    "Tips and gratuities, if applicable",
+    "Meals unless specifically mentioned",
+    "Personal expenses",
+    "Any activity, transfer, entrance ticket or service not specifically mentioned under inclusions"
+  ],
+  "days": [
+    {
+      "date": "2026-10-25",
+      "title": "Arrival + Hong Kong City",
+      "location": "Hong Kong",
+      "imageFile": "hkm-avenue-of-stars-v1.jpg",
+      "intro": "Land, check in and meet the harbour after dark.",
+      "points": [
+        { "title": "Arrival & check-in", "body": "Arrive in Hong Kong and transfer from the airport to your hotel for check-in." },
+        { "title": "Tsim Sha Tsui & the Star Ferry", "body": "Later, begin exploring the vibrant city of Hong Kong with a visit to Tsim Sha Tsui and the iconic Avenue of Stars. Enjoy a ride on the famous Star Ferry while taking in beautiful views of Victoria Harbour." },
+        { "title": "Symphony of Lights & welcome dinner", "body": "In the evening, witness the spectacular Symphony of Lights illuminating the Hong Kong skyline. End your first day with a welcome dinner followed by an opportunity to experience Hong Kong’s lively nightlife." }
+      ],
+      "overnight": "Overnight stay in Hong Kong."
+    },
+    {
+      "date": "2026-10-26",
+      "title": "Central + Victoria Peak",
+      "location": "Hong Kong",
+      "imageFile": "hkm-victoria-peak-v1.jpg",
+      "intro": "Central’s streets by day, the Peak at sunset, Lan Kwai Fong by night.",
+      "points": [
+        { "title": "Central, PMQ & Soho", "body": "Start your day exploring Hong Kong’s Central district, followed by PMQ and the vibrant streets of Soho." },
+        { "title": "The Peak Tram & Victoria Peak", "body": "Later, board the iconic Peak Tram and make your way to Victoria Peak. Enjoy panoramic views of Hong Kong and Victoria Harbour, especially as the city lights begin to appear around sunset." },
+        { "title": "Lan Kwai Fong", "body": "In the evening, explore Lan Kwai Fong and enjoy Hong Kong’s energetic nightlife." }
+      ],
+      "overnight": "Overnight stay in Hong Kong."
+    },
+    {
+      "date": "2026-10-27",
+      "title": "Hong Kong Disneyland",
+      "location": "Hong Kong Disneyland",
+      "imageFile": "hkm-halloween-castle-v1.jpg",
+      "intro": "A whole day inside the park, in its Halloween season.",
+      "points": [
+        { "title": "A day at the park", "body": "Get ready for a fun-filled day at Hong Kong Disneyland." },
+        { "title": "Themed lands & the Halloween season", "body": "Spend the entire day exploring the themed lands, attractions, rides and entertainment experiences across the park. With Halloween around the corner, enjoy the special Halloween-themed atmosphere and seasonal experiences." },
+        { "title": "The night show", "body": "Stay until the evening to enjoy the night show and magical Disney experience before returning to the hotel." }
+      ],
+      "overnight": "Overnight stay in Hong Kong."
+    },
+    {
+      "date": "2026-10-28",
+      "title": "Hong Kong → Macau",
+      "location": "Hong Kong → Macau",
+      "imageFile": "hkm-ruins-st-pauls-v1.jpg",
+      "intro": "Across the water to Macau: heritage lanes, egg tarts and the Cotai Strip.",
+      "points": [
+        { "title": "Ferry to Macau", "body": "After breakfast, transfer to the ferry terminal and board your ferry from Hong Kong to Macau." },
+        { "title": "Senado Square & the Ruins of St. Paul’s", "body": "Upon arrival, begin exploring Macau with a private city tour. Visit Senado Square and the famous Ruins of St. Paul’s while discovering the city’s unique Portuguese and Chinese heritage." },
+        { "title": "Egg tarts & Taipa Village", "body": "Experience Macau’s food culture and try its famous egg tarts before continuing towards the charming Taipa Village." },
+        { "title": "The Cotai Strip & The Venetian", "body": "Later, explore the spectacular Cotai Strip and The Venetian Macau. Spend the evening experiencing Macau’s nightlife and entertainment." }
+      ],
+      "overnight": "Overnight stay in Macau."
+    },
+    {
+      "date": "2026-10-29",
+      "title": "Macau → Hong Kong",
+      "location": "Macau → Hong Kong",
+      "imageFile": "hkm-coloane-village-v1.jpg",
+      "intro": "Macau’s slow side in the morning, Hong Kong’s Halloween spirit by night.",
+      "points": [
+        { "title": "Coloane Village & Lord Stow’s", "body": "Begin your day with a visit to the peaceful Coloane Village and enjoy the relaxed side of Macau. Stop by the famous Lord Stow’s for its signature Macau-style egg tart." },
+        { "title": "Ferry back to Hong Kong", "body": "Later, board your ferry back to Hong Kong." },
+        { "title": "Free time", "body": "After arriving in Hong Kong, enjoy some free time for shopping, exploring or relaxing." },
+        { "title": "Pre-Halloween dinner & nightlife", "body": "In the evening, get into the Halloween spirit with a pre-Halloween dinner followed by nightlife." }
+      ],
+      "overnight": "Overnight stay in Hong Kong."
+    },
+    {
+      "date": "2026-10-30",
+      "title": "The Weeknd + Halloween Night",
+      "location": "Hong Kong · Kai Tak Stadium",
+      "imageFile": "hkm-kai-tak-concert-v1.jpg",
+      "intro": "Concert night. Kai Tak Stadium. The Weeknd. Then Halloween takes over.",
+      "points": [
+        { "title": "A late breakfast & costume prep", "body": "Enjoy a relaxed morning with a late breakfast before heading out for some shopping and Halloween costume preparation." },
+        { "title": "Afternoon at leisure", "body": "Spend the afternoon at leisure before getting ready for the evening." },
+        { "title": "The Weeknd · Kai Tak Stadium · 8:15 PM", "body": "Enjoy an early dinner and proceed towards Kai Tak Stadium for The Weeknd concert scheduled for 8:15 PM." },
+        { "title": "Halloween party & late night", "body": "After the concert, continue the celebrations with a Halloween party and experience Hong Kong’s late-night clubbing scene." }
+      ],
+      "overnight": "Overnight stay in Hong Kong."
+    },
+    {
+      "date": "2026-10-31",
+      "title": "Halloween Day + Final Night",
+      "location": "Hong Kong",
+      "imageFile": "hkm-halloween-lane-v1.jpg",
+      "intro": "Halloween itself: a slow brunch, costumes on, one last night in the city.",
+      "points": [
+        { "title": "A late brunch", "body": "Start your final day with a relaxed late brunch." },
+        { "title": "Afternoon at leisure", "body": "Enjoy the afternoon at leisure for shopping, exploring the city or picking up any last-minute Halloween essentials." },
+        { "title": "Costumes on", "body": "Later, get ready in your Halloween costumes and head out to experience the city’s Halloween celebrations." },
+        { "title": "The final Halloween night", "body": "Enjoy dinner followed by a final Halloween night out, bringing the Hong Kong × Macau journey to an exciting end." }
+      ],
+      "overnight": ""
+    }
+  ]
+}

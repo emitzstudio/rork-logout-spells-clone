@@ -45,6 +45,11 @@ bun run curated-grimoires.ts --spiti-batches --draft    # Winter Spiti v3: the t
 bun run curated-grimoires.ts --spiti-batches --publish  # immutable v3 copy here and in the public brochures folder (v1/v2 untouched)
 bun run curated-grimoires.ts --spiti-batches --verify-existing  # batches page in order, no TBA copy, strip, links, bounds
 bun run prepare-spiti-batches-migration.ts  # 0113 from winter-spiti-batches.ts; never touches production
+python3 prepare-hong-kong-macau-assets.py   # website JPEGs + Grimoire crops from the reviewed raw Hong Kong x Macau renders (refuses to overwrite)
+bun run hong-kong-macau.ts --draft           # nine-page Hong Kong x Macau Grimoire to .cache, with page renders for review
+bun run hong-kong-macau.ts --publish         # immutable v1 copy here and in the public brochures folder
+bun run hong-kong-macau.ts --verify-existing # every supplied sentence in order, prices, lists, bounds, single website link
+bun run prepare-hong-kong-macau-migration.ts # insert-only 0114 from hong-kong-macau-v1.json + hong-kong-macau-content.ts; never touches production
 ```
 
 Editions in `index.ts` share the original Grimoire renderer and baseline copy.
@@ -79,6 +84,15 @@ link is the website. `goa-v1.json` is the single source for the PDF, the website
 (`goa-content.ts`) and the migration; the verifier asserts all 33 supplied points appear in
 order on the right pages and that no commercial terms, payment requests or arrow glyphs leak
 into print (routes use `›` in the PDF because the embedded fonts have no `→`).
+
+The `hong-kong-macau.ts` edition (The Hong Kong × Macau Spell, 25-31 October 2026) follows The Blinding
+Nights Spell's Grimoire page for page - cover, seven numbered-timeline day pages, a Your Spell Awaits closing page
+with both price cards, the tax line, inclusions / exclusions and an APPLY NOW link to the spell page - with violet
+artwork and a sparing violet ink (title mark, concert-day eyebrow and the live marker) where that edition was
+red. `hong-kong-macau-v1.json` + `hong-kong-macau-content.ts` are the single source for the PDF, the website page,
+the request form and the 0114 migration; `calendar.ts` turns the ISO dates into the house wording. The website's
+concert-poster presentation is theme-driven (`web/src/data/concertThemes.ts`): Starboy red, Hong Kong × Macau
+violet.
 
 The no-stay brochures in `trips.ts` share one renderer. A day may be marked as the
 spell's `spotlight` (gold frame and tag, an hour-by-hour schedule and a good-to-know

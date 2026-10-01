@@ -13,6 +13,7 @@ import { useSiteSettings } from "@/data/siteSettingsStore";
 import { AccountProvider } from "@/data/account/AccountProvider";
 import { BlogStoreProvider } from "@/data/blogStore";
 import { BucketListProvider } from "@/data/bucketList";
+import { isConcertPath } from "@/data/concertThemes";
 import { FormStoreProvider } from "@/data/formStore";
 import { SpellStoreProvider } from "@/data/spellStore";
 import { hasSeenIntro, markIntroSeen } from "@/lib/introGate";
@@ -188,7 +189,8 @@ const AppShell = () => {
   const isReviewInvite = location.pathname.startsWith("/review/");
   /* The traveller space + auth also skip the portal - returning travellers land straight in. */
   const isAccount = isAccountArea(location.pathname);
-  const isStarboy = /^\/(?:live|spell|spells)\/the-starboy-spell\/?$/.test(location.pathname);
+  /* Concert-poster spells carry their own atmosphere: no portal, no starfield. */
+  const isStarboy = isConcertPath(location.pathname);
   const skipPortal = isFormPage || isAccount || isReviewInvite || isStarboy;
   /* M12 - maintenance mode rests the PUBLIC site only. The console, sign-in
      and the traveller space stay reachable (the founder must always be able

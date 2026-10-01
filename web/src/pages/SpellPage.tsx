@@ -28,6 +28,7 @@ import {
 import { useAccount } from "@/data/account/AccountProvider";
 import { batchOptionLabel, batchQuestionOf, batchWindow, fetchSpellBatches, hasBatchChoice } from "@/data/batches";
 import type { SpellBatch } from "@/data/batches";
+import { concertThemeFor } from "@/data/concertThemes";
 import { draftFromSpell } from "@/data/builder";
 import type { SpellDraft } from "@/data/builder";
 import { useFormStore } from "@/data/formStore";
@@ -124,6 +125,8 @@ export default function SpellPage() {
 
   const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
   const openBooking = (): void => setRequestedSpellId(spell.id);
+  /* Concert-poster spells (The Blinding Nights Spell, The Hong Kong × Macau Spell) use their own presentation. */
+  const concertTheme = concertThemeFor(spell.slug);
   /* With several batches the hero and strip speak for the whole window; the picked batch takes over. */
   const pageDraft: SpellDraft = batchChoice
     ? {
@@ -158,10 +161,10 @@ export default function SpellPage() {
         ]),
       ]}
       back={false}
-      theme={spell.slug === "the-starboy-spell" ? "starboy" : undefined}
+      theme={concertTheme?.id}
     >
-      {spell.slug === "the-starboy-spell" ? (
-        <StarboyExperience draft={draft} onBook={openBooking} />
+      {concertTheme !== undefined ? (
+        <StarboyExperience draft={draft} onBook={openBooking} theme={concertTheme} />
       ) : <>
       <SpellHero draft={pageDraft} seatsLeft={pageSeatsLeft} onBook={openBooking} />
       <BookingStrip draft={pageDraft} seatsLeft={pageSeatsLeft} onBook={openBooking} />

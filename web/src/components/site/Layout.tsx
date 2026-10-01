@@ -32,7 +32,7 @@ interface PageProps {
    */
   back?: PageBackConfig | false;
   /** Presentation-only, scoped to one spell; booking and content remain shared. */
-  theme?: "starboy";
+  theme?: "starboy" | "hong-kong-macau";
   children: React.ReactNode;
 }
 
@@ -85,7 +85,7 @@ export default function Page({
 
   return (
     <div data-spell-theme={theme} className="min-h-screen text-cream">
-      {theme !== "starboy" && <Cursor />}
+      {theme === undefined && <Cursor />}
       <Nav />
       <motion.main
         className="relative"
