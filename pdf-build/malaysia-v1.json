@@ -1,0 +1,143 @@
+{
+  "id": "03112026-a117-4c3d-9051-091120260001",
+  "extendedDepartureId": "03112026-a117-4c3d-9051-091120260002",
+  "highlightsDepartureId": "03112026-a117-4c3d-9051-091120260003",
+  "changeId": "03112026-a117-4c3d-9051-091120260004",
+  "formId": "03112026-a117-4c3d-9051-091120260005",
+  "slug": "the-malaysia-spell",
+  "name": "The Malaysia Spell",
+  "hook": "Jalan Alor nights. Batu Caves mornings. The Weeknd at Bukit Jalil. Then the highlands and Penang, if you stay on.",
+  "fileName": "Logout-Spells-Malaysia-3-9-Nov-2026-Grimoire-v1.pdf",
+  "origin": "https://z57wkqd89o09lsi6kc7v1-web.rork.live",
+  "website": "https://www.logoutspells.com",
+  "dates": "3-9 November 2026",
+  "startDate": "2026-11-03",
+  "endDate": "2026-11-09",
+  "durationDays": 7,
+  "nights": 6,
+  "location": "Kuala Lumpur, Cameron Highlands & Penang",
+  "region": "Malaysia",
+  "heroFile": "mys-petronas-klcc-v1.jpg",
+  "mobileHeroFile": "mys-petronas-cover-v1.jpg",
+  "coverCrop": "mys-cover-v1.jpg",
+  "galleryExtras": ["mys-batu-caves-v1.jpg"],
+  "concert": {
+    "artist": "The Weeknd",
+    "venue": "National Stadium Bukit Jalil",
+    "date": "2026-11-04",
+    "time": "8:30 PM",
+    "transit": "Sri Petaling LRT line"
+  },
+  "packages": [
+    {
+      "id": "kl-highlights",
+      "departureId": "03112026-a117-4c3d-9051-091120260003",
+      "name": "Kuala Lumpur Highlights",
+      "founderLabel": "3-Day / 2-Night Kuala Lumpur Highlights (Nov 3 to 5)",
+      "days": 3,
+      "nights": 2,
+      "dates": "3-5 November 2026",
+      "startDate": "2026-11-03",
+      "endDate": "2026-11-05",
+      "summary": "Land at KLIA, Bukit Bintang and the Jalan Alor food crawl, Batu Caves, the show at National Stadium Bukit Jalil, the Petronas Skybridge and KLCC Park, then the airport."
+    },
+    {
+      "id": "city-highlands-heritage",
+      "departureId": "03112026-a117-4c3d-9051-091120260002",
+      "name": "City, Highlands & Heritage",
+      "founderLabel": "Extended 6-Night / 7-Day City, Highlands & Heritage (Nov 3 to 9)",
+      "days": 7,
+      "nights": 6,
+      "dates": "3-9 November 2026",
+      "startDate": "2026-11-03",
+      "endDate": "2026-11-09",
+      "summary": "Everything in Kuala Lumpur Highlights, then the Cameron Highlands, George Town and Penang National Park, flying out of Penang or taking the train back to KLIA."
+    }
+  ],
+  "imageNote": "AI-generated Malaysia-inspired artwork illustrates the atmosphere; it is not photography of the venues, the hotels, the concert or the event.",
+  "days": [
+    {
+      "date": "2026-11-03",
+      "title": "Arrival & Night Market Crawl",
+      "location": "Kuala Lumpur",
+      "imageFile": "mys-jalan-alor-v1.jpg",
+      "intro": "Land, check in and eat your way down Jalan Alor.",
+      "points": [
+        { "title": "Arrival in Kuala Lumpur", "body": "Land at KLIA. Check into Bukit Bintang." },
+        { "title": "Jalan Alor night market crawl", "body": "Street food dinner crawl along Jalan Alor (satay, grilled stingray, coconut ice cream)." }
+      ],
+      "closing": "Night one in Bukit Bintang."
+    },
+    {
+      "date": "2026-11-04",
+      "title": "Batu Caves & Concert Night",
+      "location": "Kuala Lumpur · Bukit Jalil",
+      "imageFile": "mys-bukit-jalil-concert-v1.jpg",
+      "intro": "Limestone temples in the morning. The show at Bukit Jalil by night.",
+      "points": [
+        { "title": "Batu Caves", "body": "Morning excursion to the limestone temples at Batu Caves." },
+        { "title": "The Weeknd · National Stadium Bukit Jalil · 8:30 PM", "body": "Rest in the afternoon before heading via the Sri Petaling LRT line directly to National Stadium Bukit Jalil for the show." }
+      ],
+      "closing": "Concert night in Kuala Lumpur."
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Skyline Views & Departure",
+      "location": "Kuala Lumpur",
+      "imageFile": "mys-petronas-klcc-v1.jpg",
+      "intro": "The Skybridge, the park, and the point where the two packages part ways.",
+      "points": [
+        { "title": "Petronas Twin Towers Skybridge & KLCC Park", "body": "Visit the Petronas Twin Towers Skybridge and KLCC Park before heading to the airport." }
+      ],
+      "closing": "Kuala Lumpur Highlights ends here, at the airport. City, Highlands & Heritage carries on to the Cameron Highlands tomorrow."
+    },
+    {
+      "date": "2026-11-06",
+      "title": "Rainforests of Cameron Highlands",
+      "location": "Cameron Highlands",
+      "imageFile": "mys-cameron-highlands-v1.jpg",
+      "intro": "Up into the mist: mossy trails and tea as far as you can see.",
+      "points": [
+        { "title": "The road to the Cameron Highlands", "body": "Scenic drive/bus to Cameron Highlands." },
+        { "title": "Mossy Forest & the Sungai Palas tea plantations", "body": "Hike the Mossy Forest trails, explore the rolling tea plantations of Sungai Palas, and stay in the cool mountain climate." }
+      ],
+      "closing": "A night in the cool mountain climate."
+    },
+    {
+      "date": "2026-11-07",
+      "title": "Colonial Charm & Heritage in George Town",
+      "location": "George Town, Penang",
+      "imageFile": "mys-george-town-v1.jpg",
+      "intro": "Down to the coast for shophouses, street art and the best hawker food in the country.",
+      "points": [
+        { "title": "Down to Penang", "body": "Descend to Penang." },
+        { "title": "George Town’s street art & Clan Jetties", "body": "Explore the UNESCO street art alleys and Clan Jetties in George Town." },
+        { "title": "Hawker food on Chulia Street", "body": "Indulge in world-famous hawker foods (Char Kway Teow, Assam Laksa) at Chulia Street." }
+      ],
+      "closing": "Penang, for the rest of the spell."
+    },
+    {
+      "date": "2026-11-08",
+      "title": "Penang National Park & Monkey Beach",
+      "location": "Penang",
+      "imageFile": "mys-monkey-beach-v1.jpg",
+      "intro": "Jungle trail or boat, a beach at the end of it, and a sunset to close the day.",
+      "points": [
+        { "title": "Penang National Park", "body": "Hike through Penang National Park to Monkey Beach or take a boat to Kerachut Beach." },
+        { "title": "Sunset at Batu Ferringhi", "body": "Sunset drinks at Batu Ferringhi." }
+      ],
+      "closing": "The last night of the spell."
+    },
+    {
+      "date": "2026-11-09",
+      "title": "Return to KL / Departure from Penang",
+      "location": "Penang / Kuala Lumpur",
+      "imageFile": "mys-penang-dawn-v1.jpg",
+      "intro": "One last Penang morning, then home by air or by rail.",
+      "points": [
+        { "title": "Fly out of Penang or train back to KLIA", "body": "Fly out directly via Penang International Airport (PEN) or train back to KLIA." }
+      ],
+      "closing": ""
+    }
+  ]
+}

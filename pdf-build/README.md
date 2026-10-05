@@ -50,6 +50,11 @@ bun run hong-kong-macau.ts --draft           # nine-page Hong Kong x Macau Grimo
 bun run hong-kong-macau.ts --publish         # immutable v1 copy here and in the public brochures folder
 bun run hong-kong-macau.ts --verify-existing # every supplied sentence in order, prices, lists, bounds, single website link
 bun run prepare-hong-kong-macau-migration.ts # insert-only 0114 from hong-kong-macau-v1.json + hong-kong-macau-content.ts; never touches production
+python3 prepare-malaysia-assets.py          # website JPEGs + Grimoire crops from the reviewed raw Malaysia renders (refuses to overwrite)
+bun run malaysia.ts --draft                  # nine-page Malaysia Grimoire to .cache, with page renders for review
+bun run malaysia.ts --publish                # immutable v1 copy here and in the public brochures folder
+bun run malaysia.ts --verify-existing        # every supplied sentence, package tag and package card in order, bounds, single website link, no invented price
+bun run prepare-malaysia-migration.ts        # insert-only 0115 from malaysia-v1.json + malaysia-content.ts; never touches production
 ```
 
 Editions in `index.ts` share the original Grimoire renderer and baseline copy.
@@ -93,6 +98,14 @@ red. `hong-kong-macau-v1.json` + `hong-kong-macau-content.ts` are the single sou
 the request form and the 0114 migration; `calendar.ts` turns the ISO dates into the house wording. The website's
 concert-poster presentation is theme-driven (`web/src/data/concertThemes.ts`): Starboy red, Hong Kong × Macau
 violet.
+
+The `malaysia.ts` edition (The Malaysia Spell, 3-9 November 2026) is the third concert-poster Grimoire, in teal.
+Two packages share one itinerary - Kuala Lumpur Highlights (3 days / 2 nights, 3-5 November) and City, Highlands &
+Heritage (7 days / 6 nights, 3-9 November), identical for Days 1-3 - so every day page carries a package rail
+saying which packages include it, and the closing page carries one card per package instead of price cards:
+no prices were supplied, so the page and the brochure say price on request and never an invented amount.
+`malaysia-v1.json` + `malaysia-content.ts` are the single source for the PDF, the website page (package picker,
+pre-filled request form), the request form and the 0115 migration.
 
 The no-stay brochures in `trips.ts` share one renderer. A day may be marked as the
 spell's `spotlight` (gold frame and tag, an hour-by-hour schedule and a good-to-know

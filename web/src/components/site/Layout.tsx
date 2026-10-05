@@ -6,6 +6,7 @@ import Cursor from "@/components/site/Cursor";
 import Footer from "@/components/site/Footer";
 import Nav from "@/components/site/Nav";
 import PageBack, { type PageBackConfig } from "@/components/site/PageBack";
+import type { ConcertThemeId } from "@/data/concertThemes";
 import { useSeo } from "@/lib/seo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -32,7 +33,7 @@ interface PageProps {
    */
   back?: PageBackConfig | false;
   /** Presentation-only, scoped to one spell; booking and content remain shared. */
-  theme?: "starboy" | "hong-kong-macau";
+  theme?: ConcertThemeId;
   children: React.ReactNode;
 }
 

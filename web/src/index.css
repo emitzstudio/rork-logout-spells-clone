@@ -11,9 +11,9 @@
 }
 
 /* Inherited tokens are scoped to the concert-poster spells; the rest of the brand keeps its defaults.
-   Starboy (The Blinding Nights Spell) is red; The Hong Kong × Macau Spell is violet. */
+   Starboy (The Blinding Nights Spell) is red; The Hong Kong × Macau Spell is violet; The Malaysia Spell is teal. */
 @layer components {
-  [data-spell-theme="starboy"], [data-spell-theme="hong-kong-macau"] {
+  [data-spell-theme="starboy"], [data-spell-theme="hong-kong-macau"], [data-spell-theme="malaysia"] {
     --spell-ink: 98.04% 96.08% 94.12%;
     --spell-canvas: 3.529% 3.529% 3.529%;
     --spell-display: "Barlow Condensed";
@@ -35,17 +35,25 @@
     --concert-accent-pressed: #5839bd;
     --concert-focus: #a98cff;
   }
-  [data-spell-theme="starboy"] :focus-visible, [data-spell-theme="hong-kong-macau"] :focus-visible { outline-color: var(--concert-focus); }
-  [data-spell-theme="starboy"] ::selection, [data-spell-theme="hong-kong-macau"] ::selection { background-color: color-mix(in srgb, var(--concert-accent) 40%, transparent); @apply text-white; }
-  [data-spell-theme="starboy"] .heading-serif, [data-spell-theme="hong-kong-macau"] .heading-serif { @apply font-bold uppercase; }
-  [data-spell-theme="starboy"] .text-gold-gradient, [data-spell-theme="hong-kong-macau"] .text-gold-gradient { @apply bg-none text-gold; }
-  [data-spell-theme="starboy"] .btn-gold, [data-spell-theme="hong-kong-macau"] .btn-gold { background-color: var(--concert-accent); @apply rounded-none font-semibold text-white hover:shadow-none; }
-  [data-spell-theme="starboy"] .btn-gold:hover, [data-spell-theme="hong-kong-macau"] .btn-gold:hover { background-color: var(--concert-accent-pressed); }
-  [data-spell-theme="starboy"] .btn-ghost-gold, [data-spell-theme="hong-kong-macau"] .btn-ghost-gold { @apply rounded-none; }
-  [data-spell-theme="starboy"] .card-glass, [data-spell-theme="hong-kong-macau"] .card-glass { @apply border-white/10 bg-[#141414] bg-none; }
-  [data-spell-theme="starboy"] header, [data-spell-theme="hong-kong-macau"] header { @apply bg-[#090909]/95; }
-  [data-spell-theme="starboy"] footer, [data-spell-theme="hong-kong-macau"] footer { @apply bg-[#090909]; }
-  [data-spell-theme="starboy"] [role="dialog"], [data-spell-theme="hong-kong-macau"] [role="dialog"] { @apply bg-[#111]; }
+  [data-spell-theme="malaysia"] {
+    --spell-accent: 5.49% 61.18% 57.25%;
+    --spell-accent-light: 24.71% 82.75% 78.43%;
+    --spell-accent-hi: 66.27% 93.73% 90.98%;
+    --concert-accent: #0e9c92;
+    --concert-accent-pressed: #0b7f77;
+    --concert-focus: #3fd3c8;
+  }
+  [data-spell-theme="starboy"] :focus-visible, [data-spell-theme="hong-kong-macau"] :focus-visible, [data-spell-theme="malaysia"] :focus-visible { outline-color: var(--concert-focus); }
+  [data-spell-theme="starboy"] ::selection, [data-spell-theme="hong-kong-macau"] ::selection, [data-spell-theme="malaysia"] ::selection { background-color: color-mix(in srgb, var(--concert-accent) 40%, transparent); @apply text-white; }
+  [data-spell-theme="starboy"] .heading-serif, [data-spell-theme="hong-kong-macau"] .heading-serif, [data-spell-theme="malaysia"] .heading-serif { @apply font-bold uppercase; }
+  [data-spell-theme="starboy"] .text-gold-gradient, [data-spell-theme="hong-kong-macau"] .text-gold-gradient, [data-spell-theme="malaysia"] .text-gold-gradient { @apply bg-none text-gold; }
+  [data-spell-theme="starboy"] .btn-gold, [data-spell-theme="hong-kong-macau"] .btn-gold, [data-spell-theme="malaysia"] .btn-gold { background-color: var(--concert-accent); @apply rounded-none font-semibold text-white hover:shadow-none; }
+  [data-spell-theme="starboy"] .btn-gold:hover, [data-spell-theme="hong-kong-macau"] .btn-gold:hover, [data-spell-theme="malaysia"] .btn-gold:hover { background-color: var(--concert-accent-pressed); }
+  [data-spell-theme="starboy"] .btn-ghost-gold, [data-spell-theme="hong-kong-macau"] .btn-ghost-gold, [data-spell-theme="malaysia"] .btn-ghost-gold { @apply rounded-none; }
+  [data-spell-theme="starboy"] .card-glass, [data-spell-theme="hong-kong-macau"] .card-glass, [data-spell-theme="malaysia"] .card-glass { @apply border-white/10 bg-[#141414] bg-none; }
+  [data-spell-theme="starboy"] header, [data-spell-theme="hong-kong-macau"] header, [data-spell-theme="malaysia"] header { @apply bg-[#090909]/95; }
+  [data-spell-theme="starboy"] footer, [data-spell-theme="hong-kong-macau"] footer, [data-spell-theme="malaysia"] footer { @apply bg-[#090909]; }
+  [data-spell-theme="starboy"] [role="dialog"], [data-spell-theme="hong-kong-macau"] [role="dialog"], [data-spell-theme="malaysia"] [role="dialog"] { @apply bg-[#111]; }
   .starboy-shared .font-serif { @apply font-bold not-italic; }
   .starboy-shared .rounded-2xl, .starboy-shared .rounded-xl { @apply rounded-none; }
   .starboy-shared .btn-gold, .starboy-shared .btn-ghost-gold { border-radius: 0 !important; }

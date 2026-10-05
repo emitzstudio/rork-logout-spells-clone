@@ -125,14 +125,17 @@ export default function SpellPage() {
 
   const seatsLeft = Math.max(0, spell.seatsTotal - spell.seatsBooked);
   const openBooking = (): void => setRequestedSpellId(spell.id);
-  /* Concert-poster spells (The Blinding Nights Spell, The Hong Kong × Macau Spell) use their own presentation. */
+  /* Concert-poster spells (The Blinding Nights Spell, The Hong Kong × Macau Spell, The Malaysia Spell) use their own presentation. */
   const concertTheme = concertThemeFor(spell.slug);
+  /* A package-sold spell's departures differ in length, not dates: the picked package also sets the day count. */
+  const packageSpell = concertTheme?.packages !== undefined;
   /* With several batches the hero and strip speak for the whole window; the picked batch takes over. */
   const pageDraft: SpellDraft = batchChoice
     ? {
         ...draft,
-        dates: selectedBatch !== null ? selectedBatch.label : batchWindow(batches),
+        dates: selectedBatch !== null ? selectedBatch.label : batchWindow(batches, packageSpell ? "packages" : "batches"),
         maxSeats: selectedBatch !== null ? selectedBatch.seatsTotal : 0,
+        days: packageSpell && selectedBatch !== null && selectedBatch.days !== null ? selectedBatch.days : draft.days,
       }
     : draft;
   const pageSeatsLeft = batchChoice ? (selectedBatch !== null ? Math.max(0, selectedBatch.seatsTotal - selectedBatch.seatsBooked) : null) : seatsLeft;
@@ -164,7 +167,7 @@ export default function SpellPage() {
       theme={concertTheme?.id}
     >
       {concertTheme !== undefined ? (
-        <StarboyExperience draft={draft} onBook={openBooking} theme={concertTheme} />
+        <StarboyExperience draft={pageDraft} onBook={openBooking} theme={concertTheme} batches={batches} selectedBatchId={selectedBatchId} onSelectBatch={setSelectedBatchId} />
       ) : <>
       <SpellHero draft={pageDraft} seatsLeft={pageSeatsLeft} onBook={openBooking} />
       <BookingStrip draft={pageDraft} seatsLeft={pageSeatsLeft} onBook={openBooking} />

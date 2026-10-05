@@ -118,7 +118,7 @@ describe("The Hong Kong × Macau Spell", () => {
   });
 
   it("takes the concert-poster presentation in violet, leaving The Blinding Nights Spell red", () => {
-    expect(CONCERT_SLUGS).toEqual(["the-starboy-spell", "the-hong-kong-macau-spell"]);
+    expect(CONCERT_SLUGS).toEqual(["the-starboy-spell", "the-hong-kong-macau-spell", "the-malaysia-spell"]);
     expect(isConcertPath("/live/the-hong-kong-macau-spell")).toBe(true);
     expect(isConcertPath("/live/the-goa-spell")).toBe(false);
     const theme = concertThemeFor("the-hong-kong-macau-spell")!;

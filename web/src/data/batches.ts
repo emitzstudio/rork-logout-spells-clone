@@ -4,7 +4,9 @@
  * every scheduled departure of the spell, lets the visitor pick one, and
  * carries the pick into the request form as the answer to the form's batch
  * question. Nothing here invents a batch - a spell with one departure shows
- * no picker at all.
+ * no picker at all. A spell whose departures differ in length rather than
+ * dates (The Malaysia Spell's two packages) rides the same rails: the form
+ * asks for a package, the option labels carry the package's dates.
  */
 import { fmtRange } from "@/data/account/derive";
 import type { FormQuestion, LogoutForm } from "@/data/forms";
@@ -25,6 +27,8 @@ export interface SpellBatch {
   seatsBooked: number;
   /** "Sold out" closes the pick; nothing else about a batch is judged here. */
   soldOut: boolean;
+  /** Calendar days from the first to the last, inclusive; null while a batch is undated. */
+  days: number | null;
 }
 
 /** Earliest first; undated rows last, in the order they were created. */
@@ -48,6 +52,7 @@ export const toBatches = (rows: readonly DepartureRow[]): SpellBatch[] =>
       seatsTotal: row.seats_total,
       seatsBooked: row.seats_booked,
       soldOut: row.seats_total > 0 && row.seats_booked >= row.seats_total,
+      days: row.start_date !== null && row.end_date !== null ? Math.round((Date.parse(row.end_date) - Date.parse(row.start_date)) / 86400000) + 1 : null,
     }));
 
 /**
@@ -63,9 +68,9 @@ export const fetchSpellBatches = async (spellId: string): Promise<SpellBatch[]> 
 /** A picker only makes sense once there are two or more dated batches to choose from. */
 export const hasBatchChoice = (batches: readonly SpellBatch[]): boolean => batches.length >= 2;
 
-/** The question a form asks about the batch - its title names the batch, its options carry the dates. */
+/** The question a form asks about the batch (or package) - its title names it, its options carry the dates. */
 export const batchQuestionOf = (form: Pick<LogoutForm, "questions">): FormQuestion | undefined =>
-  form.questions.find((question) => question.enabled !== false && question.type === "single_choice" && /\bbatch\b/i.test(question.title));
+  form.questions.find((question) => question.enabled !== false && question.type === "single_choice" && /\b(?:batch|package)\b/i.test(question.title));
 
 /**
  * The form option that names the picked batch: an option whose label carries
@@ -87,14 +92,19 @@ export const shortDay = (iso: string): string =>
 /**
  * "3 batches · 30 Oct to 29 Nov 2026" - the hero and strip line while no batch
  * is picked. Falls back to the first and last labels when a batch is undated.
+ * The noun follows the spell: "batches" for repeated dates, "packages" for
+ * departures of different lengths.
  */
-export const batchWindow = (batches: readonly SpellBatch[]): string => {
+export const batchWindow = (batches: readonly SpellBatch[], noun: "batches" | "packages" = "batches"): string => {
   const first = batches[0];
   const last = batches[batches.length - 1];
   if (first === undefined || last === undefined) return "";
-  const count = `${batches.length} batches`;
+  const count = `${batches.length} ${noun}`;
   if (first.start === null || last.end === null) return `${count} · ${first.label} to ${last.label}`;
   const day = (iso: string, year: boolean): string =>
     new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}) });
-  return `${count} · ${day(first.start, false)} to ${day(last.end, true)}`;
+  /* Packages share a start date and differ in length: the window runs to the latest end, not the last row's. */
+  const lastEnd = last.end;
+  const end = batches.reduce<string>((latest, batch) => (batch.end !== null && batch.end > latest ? batch.end : latest), lastEnd);
+  return `${count} · ${day(first.start, false)} to ${day(end, true)}`;
 };

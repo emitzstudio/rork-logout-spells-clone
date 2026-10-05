@@ -1,9 +1,22 @@
 /**
  * Concert-poster spells share one presentation (`StarboyExperience`) and differ only in their
  * colour and a few lines of copy. The Blinding Nights Spell keeps its red; The Hong Kong × Macau
- * Spell is violet. Everything else on the page comes from the spell's own saved content.
+ * Spell is violet; The Malaysia Spell is teal. Everything else on the page comes from the spell's
+ * own saved content.
  */
-export type ConcertThemeId = "starboy" | "hong-kong-macau";
+export type ConcertThemeId = "starboy" | "hong-kong-macau" | "malaysia";
+
+/**
+ * One way of taking a spell that sells several lengths of the same itinerary. Every package
+ * starts on day one; `days` ties it to the spell's departure of the same length, which carries
+ * the dates and the seats.
+ */
+export interface ConcertPackage {
+  days: number;
+  nights: number;
+  name: string;
+  summary: string;
+}
 
 export interface ConcertTheme {
   id: ConcertThemeId;
@@ -33,6 +46,8 @@ export interface ConcertTheme {
   closingLineB: string;
   /** The day that carries the stage panel - matched by itinerary id. */
   concertDayId: string;
+  /** Set when the spell is sold as packages of different lengths; the page then shows a package picker instead of price cards. */
+  packages?: readonly ConcertPackage[];
 }
 
 const STARBOY: ConcertTheme = {
@@ -79,9 +94,36 @@ const HONG_KONG_MACAU: ConcertTheme = {
   concertDayId: "hkm-day-6",
 };
 
+const MALAYSIA: ConcertTheme = {
+  id: "malaysia",
+  accent: "#0e9c92",
+  accentPressed: "#0b7f77",
+  accentLight: "#3fd3c8",
+  accentSoft: "#a9efe8",
+  concertPanel: "#0a1817",
+  closingGlow: "#0f3d39",
+  kicker: "Night markets. Stadium lights. Tea highlands.",
+  badge: "Malaysia",
+  heroAlt: "The Petronas Twin Towers and KLCC Park at blue hour under teal light; AI-generated illustration",
+  stageTitle: "The Weeknd",
+  stageSub: "National Stadium Bukit Jalil · 4 November · 8:30 PM",
+  storyHeading: "Night markets. Stadium lights. Tea highlands.",
+  tagline: "Scream every lyric. Then head for the hills.",
+  galleryHeading: "One country. Two ways to take it.",
+  closingKicker: "Jalan Alor nights. Concert night. Highlands and heritage.",
+  closingLineA: "Take the night.",
+  closingLineB: "Then stay on.",
+  concertDayId: "mys-day-2",
+  packages: [
+    { days: 3, nights: 2, name: "Kuala Lumpur Highlights", summary: "Land at KLIA, Bukit Bintang and the Jalan Alor food crawl, Batu Caves, the show at National Stadium Bukit Jalil, the Petronas Skybridge and KLCC Park, then the airport." },
+    { days: 7, nights: 6, name: "City, Highlands & Heritage", summary: "Everything in Kuala Lumpur Highlights, then the Cameron Highlands, George Town and Penang National Park, flying out of Penang or taking the train back to KLIA." },
+  ],
+};
+
 const BY_SLUG: Record<string, ConcertTheme> = {
   "the-starboy-spell": STARBOY,
   "the-hong-kong-macau-spell": HONG_KONG_MACAU,
+  "the-malaysia-spell": MALAYSIA,
 };
 
 /** The concert-poster theme for a spell slug, or undefined for every ordinary spell. */
